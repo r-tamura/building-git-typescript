@@ -1,7 +1,7 @@
 import * as path from "path";
 import { promisify } from "util";
 import { FileService, defaultFs } from "./services/FileService";
-import { WorkSpace } from "./workspace";
+import { Workspace } from "./workspace";
 
 type Environment = {
   process: {
@@ -52,7 +52,7 @@ export async function main(argv: string[], env: Environment) {
       const gitPath = path.join(rootPath, ".git");
       const dbPath = path.join(gitPath, "objects");
 
-      const workspace = new WorkSpace(rootPath, env);
+      const workspace = new Workspace(rootPath, env);
       console.log(await workspace.listFiles());
 
       break;

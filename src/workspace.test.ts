@@ -1,5 +1,5 @@
 import * as assert from "power-assert";
-import { WorkSpace } from "./workspace";
+import { Workspace } from "./workspace";
 import { defaultFs } from "./services/FileService";
 
 describe("WorkSpace", () => {
@@ -11,7 +11,7 @@ describe("WorkSpace", () => {
         .mockResolvedValue([".", "..", ".git", "a.txt", "dir"]);
 
       // Act
-      const ws = new WorkSpace("/test/jit", {
+      const ws = new Workspace("/test/jit", {
         fs: { ...defaultFs, readdir: mockedReaddir }
       });
       const actual = await ws.listFiles();

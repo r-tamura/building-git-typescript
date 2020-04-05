@@ -4,7 +4,7 @@ type Environment = {
   fs: FileService
 }
 
-export class WorkSpace {
+export class Workspace {
   #IGNORE = [".", "..", ".git"]
   #pathname: string
   #fs: FileService
