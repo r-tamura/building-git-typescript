@@ -1,15 +1,25 @@
+import * as CallbackFs from "fs";
+import * as zlib from "zlib";
 import { promisify } from "util";
-import * as fs from "fs";
+const fs = CallbackFs.promises;
 
-export const mkdir = promisify(fs.mkdir);
-export const readdir = promisify(fs.readdir);
+export type FileService = Pick<
+  typeof fs,
+  | "mkdir"
+  | "readdir"
+  | "readFile"
+  | "open"
+  | "write"
+  | "writeFile"
+  | "rename"
+  | "fstat"
+>;
+export const defaultFs: FileService = fs;
 
-export type FileService = {
-  mkdir: typeof mkdir;
-  readdir: typeof readdir;
+const deflate = promisify(zlib.deflate);
+export type Zlib = {
+  deflate: typeof deflate;
 };
-
-export const defaultFs: FileService = {
-  mkdir,
-  readdir
+export const defaultZlib = {
+  deflate: promisify(zlib.deflate)
 };

@@ -1,4 +1,5 @@
-import { FileService } from "./services/FileService"
+import * as path from "path"
+import { FileService } from "./services"
 
 type Environment = {
   fs: FileService
@@ -22,5 +23,9 @@ export class Workspace {
 
   async listFiles() {
     return this.#fs.readdir(this.#pathname).then(files => files.filter(file => !this.#IGNORE.includes(file)))
+  }
+
+  async readFile(rpath: string) {
+    return this.#fs.readFile(path.join(this.#pathname, rpath), "ascii")
   }
 }

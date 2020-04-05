@@ -1,0 +1,4 @@
+# typescript
+*.d.ts
+*.js
+*.js.map

@@ -1,9 +1,10 @@
 import * as path from "path";
-import { promisify } from "util";
-import { FileService, defaultFs } from "./services/FileService";
+import { FileService, defaultFs } from "./services";
 import { Workspace } from "./workspace";
+import { Blob } from "./blob";
+import { Database } from "./database";
 
-type Environment = {
+export type Environment = {
   process: {
     getcwd: () => string;
   };
@@ -53,7 +54,14 @@ export async function main(argv: string[], env: Environment) {
       const dbPath = path.join(gitPath, "objects");
 
       const workspace = new Workspace(rootPath, env);
-      console.log(await workspace.listFiles());
+      const database = new Database(dbPath);
+
+      const paths = await workspace.listFiles();
+      paths.forEach(async p => {
+        const data = await workspace.readFile(p);
+        const blob = new Blob(data);
+        database.store(blob);
+      });
 
       break;
     }

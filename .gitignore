@@ -1,10 +1,5 @@
 # nodejs
 node_modules
 
-# typescript
-*.d.ts
-*.js
-*.js.map
-
 # temporary works
 scripts
