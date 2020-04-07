@@ -1,9 +1,8 @@
 import { createHash } from "crypto";
-import { createDeflate } from "zlib";
-import { Blob, OID } from "./blob";
+import { constants } from "fs";
 import { FileService, defaultFs, Zlib, defaultZlib } from "./services";
 import path = require("path");
-import { constants } from "fs";
+import { GitObject, OID } from "./types";
 
 const TEMP_CHARS = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
 
@@ -43,7 +42,7 @@ export class Database {
     }
   }
 
-  store(obj: Blob) {
+  async store(obj: GitObject) {
     const str = obj.toString();
     const content = `${obj.type()} ${str.length}\0${str}`;
 

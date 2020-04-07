@@ -2,9 +2,8 @@ import * as assert from "power-assert";
 import { defaultFs } from "./services/FileService";
 import { main, Environment } from "./jit";
 
-import { Workspace } from "./workspace";
 import { Database } from "./database";
-import { Blob } from "./blob";
+import { GitObject } from "./types";
 
 jest.mock("./database");
 
@@ -47,7 +46,16 @@ describe("commit", () => {
   const mockedMkdir = jest.fn().mockResolvedValue("");
   const mockedCwd = jest.fn().mockReturnValue("/test/dir/");
 
-  beforeAll(() => {
+  const MockedDatabase = Database as jest.Mock;
+  const mockedStore = jest.fn().mockImplementation(async (o: GitObject) => {
+    o.oid = "123456789abcdeffedcba98765432112345678";
+  });
+
+  beforeAll(async () => {
+    MockedDatabase.mockImplementation((pathname: string) => ({
+      store: mockedStore
+    }));
+
     const env: Environment = {
       fs: { ...defaultFs, mkdir: mockedMkdir },
       process: {
@@ -55,7 +63,7 @@ describe("commit", () => {
       }
     };
     //Act
-    main(["commit"], env);
+    await main(["commit"], env);
   });
 
   it("Workspace#listFiles", () => {
@@ -63,14 +71,16 @@ describe("commit", () => {
   });
 
   it("Database#store", () => {
-    expect(Database).toHaveBeenCalled();
-    const MockedDatabase = Database as jest.Mock<Database>;
-    const store = MockedDatabase.mock.instances[0].store;
-    const mockedStore = store as jest.Mock<typeof store>;
-    assert.equal(mockedStore.mock.calls.length, 2);
+    expect(Database).toHaveBeenCalledTimes(1);
+    assert.equal(mockedStore.mock.calls.length, 3, "blob x2 + tree x1");
 
-    mockedStore.mock.calls.forEach(call => {
-      assert.equal((call[0] as Blob).toString(), "hi");
+    const callsExceptLast = mockedStore.mock.calls.slice(0, -1);
+    const lastCall = mockedStore.mock.calls[callsExceptLast.length];
+    callsExceptLast.forEach(call => {
+      assert.equal((call[0] as GitObject).type(), "blob");
+      assert.equal((call[0] as GitObject).toString(), "hi");
     });
+
+    assert.equal((lastCall[0] as GitObject).type(), "tree");
   });
 });

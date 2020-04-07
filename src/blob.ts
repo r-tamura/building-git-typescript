@@ -1,7 +1,8 @@
-export type OID = string
+import { GitObject, OID } from "./types"
+
 export type Data = string
 
-export class Blob {
+export class Blob implements GitObject {
   oid: OID
   #data: Data
   constructor(data: Data) {

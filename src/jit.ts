@@ -3,6 +3,8 @@ import { FileService, defaultFs } from "./services";
 import { Workspace } from "./workspace";
 import { Blob } from "./blob";
 import { Database } from "./database";
+import { Entry } from "./entry";
+import { Tree } from "./tree";
 
 export type Environment = {
   process: {
@@ -57,12 +59,19 @@ export async function main(argv: string[], env: Environment) {
       const database = new Database(dbPath);
 
       const paths = await workspace.listFiles();
-      paths.forEach(async p => {
-        const data = await workspace.readFile(p);
-        const blob = new Blob(data);
-        database.store(blob);
-      });
+      const entries = await Promise.all(
+        paths.map(async p => {
+          const data = await workspace.readFile(p);
+          const blob = new Blob(data);
+          await database.store(blob);
+          return new Entry(p, blob.oid);
+        })
+      );
 
+      const tree = new Tree(entries);
+      await database.store(tree);
+
+      console.log("tree", tree.oid);
       break;
     }
     default:
