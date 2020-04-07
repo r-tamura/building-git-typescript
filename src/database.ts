@@ -62,11 +62,8 @@ export class Database {
     const flags = constants.O_RDWR | constants.O_CREAT | constants.O_EXCL
 
     let fileHandle = null // FileHandle型はエクスポートされていない
-    let compressed: Buffer
     try {
       fileHandle = await this.#fs.open(tempPath, flags)
-      compressed = await this.#zlib.deflate(content) as Buffer
-      await this.#fs.writeFile(fileHandle, compressed)
     }
     catch(e) {
       const nodeErr = e as NodeJS.ErrnoException
@@ -77,13 +74,13 @@ export class Database {
         throw e
       }
     }
-    finally {
-      if (fileHandle) {
-        fileHandle.close()
-      }
-    }
 
+    const compressed = await this.#zlib.deflate(content) as Buffer
+    await this.#fs.writeFile(fileHandle, compressed)
     this.#fs.rename(tempPath, objectPath)
+    if (fileHandle) {
+      fileHandle.close()
+    }
   }
 
   genTempName() {

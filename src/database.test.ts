@@ -48,6 +48,7 @@ describe("Database#writeObject", () => {
     code: "ENOENT"
   };
   describe("objects内にすでにディレクトリが存在する場合、そのディレクトリ内にオブジェクトを作成する", () => {
+    beforeAll(jest.clearAllMocks);
     beforeAll(async () => {
       // Arrange
       const fs = {
@@ -100,6 +101,7 @@ describe("Database#writeObject", () => {
       throw errNoEntry;
     });
     const mockedMkdir = jest.fn();
+    beforeAll(jest.clearAllMocks);
     beforeAll(async () => {
       // Arrange
       const fs = {
@@ -129,6 +131,21 @@ describe("Database#writeObject", () => {
         2,
         "例外発生前と後で2回呼び出される"
       );
+    });
+
+    it("deflate", () => {
+      assert.equal(mockedDeflate.mock.calls[0][0], content);
+    });
+
+    it("writeFile", () => {
+      const firstCall = mockedWrite.mock.calls[0];
+      assert.deepEqual(firstCall[1], compressed);
+    });
+    it("rename", () => {
+      assert.deepEqual(mockedRename.mock.calls[0], [
+        path.join(testRepoPath, tempPath),
+        path.join(testRepoPath, "ab/cdefghijklmnopqrstu012345")
+      ]);
     });
   });
 });
