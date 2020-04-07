@@ -15,11 +15,13 @@ export type FileService = Pick<
   | "fstat"
 >;
 export const defaultFs: FileService = fs;
-
-const deflate = promisify(zlib.deflate);
+const deflate = promisify(zlib.deflate) as (
+  buf: Parameters<typeof zlib.deflate>[0],
+  options: Parameters<typeof zlib.deflate>[1]
+) => Promise<Buffer>;
 export type Zlib = {
   deflate: typeof deflate;
 };
 export const defaultZlib = {
-  deflate: promisify(zlib.deflate)
+  deflate: promisify(zlib.deflate) as typeof deflate
 };

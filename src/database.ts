@@ -3,6 +3,7 @@ import { constants } from "fs";
 import { FileService, defaultFs, Zlib, defaultZlib } from "./services";
 import path = require("path");
 import { GitObject, OID } from "./types";
+import { Z_BEST_SPEED } from "zlib";
 
 const TEMP_CHARS = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
 
@@ -75,7 +76,7 @@ export class Database {
       }
     }
 
-    const compressed = await this.#zlib.deflate(content) as Buffer
+    const compressed = await this.#zlib.deflate(content, { level: Z_BEST_SPEED }) as Buffer
     await this.#fs.writeFile(fileHandle, compressed)
     this.#fs.rename(tempPath, objectPath)
     if (fileHandle) {

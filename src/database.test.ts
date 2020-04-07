@@ -4,6 +4,7 @@ import * as assert from "power-assert";
 import { constants } from "fs";
 import * as path from "path";
 import { Blob } from "./blob";
+import { Z_BEST_SPEED } from "zlib";
 
 describe("Database#store", () => {
   describe("blobの場合、オブジェクトタイプをblobとする", () => {
@@ -80,7 +81,9 @@ describe("Database#writeObject", () => {
     });
 
     it("deflate", () => {
-      assert.equal(mockedDeflate.mock.calls[0][0], content);
+      const call = mockedDeflate.mock.calls[0];
+      assert.equal(call[0], content, "圧縮対象データ");
+      assert.deepEqual(call[1], { level: Z_BEST_SPEED }, "圧縮オプション");
     });
 
     it("writeFile", () => {
