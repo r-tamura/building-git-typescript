@@ -4,11 +4,13 @@ import * as os from "os"
 
 export class Commit implements GitObject {
   oid: string;
+  #parent: OID;
   #tree: OID;
   #author: Author;
   #message: string
 
-  constructor(tree: OID, author: Author, message: string) {
+  constructor(parent: OID, tree: OID, author: Author, message: string) {
+    this.#parent = parent
     this.#tree = tree
     this.#author = author
     this.#message = message
@@ -16,15 +18,19 @@ export class Commit implements GitObject {
 
   type() {
     return "commit"
-  };
+  }
+
   toString() {
-    const lines = [
-      `tree ${this.#tree}`,
-      `author ${this.#author}`,
-      `committer ${this.#author}`,
-      "",
-      this.#message
-    ]
+    const lines = []
+    lines.push(`tree ${this.#tree}`)
+    if (this.#parent) {
+      lines.push(`parent ${this.#parent}`)
+    }
+    lines.push(`author ${this.#author}`)
+    lines.push(`committer ${this.#author}`)
+    lines.push("")
+    lines.push(this.#message)
+
     return lines.join(os.EOL)
-  };
+  }
 }

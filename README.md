@@ -13,6 +13,6 @@ yarn test
 
 # run
 # node ./jit.js <subcommand>
-node ./jit.js init
-node ./jit.js commit
+node ./src/jit.js init
+node ./src/jit.js commit
 ```

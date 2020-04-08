@@ -13,6 +13,7 @@ import { Entry } from "./entry";
 import { Tree } from "./tree";
 import { Author } from "./author";
 import { Commit } from "./commit";
+import { Refs } from "./refs";
 
 export type Environment = {
   process: Process;
@@ -64,7 +65,8 @@ export async function main(argv: string[], env: Environment) {
       const dbPath = path.join(gitPath, "objects");
 
       const workspace = new Workspace(rootPath, env);
-      const database = new Database(dbPath);
+      const database = new Database(dbPath, env);
+      const refs = new Refs(gitPath, env);
 
       const paths = await workspace.listFiles();
       const entries = await Promise.all(
@@ -79,18 +81,19 @@ export async function main(argv: string[], env: Environment) {
       const tree = new Tree(entries);
       await database.store(tree);
 
+      const parent = await refs.readHead();
       const name = process.env["GIT_AUTHOR_NAME"];
       const email = process.env["GIT_AUTHOR_EMAIL"];
 
       const author = new Author(name, email, env.date.now());
       const message = await readTextStream(process.stdin);
 
-      const commit = new Commit(tree.oid, author, message);
-      database.store(commit);
+      const commit = new Commit(parent, tree.oid, author, message);
+      await database.store(commit);
+      await refs.updateHead(commit.oid);
 
-      env.fs.writeFile(path.join(gitPath, "HEAD"), commit.oid);
-
-      console.log(`[(root-commit) ${commit.oid}] ${message.split("\n")[0]}`);
+      const isRoot = parent === null ? "(root-commit) " : "";
+      console.log(`[${isRoot}${commit.oid}] ${message.split("\n")[0]}`);
 
       break;
     }
