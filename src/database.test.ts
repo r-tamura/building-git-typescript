@@ -37,7 +37,7 @@ describe("Database#store", () => {
 describe("Database#writeObject", () => {
   const testRepoPath = "/test/jit";
   const oid = "abcdefghijklmnopqrstu012345";
-  const content = `blob 13\0Hello, World!`;
+  const content = Buffer.from(`blob 13\0Hello, World!`, "binary");
   const tempPath = "ab/tmp_obj_AAAAAA";
   const compressed = Buffer.from([1, 2, 3]);
   const mockedOpen = jest.fn().mockResolvedValue({ close: () => null });
@@ -82,13 +82,17 @@ describe("Database#writeObject", () => {
 
     it("deflate", () => {
       const call = mockedDeflate.mock.calls[0];
-      assert.equal(call[0], content, "圧縮対象データ");
-      assert.deepEqual(call[1], { level: Z_BEST_SPEED }, "圧縮オプション");
+      assert.deepStrictEqual(call[0], content, "圧縮対象データ");
+      assert.deepStrictEqual(
+        call[1],
+        { level: Z_BEST_SPEED },
+        "圧縮オプション"
+      );
     });
 
     it("writeFile", () => {
       const firstCall = mockedWrite.mock.calls[0];
-      assert.deepEqual(firstCall[1], compressed);
+      assert.deepEqual(firstCall[1], compressed, "圧縮されたデータ");
     });
 
     it("rename", () => {

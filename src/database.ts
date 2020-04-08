@@ -45,7 +45,8 @@ export class Database {
 
   async store(obj: GitObject) {
     const str = obj.toString();
-    const content = `${obj.type()} ${str.length}\0${str}`;
+    const contentStr = `${obj.type()} ${str.length}\0${str}`;
+    const content = Buffer.from(contentStr, "binary")
 
     obj.oid = createHash("sha1")
       .update(content)
@@ -54,7 +55,7 @@ export class Database {
     this.writeObject(obj.oid, content);
   }
 
-  async writeObject(oid: OID, content: string) {
+  async writeObject(oid: OID, content: Buffer) {
     const [dirname, basename] = [oid.slice(0, 2), oid.slice(2)]
     const objectPath = path.join(this.#pathname, dirname, basename)
     const dirPath = path.join(this.#pathname, dirname)
@@ -75,7 +76,6 @@ export class Database {
         throw e
       }
     }
-
     const compressed = await this.#zlib.deflate(content, { level: Z_BEST_SPEED }) as Buffer
     await this.#fs.writeFile(fileHandle, compressed)
     this.#fs.rename(tempPath, objectPath)
