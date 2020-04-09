@@ -56,6 +56,11 @@ export class Database {
   async writeObject(oid: OID, content: Buffer) {
     const [dirname, basename] = [oid.slice(0, 2), oid.slice(2)]
     const objectPath = path.join(this.#pathname, dirname, basename)
+
+    if(await this.fileExists(objectPath)) {
+      return;
+    }
+
     const dirPath = path.join(this.#pathname, dirname)
     const tempPath = path.join(dirPath, this.genTempName())
 
@@ -82,11 +87,24 @@ export class Database {
     }
   }
 
-  genTempName() {
+  private genTempName() {
     let suffix = ""
     for (let i = 0; i < 6; i++) {
       suffix += this.#rand.sample(TEMP_CHARS)
     }
     return `tmp_obj_${suffix}`
+  }
+
+  private async fileExists(filepath: string) {
+    try {
+      await this.#fs.access(filepath)
+    } catch(e) {
+      const nodeErr = e as NodeJS.ErrnoException
+      if (nodeErr.code === "ENOENT") {
+        return false
+      }
+      throw e;
+    }
+    return true
   }
 }

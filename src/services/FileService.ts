@@ -15,6 +15,7 @@ export type FileService = Pick<
   | "rename"
   | "write"
   | "writeFile"
+  | "access"
 >;
 
 export const defaultFs: FileService = fs;
