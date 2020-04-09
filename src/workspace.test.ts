@@ -28,7 +28,7 @@ describe("Workspace#readFile", () => {
     `when an unknown printer took a galley of type and scrambled it to make a type specimen book.`
   ].join("\n");
   const mockedReadFile = jest.fn().mockResolvedValue(testContent);
-  let actual;
+  let actual: string | null = null;
   beforeAll(async () => {
     // Arrange
 

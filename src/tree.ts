@@ -5,7 +5,7 @@ export class Tree implements GitObject {
   static ENTRY_FORMAT = "A7Z*H40"
   static MODE = "100644"
 
-  oid: OID
+  oid: OID | null = null
   #entries: Entry[]
   constructor(entries: Entry[]) {
     this.#entries = entries

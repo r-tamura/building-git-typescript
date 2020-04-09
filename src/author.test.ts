@@ -21,22 +21,25 @@ describe("Author#toString", () => {
     ["PST", "-0800"],
     ["JST", "+0900"],
     ["GMT", "+0000"]
-  ])("タイムゾーン: %s", (tzname: TimezoneName, tzInHours: string) => {
-    //Arrange
-    const spy = mockTimezone(tzname);
+  ] as [TimezoneName, string][])(
+    "タイムゾーン: %s",
+    (tzname: TimezoneName, tzInHours: string) => {
+      //Arrange
+      const spy = mockTimezone(tzname);
 
-    // Act
-    const date20200401 = new Date(2020, 3, 1);
-    const author = new Author("John Doe", "johndoe@test.local", date20200401);
-    const actual = author.toString();
+      // Act
+      const date20200401 = new Date(2020, 3, 1);
+      const author = new Author("John Doe", "johndoe@test.local", date20200401);
+      const actual = author.toString();
 
-    // Assert
-    assert.equal(
-      actual,
-      `John Doe <johndoe@test.local> 1585666800 ${tzInHours}`
-    );
+      // Assert
+      assert.equal(
+        actual,
+        `John Doe <johndoe@test.local> 1585666800 ${tzInHours}`
+      );
 
-    // Arrange
-    spy.mockRestore();
-  });
+      // Arrange
+      spy.mockRestore();
+    }
+  );
 });

@@ -3,7 +3,7 @@
  */
 export type OID = string;
 export interface GitObject {
-  oid: OID;
+  oid: OID | null;
   type: () => string;
   toString: () => string;
 }

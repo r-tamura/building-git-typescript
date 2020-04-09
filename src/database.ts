@@ -31,16 +31,14 @@ type Environment = {
 
 export class Database {
   #pathname: string
-  #fs: Required<Environment["fs"]>
-  #rand: Required<Environment["rand"]>
-  #zlib: Required<Environment["zlib"]>
+  #fs: NonNullable<Environment["fs"]>
+  #rand: NonNullable<Environment["rand"]>
+  #zlib: NonNullable<Environment["zlib"]>
   constructor(pathname: string, env: Environment = {}) {
     this.#pathname = pathname
-    if (env) {
-      this.#fs = env.fs ?? defaultFs
-      this.#rand = env.rand ?? defaultRand
-      this.#zlib = env.zlib ?? defaultZlib
-    }
+    this.#fs = env.fs ?? defaultFs
+    this.#rand = env.rand ?? defaultRand
+    this.#zlib = env.zlib ?? defaultZlib
   }
 
   async store(obj: GitObject) {

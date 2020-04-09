@@ -2,6 +2,7 @@ import * as assert from "power-assert";
 import * as Service from "./services";
 import { main, Environment } from "./jit";
 import { Database } from "./database";
+import { Refs } from "./refs";
 import { GitObject } from "./types";
 import { defaultProcess } from "./services";
 
@@ -14,6 +15,8 @@ jest.mock("./workspace", () => ({
     readFile: jest.fn().mockResolvedValue("hi")
   }))
 }));
+
+jest.mock("./refs");
 
 jest
   .spyOn(Service, "readTextStream")
@@ -53,26 +56,38 @@ describe("commit", () => {
   // Arrange
   const mockedMkdir = jest.fn().mockResolvedValue("");
   const mockedCwd = jest.fn().mockReturnValue("/test/dir/");
-  const mockedWriteFile = jest.fn();
+  const mockedWrite = jest.fn();
 
   const MockedDatabase = Database as jest.Mock;
+  const MockedRefs = Refs as jest.Mock;
   const mockedStore = jest.fn().mockImplementation(async (o: GitObject) => {
     o.oid = "123456789abcdeffedcba98765432112345678";
   });
+  const mockedUpdateHead = jest.fn().mockResolvedValue(null);
 
   beforeAll(async () => {
     MockedDatabase.mockImplementation((pathname: string) => ({
       store: mockedStore
+    }));
+    MockedRefs.mockImplementation((pathname: string) => ({
+      updateHead: mockedUpdateHead,
+      readHead: jest.fn(),
+      headPath: pathname + "/HEAD"
     }));
 
     const env: Environment = {
       fs: {
         ...Service.defaultFs,
         mkdir: mockedMkdir,
-        writeFile: mockedWriteFile
+        write: mockedWrite
       },
       process: {
         ...defaultProcess,
+        env: {
+          ...process.env,
+          GIT_AUTHOR_NAME: "John Doe",
+          GIT_AUTHOR_EMAIL: "johndoe@test.local"
+        },
         cwd: mockedCwd
       },
       date: {
@@ -108,10 +123,10 @@ describe("commit", () => {
     assert.equal((storingCommit[0] as GitObject).type(), "commit");
   });
 
-  it("HEAD", () => {
-    assert.equal(mockedWriteFile.mock.calls.length, 1);
-    const firstCall = mockedWriteFile.mock.calls[0];
-    assert.equal(firstCall[0], "/test/dir/.git/HEAD");
-    assert.equal(firstCall[1], "123456789abcdeffedcba98765432112345678");
+  it("Update HEAD", () => {
+    assert.equal(MockedRefs.mock.calls.length, 1);
+    assert.equal(mockedUpdateHead.mock.calls.length, 1);
+    const call = mockedUpdateHead.mock.calls[0];
+    assert.equal(call[0], "123456789abcdeffedcba98765432112345678");
   });
 });

@@ -1,8 +1,8 @@
 import * as path from "path"
-import { FileService } from "./services"
+import { FileService, defaultFs } from "./services"
 
 type Environment = {
-  fs: FileService
+  fs?: FileService
 }
 
 export class Workspace {
@@ -10,11 +10,9 @@ export class Workspace {
   #pathname: string
   #fs: FileService
 
-  constructor(pathname: string, env?: Environment) {
+  constructor(pathname: string, env: Environment = {}) {
     this.#pathname = pathname
-    if (env) {
-      this.#fs = env.fs
-    }
+    this.#fs = env.fs ?? defaultFs
   }
 
   setFs(fs: FileService) {

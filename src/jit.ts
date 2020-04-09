@@ -14,6 +14,7 @@ import { Tree } from "./tree";
 import { Author } from "./author";
 import { Commit } from "./commit";
 import { Refs } from "./refs";
+import { assert } from "./util";
 
 export type Environment = {
   process: Process;
@@ -44,15 +45,15 @@ export async function main(argv: string[], env: Environment) {
       const rootPath = path.resolve(repositoryDirName);
       const gitPath = path.join(rootPath, ".git");
       Promise.all(
-        ["objects", "refs"].map(dir => {
-          return env.fs
+        ["objects", "refs"].map(dir =>
+          env.fs
             .mkdir(path.join(gitPath, dir), { recursive: true })
             .catch((err: NodeJS.ErrnoException) => {
               console.log("%o", err);
               console.error(`fatal: ${err}`);
               process.exit(1);
-            });
-        })
+            })
+        )
       );
 
       console.log(`Initialized empty Jit repository in ${gitPath}`);
@@ -74,22 +75,32 @@ export async function main(argv: string[], env: Environment) {
           const data = await workspace.readFile(p);
           const blob = new Blob(data);
           await database.store(blob);
+          if (!blob.oid) {
+            throw TypeError("blob.oid is not set.");
+          }
           return new Entry(p, blob.oid);
         })
       );
 
       const tree = new Tree(entries);
       await database.store(tree);
+      assert(tree.oid !== null);
 
       const parent = await refs.readHead();
-      const name = process.env["GIT_AUTHOR_NAME"];
-      const email = process.env["GIT_AUTHOR_EMAIL"];
+      const name = env.process.env["GIT_AUTHOR_NAME"];
+      const email = env.process.env["GIT_AUTHOR_EMAIL"];
+
+      assert(typeof name === "string");
+      assert(typeof email === "string");
 
       const author = new Author(name, email, env.date.now());
       const message = await readTextStream(process.stdin);
 
       const commit = new Commit(parent, tree.oid, author, message);
       await database.store(commit);
+
+      assert(commit.oid !== null);
+
       await refs.updateHead(commit.oid);
 
       const isRoot = parent === null ? "(root-commit) " : "";

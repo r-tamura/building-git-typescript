@@ -3,13 +3,13 @@ import { Author } from "./author";
 import * as os from "os"
 
 export class Commit implements GitObject {
-  oid: string;
-  #parent: OID;
+  oid: OID | null = null;
+  #parent: OID | null = null;
   #tree: OID;
   #author: Author;
   #message: string
 
-  constructor(parent: OID, tree: OID, author: Author, message: string) {
+  constructor(parent: OID | null, tree: OID, author: Author, message: string) {
     this.#parent = parent
     this.#tree = tree
     this.#author = author

@@ -1,12 +1,14 @@
 import * as path from "path"
 import { FileService, defaultFs } from "./services"
 import { OID } from "./types"
-import { constants } from "fs"
+import { BaseError } from "./util"
+import { Lockfile } from "./lockfile"
 
 type Environment = {
   fs?: FileService
 }
 
+export class LockDenied extends BaseError {}
 export class Refs {
   #pathname: string
   #fs: FileService
@@ -15,8 +17,21 @@ export class Refs {
     this.#fs = env.fs ?? defaultFs
   }
 
+  /**
+   * HEADを更新します
+   * HEADが他のプロセスと競合した場合 LockDenied エラーの例外を投げます
+   * @param oid オブジェクトID
+   */
   async updateHead(oid: OID) {
-    this.#fs.writeFile(this.headPath, oid)
+    const lockfile = new Lockfile(this.headPath, { fs: this.#fs })
+
+    if (!await lockfile.holdForUpdate()) {
+      throw new LockDenied()
+    }
+
+    lockfile.write(oid)
+    lockfile.write("\n")
+    lockfile.commit()
   }
 
   /**
