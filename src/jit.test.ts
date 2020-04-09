@@ -5,6 +5,7 @@ import { Database } from "./database";
 import { Refs } from "./refs";
 import { GitObject } from "./types";
 import { defaultProcess } from "./services";
+import { Stats } from "fs";
 
 jest.mock("./database");
 
@@ -12,7 +13,8 @@ const mockedListFiles = jest.fn().mockResolvedValue(["a.txt", "b.html"]);
 jest.mock("./workspace", () => ({
   Workspace: jest.fn().mockImplementationOnce((pathname: string) => ({
     listFiles: mockedListFiles,
-    readFile: jest.fn().mockResolvedValue("hi")
+    readFile: jest.fn().mockResolvedValue("hi"),
+    statFile: jest.fn().mockResolvedValue(new Stats())
   }))
 }));
 

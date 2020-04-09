@@ -6,7 +6,7 @@ const fs = CallbackFs.promises;
 
 export type FileService = Pick<
   typeof fs,
-  | "fstat"
+  | "stat"
   | "mkdir"
   | "open"
   | "read"

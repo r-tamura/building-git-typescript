@@ -1,3 +1,4 @@
+#! /usr/bin/env node
 import * as path from "path";
 import {
   FileService,
@@ -78,7 +79,8 @@ export async function main(argv: string[], env: Environment) {
           if (!blob.oid) {
             throw TypeError("blob.oid is not set.");
           }
-          return new Entry(p, blob.oid);
+          const stats = await workspace.statFile(p);
+          return new Entry(p, blob.oid, stats);
         })
       );
 

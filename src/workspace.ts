@@ -24,6 +24,14 @@ export class Workspace {
   }
 
   async readFile(rpath: string) {
-    return this.#fs.readFile(path.join(this.#pathname, rpath), "ascii")
+    return this.#fs.readFile(this.join(rpath), "ascii")
+  }
+
+  async statFile(rpath: string) {
+    return this.#fs.stat(this.join(rpath))
+  }
+
+  private join(rpath: string) {
+    return path.join(this.#pathname, rpath)
   }
 }

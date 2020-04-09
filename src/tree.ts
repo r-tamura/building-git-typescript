@@ -3,7 +3,6 @@ import { GitObject, OID } from "./types";
 
 export class Tree implements GitObject {
   static ENTRY_FORMAT = "A7Z*H40"
-  static MODE = "100644"
 
   oid: OID | null = null
   #entries: Entry[]
@@ -23,7 +22,7 @@ export class Tree implements GitObject {
     this.#entries.sort((e1, e2) => e1.name <= e2.name ? -1 : 1)
 
     const entries = this.#entries.map(entry => {
-      const encodedMode = Buffer.from(Tree.MODE + " ", "ascii")
+      const encodedMode = Buffer.from(entry.mode + " ", "ascii")
       const encodedName = Buffer.from(entry.name + '\0', "ascii")
       const encodedOId = Buffer.from(entry.oid, "hex")
 
