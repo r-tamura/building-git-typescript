@@ -1,8 +1,8 @@
 import { createHash } from "crypto";
 import { constants } from "fs";
-import { FileService, defaultFs, Zlib, defaultZlib } from "./services";
+import { FileService, defaultFs, Zlib, defaultZlib } from "../services";
 import path = require("path");
-import { GitObject, OID } from "./types";
+import { GitObject, OID } from "../types";
 import { Z_BEST_SPEED } from "zlib";
 
 const TEMP_CHARS =

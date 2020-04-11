@@ -1,7 +1,7 @@
 import * as path from "path";
-import { Entry } from "./entry";
-import { assert } from "./util";
-import { GitObject, OID, Pathname } from "./types";
+import { Entry } from "../entry";
+import { assert } from "../util";
+import { GitObject, OID, Pathname } from "../types";
 
 export type EntryMap = { [s: string]: Entry | Tree };
 export type TraverseCallbackFn = (t: Tree) => Promise<void>;

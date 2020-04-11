@@ -7,12 +7,9 @@ import {
   defaultFs,
 } from "./services";
 import { Workspace } from "./workspace";
-import { Blob } from "./blob";
-import { Database } from "./database";
+import { Blob } from "./database/blob";
+import { Database, Author, Commit, Tree } from "./database";
 import { Entry } from "./entry";
-import { Tree } from "./tree";
-import { Author } from "./author";
-import { Commit } from "./commit";
 import { Refs } from "./refs";
 import { assert } from "./util";
 

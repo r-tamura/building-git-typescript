@@ -4,8 +4,8 @@ import * as assert from "power-assert";
 
 jest.mock("./author", () => ({
   Author: jest.fn().mockImplementation(() => ({
-    toString: () => "JohnDoe <johndoe@test.local> 1585666800000 +0900"
-  }))
+    toString: () => "JohnDoe <johndoe@test.local> 1585666800000 +0900",
+  })),
 }));
 
 describe("Commit#toString", () => {

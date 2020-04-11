@@ -1,21 +1,21 @@
 import * as assert from "power-assert";
 import * as Service from "./services";
 import { main, Environment } from "./main";
-import { Database } from "./database";
+import { Database } from "./database/database";
 import { Refs } from "./refs";
 import { GitObject } from "./types";
 import { defaultProcess } from "./services";
 import { Stats } from "fs";
 
-jest.mock("./database");
+jest.mock("./database/database");
 
 const mockedListFiles = jest.fn().mockResolvedValue(["a.txt", "b.html"]);
 jest.mock("./workspace", () => ({
   Workspace: jest.fn().mockImplementationOnce((pathname: string) => ({
     listFiles: mockedListFiles,
     readFile: jest.fn().mockResolvedValue("hi"),
-    statFile: jest.fn().mockResolvedValue(new Stats())
-  }))
+    statFile: jest.fn().mockResolvedValue(new Stats()),
+  })),
 }));
 
 jest.mock("./refs");
@@ -33,11 +33,11 @@ describe("init", () => {
       fs: { ...Service.defaultFs, mkdir: mockedMkdir },
       process: {
         ...defaultProcess,
-        cwd: mockedCwd
+        cwd: mockedCwd,
       },
       date: {
-        now: () => new Date(2020, 3, 1)
-      }
+        now: () => new Date(2020, 3, 1),
+      },
     };
 
     // Act
@@ -69,32 +69,32 @@ describe("commit", () => {
 
   beforeAll(async () => {
     MockedDatabase.mockImplementation((pathname: string) => ({
-      store: mockedStore
+      store: mockedStore,
     }));
     MockedRefs.mockImplementation((pathname: string) => ({
       updateHead: mockedUpdateHead,
       readHead: jest.fn(),
-      headPath: pathname + "/HEAD"
+      headPath: pathname + "/HEAD",
     }));
 
     const env: Environment = {
       fs: {
         ...Service.defaultFs,
         mkdir: mockedMkdir,
-        write: mockedWrite
+        write: mockedWrite,
       },
       process: {
         ...defaultProcess,
         env: {
           ...process.env,
           GIT_AUTHOR_NAME: "John Doe",
-          GIT_AUTHOR_EMAIL: "johndoe@test.local"
+          GIT_AUTHOR_EMAIL: "johndoe@test.local",
         },
-        cwd: mockedCwd
+        cwd: mockedCwd,
       },
       date: {
-        now: () => new Date(2020, 3, 1)
-      }
+        now: () => new Date(2020, 3, 1),
+      },
     };
     //Act
     await main(["commit"], env);
@@ -115,7 +115,7 @@ describe("commit", () => {
     const blobCalls = mockedStore.mock.calls.slice(0, -2);
     const storingTree = mockedStore.mock.calls[2];
     const storingCommit = mockedStore.mock.calls[3];
-    blobCalls.forEach(call => {
+    blobCalls.forEach((call) => {
       assert.equal((call[0] as GitObject).type(), "blob");
       assert.equal((call[0] as GitObject).toString(), "hi");
     });

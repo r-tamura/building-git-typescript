@@ -1,5 +1,5 @@
-import { Database } from "./database";
-import { defaultFs, defaultZlib } from "./services";
+import { Database } from ".";
+import { defaultFs, defaultZlib } from "../services";
 import * as assert from "power-assert";
 import { constants } from "fs";
 import * as path from "path";
@@ -46,7 +46,7 @@ describe("Database#writeObject", () => {
   const mockedRename = jest.fn();
   const mockedSample = jest.fn().mockReturnValue("A");
   const errNoEntry = {
-    code: "ENOENT"
+    code: "ENOENT",
   };
   describe("objects内にすでにディレクトリが存在する場合、そのディレクトリ内にオブジェクトを作成する", () => {
     beforeAll(jest.clearAllMocks);
@@ -56,10 +56,10 @@ describe("Database#writeObject", () => {
         ...defaultFs,
         open: mockedOpen,
         writeFile: mockedWrite,
-        rename: mockedRename
+        rename: mockedRename,
       };
       const rand = {
-        sample: mockedSample
+        sample: mockedSample,
       };
       const zlib = { ...defaultZlib, deflate: mockedDeflate };
 
@@ -98,7 +98,7 @@ describe("Database#writeObject", () => {
     it("rename", () => {
       assert.deepEqual(mockedRename.mock.calls[0], [
         path.join(testRepoPath, tempPath),
-        path.join(testRepoPath, "ab/cdefghijklmnopqrstu012345")
+        path.join(testRepoPath, "ab/cdefghijklmnopqrstu012345"),
       ]);
     });
   });
@@ -116,10 +116,10 @@ describe("Database#writeObject", () => {
         open: mockedOpen,
         writeFile: mockedWrite,
         rename: mockedRename,
-        mkdir: mockedMkdir
+        mkdir: mockedMkdir,
       };
       const rand = {
-        sample: mockedSample
+        sample: mockedSample,
       };
       const zlib = { ...defaultZlib, deflate: mockedDeflate };
 
@@ -151,7 +151,7 @@ describe("Database#writeObject", () => {
     it("rename", () => {
       assert.deepEqual(mockedRename.mock.calls[0], [
         path.join(testRepoPath, tempPath),
-        path.join(testRepoPath, "ab/cdefghijklmnopqrstu012345")
+        path.join(testRepoPath, "ab/cdefghijklmnopqrstu012345"),
       ]);
     });
   });

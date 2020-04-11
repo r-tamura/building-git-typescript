@@ -1,4 +1,4 @@
-import { Entry } from "./entry";
+import { Entry } from "../entry";
 import { Tree } from "./tree";
 import * as assert from "assert";
 import { Stats } from "fs";
