@@ -7,3 +7,8 @@ export interface GitObject {
   type: () => string;
   toString: () => string;
 }
+
+/**
+ * ファイルパス
+ */
+export type Pathname = string;

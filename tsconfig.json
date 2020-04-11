@@ -4,7 +4,8 @@
     "module": "CommonJS",
     "declaration": true,
     "sourceMap": true,
-    "strict": true
+    "strict": true,
+    "lib": ["es2019"]
   },
   "include": ["**/*.ts"]
 }

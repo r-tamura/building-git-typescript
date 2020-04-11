@@ -10,8 +10,108 @@ const testStats = (mode: "regular" | "exec") => {
   return stats;
 };
 
+const unpackEntry = (s: string) => {
+  let pp;
+  let p = 0;
+  while (s[p] && s[p] !== " ") {
+    p++;
+  }
+  const mode = s.slice(0, p);
+  p++;
+  pp = p;
+  while (s[p] && s[p] !== "\0") {
+    p++;
+  }
+  const name = s.slice(pp, p);
+  p++;
+  pp = p;
+  const packedHash = s.slice(p, p + 20);
+  const hash = Buffer.from(packedHash, "binary").toString("hex");
+  const rest = s.slice(p + 20);
+  return [mode, name, hash, rest];
+};
+
+const unpackEntries = (serializedEntry: string) => {
+  let rest = serializedEntry;
+  let entries = [];
+  let count = 0;
+  while (rest !== "") {
+    const [mode, name, hash, _rest] = unpackEntry(rest);
+    rest = _rest;
+    entries.push(`${mode} ${name} ${hash}`);
+    count++;
+    if (count > 10) {
+      throw Error("too many loop count");
+    }
+  }
+  return entries.join("\n");
+};
+
+//  unpackEntries('a b\0ce013625030ba8dba906')
+
+describe("Tree#traverse", () => {
+  describe("Treeオブジェクトを含むTreeのとき、深さ優先でコールバック関数が呼び出される", () => {
+    // Arrange
+    const mockedCallback = jest.fn().mockImplementation((tree: Tree) => {
+      tree.oid = Array(40).fill("a").join("");
+      const strtree = tree.toString();
+      return unpackEntries(strtree);
+    });
+    const entries = [
+      new Entry(
+        "test/hello.txt",
+        "ce013625030ba8dba906f756967f9e9ca394464a",
+        testStats("regular")
+      ),
+      new Entry(
+        "test/test2/world.txt",
+        "cc628ccd10742baea8241c5924df992b5c019f71",
+        testStats("regular")
+      ),
+    ];
+
+    // Act
+    const tree = Tree.build(entries);
+    tree.traverse(mockedCallback);
+
+    // Assert
+    it("called twice", () => {
+      assert.equal(mockedCallback.mock.calls.length, 3);
+    });
+
+    it("'test2' Tree", () => {
+      const expectedTree = new Tree();
+      expectedTree.oid = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
+      assert.deepStrictEqual(mockedCallback.mock.calls[0][0], expectedTree);
+      assert.equal(
+        mockedCallback.mock.results[0].value,
+        "100644 test/test2/world.txt cc628ccd10742baea8241c5924df992b5c019f71"
+      );
+    });
+
+    it("'test' Tree", () => {
+      const expectedTree = new Tree();
+      expectedTree.oid = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
+      assert.deepStrictEqual(mockedCallback.mock.calls[1][0], expectedTree);
+      assert.equal(
+        mockedCallback.mock.results[1].value,
+        [
+          "100644 test/hello.txt ce013625030ba8dba906f756967f9e9ca394464a",
+          "40000 test2 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        ].join("\n")
+      );
+    });
+
+    it("'root' Tree", () => {
+      assert.equal(
+        mockedCallback.mock.results[2].value,
+        ["40000 test aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"].join("\n")
+      );
+    });
+  });
+});
+
 describe("Tree#toString", () => {
-  // Arrange
   const makeExpected = () => {
     const mode = Buffer.from("100644 "); // '100644' + ' '
     const firstFileName = Buffer.from("hello.txt\0");
@@ -44,11 +144,11 @@ describe("Tree#toString", () => {
         "world.txt",
         "cc628ccd10742baea8241c5924df992b5c019f71",
         testStats("regular")
-      )
+      ),
     ];
 
     // Act
-    const tree = new Tree(entries);
+    const tree = Tree.build(entries);
     const actual = tree.toString();
 
     // assert
@@ -68,11 +168,11 @@ describe("Tree#toString", () => {
         "hello.txt",
         "ce013625030ba8dba906f756967f9e9ca394464a",
         testStats("regular")
-      )
+      ),
     ];
 
     // Act
-    const tree = new Tree(entries);
+    const tree = Tree.build(entries);
     const actual = tree.toString();
 
     // Assert
@@ -87,15 +187,37 @@ describe("Tree#toString", () => {
         "hello.txt",
         "ce013625030ba8dba906f756967f9e9ca394464a",
         testStats("exec")
-      )
+      ),
     ];
 
     // Act
-    const tree = new Tree(entries);
+    const tree = Tree.build(entries);
     const actual = tree.toString();
     const expected = "100755";
 
     // Assert
     assert.equal(actual.slice(0, 6), expected);
+  });
+
+  it("ディレクトリが含まれるとき、modeが40000になる", () => {
+    // Arrange
+    const entries = [
+      new Entry(
+        "test/hello.txt",
+        "ce013625030ba8dba906f756967f9e9ca394464a",
+        testStats("regular")
+      ),
+    ];
+
+    // Act
+    const tree = Tree.build(entries);
+    tree.traverse(async (tree) => {
+      tree.oid = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
+    });
+    const actual = tree.toString();
+
+    // Assert
+    const expected = "40000";
+    assert.equal(actual.slice(0, 5), expected);
   });
 });

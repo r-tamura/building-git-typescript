@@ -12,7 +12,7 @@ yarn watch
 yarn test
 
 # run
-# node ./jit.js <subcommand>
-node ./src/jit.js init
-node ./src/jit.js commit
+# ./bin/jit <subcommand>
+./bin/jit init
+./bin/jit commit
 ```

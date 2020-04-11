@@ -1,11 +1,10 @@
-#! /usr/bin/env node
 import * as path from "path";
 import {
   FileService,
-  defaultFs,
   Process,
+  readTextStream,
   defaultProcess,
-  readTextStream
+  defaultFs,
 } from "./services";
 import { Workspace } from "./workspace";
 import { Blob } from "./blob";
@@ -25,13 +24,13 @@ export type Environment = {
   };
 };
 
-function createMain() {
+export function createMain() {
   const env: Environment = {
     process: defaultProcess,
     fs: defaultFs,
     date: {
-      now: () => new Date()
-    }
+      now: () => new Date(),
+    },
   };
 
   return (argv: string[]) => {
@@ -46,7 +45,7 @@ export async function main(argv: string[], env: Environment) {
       const rootPath = path.resolve(repositoryDirName);
       const gitPath = path.join(rootPath, ".git");
       Promise.all(
-        ["objects", "refs"].map(dir =>
+        ["objects", "refs"].map((dir) =>
           env.fs
             .mkdir(path.join(gitPath, dir), { recursive: true })
             .catch((err: NodeJS.ErrnoException) => {
@@ -72,7 +71,7 @@ export async function main(argv: string[], env: Environment) {
 
       const paths = await workspace.listFiles();
       const entries = await Promise.all(
-        paths.map(async p => {
+        paths.map(async (p) => {
           const data = await workspace.readFile(p);
           const blob = new Blob(data);
           await database.store(blob);
@@ -84,9 +83,9 @@ export async function main(argv: string[], env: Environment) {
         })
       );
 
-      const tree = new Tree(entries);
-      await database.store(tree);
-      assert(tree.oid !== null);
+      const root = Tree.build(entries);
+      await root.traverse((tree) => database.store(tree));
+      assert(root.oid !== null);
 
       const parent = await refs.readHead();
       const name = env.process.env["GIT_AUTHOR_NAME"];
@@ -98,7 +97,7 @@ export async function main(argv: string[], env: Environment) {
       const author = new Author(name, email, env.date.now());
       const message = await readTextStream(process.stdin);
 
-      const commit = new Commit(parent, tree.oid, author, message);
+      const commit = new Commit(parent, root.oid, author, message);
       await database.store(commit);
 
       assert(commit.oid !== null);
@@ -114,8 +113,4 @@ export async function main(argv: string[], env: Environment) {
       console.error(`jit: '${command}' is not a jit command`);
       process.exit(1);
   }
-}
-
-if (require.main == module) {
-  createMain()(process.argv.slice(2));
 }

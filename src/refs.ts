@@ -1,20 +1,20 @@
-import * as path from "path"
-import { FileService, defaultFs } from "./services"
-import { OID } from "./types"
-import { BaseError } from "./util"
-import { Lockfile } from "./lockfile"
+import * as path from "path";
+import { FileService, defaultFs } from "./services";
+import { OID } from "./types";
+import { BaseError } from "./util";
+import { Lockfile } from "./lockfile";
 
 type Environment = {
-  fs?: FileService
-}
+  fs?: FileService;
+};
 
 export class LockDenied extends BaseError {}
 export class Refs {
-  #pathname: string
-  #fs: FileService
+  #pathname: string;
+  #fs: FileService;
   constructor(pathname: string, env: Environment = {}) {
-    this.#pathname = pathname
-    this.#fs = env.fs ?? defaultFs
+    this.#pathname = pathname;
+    this.#fs = env.fs ?? defaultFs;
   }
 
   /**
@@ -23,15 +23,15 @@ export class Refs {
    * @param oid オブジェクトID
    */
   async updateHead(oid: OID) {
-    const lockfile = new Lockfile(this.headPath, { fs: this.#fs })
+    const lockfile = new Lockfile(this.headPath, { fs: this.#fs });
 
-    if (!await lockfile.holdForUpdate()) {
-      throw new LockDenied()
+    if (!(await lockfile.holdForUpdate())) {
+      throw new LockDenied();
     }
 
-    lockfile.write(oid)
-    lockfile.write("\n")
-    lockfile.commit()
+    await lockfile.write(oid);
+    await lockfile.write("\n");
+    await lockfile.commit();
   }
 
   /**
@@ -39,18 +39,18 @@ export class Refs {
    */
   async readHead() {
     try {
-      return await this.#fs.readFile(this.headPath, { encoding: "ascii" })
+      return await this.#fs.readFile(this.headPath, { encoding: "ascii" });
     } catch (e) {
-      const nodeErr = e as NodeJS.ErrnoException
+      const nodeErr = e as NodeJS.ErrnoException;
       if (nodeErr.code === "ENOENT") {
-        return null
+        return null;
       } else {
-        throw e
+        throw e;
       }
     }
   }
 
   private get headPath() {
-    return path.join(this.#pathname, "HEAD")
+    return path.join(this.#pathname, "HEAD");
   }
 }

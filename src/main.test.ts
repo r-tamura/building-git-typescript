@@ -1,6 +1,6 @@
 import * as assert from "power-assert";
 import * as Service from "./services";
-import { main, Environment } from "./jit";
+import { main, Environment } from "./main";
 import { Database } from "./database";
 import { Refs } from "./refs";
 import { GitObject } from "./types";

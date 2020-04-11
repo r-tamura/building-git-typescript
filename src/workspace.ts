@@ -19,8 +19,22 @@ export class Workspace {
     this.#fs = fs
   }
 
-  async listFiles() {
-    return this.#fs.readdir(this.#pathname).then(files => files.filter(file => !this.#IGNORE.includes(file)))
+  async listFiles(dir: string = this.#pathname): Promise<string[]> {
+    const names = await this.#fs.readdir(dir)
+      .then(names => names.filter(name => !this.#IGNORE.includes(name)))
+
+    // TODO: flatMapで置き換えられないか?
+    const promises: Promise<string[] | string>[] = names.map(async (name) => {
+      const fullpath = path.join(dir, name)
+      const stats = await this.#fs.stat(fullpath)
+      if (stats.isDirectory()) {
+        const names = await this.listFiles(fullpath)
+        return names
+      }
+      return path.relative(this.#pathname, fullpath)
+    })
+    const all = await Promise.all(promises)
+    return all.flat()
   }
 
   async readFile(rpath: string) {
