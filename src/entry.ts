@@ -11,19 +11,32 @@ export class Entry {
 
   oid: OID;
   name: EntryName;
-  basename: string;
-  parentDirectries: string[];
   #stat: Stats;
   constructor(pathname: EntryName, oid: OID, stat: Stats) {
     this.name = pathname;
-    this.basename = path.basename(pathname);
-    this.parentDirectries = path.dirname(pathname).split(path.sep);
+
     this.oid = oid;
     this.#stat = stat;
   }
 
   get mode() {
     return this.isExecutable() ? Entry.EXECUTABLE_MODE : Entry.REGULAR_MODE;
+  }
+
+  get parentDirectories() {
+    // - path.dirname は ファイル名の見の場合 ['.'] を返すため、'.' を削除する
+    // ```
+    // > path.dirname("c.txt")
+    // '.'
+    // ```
+    return path
+      .dirname(this.name)
+      .split(path.sep)
+      .filter((s) => s !== ".");
+  }
+
+  get basename() {
+    return path.basename(this.name);
   }
 
   private isExecutable() {

@@ -19,27 +19,22 @@ export class Tree implements GitObject {
     const root = new this();
 
     for (const entry of entries) {
-      const basename = path.basename(entry.name);
-      const parentDirectries = path
-        .dirname(entry.name)
-        .split(path.sep)
-        .filter((s) => s !== ".");
-      root.addEntry(parentDirectries, basename, entry);
+      root.addEntry(entry.parentDirectories, entry);
     }
 
     return root;
   }
 
-  addEntry(parents: Pathname[], name: Pathname, entry: Entry) {
+  addEntry(parents: Pathname[], entry: Entry) {
     if (parents.length === 0) {
-      this.#entries[entry.name] = entry;
+      this.#entries[entry.basename] = entry;
     } else {
       const treeName = parents[0];
       const tree = (this.#entries[treeName] =
         this.#entries[treeName] ?? new Tree());
       assert(tree instanceof Tree);
       parents.shift();
-      tree.addEntry(parents, name, entry);
+      tree.addEntry(parents, entry);
     }
   }
 

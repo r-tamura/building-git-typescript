@@ -75,7 +75,7 @@ describe("Tree#traverse", () => {
     tree.traverse(mockedCallback);
 
     // Assert
-    it("called twice", () => {
+    it("should call 3 times", () => {
       assert.equal(mockedCallback.mock.calls.length, 3);
     });
 
@@ -85,7 +85,7 @@ describe("Tree#traverse", () => {
       assert.deepStrictEqual(mockedCallback.mock.calls[0][0], expectedTree);
       assert.equal(
         mockedCallback.mock.results[0].value,
-        "100644 test/test2/world.txt cc628ccd10742baea8241c5924df992b5c019f71"
+        "100644 world.txt cc628ccd10742baea8241c5924df992b5c019f71"
       );
     });
 
@@ -96,7 +96,7 @@ describe("Tree#traverse", () => {
       assert.equal(
         mockedCallback.mock.results[1].value,
         [
-          "100644 test/hello.txt ce013625030ba8dba906f756967f9e9ca394464a",
+          "100644 hello.txt ce013625030ba8dba906f756967f9e9ca394464a",
           "40000 test2 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
         ].join("\n")
       );
