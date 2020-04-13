@@ -6,7 +6,7 @@ import { AssertionError } from "assert";
  * @param cond 条件
  * @param msg 条件を満たさない場合のエラーに含まれるメッセージ
  */
-export function assert(cond: boolean, msg?: string): asserts cond {
+export function asserts(cond: boolean, msg?: string): asserts cond {
   // この関数はfunctionで宣言する必要がある
   // https://qiita.com/arx8/items/a87fe4bb4bf9be89a146
   if (!cond) throw new AssertionError({ message: msg });

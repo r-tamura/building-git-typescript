@@ -1,6 +1,6 @@
 import * as path from "path";
 import { Entry } from "../entry";
-import { assert } from "../util";
+import { asserts } from "../util";
 import { GitObject, OID, Pathname } from "../types";
 
 export type EntryMap = { [s: string]: Entry | Tree };
@@ -32,7 +32,7 @@ export class Tree implements GitObject {
       const treeName = parents[0];
       const tree = (this.#entries[treeName] =
         this.#entries[treeName] ?? new Tree());
-      assert(tree instanceof Tree);
+      asserts(tree instanceof Tree);
       parents.shift();
       tree.addEntry(parents, entry);
     }
@@ -63,7 +63,7 @@ export class Tree implements GitObject {
   toString() {
     // this.#entries.sort(Tree.ascending)
     const entries = Object.entries(this.#entries).map(([name, entry]) => {
-      assert(entry.oid !== null, `Entry.oid of '${name}' is not set yet.`);
+      asserts(entry.oid !== null, `Entry.oid of '${name}' is not set yet.`);
       const encodedMode = Buffer.from(entry.mode + " ", "ascii");
       const encodedName = Buffer.from(name + "\0", "ascii");
       const encodedOId = Buffer.from(entry.oid, "hex");

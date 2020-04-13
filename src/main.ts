@@ -11,7 +11,8 @@ import { Blob } from "./database/blob";
 import { Database, Author, Commit, Tree } from "./database";
 import { Entry } from "./entry";
 import { Refs } from "./refs";
-import { assert } from "./util";
+import { asserts } from "./util";
+import { Index } from "./gindex";
 
 export type Environment = {
   process: Process;
@@ -36,12 +37,13 @@ export function createMain() {
 }
 
 export async function main(argv: string[], env: Environment) {
-  const [command, repositoryDirName = env.process.cwd()] = argv;
+  const command = argv.shift();
   switch (command) {
     case "init": {
+      const [repositoryDirName = env.process.cwd()] = argv;
       const rootPath = path.resolve(repositoryDirName);
       const gitPath = path.join(rootPath, ".git");
-      Promise.all(
+      await Promise.all(
         ["objects", "refs"].map((dir) =>
           env.fs
             .mkdir(path.join(gitPath, dir), { recursive: true })
@@ -82,14 +84,14 @@ export async function main(argv: string[], env: Environment) {
 
       const root = Tree.build(entries);
       await root.traverse((tree) => database.store(tree));
-      assert(root.oid !== null);
+      asserts(root.oid !== null);
 
       const parent = await refs.readHead();
       const name = env.process.env["GIT_AUTHOR_NAME"];
       const email = env.process.env["GIT_AUTHOR_EMAIL"];
 
-      assert(typeof name === "string");
-      assert(typeof email === "string");
+      asserts(typeof name === "string");
+      asserts(typeof email === "string");
 
       const author = new Author(name, email, env.date.now());
       const message = await readTextStream(process.stdin);
@@ -97,13 +99,34 @@ export async function main(argv: string[], env: Environment) {
       const commit = new Commit(parent, root.oid, author, message);
       await database.store(commit);
 
-      assert(commit.oid !== null);
+      asserts(commit.oid !== null);
 
       await refs.updateHead(commit.oid);
 
       const isRoot = parent === null ? "(root-commit) " : "";
       console.log(`[${isRoot}${commit.oid}] ${message.split("\n")[0]}`);
 
+      break;
+    }
+
+    case "add": {
+      const [entryPath] = argv;
+      const rootPath = env.process.cwd();
+      const gitPath = path.join(rootPath, ".git");
+
+      const workspace = new Workspace(rootPath);
+      const database = new Database(path.join(gitPath, "objects"));
+      const index = new Index(path.join(gitPath, "index"));
+
+      const data = await workspace.readFile(entryPath);
+      const stat = await workspace.statFile(entryPath);
+
+      const blob = new Blob(data);
+      await database.store(blob);
+      asserts(typeof blob.oid === "string");
+      index.add(entryPath, blob.oid, stat);
+
+      await index.writeUpdates();
       break;
     }
     default:

@@ -83,7 +83,7 @@ export class Database {
     await this.#fs.writeFile(fileHandle, compressed);
     this.#fs.rename(tempPath, objectPath);
     if (fileHandle) {
-      fileHandle.close();
+      await fileHandle.close();
     }
   }
 

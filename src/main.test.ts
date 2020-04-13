@@ -4,21 +4,34 @@ import { main, Environment } from "./main";
 import { Database } from "./database/database";
 import { Refs } from "./refs";
 import { GitObject } from "./types";
+import { Index } from "./gindex";
 import { defaultProcess } from "./services";
-import { Stats } from "fs";
+import { makeTestStats } from "./__test__";
+import { Workspace } from "./workspace";
 
+const mockedStore = jest.fn().mockImplementation(async (o: GitObject) => {
+  o.oid = "123456789abcdeffedcba98765432112345678";
+});
 jest.mock("./database/database");
+const MockedDatabase = Database as jest.Mock;
 
+const testStats = makeTestStats();
 const mockedListFiles = jest.fn().mockResolvedValue(["a.txt", "b.html"]);
+const mockedReadFile = jest.fn().mockResolvedValue("hi");
+const mockedStatFile = jest.fn().mockResolvedValue(testStats);
 jest.mock("./workspace", () => ({
-  Workspace: jest.fn().mockImplementationOnce((pathname: string) => ({
+  Workspace: jest.fn().mockImplementation((pathname: string) => ({
     listFiles: mockedListFiles,
-    readFile: jest.fn().mockResolvedValue("hi"),
-    statFile: jest.fn().mockResolvedValue(new Stats()),
+    readFile: mockedReadFile,
+    statFile: mockedStatFile,
   })),
 }));
+const MockedWs = Workspace as jest.Mock<Workspace>;
 
 jest.mock("./refs");
+const MockedRefs = Refs as jest.Mock;
+jest.mock("./gindex");
+const MockedIndex = Index as jest.Mock<Index>;
 
 jest
   .spyOn(Service, "readTextStream")
@@ -59,13 +72,11 @@ describe("commit", () => {
   const mockedMkdir = jest.fn().mockResolvedValue("");
   const mockedCwd = jest.fn().mockReturnValue("/test/dir/");
   const mockedWrite = jest.fn();
-
-  const MockedDatabase = Database as jest.Mock;
-  const MockedRefs = Refs as jest.Mock;
-  const mockedStore = jest.fn().mockImplementation(async (o: GitObject) => {
-    o.oid = "123456789abcdeffedcba98765432112345678";
-  });
   const mockedUpdateHead = jest.fn().mockResolvedValue(null);
+
+  beforeAll(() => {
+    jest.clearAllMocks();
+  });
 
   beforeAll(async () => {
     MockedDatabase.mockImplementation((pathname: string) => ({
@@ -130,5 +141,54 @@ describe("commit", () => {
     assert.equal(mockedUpdateHead.mock.calls.length, 1);
     const call = mockedUpdateHead.mock.calls[0];
     assert.equal(call[0], "123456789abcdeffedcba98765432112345678");
+  });
+});
+
+describe("add", () => {
+  beforeAll(() => {
+    jest.clearAllMocks();
+  });
+  beforeAll(async () => {
+    // Arrange
+    const env: Environment = {
+      fs: {
+        ...Service.defaultFs,
+      },
+      process: {
+        ...defaultProcess,
+      },
+      date: {
+        now: () => new Date(2020, 3, 1),
+      },
+    };
+    MockedDatabase.mockImplementation((pathname: string) => ({
+      store: mockedStore,
+    }));
+
+    // Act
+    await main(["add", "README.md"], env);
+  });
+  it("add対象のファイルを読み込む", () => {
+    assert.equal(mockedReadFile.mock.calls.length, 1);
+    assert.equal(mockedStatFile.mock.calls.length, 1);
+  });
+
+  it("indexが更新される", () => {
+    assert.equal(MockedIndex.mock.calls.length, 1, "Indexインスタンスの生成");
+
+    const instance = MockedIndex.mock.instances[0];
+    const mockedAdd = instance.add as jest.Mock;
+    assert.deepEqual(
+      mockedAdd.mock.calls[0],
+      ["README.md", "123456789abcdeffedcba98765432112345678", testStats],
+      "add対象ファイルがindexへ追加"
+    );
+
+    const mockedWriteUpdates = instance.writeUpdates as jest.Mock;
+    assert.equal(
+      mockedWriteUpdates.mock.calls.length,
+      1,
+      "indexファイルの更新"
+    );
   });
 });

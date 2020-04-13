@@ -1,6 +1,7 @@
 import * as path from "path";
 import { OID } from "./types";
 import { Stats } from "fs";
+import { isExecutable } from "./util/fs";
 
 export type EntryName = string;
 
@@ -40,9 +41,6 @@ export class Entry {
   }
 
   private isExecutable() {
-    const modeBin = this.#stat.mode.toString(2);
-    const user = modeBin.slice(7, 10);
-    const isExecutable = 0b001 & Number.parseInt(user, 2);
-    return isExecutable === 1;
+    return isExecutable(this.#stat);
   }
 }
