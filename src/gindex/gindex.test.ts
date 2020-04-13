@@ -1,19 +1,13 @@
 import * as assert from "power-assert";
 import { Index } from "./gindex";
 import { Lockfile } from "../lockfile";
-import { Entry } from "./entry";
 import { defaultFs } from "../services";
 import { makeTestStats } from "../__test__";
+import { Stats } from "fs";
 
 jest.mock("../lockfile");
-const MockedLockfile = Lockfile as jest.Mock<Lockfile>;
+const MockedLockfile = (Lockfile as unknown) as jest.Mock<Partial<Lockfile>>;
 const testOid = "ba78afac62556e840341715936909cc36fe83a77"; // sha1 of 'jit'
-
-// jest.mock("./entry", () => ({
-//   Entry: jest.fn().mockReturnValue(({
-//     create: (...args: any[]) => {}
-//   } as typeof Entry))
-// }))
 
 describe("Index#writeUpdate", () => {
   const testPath = ".git/index";
@@ -22,12 +16,9 @@ describe("Index#writeUpdate", () => {
     // Arrange
     const mockedWrite = jest.fn();
     let actual: boolean;
-    const env = {
-      fs: { ...defaultFs, write: mockedWrite },
-    };
     beforeAll(async () => {
       // Act
-      const index = new Index(testPath, env);
+      const index = new Index(testPath);
       actual = await index.writeUpdates();
     });
     afterAll(() => {
@@ -50,40 +41,32 @@ describe("Index#writeUpdate", () => {
   });
 
   describe("Lockfileがロックされていないとき、indexへ全てのエントリを書き込む", () => {
-    const spies: jest.SpyInstance[] = [];
     let actual: boolean;
-    let spyWrite: jest.SpyInstance;
-    let spyHoldForUpdate: jest.SpyInstance;
+    const mockedWrite = jest.fn();
+    const mockedHoldForUpdate = jest.fn().mockResolvedValue(true);
     // Arrange
-    beforeAll(() => {
-      MockedLockfile.prototype.write.mockClear();
-      MockedLockfile.prototype.holdForUpdate.mockClear();
-    });
+    beforeAll(() => {});
     beforeAll(async () => {
-      spyWrite = jest.spyOn(Lockfile.prototype, "write");
-      spyHoldForUpdate = jest
-        .spyOn(Lockfile.prototype, "holdForUpdate")
-        .mockResolvedValue(true);
-      spies.push(spyHoldForUpdate);
-      spies.push(spyWrite);
-
+      MockedLockfile.mockReset();
+      MockedLockfile.mockImplementation(() => ({
+        write: mockedWrite,
+        holdForUpdate: mockedHoldForUpdate,
+        commit: jest.fn(),
+      }));
       // Act
       const index = new Index(testObjectPath);
       index.add(testObjectPath, testOid, makeTestStats());
       actual = await index.writeUpdates();
     });
-    afterAll(() => {
-      spies.forEach((spy) => spy.mockReset());
-    });
 
     // Assert
     it("Lockfileをロックする", () => {
-      assert.equal(spyHoldForUpdate.mock.calls.length, 1);
+      assert.equal(mockedHoldForUpdate.mock.calls.length, 1);
     });
 
     it("ヘッダの書き込み", () => {
       assert.deepStrictEqual(
-        Buffer.from(spyWrite.mock.calls[0][0], "binary"),
+        Buffer.from(mockedWrite.mock.calls[0][0], "binary"),
         Buffer.from([
           0x44,
           0x49,
@@ -102,7 +85,7 @@ describe("Index#writeUpdate", () => {
     });
 
     it("オブジェクトの書き込み(Oidのみ)", () => {
-      const arg = spyWrite.mock.calls[1][0];
+      const arg = mockedWrite.mock.calls[1][0];
       const actualData = Buffer.from(arg, "binary");
 
       assert.equal(actualData.length, 72, "データ長");
@@ -111,7 +94,7 @@ describe("Index#writeUpdate", () => {
     });
 
     it("フッタの書き込み", () => {
-      const actualSha1 = spyWrite.mock.calls[2][0];
+      const actualSha1 = mockedWrite.mock.calls[2][0];
       assert.deepEqual(
         Buffer.from(actualSha1, "binary"),
         Buffer.from("5731b15defefca2d8429d179e2650f99f4bccdbd", "hex")
@@ -120,6 +103,57 @@ describe("Index#writeUpdate", () => {
 
     it("返り値", () => {
       assert.equal(actual, true);
+    });
+  });
+
+  describe("複数ファイルのとき、ファイルパスでソートされた順番で書き込む", () => {
+    // Arrange
+    const mockedWrite = jest.fn();
+    beforeAll(async () => {
+      MockedLockfile.mockReset();
+      MockedLockfile.mockImplementation(() => ({
+        write: mockedWrite,
+        holdForUpdate: jest.fn().mockResolvedValue(true),
+        commit: jest.fn(),
+      }));
+
+      // Act
+      const index = new Index(testPath);
+      const entries = [
+        [
+          "bin/jit",
+          "1eeef788efe4e91fe5780a77679444772f5b9253",
+          makeTestStats({ ino: 8641899915, mode: 33261 }),
+        ],
+        [
+          ".gitignore",
+          "81876f206950dc4d9c0f7d20aa43fe68ee8f9113",
+          makeTestStats({
+            ctimeMs: 1586222433163.7546,
+            mtimeMs: 1586222433163.7546,
+            ino: 8641636618,
+          }),
+        ],
+
+        [
+          "README.md",
+          "78e6cf75f4a8afa5a46741523101393381913dd4",
+          makeTestStats(),
+        ],
+      ] as [string, string, Stats][];
+      entries.forEach((e) => index.add(...e));
+      await index.writeUpdates();
+    });
+
+    // headerの書き込みがあるためインデックス0はスキップ
+    it.each([
+      [".gitignore", 1, "81876f206950dc4d9c0f7d20aa43fe68ee8f9113"],
+      ["README.md", 2, "78e6cf75f4a8afa5a46741523101393381913dd4"],
+      ["bin/jit", 3, "1eeef788efe4e91fe5780a77679444772f5b9253"],
+    ])("%s", (expectedName, index, expectedHash) => {
+      const arg = mockedWrite.mock.calls[index][0];
+      const buf = Buffer.from(arg);
+      assert.equal(buf.slice(40, 60).toString("hex"), expectedHash);
     });
   });
 });

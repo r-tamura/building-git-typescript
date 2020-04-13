@@ -12,15 +12,18 @@ type IndexEntryMap = { [s: string]: Entry };
 
 export class Index {
   #entries: IndexEntryMap;
+  #keys: Set<Pathname>;
   #lockfile: Lockfile;
   #digest: crypto.Hash | undefined;
   constructor(pathname: Pathname, env?: LockfileEnvironment) {
     this.#entries = {};
+    this.#keys = new Set();
     this.#lockfile = new Lockfile(pathname, env);
   }
 
   add(pathname: Pathname, oid: OID, stat: Stats) {
     const entry = Entry.create(pathname, oid, stat);
+    this.#keys.add(entry.key);
     this.#entries[pathname] = entry;
   }
 
@@ -34,7 +37,7 @@ export class Index {
     const header = this.buildHeader();
     await this.write(header.toString("binary"));
 
-    for (const entry of Object.values(this.#entries)) {
+    for (const entry of this.eachEntry()) {
       await this.write(entry.toString());
     }
     await this.finishWrite();
@@ -77,5 +80,12 @@ export class Index {
     const digest = this.#digest.digest("hex");
     await this.#lockfile.write(packSha1(digest));
     await this.#lockfile.commit();
+  }
+
+  private *eachEntry() {
+    const sortedKeys = Array.from(this.#keys).sort();
+    for (const key of sortedKeys) {
+      yield this.#entries[key];
+    }
   }
 }

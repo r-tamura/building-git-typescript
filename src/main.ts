@@ -110,7 +110,7 @@ export async function main(argv: string[], env: Environment) {
     }
 
     case "add": {
-      const [entryPath] = argv;
+      const entryPaths = argv;
       const rootPath = env.process.cwd();
       const gitPath = path.join(rootPath, ".git");
 
@@ -118,13 +118,15 @@ export async function main(argv: string[], env: Environment) {
       const database = new Database(path.join(gitPath, "objects"));
       const index = new Index(path.join(gitPath, "index"));
 
-      const data = await workspace.readFile(entryPath);
-      const stat = await workspace.statFile(entryPath);
+      for (const entryPath of entryPaths) {
+        const data = await workspace.readFile(entryPath);
+        const stat = await workspace.statFile(entryPath);
 
-      const blob = new Blob(data);
-      await database.store(blob);
-      asserts(typeof blob.oid === "string");
-      index.add(entryPath, blob.oid, stat);
+        const blob = new Blob(data);
+        await database.store(blob);
+        asserts(typeof blob.oid === "string");
+        index.add(entryPath, blob.oid, stat);
+      }
 
       await index.writeUpdates();
       break;

@@ -15,4 +15,5 @@ yarn test
 # ./bin/jit <subcommand>
 ./bin/jit init
 ./bin/jit commit
+./bin/jit add
 ```

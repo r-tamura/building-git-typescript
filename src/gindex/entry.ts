@@ -85,6 +85,10 @@ export class Entry {
     );
   }
 
+  get key() {
+    return this.pathname;
+  }
+
   toString() {
     const packed = this.pack();
     return packed.toString("binary");

@@ -151,12 +151,8 @@ describe("add", () => {
   beforeAll(async () => {
     // Arrange
     const env: Environment = {
-      fs: {
-        ...Service.defaultFs,
-      },
-      process: {
-        ...defaultProcess,
-      },
+      fs: Service.defaultFs,
+      process: defaultProcess,
       date: {
         now: () => new Date(2020, 3, 1),
       },
