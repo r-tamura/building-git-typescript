@@ -37,6 +37,14 @@ jest
   .spyOn(Service, "readTextStream")
   .mockImplementation(() => Promise.resolve("test message"));
 
+const testEnvGlobal: Environment = {
+  fs: Service.defaultFs,
+  process: defaultProcess,
+  date: {
+    now: () => new Date(2020, 3, 1),
+  },
+};
+
 describe("init", () => {
   const mockedMkdir = jest.fn().mockResolvedValue("");
   const mockedCwd = jest.fn().mockReturnValue("/test/dir/");
@@ -150,23 +158,17 @@ describe("add", () => {
   });
   beforeAll(async () => {
     // Arrange
-    const env: Environment = {
-      fs: Service.defaultFs,
-      process: defaultProcess,
-      date: {
-        now: () => new Date(2020, 3, 1),
-      },
-    };
+    MockedDatabase.mockReset();
     MockedDatabase.mockImplementation((pathname: string) => ({
       store: mockedStore,
     }));
 
     // Act
-    await main(["add", "README.md"], env);
+    await main(["add", "."], testEnvGlobal);
   });
   it("add対象のファイルを読み込む", () => {
-    assert.equal(mockedReadFile.mock.calls.length, 1);
-    assert.equal(mockedStatFile.mock.calls.length, 1);
+    assert.equal(mockedReadFile.mock.calls.length, 2);
+    assert.equal(mockedStatFile.mock.calls.length, 2);
   });
 
   it("indexが更新される", () => {
@@ -174,11 +176,18 @@ describe("add", () => {
 
     const instance = MockedIndex.mock.instances[0];
     const mockedAdd = instance.add as jest.Mock;
-    assert.deepEqual(
-      mockedAdd.mock.calls[0],
-      ["README.md", "123456789abcdeffedcba98765432112345678", testStats],
-      "add対象ファイルがindexへ追加"
-    );
+    const expectedFiles = [
+      ["a.txt", "123456789abcdeffedcba98765432112345678", testStats],
+      ["b.html", "123456789abcdeffedcba98765432112345678", testStats],
+    ];
+
+    expectedFiles.forEach((expected, i) => {
+      assert.deepEqual(
+        mockedAdd.mock.calls[i],
+        expected,
+        "最初のadd対象ファイルがindexへ追加"
+      );
+    });
 
     const mockedWriteUpdates = instance.writeUpdates as jest.Mock;
     assert.equal(

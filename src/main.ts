@@ -119,13 +119,18 @@ export async function main(argv: string[], env: Environment) {
       const index = new Index(path.join(gitPath, "index"));
 
       for (const entryPath of entryPaths) {
-        const data = await workspace.readFile(entryPath);
-        const stat = await workspace.statFile(entryPath);
+        const absPath = path.resolve(entryPath);
 
-        const blob = new Blob(data);
-        await database.store(blob);
-        asserts(typeof blob.oid === "string");
-        index.add(entryPath, blob.oid, stat);
+        const pathnames = await workspace.listFiles(absPath);
+        for (const pathname of pathnames) {
+          const data = await workspace.readFile(pathname);
+          const stat = await workspace.statFile(pathname);
+
+          const blob = new Blob(data);
+          await database.store(blob);
+          asserts(typeof blob.oid === "string");
+          index.add(pathname, blob.oid, stat);
+        }
       }
 
       await index.writeUpdates();
