@@ -54,6 +54,4 @@ export class Workspace {
     const stats = await this.#fs.stat(pathname);
     return stats.isDirectory();
   }
-
-  private async listDir(pathname: Pathname) {}
 }

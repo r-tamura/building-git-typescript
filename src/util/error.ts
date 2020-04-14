@@ -9,3 +9,5 @@ export class BaseError extends Error {
     this.name = new.target.name;
   }
 }
+
+export class Invalid extends BaseError {}

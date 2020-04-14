@@ -31,7 +31,7 @@ const MockedWs = Workspace as jest.Mock<Workspace>;
 jest.mock("./refs");
 const MockedRefs = Refs as jest.Mock;
 jest.mock("./gindex");
-const MockedIndex = Index as jest.Mock<Index>;
+const MockedIndex = (Index as unknown) as jest.Mock<Partial<Index>>;
 
 jest
   .spyOn(Service, "readTextStream")

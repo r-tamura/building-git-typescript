@@ -3,14 +3,14 @@ import { Index } from "./gindex";
 import { Lockfile } from "../lockfile";
 import { defaultFs } from "../services";
 import { makeTestStats } from "../__test__";
-import { Stats } from "fs";
+import { Stats, promises, PathLike } from "fs";
 
 jest.mock("../lockfile");
+const testIndexPath = ".git/index";
 const MockedLockfile = (Lockfile as unknown) as jest.Mock<Partial<Lockfile>>;
 const testOid = "ba78afac62556e840341715936909cc36fe83a77"; // sha1 of 'jit'
 
 describe("Index#writeUpdate", () => {
-  const testPath = ".git/index";
   const testObjectPath = "README.md";
   describe("Lockfileがロックされているとき、indexへの書き込みを行わない", () => {
     // Arrange
@@ -18,7 +18,7 @@ describe("Index#writeUpdate", () => {
     let actual: boolean;
     beforeAll(async () => {
       // Act
-      const index = new Index(testPath);
+      const index = new Index(testIndexPath);
       actual = await index.writeUpdates();
     });
     afterAll(() => {
@@ -118,7 +118,7 @@ describe("Index#writeUpdate", () => {
       }));
 
       // Act
-      const index = new Index(testPath);
+      const index = new Index(testIndexPath);
       const entries = [
         [
           "bin/jit",
@@ -154,6 +154,136 @@ describe("Index#writeUpdate", () => {
       const arg = mockedWrite.mock.calls[index][0];
       const buf = Buffer.from(arg);
       assert.equal(buf.slice(40, 60).toString("hex"), expectedHash);
+    });
+  });
+});
+
+// 2 ファイル
+// prettier-ignore
+const fakeIndex = Buffer.of(
+  0x44, 0x49, 0x52, 0x43, 0x00, 0x00, 0x00, 0x02, 0x00, 0x00, 0x00, 0x02, 0x5e, 0x91, 0x5a, 0x0f,
+  0x00, 0x00, 0x00, 0x00, 0x5e, 0x91, 0x5a, 0x0f, 0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x05,
+  0x03, 0x1a, 0x3a, 0xcf, 0x00, 0x00, 0x81, 0xa4, 0x00, 0x00, 0x01, 0xf5, 0x00, 0x00, 0x00, 0x14,
+  0x00, 0x00, 0x00, 0x00, 0xe6, 0x9d, 0xe2, 0x9b, 0xb2, 0xd1, 0xd6, 0x43, 0x4b, 0x8b, 0x29, 0xae,
+  0x77, 0x5a, 0xd8, 0xc2, 0xe4, 0x8c, 0x53, 0x91, 0x00, 0x05, 0x62, 0x2e, 0x74, 0x78, 0x74, 0x00,
+  0x00, 0x00, 0x00, 0x00, 0x5e, 0x91, 0x5e, 0xa7, 0x00, 0x00, 0x00, 0x00, 0x5e, 0x91, 0x5e, 0xa7,
+  0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x05, 0x03, 0x1a, 0x3d, 0x55, 0x00, 0x00, 0x81, 0xa4,
+  0x00, 0x00, 0x01, 0xf5, 0x00, 0x00, 0x00, 0x14, 0x00, 0x00, 0x00, 0x06, 0xcc, 0x62, 0x8c, 0xcd,
+  0x10, 0x74, 0x2b, 0xae, 0xa8, 0x24, 0x1c, 0x59, 0x24, 0xdf, 0x99, 0x2b, 0x5c, 0x01, 0x9f, 0x71,
+  0x00, 0x09, 0x77, 0x6f, 0x72, 0x6c, 0x64, 0x2e, 0x74, 0x78, 0x74, 0x00, 0x3b, 0xb0, 0x6f, 0x3f,
+  0xcf, 0xcf, 0x26, 0x56, 0x71, 0xef, 0xb0, 0x29, 0xfb, 0x05, 0x87, 0x35, 0xd9, 0x0f, 0x7a, 0xdc,
+)
+
+function createFakeRead(data: Buffer = fakeIndex) {
+  function* fakeRead(data: Buffer) {
+    const length = data.length;
+    let point = 0;
+    let size = yield Promise.resolve({ bytesRead: 0, buffer: Buffer.alloc(0) });
+    while (point + size < length) {
+      const slice = data.slice(point, point + size);
+      point += size;
+      size = yield Promise.resolve({ bytesRead: size, buffer: slice });
+      size = size ?? 0;
+    }
+    const slice = data.slice(point);
+    yield Promise.resolve({ bytesRead: length - point, buffer: slice });
+    return Promise.resolve(null);
+  }
+  const gen = fakeRead(data);
+  gen.next();
+  return async (
+    buffer: Buffer | Uint8Array,
+    offset?: any,
+    length?: any,
+    point?: any
+  ) => {
+    assert.equal(point, null);
+    const empty = { bytesRead: 0, buffer };
+    if (length < 0) {
+      console.warn("length < 0");
+      return empty;
+    }
+    const next = gen.next(length);
+    if (next.done) {
+      console.warn("done");
+      return empty;
+    }
+    const { bytesRead, buffer: buf } = await next.value;
+    buf.copy(buffer, 0, 0, buf.length);
+    return { bytesRead, buffer };
+  };
+}
+
+describe("loadForUpdate", () => {
+  // Arrange
+  const mockedRead = jest
+    .fn<
+      ReturnType<promises.FileHandle["read"]>,
+      Parameters<promises.FileHandle["read"]>
+    >()
+    .mockImplementation(createFakeRead());
+  const mockedOpen = jest
+    .fn<Promise<Partial<promises.FileHandle>>, any>()
+    .mockResolvedValue({
+      read: mockedRead as any,
+      close: jest.fn(),
+    });
+  const env = {
+    fs: { ...defaultFs, open: mockedOpen as any },
+  };
+  describe("lockfileがロックされているとき、falseを返す", () => {
+    let actual: boolean;
+    beforeAll(async () => {
+      MockedLockfile.mockReset();
+      MockedLockfile.mockImplementation(() => ({
+        write: jest.fn(),
+        holdForUpdate: jest.fn().mockResolvedValue(false),
+        commit: jest.fn(),
+      }));
+
+      // Act
+      const index = new Index(testIndexPath, env);
+      actual = await index.loadForUpdate();
+    });
+
+    it("indexファイルの読み込み", () => {
+      assert.equal(mockedOpen.mock.calls.length, 0);
+    });
+
+    it("返り値", () => {
+      assert.equal(actual, false);
+    });
+  });
+
+  describe("lockfileがロックされていないとき、trueを返す", () => {
+    let actual: boolean;
+    beforeAll(async () => {
+      // Arrange
+      jest.clearAllMocks();
+      MockedLockfile.mockReset();
+      MockedLockfile.mockImplementation(() => ({
+        write: jest.fn(),
+        holdForUpdate: jest.fn().mockResolvedValue(true),
+        commit: jest.fn(),
+      }));
+
+      // Act
+      const index = new Index(testIndexPath, env);
+      actual = await index.loadForUpdate();
+    });
+
+    it("indexファイルの読み込み", () => {
+      assert.equal(mockedOpen.mock.calls.length, 1, "indexファイルオープン");
+
+      assert.equal(
+        mockedRead.mock.calls.length,
+        6,
+        "header + (file meta + file name)x2 + checksum"
+      );
+    });
+
+    it("返り値", () => {
+      assert.equal(actual, true);
     });
   });
 });
