@@ -1,6 +1,7 @@
 import { Entry } from "./entry";
 import * as assert from "power-assert";
 import { makeTestStats } from "../__test__";
+import { createFakeRead, fakeFiles } from "./__test__/fakeIndex";
 
 const testPath = "README.md";
 const testOid = "ba78afac62556e840341715936909cc36fe83a77"; // sha1 of 'jit'
@@ -59,6 +60,28 @@ describe("Entry.create", () => {
 
     // Arrange
     assert.equal(actual.mode, 0o0100755);
+  });
+});
+
+describe("Entry.parse", () => {
+  it("バイナリデータをパースする", async () => {
+    // Arrange
+    const fakeRead = createFakeRead();
+    await fakeRead(Buffer.alloc(0), null, 12, null);
+    const { buffer } = await fakeRead(Buffer.alloc(72), null, 72, null);
+
+    // Act
+    const actual = Entry.parse(buffer as Buffer);
+
+    // Assert
+    assert.deepEqual(
+      actual,
+      Entry.create(
+        "b.txt",
+        "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391",
+        makeTestStats(fakeFiles["b.txt"].stat)
+      )
+    );
   });
 });
 

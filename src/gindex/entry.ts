@@ -21,26 +21,36 @@ export interface Entry extends EntryStats {
   pathname: Pathname;
 }
 
+// prettier-ignore
+type EntryConstructor = (
+  citme: number, ctimeNsec: number, mtime: number, mtimeNsec: number,
+  dev: number, ino: number, mode: number,
+  uid: number, gid: number, size: number,
+  oid: OID, flags: number, pathname: Pathname
+) => void
+
+// prettier-ignore
+type EntryConstructorParameters = Parameters<EntryConstructor>
+
 export class Entry {
-  static REGULAR_MODE = 0o0100644;
-  static EXECUTABLE_MODE = 0o0100755;
-  static MAX_PATH_SIZE = 0xfff;
-  static BLOCK_SIZE = 8;
+  static readonly REGULAR_MODE = 0o0100644;
+  static readonly EXECUTABLE_MODE = 0o0100755;
+  static readonly MAX_PATH_SIZE = 0xfff;
+  static readonly BLOCK_SIZE = 8;
+  static readonly MIN_SIZE = 64;
+  static readonly META_SIZE = 4;
+  static readonly META_COUNT = 10;
+  static readonly OID_SIZE = 20;
+  static readonly FILE_LENGTH_SIZE = 2;
 
   private constructor(
-    ctime: number,
-    ctimeNsec: number,
-    mtime: number,
-    mtimeNsec: number,
-    dev: number,
-    ino: number,
-    mode: number,
-    uid: number,
-    gid: number,
-    size: number,
-    oid: OID,
-    flags: number,
-    pathname: Pathname
+    // prettier-ignore
+    ...[
+      ctime, ctimeNsec, mtime, mtimeNsec,
+      dev, ino, mode,
+      uid, gid, size,
+      oid,flags, pathname,
+    ]: EntryConstructorParameters
   ) {
     /** seconds, the last time a file's metadata changed) */
     this.ctime = ctime;
@@ -68,21 +78,18 @@ export class Entry {
     const mtime = Math.floor(stat.mtimeMs / 1000);
     // https://nodejs.org/api/fs.html#fs_class_fs_stats
     // NodeJSのStats時刻はmilli second
+    // prettier-ignore
     return new Entry(
-      ctime,
-      0,
-      mtime,
-      0,
-      stat.dev,
-      stat.ino,
-      mode,
-      stat.uid,
-      stat.gid,
-      stat.size,
-      oid,
-      flags,
-      pathname
+      ctime, 0, mtime, 0,
+      stat.dev, stat.ino, mode,
+      stat.uid, stat.gid, stat.size,
+      oid, flags, pathname
     );
+  }
+
+  static parse(data: Buffer) {
+    const args = this.unpack(data);
+    return new Entry(...args);
   }
 
   get key() {
@@ -94,6 +101,27 @@ export class Entry {
     return packed.toString("binary");
   }
 
+  private static unpack(data: Buffer) {
+    // ファイルメタデータ
+    const metaLength = Entry.META_SIZE * Entry.META_COUNT;
+    const meta: number[] = [];
+    for (let i = 0; i < metaLength; i += Entry.META_SIZE) {
+      meta.push(data.readUInt32BE(i));
+    }
+    // oid
+    const oid = data
+      .slice(metaLength, metaLength + Entry.OID_SIZE)
+      .toString("hex");
+
+    // file name
+    const length = data.readUInt16BE(metaLength + Entry.OID_SIZE);
+    const filenameOffset = metaLength + Entry.OID_SIZE + Entry.FILE_LENGTH_SIZE;
+    const pathname = data
+      .slice(filenameOffset, filenameOffset + length)
+      .toString();
+    return [...meta, oid, length, pathname] as EntryConstructorParameters;
+  }
+
   /**
    * ファイルメタ情報をビッグエンディアン形式でバッファへ書き込む
    * 32bitを超える値の場合は32bitになるように上位ビットを切り取る
@@ -101,9 +129,9 @@ export class Entry {
   private pack() {
     const filenameLength = this.pathname.length;
 
-    const metaLength = 40;
-    const sha1Length = 20;
-    const fileSizeLength = 2;
+    const metaLength = Entry.META_SIZE * Entry.META_COUNT;
+    const sha1Length = Entry.OID_SIZE;
+    const fileSizeLength = Entry.FILE_LENGTH_SIZE;
     const sha1Offset = metaLength;
     const fileSizeOffset = sha1Offset + sha1Length;
     const filenameOffset = fileSizeOffset + fileSizeLength;
@@ -126,11 +154,11 @@ export class Entry {
       "size",
     ];
     for (const [i, name] of orderToWrite.entries()) {
-      buffer.writeUInt32BE(this[name] & 0xffffffff, i * 4);
+      buffer.writeUInt32BE(this[name] & 0xffffffff, i * Entry.META_SIZE);
     }
 
     // OID
-    buffer.write(this.oid, 40, 20, "hex");
+    buffer.write(this.oid, sha1Offset, Entry.OID_SIZE, "hex");
 
     // file name
     // ファイルサイズ(2byte) + ファイル名

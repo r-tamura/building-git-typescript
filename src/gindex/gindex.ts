@@ -17,8 +17,6 @@ export class Index {
   static HEADER_SIZE = 12;
   static SIGNATURE = "DIRC";
   static VERSION = 2;
-  static ENTRY_BLOCK = 8;
-  static ENTRY_MIN_SIZE = 64;
 
   #pathname: Pathname;
   #entries: IndexEntryMap;
@@ -139,12 +137,12 @@ export class Index {
   private async readEntries(reader: Checksum, count: number) {
     for (const i of this.times(count)) {
       // ファイルメタ情報の読み込み
-      let entry = await reader.read(Index.ENTRY_MIN_SIZE);
+      let entry = await reader.read(Entry.MIN_SIZE);
 
       // ファイル名の読み込み
       // ブロックの最終バイトが'null文字'の場合、データの終端を意味する
       while (!this.isNullChar(entry.slice(-1))) {
-        const block = await reader.read(Index.ENTRY_BLOCK);
+        const block = await reader.read(Entry.BLOCK_SIZE);
         entry = Buffer.concat([entry, block]);
       }
     }
