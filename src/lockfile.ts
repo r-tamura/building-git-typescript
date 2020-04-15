@@ -1,6 +1,7 @@
 import { FileService, defaultFs } from "./services";
 import { BaseError } from "./util";
 import { constants, promises } from "fs";
+import { IOHandle } from "./types";
 export type LockfileEnvironment = {
   fs?: FileService;
 };
@@ -15,7 +16,7 @@ export class MissingParent extends BaseError {}
 export class NoPermission extends BaseError {}
 export class StaleLock extends BaseError {}
 
-export class Lockfile {
+export class Lockfile implements IOHandle {
   #filePath: string;
   #lockPath: string;
   #lock: promises.FileHandle | null;
@@ -55,10 +56,27 @@ export class Lockfile {
     return true;
   }
 
+  async rollback() {
+    this.throwOnStaleLock(this.#lock);
+
+    this.#lock.close();
+    await this.#fs.unlink(this.#lockPath);
+    this.#lock = null;
+  }
+
   async write(data: Buffer | string) {
     this.throwOnStaleLock(this.#lock);
-    const dataBin = data instanceof Buffer ? data : Buffer.from(data, "binary");
-    await this.#lock.write(dataBin);
+    if (typeof data === "string") {
+      const res = await this.#lock.write(data, null, "binary");
+      // Note: コンパイラが { bytesWritten: number, buffer: string } として認識しない
+      return res as any;
+    }
+    return this.#lock.write(data);
+  }
+
+  // TODO: TBI ?
+  async read(...args: any[]) {
+    return {} as any;
   }
 
   async commit() {

@@ -118,6 +118,8 @@ export async function main(argv: string[], env: Environment) {
       const database = new Database(path.join(gitPath, "objects"));
       const index = new Index(path.join(gitPath, "index"));
 
+      await index.loadForUpdate();
+
       for (const entryPath of entryPaths) {
         const absPath = path.resolve(entryPath);
 

@@ -22,7 +22,6 @@ export class Index {
   #entries: IndexEntryMap;
   #keys: Set<Pathname>;
   #lockfile: Lockfile;
-  #digest: crypto.Hash | undefined;
   #changed: boolean = false;
   #fs: FileService;
   constructor(pathname: Pathname, env: LockfileEnvironment = {}) {
@@ -49,19 +48,22 @@ export class Index {
   }
 
   async writeUpdates() {
-    if (!(await this.#lockfile.holdForUpdate())) {
+    if (!this.#changed) {
+      await this.#lockfile.rollback();
       return false;
     }
 
-    this.beginWrite();
+    const writer = new Checksum(this.#lockfile);
 
     const header = this.buildHeader();
-    await this.write(header.toString("binary"));
+    await writer.write(header);
 
     for (const entry of this.eachEntry()) {
-      await this.write(entry.toString());
+      const packed = Buffer.from(entry.toString(), "binary");
+      await writer.write(packed);
     }
-    await this.finishWrite();
+    await writer.writeChecksum();
+    await this.#lockfile.commit();
     return true;
   }
 
@@ -145,36 +147,13 @@ export class Index {
         const block = await reader.read(Entry.BLOCK_SIZE);
         entry = Buffer.concat([entry, block]);
       }
+      this.storeEntry(Entry.parse(entry));
     }
   }
 
   private storeEntry(entry: Entry) {
     this.#keys.add(entry.key);
     this.#entries[entry.key] = entry;
-  }
-
-  private beginWrite() {
-    this.#digest = crypto.createHash("sha1");
-  }
-
-  private async write(data: string) {
-    asserts(
-      typeof this.#digest !== "undefined",
-      "beginWrite should be called first."
-    );
-    const dataBin = Buffer.from(data, "binary");
-    await this.#lockfile.write(dataBin);
-    this.#digest.update(dataBin);
-  }
-
-  private async finishWrite() {
-    asserts(
-      typeof this.#digest !== "undefined",
-      "beginWrite should be called first."
-    );
-    const digest = this.#digest.digest("hex");
-    await this.#lockfile.write(packSha1(digest));
-    await this.#lockfile.commit();
   }
 
   private *eachEntry() {
@@ -191,8 +170,6 @@ export class Index {
     const count = header.readUInt32BE(8);
     return [signature, version, count] as const;
   }
-
-  private unpackEntry(entry: Buffer) {}
 
   private *times(count: number) {
     for (let i = 0; i < count; i++) {

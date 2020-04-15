@@ -8,50 +8,21 @@ import { createFakeRead } from "./__test__/fakeIndex";
 
 jest.mock("../lockfile");
 const testIndexPath = ".git/index";
+
+const mockedWrite = jest.fn();
 const MockedLockfile = (Lockfile as unknown) as jest.Mock<Partial<Lockfile>>;
+const testObjectPath = "README.md";
 const testOid = "ba78afac62556e840341715936909cc36fe83a77"; // sha1 of 'jit'
 
-describe("Index#writeUpdate", () => {
-  const testObjectPath = "README.md";
-  describe("Lockfileがロックされているとき、indexへの書き込みを行わない", () => {
+describe("Index#writeUpdates", () => {
+  describe("indexに変更があるとき、indexへ全てのエントリを書き込む", () => {
     // Arrange
-    const mockedWrite = jest.fn();
-    let actual: boolean;
-    beforeAll(async () => {
-      // Act
-      const index = new Index(testIndexPath);
-      actual = await index.writeUpdates();
-    });
-    afterAll(() => {
-      MockedLockfile.mockClear();
-    });
-
-    // Arrange
-    it("Lockfile生成", () => {
-      assert.equal(MockedLockfile.mock.calls.length, 1);
-    });
-
-    it("Lockfileへの書き込み回数", () => {
-      const mockedWrite = MockedLockfile.mock.instances[0].write as jest.Mock;
-      assert.equal(mockedWrite.mock.calls.length, 0);
-    });
-
-    it("返り値", () => {
-      assert.equal(actual, false);
-    });
-  });
-
-  describe("Lockfileがロックされていないとき、indexへ全てのエントリを書き込む", () => {
     let actual: boolean;
     const mockedWrite = jest.fn();
-    const mockedHoldForUpdate = jest.fn().mockResolvedValue(true);
-    // Arrange
-    beforeAll(() => {});
     beforeAll(async () => {
       MockedLockfile.mockReset();
       MockedLockfile.mockImplementation(() => ({
         write: mockedWrite,
-        holdForUpdate: mockedHoldForUpdate,
         commit: jest.fn(),
       }));
       // Act
@@ -61,10 +32,6 @@ describe("Index#writeUpdate", () => {
     });
 
     // Assert
-    it("Lockfileをロックする", () => {
-      assert.equal(mockedHoldForUpdate.mock.calls.length, 1);
-    });
-
     it("ヘッダの書き込み", () => {
       assert.deepStrictEqual(
         Buffer.from(mockedWrite.mock.calls[0][0], "binary"),
@@ -104,6 +71,31 @@ describe("Index#writeUpdate", () => {
 
     it("返り値", () => {
       assert.equal(actual, true);
+    });
+  });
+
+  describe("indexに変更がない場合、indexの更新を行わない", () => {
+    // Arrange
+    const mockedRollback = jest.fn().mockResolvedValue(undefined);
+    const mockedWrite = jest.fn().mockResolvedValue(undefined);
+
+    beforeAll(async () => {
+      MockedLockfile.mockReset();
+      MockedLockfile.mockImplementation(() => ({
+        write: mockedWrite,
+        rollback: mockedRollback,
+      }));
+      // Act
+      const index = new Index(testIndexPath);
+      await index.writeUpdates();
+    });
+
+    it("lockfileをロールバックする", () => {
+      assert.equal(mockedRollback.mock.calls.length, 1);
+    });
+
+    it("ファイルの更新は実行されない", () => {
+      assert.equal(mockedWrite.mock.calls.length, 0);
     });
   });
 
@@ -200,14 +192,14 @@ describe("loadForUpdate", () => {
     });
   });
 
-  describe("lockfileがロックされていないとき、trueを返す", () => {
+  describe("lockfileがロックされていないとき、indexファイルからデータを読み込みtrueを返す", () => {
     let actual: boolean;
     beforeAll(async () => {
       // Arrange
       jest.clearAllMocks();
       MockedLockfile.mockReset();
       MockedLockfile.mockImplementation(() => ({
-        write: jest.fn(),
+        write: mockedWrite,
         holdForUpdate: jest.fn().mockResolvedValue(true),
         commit: jest.fn(),
       }));
@@ -215,6 +207,8 @@ describe("loadForUpdate", () => {
       // Act
       const index = new Index(testIndexPath, env);
       actual = await index.loadForUpdate();
+      index.add(testObjectPath, testOid, makeTestStats());
+      await index.writeUpdates();
     });
 
     it("indexファイルの読み込み", () => {
@@ -224,6 +218,13 @@ describe("loadForUpdate", () => {
         mockedRead.mock.calls.length,
         6,
         "header + (file meta + file name)x2 + checksum"
+      );
+    });
+    it("データが読み込まれる", () => {
+      assert.equal(
+        mockedWrite.mock.calls.length,
+        5,
+        "header + indexファイルのデータx2 + 追加データx1 + checksum"
       );
     });
 

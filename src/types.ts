@@ -1,3 +1,5 @@
+import { promises } from "fs";
+
 /**
  * .git/objectsへ保存することができるデータ
  */
@@ -12,3 +14,9 @@ export interface GitObject {
  * ファイルパス
  */
 export type Pathname = string;
+
+/**
+ * IO
+ */
+
+export type IOHandle = Pick<promises.FileHandle, "write" | "read">;

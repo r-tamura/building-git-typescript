@@ -1,6 +1,6 @@
 import { BaseError, Invalid } from "../util";
-import { promises } from "fs";
 import { Hash, createHash } from "crypto";
+import { IOHandle } from "../types";
 
 export class EndOfFile extends BaseError {}
 
@@ -8,9 +8,9 @@ export class Checksum {
   /** チェックサムバイトサイズ */
   static CHECKSUM_SIZE = 20;
 
-  #file: promises.FileHandle;
+  #file: IOHandle;
   #digest: Hash;
-  constructor(file: promises.FileHandle) {
+  constructor(file: IOHandle) {
     this.#file = file;
     this.#digest = createHash("sha1");
   }
@@ -24,6 +24,15 @@ export class Checksum {
     return buf;
   }
 
+  async write(data: Buffer) {
+    await this.#file.write(data);
+    this.#digest.update(data);
+  }
+
+  async writeChecksum() {
+    this.#file.write(this.#digest.digest());
+  }
+
   async verifyChecksum() {
     const [sum] = await this._read(this.#file, Checksum.CHECKSUM_SIZE);
     if (Buffer.compare(this.#digest.digest(), sum) !== 0) {
@@ -32,7 +41,7 @@ export class Checksum {
   }
 
   private async _read(
-    file: promises.FileHandle,
+    file: IOHandle,
     size: number
   ): Promise<[Buffer, number, boolean]> {
     const { bytesRead, buffer } = await file.read(

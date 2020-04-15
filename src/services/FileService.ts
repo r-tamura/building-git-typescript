@@ -6,16 +6,17 @@ const fs = CallbackFs.promises;
 
 export type FileService = Pick<
   typeof fs,
-  | "stat"
+  | "access"
   | "mkdir"
   | "open"
   | "read"
   | "readdir"
   | "readFile"
   | "rename"
+  | "stat"
+  | "unlink"
   | "write"
   | "writeFile"
-  | "access"
 >;
 
 export const defaultFs: FileService = fs;
@@ -27,7 +28,7 @@ export type Zlib = {
   deflate: typeof deflate;
 };
 export const defaultZlib = {
-  deflate: promisify(zlib.deflate) as typeof deflate
+  deflate: promisify(zlib.deflate) as typeof deflate,
 };
 
 /**
@@ -41,8 +42,8 @@ export function readTextStream(stream: Readable, encoding = "utf8") {
   stream.setEncoding(encoding);
   return new Promise<string>((resolve, reject) => {
     let data = "";
-    stream.on("data", chunk => (data += chunk));
+    stream.on("data", (chunk) => (data += chunk));
     stream.on("end", () => resolve(data));
-    stream.on("error", err => reject(err));
+    stream.on("error", (err) => reject(err));
   });
 }

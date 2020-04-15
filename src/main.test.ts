@@ -173,8 +173,15 @@ describe("add", () => {
 
   it("indexが更新される", () => {
     assert.equal(MockedIndex.mock.calls.length, 1, "Indexインスタンスの生成");
-
     const instance = MockedIndex.mock.instances[0];
+
+    const mockedLoadforUpdate = instance.loadForUpdate as jest.Mock;
+    assert.equal(
+      mockedLoadforUpdate.mock.calls.length,
+      1,
+      "index更新前にindexファイルを読み込む"
+    );
+
     const mockedAdd = instance.add as jest.Mock;
     const expectedFiles = [
       ["a.txt", "123456789abcdeffedcba98765432112345678", testStats],
