@@ -1,12 +1,11 @@
 /**
  * Note: index.jsはNodeJSでは特別な扱いをされるためgitのindexを扱う機能のファイル名はgindex.js (git index) とする
  */
-import * as crypto from "crypto";
 import { Stats, constants } from "fs";
 import * as assert from "assert";
 import { Pathname, OID } from "../types";
 import { Lockfile, LockfileEnvironment } from "../lockfile";
-import { asserts, packHex, Invalid } from "../util";
+import { Invalid } from "../util";
 import { Entry } from "./entry";
 import { Checksum } from "./checksum";
 import { FileService, defaultFs } from "../services";
@@ -14,13 +13,14 @@ import { FileService, defaultFs } from "../services";
 type IndexEntryMap = { [s: string]: Entry };
 
 export class Index {
-  static HEADER_SIZE = 12;
-  static SIGNATURE = "DIRC";
-  static VERSION = 2;
+  static readonly HEADER_SIZE = 12;
+  static readonly SIGNATURE = "DIRC";
+  static readonly VERSION = 2;
 
   #pathname: Pathname;
   #entries: IndexEntryMap;
   #keys: Set<Pathname>;
+  #parents: Map<string, Set<string>>;
   #lockfile: Lockfile;
   #changed: boolean = false;
   #fs: FileService;
@@ -28,6 +28,7 @@ export class Index {
     this.#pathname = pathname;
     this.#entries = {};
     this.#keys = new Set();
+    this.#parents = new Map();
     this.clear();
     this.#lockfile = new Lockfile(pathname, env);
     this.#fs = env.fs ?? defaultFs;
@@ -35,6 +36,7 @@ export class Index {
 
   add(pathname: Pathname, oid: OID, stat: Stats) {
     const entry = Entry.create(pathname, oid, stat);
+    this.discardConflicts(entry);
     this.storeEntry(entry);
     this.#changed = true;
   }
@@ -112,6 +114,17 @@ export class Index {
     this.#changed = false;
   }
 
+  private discardConflicts(entry: Entry) {
+    for (const parent of entry.parentDirectories) {
+      this.removeEntry(parent);
+    }
+    this.removeChildren(entry.name);
+  }
+
+  private initParentsItem(key: string) {
+    this.#parents.set(key, new Set());
+  }
+
   private async openIndexFile() {
     return this.#fs
       .open(this.#pathname, constants.O_RDONLY)
@@ -157,9 +170,44 @@ export class Index {
     }
   }
 
+  private removeChildren(pathname: Pathname) {
+    if (!this.#parents.has(pathname)) {
+      return;
+    }
+    const children = this.#parents.get(pathname)?.values() ?? [];
+    for (const child of children) {
+      this.removeEntry(child);
+    }
+  }
+
+  private removeEntry(pathname: Pathname) {
+    const entry = this.#entries[pathname];
+    if (!entry) {
+      return;
+    }
+
+    this.#keys.delete(entry.key);
+    delete this.#entries[entry.key];
+
+    for (const dirname of entry.parentDirectories) {
+      const children = this.#parents.get(dirname);
+      children?.delete(entry.name);
+      if (children?.size === 0) {
+        this.#parents.delete(dirname);
+      }
+    }
+  }
+
   private storeEntry(entry: Entry) {
     this.#keys.add(entry.key);
     this.#entries[entry.key] = entry;
+    for (const dirname of entry.parentDirectories) {
+      if (!this.#parents.has(dirname)) {
+        this.initParentsItem(dirname);
+      }
+      const set = this.#parents.get(dirname);
+      set?.add(entry.name);
+    }
   }
 
   private unpackHeader(header: Buffer) {

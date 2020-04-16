@@ -1,10 +1,13 @@
 import * as assert from "power-assert";
+import * as path from "path";
+import * as crypto from "crypto";
 import { Index } from "./gindex";
 import { Lockfile } from "../lockfile";
 import { defaultFs } from "../services";
 import { makeTestStats } from "../__test__";
 import { Stats, promises } from "fs";
 import { createFakeRead } from "./__test__/fakeIndex";
+import { IEntry } from "../entry";
 
 jest.mock("../lockfile");
 const testIndexPath = ".git/index";
@@ -13,6 +16,69 @@ const mockedWrite = jest.fn();
 const MockedLockfile = (Lockfile as unknown) as jest.Mock<Partial<Lockfile>>;
 const testObjectPath = "README.md";
 const testOid = "ba78afac62556e840341715936909cc36fe83a77"; // sha1 of 'jit'
+
+// book
+describe("Index#add", () => {
+  // Arrange
+  const tmpPath = path.resolve("../tmp", __filename);
+  const indexPath = path.join(tmpPath, "index");
+
+  const stat = makeTestStats();
+  const oid = crypto.randomBytes(20).toString("hex");
+  const extractName = (e: IEntry) => e.name;
+
+  it("adds a single file", () => {
+    // Act
+    const index = new Index(testIndexPath);
+    index.add("alice.txt", oid, stat);
+
+    // Assert
+    assert.deepEqual(index.eachEntry().map(extractName), ["alice.txt"]);
+  });
+
+  it("replaces a file with a directory", () => {
+    // Act
+    const index = new Index(testIndexPath);
+    index.add("alice.txt", oid, stat);
+    index.add("bob.txt", oid, stat);
+
+    index.add("alice.txt/nested.txt", oid, stat);
+
+    // Assert
+    assert.deepEqual(index.eachEntry().map(extractName), [
+      "alice.txt/nested.txt",
+      "bob.txt",
+    ]);
+  });
+
+  it("replaces a directory with a file", () => {
+    // Act
+    const index = new Index(testIndexPath);
+    index.add("alice.txt", oid, stat);
+    index.add("nested/bob.txt", oid, stat);
+    index.add("nested", oid, stat);
+
+    // Assert
+    assert.deepEqual(index.eachEntry().map(extractName), [
+      "alice.txt",
+      "nested",
+    ]);
+  });
+
+  it("recursively replaces a directory with a file", () => {
+    // Act
+    const index = new Index(testIndexPath);
+    index.add("alice.txt", oid, stat);
+    index.add("nested/bob.txt", oid, stat);
+    index.add("nested/inner/claire.txt", oid, stat);
+
+    index.add("nested", oid, stat);
+    assert.deepEqual(index.eachEntry().map(extractName), [
+      "alice.txt",
+      "nested",
+    ]);
+  });
+});
 
 describe("Index#writeUpdates", () => {
   describe("indexに変更があるとき、indexへ全てのエントリを書き込む", () => {
