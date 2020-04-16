@@ -1,20 +1,18 @@
 import * as path from "path";
-import { Entry } from "../entry";
-import { asserts } from "../util";
+import { Entry, IEntry } from "../entry";
+import { asserts, packHex } from "../util";
 import { GitObject, OID, Pathname } from "../types";
 
-export type EntryMap = { [s: string]: Entry | Tree };
+export type EntryMap = { [s: string]: IEntry | Tree };
 export type TraverseCallbackFn = (t: Tree) => Promise<void>;
 export class Tree implements GitObject {
-  static ENTRY_FORMAT = "A7Z*H40";
-
   oid: OID | null = null;
   #entries: EntryMap;
   constructor(entries: EntryMap = {}) {
     this.#entries = entries;
   }
 
-  static build(entries: Entry[]) {
+  static build(entries: IEntry[]) {
     entries.sort(this.ascending);
     const root = new this();
 
@@ -25,7 +23,7 @@ export class Tree implements GitObject {
     return root;
   }
 
-  addEntry(parents: Pathname[], entry: Entry) {
+  addEntry(parents: Pathname[], entry: IEntry) {
     if (parents.length === 0) {
       this.#entries[entry.basename] = entry;
     } else {
@@ -64,9 +62,9 @@ export class Tree implements GitObject {
     // this.#entries.sort(Tree.ascending)
     const entries = Object.entries(this.#entries).map(([name, entry]) => {
       asserts(entry.oid !== null, `Entry.oid of '${name}' is not set yet.`);
-      const encodedMode = Buffer.from(entry.mode + " ", "ascii");
+      const encodedMode = Buffer.from(entry.mode.toString(8) + " ", "ascii");
       const encodedName = Buffer.from(name + "\0", "ascii");
-      const encodedOId = Buffer.from(entry.oid, "hex");
+      const encodedOId = packHex(entry.oid);
 
       return Buffer.concat([encodedMode, encodedName, encodedOId]);
     });
@@ -75,7 +73,7 @@ export class Tree implements GitObject {
     return bytes.toString("binary");
   }
 
-  private static ascending(e1: Entry, e2: Entry) {
+  private static ascending(e1: IEntry, e2: IEntry) {
     return e1.name <= e2.name ? -1 : 1;
   }
 }

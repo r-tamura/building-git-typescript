@@ -6,7 +6,7 @@ import { Stats, constants } from "fs";
 import * as assert from "assert";
 import { Pathname, OID } from "../types";
 import { Lockfile, LockfileEnvironment } from "../lockfile";
-import { asserts, packSha1, Invalid } from "../util";
+import { asserts, packHex, Invalid } from "../util";
 import { Entry } from "./entry";
 import { Checksum } from "./checksum";
 import { FileService, defaultFs } from "../services";
@@ -39,12 +39,37 @@ export class Index {
     this.#changed = true;
   }
 
+  eachEntry() {
+    const sortedKeys = Array.from(this.#keys).sort();
+    const entries = sortedKeys.map((key) => this.#entries[key]);
+    return entries;
+  }
+
   async loadForUpdate() {
     if (await this.#lockfile.holdForUpdate()) {
       await this.load();
       return true;
     }
     return false;
+  }
+
+  async load() {
+    this.clear();
+
+    const file = await this.openIndexFile();
+
+    if (file === null) {
+      return;
+    }
+
+    try {
+      const reader = new Checksum(file);
+      const count = await this.readHeader(reader);
+      await this.readEntries(reader, count);
+      await reader.verifyChecksum();
+    } finally {
+      file.close();
+    }
   }
 
   async writeUpdates() {
@@ -85,25 +110,6 @@ export class Index {
     this.#entries = {};
     this.#keys = new Set();
     this.#changed = false;
-  }
-
-  private async load() {
-    this.clear();
-
-    const file = await this.openIndexFile();
-
-    if (file === null) {
-      return;
-    }
-
-    try {
-      const reader = new Checksum(file);
-      const count = await this.readHeader(reader);
-      await this.readEntries(reader, count);
-      await reader.verifyChecksum();
-    } finally {
-      file.close();
-    }
   }
 
   private async openIndexFile() {
@@ -154,13 +160,6 @@ export class Index {
   private storeEntry(entry: Entry) {
     this.#keys.add(entry.key);
     this.#entries[entry.key] = entry;
-  }
-
-  private *eachEntry() {
-    const sortedKeys = Array.from(this.#keys).sort();
-    for (const key of sortedKeys) {
-      yield this.#entries[key];
-    }
   }
 
   private unpackHeader(header: Buffer) {

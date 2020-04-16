@@ -1,32 +1,31 @@
-import { Pathname, OID } from "../types";
+import * as path from "path";
+import { OID, Pathname } from "../types";
 import { Stats } from "fs";
 import { isExecutable } from "../util/fs";
+import { IEntry } from "../entry";
 
-type EntryField =
-  | "ctime"
-  | "ctimeNsec"
-  | "mtime"
-  | "mtimeNsec"
-  | "dev"
-  | "ino"
-  | "mode"
-  | "uid"
-  | "gid"
-  | "size"
-  | "flags";
-type EntryStats = Record<EntryField, number>;
+type EntryStats = {
+  ctime: number;
+  ctimeNsec: number;
+  mtime: number;
+  mtimeNsec: number;
+  dev: number;
+  ino: number;
+  mod: 0o0100644 | 0o0100755;
+  uid: number;
+  gid: number;
+  size: number;
+  flags: number;
+};
 
-export interface Entry extends EntryStats {
-  oid: OID;
-  pathname: Pathname;
-}
+export interface Entry extends EntryStats, IEntry {}
 
 // prettier-ignore
 type EntryConstructor = (
   citme: number, ctimeNsec: number, mtime: number, mtimeNsec: number,
-  dev: number, ino: number, mode: number,
+  dev: number, ino: number, mode: 0o0100644 | 0o0100755,
   uid: number, gid: number, size: number,
-  oid: OID, flags: number, pathname: Pathname
+  oid: OID, flags: number, name: Pathname
 ) => void
 
 // prettier-ignore
@@ -49,7 +48,7 @@ export class Entry {
       ctime, ctimeNsec, mtime, mtimeNsec,
       dev, ino, mode,
       uid, gid, size,
-      oid,flags, pathname,
+      oid,flags, name,
     ]: EntryConstructorParameters
   ) {
     /** seconds, the last time a file's metadata changed) */
@@ -59,21 +58,21 @@ export class Entry {
     this.mtime = mtime;
     this.mtimeNsec = mtimeNsec;
     this.dev = dev;
-
-    this.mode = mode;
+    // mode アクセサと命名が重なるためmod
+    this.mod = mode;
     this.ino = ino;
     this.uid = uid;
     this.gid = gid;
     this.size = size;
     this.oid = oid;
     this.flags = flags;
-    this.pathname = pathname;
+    this.name = name;
   }
 
-  static create(pathname: Pathname, oid: OID, stat: Stats) {
+  static create(name: Pathname, oid: OID, stat: Stats) {
     const mode = isExecutable(stat) ? this.EXECUTABLE_MODE : this.REGULAR_MODE;
-    // pathnameはasciiのみ想定
-    const flags = Math.min(pathname.length, this.MAX_PATH_SIZE);
+    // nameはasciiのみ想定
+    const flags = Math.min(name.length, this.MAX_PATH_SIZE);
     const ctime = Math.floor(stat.ctimeMs / 1000);
     const mtime = Math.floor(stat.mtimeMs / 1000);
     // https://nodejs.org/api/fs.html#fs_class_fs_stats
@@ -83,7 +82,7 @@ export class Entry {
       ctime, 0, mtime, 0,
       stat.dev, stat.ino, mode,
       stat.uid, stat.gid, stat.size,
-      oid, flags, pathname
+      oid, flags, name
     );
   }
 
@@ -92,8 +91,23 @@ export class Entry {
     return new Entry(...args);
   }
 
+  get basename() {
+    return path.basename(this.name);
+  }
+
+  get mode() {
+    return this.mod;
+  }
+
+  get parentDirectories() {
+    return path
+      .dirname(this.name)
+      .split(path.sep)
+      .filter((s) => s !== ".");
+  }
+
   get key() {
-    return this.pathname;
+    return this.name;
   }
 
   toString() {
@@ -116,10 +130,8 @@ export class Entry {
     // file name
     const length = data.readUInt16BE(metaLength + Entry.OID_SIZE);
     const filenameOffset = metaLength + Entry.OID_SIZE + Entry.FILE_LENGTH_SIZE;
-    const pathname = data
-      .slice(filenameOffset, filenameOffset + length)
-      .toString();
-    return [...meta, oid, length, pathname] as EntryConstructorParameters;
+    const name = data.slice(filenameOffset, filenameOffset + length).toString();
+    return [...meta, oid, length, name] as EntryConstructorParameters;
   }
 
   /**
@@ -127,7 +139,7 @@ export class Entry {
    * 32bitを超える値の場合は32bitになるように上位ビットを切り取る
    */
   private pack() {
-    const filenameLength = this.pathname.length;
+    const filenameLength = this.name.length;
 
     const metaLength = Entry.META_SIZE * Entry.META_COUNT;
     const sha1Length = Entry.OID_SIZE;
@@ -148,13 +160,14 @@ export class Entry {
       "mtimeNsec",
       "dev",
       "ino",
-      "mode",
+      "mod",
       "uid",
       "gid",
       "size",
     ];
     for (const [i, name] of orderToWrite.entries()) {
-      buffer.writeUInt32BE(this[name] & 0xffffffff, i * Entry.META_SIZE);
+      const v = this[name];
+      buffer.writeUInt32BE(v & 0xffffffff, i * Entry.META_SIZE);
     }
 
     // OID
@@ -163,7 +176,7 @@ export class Entry {
     // file name
     // ファイルサイズ(2byte) + ファイル名
     buffer.writeUInt16BE(filenameLength, fileSizeOffset);
-    buffer.write(this.pathname, filenameOffset, filenameLength);
+    buffer.write(this.name, filenameOffset, filenameLength);
 
     return buffer;
   }

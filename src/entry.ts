@@ -1,19 +1,25 @@
 import * as path from "path";
-import { OID } from "./types";
+import { OID, Pathname } from "./types";
 import { Stats } from "fs";
 import { isExecutable } from "./util/fs";
 
-export type EntryName = string;
+export interface IEntry {
+  readonly parentDirectories: string[];
+  readonly basename: Pathname;
+  mode: 0o0100644 | 0o0100755 | 0o40000 | "100644" | "100755";
+  name: Pathname;
+  oid: OID;
+}
 
-export class Entry {
-  static REGULAR_MODE = "100644";
-  static EXECUTABLE_MODE = "100755";
-  static DIRECTORY_MODE = "40000";
+export class Entry implements IEntry {
+  static readonly REGULAR_MODE = "100644";
+  static readonly EXECUTABLE_MODE = "100755";
+  static readonly DIRECTORY_MODE = 0o040000;
 
   oid: OID;
-  name: EntryName;
+  name: Pathname;
   #stat: Stats;
-  constructor(pathname: EntryName, oid: OID, stat: Stats) {
+  constructor(pathname: Pathname, oid: OID, stat: Stats) {
     this.name = pathname;
 
     this.oid = oid;

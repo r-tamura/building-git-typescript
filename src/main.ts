@@ -9,7 +9,6 @@ import {
 import { Workspace } from "./workspace";
 import { Blob } from "./database/blob";
 import { Database, Author, Commit, Tree } from "./database";
-import { Entry } from "./entry";
 import { Refs } from "./refs";
 import { asserts } from "./util";
 import { Index } from "./gindex";
@@ -64,25 +63,12 @@ export async function main(argv: string[], env: Environment) {
       const gitPath = path.join(rootPath, ".git");
       const dbPath = path.join(gitPath, "objects");
 
-      const workspace = new Workspace(rootPath, env);
       const database = new Database(dbPath, env);
+      const index = new Index(path.join(gitPath, "index"), env);
       const refs = new Refs(gitPath, env);
 
-      const paths = await workspace.listFiles();
-      const entries = await Promise.all(
-        paths.map(async (p) => {
-          const data = await workspace.readFile(p);
-          const blob = new Blob(data);
-          await database.store(blob);
-          if (!blob.oid) {
-            throw TypeError("blob.oid is not set.");
-          }
-          const stats = await workspace.statFile(p);
-          return new Entry(p, blob.oid, stats);
-        })
-      );
-
-      const root = Tree.build(entries);
+      await index.load();
+      const root = Tree.build(index.eachEntry());
       await root.traverse((tree) => database.store(tree));
       asserts(root.oid !== null);
 

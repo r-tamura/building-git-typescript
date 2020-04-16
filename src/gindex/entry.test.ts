@@ -43,7 +43,7 @@ describe("Entry.create", () => {
     });
 
     it("mode", () => {
-      assert.equal(actual.mode, 0o0100644);
+      assert.equal(actual.mod, 0o0100644);
     });
 
     it("flags", () => {
@@ -59,7 +59,7 @@ describe("Entry.create", () => {
     const actual = Entry.create(testPath, testOid, testStats);
 
     // Arrange
-    assert.equal(actual.mode, 0o0100755);
+    assert.equal(actual.mod, 0o0100755);
   });
 });
 

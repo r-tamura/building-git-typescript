@@ -8,6 +8,7 @@ import { Index } from "./gindex";
 import { defaultProcess } from "./services";
 import { makeTestStats } from "./__test__";
 import { Workspace } from "./workspace";
+import { IEntry } from "./entry";
 
 const mockedStore = jest.fn().mockImplementation(async (o: GitObject) => {
   o.oid = "123456789abcdeffedcba98765432112345678";
@@ -80,13 +81,16 @@ describe("commit", () => {
   const mockedMkdir = jest.fn().mockResolvedValue("");
   const mockedCwd = jest.fn().mockReturnValue("/test/dir/");
   const mockedWrite = jest.fn();
-  const mockedUpdateHead = jest.fn().mockResolvedValue(null);
-
-  beforeAll(() => {
-    jest.clearAllMocks();
-  });
+  const mockedUpdateHead = jest.fn().mockResolvedValue(undefined);
+  const mockedEachEntry = jest.fn().mockReturnValue([
+    { name: "bin/exe", parentDirectories: ["bin"], basename: "exe", oid: "1" },
+    { name: "mock.txt", parentDirectories: [], basename: "mock.txt", oid: "2" },
+    { name: "test.js", parentDirectories: [], basename: "test.js", oid: "3" },
+  ] as IEntry[]);
+  const mockedLoad = jest.fn().mockResolvedValue(undefined);
 
   beforeAll(async () => {
+    jest.clearAllMocks();
     MockedDatabase.mockImplementation((pathname: string) => ({
       store: mockedStore,
     }));
@@ -94,6 +98,10 @@ describe("commit", () => {
       updateHead: mockedUpdateHead,
       readHead: jest.fn(),
       headPath: pathname + "/HEAD",
+    }));
+    MockedIndex.mockImplementationOnce(() => ({
+      eachEntry: mockedEachEntry,
+      load: mockedLoad,
     }));
 
     const env: Environment = {
@@ -120,27 +128,22 @@ describe("commit", () => {
   });
 
   it("Workspace#listFiles", () => {
-    assert.equal(mockedListFiles.mock.calls.length, 1);
+    assert.equal(mockedListFiles.mock.calls.length, 0);
+  });
+
+  it("indexの読み込み", () => {
+    expect(mockedLoad).toHaveBeenCalledTimes(1);
   });
 
   it("Database#store", () => {
     expect(Database).toHaveBeenCalledTimes(1);
-    assert.equal(
-      mockedStore.mock.calls.length,
-      4,
-      "blob x2 + tree x1 + commit x1"
-    );
+    assert.equal(mockedStore.mock.calls.length, 3, "tree x2 + commit x1");
 
-    const blobCalls = mockedStore.mock.calls.slice(0, -2);
-    const storingTree = mockedStore.mock.calls[2];
-    const storingCommit = mockedStore.mock.calls[3];
-    blobCalls.forEach((call) => {
-      assert.equal((call[0] as GitObject).type(), "blob");
-      assert.equal((call[0] as GitObject).toString(), "hi");
+    const storingTrees = mockedStore.mock.calls.slice(0, 1);
+    const storingCommit = mockedStore.mock.calls[2];
+    storingTrees.forEach((call) => {
+      assert.equal((call[0] as GitObject).type(), "tree");
     });
-
-    assert.equal((storingTree[0] as GitObject).type(), "tree");
-
     assert.equal((storingCommit[0] as GitObject).type(), "commit");
   });
 
