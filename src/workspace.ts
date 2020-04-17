@@ -1,10 +1,14 @@
 import * as path from "path";
 import { FileService, defaultFs } from "./services";
 import { Pathname } from "./types";
+import { BaseError } from "./util";
 
 type Environment = {
   fs?: FileService;
 };
+
+export class MissingFile extends BaseError {}
+export class NoPermission extends BaseError {}
 
 export class Workspace {
   #IGNORE = [".", "..", ".git"];
@@ -25,7 +29,8 @@ export class Workspace {
       // TODO: flatMapで置き換えられないか?
       const promises: Promise<string[]>[] = names.map(async (name) => {
         const pathFromRoot = path.join(pathname, name);
-        if (await this.isDirectory(pathFromRoot)) {
+        const isDir = await this.isDirectory(pathFromRoot);
+        if (isDir) {
           const names = await this.listFiles(pathFromRoot);
           return names;
         }
@@ -39,11 +44,23 @@ export class Workspace {
   }
 
   async readFile(rpath: string) {
-    return this.#fs.readFile(this.join(rpath), "ascii");
+    return this.#fs
+      .readFile(this.join(rpath), "ascii")
+      .catch((e: NodeJS.ErrnoException) => {
+        if (e.code === "EACCES") {
+          throw new NoPermission(`open('${rpath}'): Permission denied`);
+        }
+        throw e;
+      });
   }
 
   async statFile(rpath: string) {
-    return this.#fs.stat(this.join(rpath));
+    return this.#fs.stat(this.join(rpath)).catch((e: NodeJS.ErrnoException) => {
+      if (e.code === "EACCES") {
+        throw new NoPermission(`stat('${rpath}'): Permission denied`);
+      }
+      throw e;
+    });
   }
 
   private join(rpath: string) {
@@ -51,7 +68,15 @@ export class Workspace {
   }
 
   private async isDirectory(pathname: Pathname) {
-    const stats = await this.#fs.stat(pathname);
-    return stats.isDirectory();
+    try {
+      return (await this.#fs.stat(pathname)).isDirectory();
+    } catch (e) {
+      switch (e.code) {
+        case "ENOENT":
+          throw new MissingFile(`pathspec ${pathname} did not match any files`);
+        default:
+          throw e;
+      }
+    }
   }
 }

@@ -2,10 +2,9 @@ import { Lockfile, MissingParent, NoPermission } from "./lockfile";
 import { defaultFs } from "./services";
 import { constants } from "fs";
 import * as assert from "power-assert";
-
-const EEXIST = { code: "EEXIST" } as const;
-const ENOENT = { code: "ENOENT" } as const;
-const EACCES = { code: "EACCES" } as const;
+import { EACCES, EEXIST, ENOENT } from "./__test__";
+import { execPath } from "process";
+import { LockDenied } from "./refs";
 
 const testTargetPath = "/test/file.txt";
 
@@ -28,7 +27,7 @@ describe("Lockfile#holdForUpdate", () => {
     beforeAll(async () => {
       // Act
       const lockfile = new Lockfile(testTargetPath, env);
-      actual = await lockfile.holdForUpdate();
+      await lockfile.holdForUpdate();
     });
 
     // Assert
@@ -37,13 +36,9 @@ describe("Lockfile#holdForUpdate", () => {
       assert.equal(mockedOpen.mock.calls[0][0], "/test/file.lock");
       assert.equal(mockedOpen.mock.calls[0][1], flags);
     });
-
-    it("trueを返す", () => {
-      assert.equal(actual, true);
-    });
   });
 
-  it("ロックファイルがすでに存在するとき、falseを返す", async () => {
+  it("ロックファイルがすでに存在するとき、例外を発生させる", async () => {
     // Arrange
     const mockedOpen = jest.fn().mockImplementation(() => {
       throw EEXIST;
@@ -54,10 +49,10 @@ describe("Lockfile#holdForUpdate", () => {
 
     // Act
     const lockfile = new Lockfile(testTargetPath, env);
-    const actual = await lockfile.holdForUpdate();
+    const actual = lockfile.holdForUpdate();
 
     // Assert
-    assert.equal(actual, false);
+    await expect(actual).rejects.toThrow(LockDenied);
   });
 
   it.each([

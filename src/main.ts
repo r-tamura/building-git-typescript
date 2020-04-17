@@ -6,12 +6,13 @@ import {
   defaultProcess,
   defaultFs,
 } from "./services";
-import { Workspace } from "./workspace";
+import { Workspace, MissingFile } from "./workspace";
 import { Blob } from "./database/blob";
 import { Database, Author, Commit, Tree } from "./database";
-import { Refs } from "./refs";
-import { asserts } from "./util";
+import { Refs, LockDenied } from "./refs";
+import { asserts, stripIndent } from "./util";
 import { Index } from "./gindex";
+import { NoPermission } from "./workspace";
 
 export type Environment = {
   process: Process;
@@ -104,13 +105,49 @@ export async function main(argv: string[], env: Environment) {
       const database = new Database(path.join(gitPath, "objects"));
       const index = new Index(path.join(gitPath, "index"));
 
-      await index.loadForUpdate();
+      try {
+        await index.loadForUpdate();
+      } catch (e) {
+        if (e instanceof LockDenied) {
+          console.error(stripIndent`
+          fatal: ${e.message}
 
-      for (const entryPath of entryPaths) {
-        const absPath = path.resolve(entryPath);
+          Another jit process seems to be running in this repository.
+          Please make sure all processes are terminated then try again.
+          If it still fails, a jit process may have crached in this
+          repository earlier: remove the file manually to continue.
+          `);
+        } else {
+          console.error(e.stack);
+        }
+        process.exit(128);
+        return; // TODO: jestで終了の方法を調べる
+      }
 
-        const pathnames = await workspace.listFiles(absPath);
-        for (const pathname of pathnames) {
+      let pathnameslist: string[][] | null = null;
+      try {
+        pathnameslist = await Promise.all(
+          entryPaths.map((entryPath) => {
+            const absPath = path.resolve(entryPath);
+            return workspace.listFiles(absPath);
+          })
+        );
+      } catch (e) {
+        if (e instanceof MissingFile) {
+          console.error(`fatal: ${e.message}`);
+        } else {
+          console.error(e.stack);
+        }
+        await index.releaseLock();
+        process.exit(128);
+        return; // TODO: jestで終了の方法を調べる
+      }
+      asserts(pathnameslist !== null);
+
+      const pathnames = pathnameslist.flat();
+
+      for (const pathname of pathnames) {
+        try {
           const data = await workspace.readFile(pathname);
           const stat = await workspace.statFile(pathname);
 
@@ -118,6 +155,16 @@ export async function main(argv: string[], env: Environment) {
           await database.store(blob);
           asserts(typeof blob.oid === "string");
           index.add(pathname, blob.oid, stat);
+        } catch (e) {
+          if (e instanceof NoPermission) {
+            console.error(`error: ${e.message}`);
+            console.error(`fatal: adding files failed`);
+          } else {
+            console.error(e.stack);
+          }
+          index.releaseLock();
+          process.exit(128);
+          return; // TODO: jestで終了の方法を調べる
         }
       }
 

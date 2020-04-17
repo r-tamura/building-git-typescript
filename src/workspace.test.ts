@@ -1,8 +1,9 @@
 import { join } from "path";
 import * as assert from "power-assert";
-import { Workspace } from "./workspace";
+import { Workspace, MissingFile } from "./workspace";
 import { defaultFs } from "./services";
 import { Stats } from "fs";
+import { ENOENT } from "./__test__";
 
 jest.mock("fs");
 
@@ -64,7 +65,12 @@ const retrieve = (pathname: string): FakeEntry => {
       return entry;
     }
     const item: FakeEntry[] = entry.items.filter((e) => e.name === name);
-    assert.equal(item.length, 1, "Not found: " + join(seen, name));
+    // assert.equal(item.length, 1, "Not found: " + join(seen, name));
+
+    if (item.length === 0) {
+      throw ENOENT;
+    }
+
     entry = item[0];
     seen = join(seen, item[0].name);
   }
@@ -96,7 +102,12 @@ const fakeStat = jest
 describe("WorkSpace#listFiles", () => {
   const testPath = "test";
   const env = {
-    fs: { ...defaultFs, readdir: fakeReaddir, stat: fakeStat },
+    fs: {
+      ...defaultFs,
+      readdir: fakeReaddir,
+      stat: fakeStat,
+      access: jest.fn().mockResolvedValue(undefined),
+    },
   };
 
   it("ファイルが指定されたとき、そのファイルのみを要素とするリストを返す", async () => {
@@ -135,6 +146,25 @@ describe("WorkSpace#listFiles", () => {
       "dir_b/hello_b.txt",
     ];
     assert.deepStrictEqual(actual, expected);
+  });
+
+  it("存在しないファイルが含まれているとき、例外を発生させる", async () => {
+    // Arrange
+    const env = {
+      fs: {
+        ...defaultFs,
+        readdir: fakeReaddir,
+        stat: jest.fn().mockImplementation(() => {
+          throw ENOENT;
+        }),
+      },
+    };
+
+    // Act
+    const ws = new Workspace("test/noent.txt", env);
+
+    // Assert
+    await expect(ws.listFiles()).rejects.toThrow(MissingFile);
   });
 });
 

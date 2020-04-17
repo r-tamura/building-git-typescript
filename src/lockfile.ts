@@ -2,12 +2,19 @@ import { FileService, defaultFs } from "./services";
 import { BaseError } from "./util";
 import { constants, promises } from "fs";
 import { IOHandle } from "./types";
+import { LockDenied } from "./refs";
+import * as path from "path";
 export type LockfileEnvironment = {
   fs?: FileService;
 };
 
-const splitExt = (path: string) => {
-  const split = path.split(".");
+const splitExt = (pathname: string): [string, string | undefined] => {
+  const basename = path.basename(pathname);
+  if (!basename.includes(".")) {
+    return [pathname, undefined];
+  }
+
+  const split = pathname.split(".");
   const ext = split.pop();
   return [split.join("."), ext];
 };
@@ -33,7 +40,7 @@ export class Lockfile implements IOHandle {
   }
 
   /**
-   * ロックされていない場合はロックを取得ししてからtrueを返し、ロックされている場合はfalseを返す
+   * ロックされていない場合はロックを取得し、ロックされているときは例外LockDeniedを発生させる
    */
   async holdForUpdate() {
     const flags = constants.O_RDWR | constants.O_CREAT | constants.O_EXCL;
@@ -46,14 +53,15 @@ export class Lockfile implements IOHandle {
       switch (nodeErr.code) {
         case "EEXIST":
           // すでにロックされている場合
-          return false;
+          throw new LockDenied(
+            `Unable to create ${this.#lockPath}: File exists.`
+          );
         case "ENOENT":
-          throw new MissingParent();
+          throw new MissingParent(nodeErr.message);
         case "EACCES":
-          throw new NoPermission();
+          throw new NoPermission(nodeErr.message);
       }
     }
-    return true;
   }
 
   async rollback() {

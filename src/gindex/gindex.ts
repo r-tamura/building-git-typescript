@@ -48,11 +48,8 @@ export class Index {
   }
 
   async loadForUpdate() {
-    if (await this.#lockfile.holdForUpdate()) {
-      await this.load();
-      return true;
-    }
-    return false;
+    await this.#lockfile.holdForUpdate();
+    await this.load();
   }
 
   async load() {
@@ -72,6 +69,10 @@ export class Index {
     } finally {
       file.close();
     }
+  }
+
+  async releaseLock() {
+    return this.#lockfile.rollback();
   }
 
   async writeUpdates() {

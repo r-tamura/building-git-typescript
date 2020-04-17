@@ -4,9 +4,11 @@
 export class BaseError extends Error {
   name: string;
 
-  constructor(e?: string) {
-    super(e);
+  constructor(message?: string | undefined) {
+    super(message);
     this.name = new.target.name;
+    const actualProto = new.target.prototype;
+    Object.setPrototypeOf(this, actualProto);
   }
 }
 

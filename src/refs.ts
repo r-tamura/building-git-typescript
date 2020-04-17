@@ -25,9 +25,7 @@ export class Refs {
   async updateHead(oid: OID) {
     const lockfile = new Lockfile(this.headPath, { fs: this.#fs });
 
-    if (!(await lockfile.holdForUpdate())) {
-      throw new LockDenied();
-    }
+    await lockfile.holdForUpdate();
 
     await lockfile.write(oid);
     await lockfile.write("\n");

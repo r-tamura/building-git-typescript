@@ -4,10 +4,11 @@ import * as crypto from "crypto";
 import { Index } from "./gindex";
 import { Lockfile } from "../lockfile";
 import { defaultFs } from "../services";
-import { makeTestStats } from "../__test__";
+import { makeTestStats, EEXIST } from "../__test__";
 import { Stats, promises } from "fs";
 import { createFakeRead } from "./__test__/fakeIndex";
 import { IEntry } from "../entry";
+import { LockDenied } from "../refs";
 
 jest.mock("../lockfile");
 const testIndexPath = ".git/index";
@@ -234,27 +235,28 @@ describe("loadForUpdate", () => {
   const env = {
     fs: { ...defaultFs, open: mockedOpen as any },
   };
-  describe("lockfileがロックされているとき、falseを返す", () => {
-    let actual: boolean;
+  describe("lockfileがロックされているとき、ファイルが読み込まれない", () => {
+    const throwLockDenied = () => {
+      throw new LockDenied();
+    };
     beforeAll(async () => {
       MockedLockfile.mockReset();
       MockedLockfile.mockImplementation(() => ({
         write: jest.fn(),
-        holdForUpdate: jest.fn().mockResolvedValue(false),
+        holdForUpdate: jest.fn().mockImplementation(throwLockDenied),
         commit: jest.fn(),
       }));
 
       // Act
       const index = new Index(testIndexPath, env);
-      actual = await index.loadForUpdate();
+      const actual = index.loadForUpdate();
+
+      // Assert
+      await expect(actual).rejects.toThrow(LockDenied);
     });
 
     it("indexファイルの読み込み", () => {
-      assert.equal(mockedOpen.mock.calls.length, 0);
-    });
-
-    it("返り値", () => {
-      assert.equal(actual, false);
+      expect(mockedOpen).not.toBeCalled();
     });
   });
 
@@ -266,13 +268,13 @@ describe("loadForUpdate", () => {
       MockedLockfile.mockReset();
       MockedLockfile.mockImplementation(() => ({
         write: mockedWrite,
-        holdForUpdate: jest.fn().mockResolvedValue(true),
+        holdForUpdate: jest.fn().mockResolvedValue(undefined),
         commit: jest.fn(),
       }));
 
       // Act
       const index = new Index(testIndexPath, env);
-      actual = await index.loadForUpdate();
+      await index.loadForUpdate();
       index.add(testObjectPath, testOid, makeTestStats());
       await index.writeUpdates();
     });
@@ -292,10 +294,6 @@ describe("loadForUpdate", () => {
         5,
         "header + indexファイルのデータx2 + 追加データx1 + checksum"
       );
-    });
-
-    it("返り値", () => {
-      assert.equal(actual, true);
     });
   });
 });

@@ -1,3 +1,4 @@
 export * from "./assert";
-export * from "./error";
 export * from "./binary";
+export * from "./error";
+export * from "./text";
