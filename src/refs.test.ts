@@ -13,7 +13,7 @@ describe("Refs#readHead", () => {
       .fn()
       .mockResolvedValue("ref: refs/heads/master");
     const env = {
-      fs: { ...defaultFs, readFile: mockedReadFile }
+      fs: { ...defaultFs, readFile: mockedReadFile },
     };
 
     // Act
@@ -30,7 +30,7 @@ describe("Refs#readHead", () => {
       throw { code: "ENOENT" } as NodeJS.ErrnoException;
     });
     const env = {
-      fs: { ...defaultFs, readFile: mockedReadFile }
+      fs: { ...defaultFs, readFile: mockedReadFile },
     };
 
     // Act
@@ -54,7 +54,7 @@ describe("Refs#updateHead", () => {
     >).mockImplementationOnce((pathname: string) => ({
       holdForUpdate: jest.fn().mockResolvedValue(true),
       write: mockedWrite,
-      commit: mockedCommit
+      commit: mockedCommit,
     }));
     beforeAll(async () => {
       // Act
@@ -79,12 +79,15 @@ describe("Refs#updateHead", () => {
     // Arrange
     const mockedWrite = jest.fn();
     const mockedCommit = jest.fn();
+    const throwLockDenied = jest.fn().mockImplementation(() => {
+      throw new LockDenied();
+    });
     const MockedLockfile = ((Lockfile as unknown) as jest.Mock<
       Partial<Lockfile>
     >).mockImplementationOnce((pathname: string) => ({
-      holdForUpdate: jest.fn().mockResolvedValue(false),
+      holdForUpdate: throwLockDenied,
       write: mockedWrite,
-      commit: mockedCommit
+      commit: mockedCommit,
     }));
     beforeAll(async () => {
       // Act & Assert

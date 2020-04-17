@@ -1,4 +1,5 @@
 import { promises } from "fs";
+import { Process, FileService } from "./services";
 
 /**
  * .git/objectsへ保存することができるデータ
@@ -20,3 +21,11 @@ export type Pathname = string;
  */
 
 export type IOHandle = Pick<promises.FileHandle, "write" | "read">;
+
+export type Environment = {
+  process: Process;
+  fs: FileService;
+  date: {
+    now(): Date;
+  };
+};
