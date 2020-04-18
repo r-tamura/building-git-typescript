@@ -1,11 +1,16 @@
 import * as path from "path";
-import { Environment } from "../types";
+import { Environment, Pathname } from "../types";
 import * as Database from "../database";
-import { asserts, stripIndent } from "../util";
+import { asserts, stripIndent, asyncForEach } from "../util";
 import { Repository } from "../repository";
 import { LockDenied } from "../refs";
 import { MissingFile, NoPermission } from "../workspace";
 import { Base } from "./base";
+
+const LOCKED_INDEX_MESSAGE = `Another jit process seems to be running in this repository.
+Please make sure all processes are terminated then try again.
+If it still fails, a jit process may have crached in this
+repository earlier: remove the file manually to continue.`;
 
 export class Add extends Base {
   constructor(args: string[], env: Environment) {
@@ -13,77 +18,66 @@ export class Add extends Base {
   }
 
   async run() {
-    const { logger } = this.env;
-    const entryPaths = this.args;
-    const rootPath = this.dir;
-    const gitPath = path.join(rootPath, ".git");
-
-    const repo = new Repository(gitPath, this.env);
-
     try {
-      await repo.index.loadForUpdate();
+      await this.repo.index.loadForUpdate();
+      const pathnames = await this.expandedPaths();
+      await asyncForEach(this.addToIndex.bind(this), pathnames);
+      await this.repo.index.writeUpdates();
     } catch (e) {
       if (e instanceof LockDenied) {
-        logger.error(stripIndent`fatal: ${e.message}
-
-        Another jit process seems to be running in this repository.
-        Please make sure all processes are terminated then try again.
-        If it still fails, a jit process may have crached in this
-        repository earlier: remove the file manually to continue.
-        `);
+        await this.handleLockedIndex(e);
+      } else if (e instanceof NoPermission) {
+        await this.handleUnreadableFile(e);
+      } else if (e instanceof MissingFile) {
+        await this.handleMissingFile(e);
       } else {
-        logger.error(e.stack);
+        throw e;
       }
-      this.exit(128);
-      return; // TODO: jestで終了の方法を調べる
     }
+  }
 
-    let pathnameslist: string[][] | null = null;
-    try {
-      pathnameslist = await Promise.all(
-        entryPaths.map((entryPath) => {
-          const absPath = this.expeandedPathname(entryPath);
-          return repo.workspace.listFiles(absPath);
-        })
-      );
-    } catch (e) {
-      if (e instanceof MissingFile) {
-        logger.error(`fatal: ${e.message}`);
-      } else {
-        logger.error(e.stack);
-      }
-      await repo.index.releaseLock();
-      this.exit(128);
-      return; // TODO: jestで終了の方法を調べる
-    }
-    asserts(pathnameslist !== null);
+  private async addToIndex(pathname: Pathname) {
+    const data = await this.repo.workspace.readFile(pathname);
+    const stat = await this.repo.workspace.statFile(pathname);
 
+    const blob = new Database.Blob(data);
+    await this.repo.database.store(blob);
+    asserts(typeof blob.oid === "string");
+    this.repo.index.add(pathname, blob.oid, stat);
+  }
+
+  private async expandedPaths() {
+    const entryPaths = this.args;
+    const pathnameslist = await Promise.all(
+      entryPaths.map((entryPath) => {
+        const absPath = this.expeandedPathname(entryPath);
+        return this.repo.workspace.listFiles(absPath);
+      })
+    );
     const pathnames = pathnameslist.flat();
+    return pathnames;
+  }
 
-    for (const pathname of pathnames) {
-      try {
-        const data = await repo.workspace.readFile(pathname);
-        const stat = await repo.workspace.statFile(pathname);
+  private async handleLockedIndex(e: LockDenied) {
+    this.logger.error(stripIndent`
+    fatal: ${e.message}
 
-        const blob = new Database.Blob(data);
-        await repo.database.store(blob);
-        asserts(typeof blob.oid === "string");
-        repo.index.add(pathname, blob.oid, stat);
-      } catch (e) {
-        if (e instanceof NoPermission) {
-          logger.error(stripIndent`
-          error: ${e.message}
-          fatal: adding files failed
-        `);
-        } else {
-          logger.error(e.stack);
-        }
-        repo.index.releaseLock();
-        this.exit(128);
-        return; // TODO: jestで終了の方法を調べる
-      }
-    }
+    ${LOCKED_INDEX_MESSAGE}`);
+    this.exit(128);
+  }
 
-    await repo.index.writeUpdates();
+  private async handleMissingFile(e: MissingFile) {
+    this.logger.error(`fatal: ${e.message}`);
+    await this.repo.index.releaseLock();
+    this.exit(128);
+  }
+
+  private async handleUnreadableFile(e: NoPermission) {
+    this.logger.error(stripIndent`
+    error: ${e.message}
+    fatal: adding files failed
+  `);
+    await this.repo.index.releaseLock();
+    this.exit(128);
   }
 }

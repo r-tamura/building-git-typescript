@@ -97,7 +97,7 @@ describe("add", () => {
     await assertIndex([]);
   });
 
-  it("fails fro unreadable files", async () => {
+  it("fails for unreadable files", async () => {
     // Arrange
     await t.writeFile("secret.txt", "");
     await t.makeUnreadable("secret.txt");
