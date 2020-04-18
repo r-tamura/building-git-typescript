@@ -1,13 +1,13 @@
-import { BaseError } from "../util";
-import { RunnableConstructor } from "./types";
+import { BaseError, asserts } from "../util";
 import { Commit } from "./commit";
 import { Init } from "./init";
 import { Add } from "./add";
 import { Environment } from "../types";
+import { Base, BaseConstructor } from "./base";
 
 export class Unknown extends BaseError {}
 
-type CommandMap = { [s: string]: RunnableConstructor };
+type CommandMap = { [s: string]: BaseConstructor };
 
 const COMMANDS: CommandMap = {
   init: Init,
@@ -15,15 +15,15 @@ const COMMANDS: CommandMap = {
   commit: Commit,
 } as const;
 
-export async function execute(
-  name: string = "",
-  args: string[],
-  env: Environment
-) {
+export async function execute(args: string[], env: Environment) {
+  const name = args.shift();
+  asserts(typeof name === "string", "no subcommand specified.");
+
   const Command = COMMANDS[name];
   if (!Command) {
     throw new Unknown(`'${name} is not a jit command`);
   }
-  const command = new Command(env);
-  await command.run(...args);
+  const command = new Command(args, env);
+  await command.execute();
+  return command;
 }

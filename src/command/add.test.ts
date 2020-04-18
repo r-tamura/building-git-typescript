@@ -1,6 +1,5 @@
 import * as assert from "power-assert";
 import * as Service from "../services";
-import { main } from "../main";
 import { Database } from "../database/database";
 import { Refs, LockDenied } from "../refs";
 import { GitObject, Environment } from "../types";
@@ -8,6 +7,8 @@ import { Index } from "../gindex";
 import { defaultProcess } from "../services";
 import { Workspace, MissingFile } from "../workspace";
 import { makeTestStats } from "../__test__";
+import { makeLogger } from "../__test__/util";
+import { Add } from "./add";
 
 const mockedStore = jest.fn().mockImplementation(async (o: GitObject) => {
   o.oid = "123456789abcdeffedcba98765432112345678";
@@ -38,6 +39,7 @@ jest
 
 const testEnvGlobal: Environment = {
   fs: Service.defaultFs,
+  logger: makeLogger(),
   process: defaultProcess,
   date: {
     now: () => new Date(2020, 3, 1),
@@ -57,7 +59,8 @@ describe("add", () => {
       }));
 
       // Act
-      await main(["add", "."], testEnvGlobal);
+      const cmd = new Add(["."], testEnvGlobal);
+      await cmd.execute();
     });
     it("add対象のファイルを読み込む", () => {
       assert.equal(mockedReadFile.mock.calls.length, 2);
@@ -140,17 +143,18 @@ describe("add", () => {
           .spyOn(process, "exit")
           .mockImplementation(jest.fn() as any);
         // Act
-        await main(["add", "test"], testEnvGlobal);
+        const cmd = new Add(["."], testEnvGlobal);
+        await cmd.execute();
 
         // Assert
         // prettier-ignore
-        assert.equal(throwErr.mock.calls.length, 1)
+        assert.equal(throwErr.mock.calls.length, 1);
         assert.equal(
           mockedReadFile.mock.calls.length,
           0,
           "indexファイルのオープン"
         );
-        assert.equal(spyExit.mock.calls[0][0], code, "プロセス返り値");
+        assert.equal(cmd.status, code, "プロセス返り値");
       }
     );
   });

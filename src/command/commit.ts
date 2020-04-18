@@ -1,17 +1,19 @@
 import * as path from "path";
-import { Runnable } from "./types";
+import { Base } from "./base";
 import { asserts } from "../util";
 import { Repository } from "../repository";
 import * as Database from "../database";
 import { readTextStream } from "../services";
 import { Environment } from "../types";
 
-export class Commit implements Runnable {
-  constructor(private env: Environment) {}
+export class Commit extends Base {
+  constructor(args: string[], env: Environment) {
+    super(args, env);
+  }
 
   async run() {
-    // Assumes the current working directory is the location of the repo.
-    const rootPath = this.env.process.cwd();
+    const { date, process } = this.env;
+    const rootPath = this.dir;
     const repo = new Repository(path.join(rootPath, ".git"), this.env);
 
     await repo.index.load();
@@ -20,13 +22,15 @@ export class Commit implements Runnable {
     asserts(root.oid !== null);
 
     const parent = await repo.refs.readHead();
-    const name = this.env.process.env["GIT_AUTHOR_NAME"];
-    const email = this.env.process.env["GIT_AUTHOR_EMAIL"];
+    const name = this.envvars["GIT_AUTHOR_NAME"];
+    const email = this.envvars["GIT_AUTHOR_EMAIL"];
 
-    asserts(typeof name === "string");
-    asserts(typeof email === "string");
+    // prettier-ignore
+    asserts(typeof name === "string", "Environment variable 'GIT_AUTHOR_NAME' is not set.");
+    // prettier-ignore
+    asserts(typeof email === "string", "Environment variable 'GIT_AUTHOR_EMAIL' is not set.");
 
-    const author = new Database.Author(name, email, this.env.date.now());
+    const author = new Database.Author(name, email, date.now());
     const message = await readTextStream(process.stdin);
 
     const commit = new Database.Commit(parent, root.oid, author, message);
@@ -37,6 +41,6 @@ export class Commit implements Runnable {
     await repo.refs.updateHead(commit.oid);
 
     const isRoot = parent === null ? "(root-commit) " : "";
-    console.log(`[${isRoot}${commit.oid}] ${message.split("\n")[0]}`);
+    this.log(`[${isRoot}${commit.oid}] ${message.split("\n")[0]}`);
   }
 }

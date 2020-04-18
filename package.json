@@ -10,7 +10,8 @@
   "scripts": {
     "build": "tsc",
     "watch": "tsc -w",
-    "test": "jest"
+    "test": "jest",
+    "integ": "jest --config jest.config.integ.js"
   },
   "devDependencies": {
     "@types/jest": "^25.2.1",

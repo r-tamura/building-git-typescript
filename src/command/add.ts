@@ -6,22 +6,26 @@ import { asserts, stripIndent } from "../util";
 import { Repository } from "../repository";
 import { LockDenied } from "../refs";
 import { MissingFile, NoPermission } from "../workspace";
+import { Base } from "./base";
 
-export class Add implements Runnable {
-  constructor(private env: Environment) {}
+export class Add extends Base {
+  constructor(args: string[], env: Environment) {
+    super(args, env);
+  }
 
-  async run(...argv: string[]) {
-    const entryPaths = argv;
-    const rootPath = this.env.process.cwd();
+  async run() {
+    const { logger } = this.env;
+    const entryPaths = this.args;
+    const rootPath = this.dir;
     const gitPath = path.join(rootPath, ".git");
 
-    const repo = new Repository(path.join(rootPath, ".git"), this.env);
+    const repo = new Repository(gitPath, this.env);
 
     try {
       await repo.index.loadForUpdate();
     } catch (e) {
       if (e instanceof LockDenied) {
-        console.error(stripIndent`fatal: ${e.message}
+        logger.error(stripIndent`fatal: ${e.message}
 
         Another jit process seems to be running in this repository.
         Please make sure all processes are terminated then try again.
@@ -29,9 +33,9 @@ export class Add implements Runnable {
         repository earlier: remove the file manually to continue.
         `);
       } else {
-        console.error(e.stack);
+        logger.error(e.stack);
       }
-      process.exit(128);
+      this.exit(128);
       return; // TODO: jestで終了の方法を調べる
     }
 
@@ -45,12 +49,12 @@ export class Add implements Runnable {
       );
     } catch (e) {
       if (e instanceof MissingFile) {
-        console.error(`fatal: ${e.message}`);
+        logger.error(`fatal: ${e.message}`);
       } else {
-        console.error(e.stack);
+        logger.error(e.stack);
       }
       await repo.index.releaseLock();
-      process.exit(128);
+      this.exit(128);
       return; // TODO: jestで終了の方法を調べる
     }
     asserts(pathnameslist !== null);
@@ -68,13 +72,13 @@ export class Add implements Runnable {
         repo.index.add(pathname, blob.oid, stat);
       } catch (e) {
         if (e instanceof NoPermission) {
-          console.error(`error: ${e.message}`);
-          console.error(`fatal: adding files failed`);
+          logger.error(`error: ${e.message}`);
+          logger.error(`fatal: adding files failed`);
         } else {
-          console.error(e.stack);
+          logger.error(e.stack);
         }
         repo.index.releaseLock();
-        process.exit(128);
+        this.exit(128);
         return; // TODO: jestで終了の方法を調べる
       }
     }

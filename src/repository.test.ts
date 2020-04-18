@@ -1,14 +1,16 @@
 import { Refs } from "./refs";
-import { Pathname, Environment } from "./types";
+import { Environment } from "./types";
 import { Repository } from "./repository";
 import { defaultFs, defaultProcess } from "./services";
 import * as assert from "assert";
+import { makeLogger } from "./__test__/util";
 
 jest.mock("./refs");
 let MockedRefs = (Refs as unknown) as jest.Mock<Partial<Refs>>;
 
 const testEnvGlobal: Environment = {
   fs: { ...defaultFs },
+  logger: makeLogger(),
   process: { ...defaultProcess },
   date: {
     now: () => new Date(2020, 3, 1),

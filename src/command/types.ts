@@ -5,5 +5,5 @@ export interface RunnableConstructor {
 }
 
 export interface Runnable {
-  run(...args: string[]): Promise<void>;
+  run(): Promise<void>;
 }

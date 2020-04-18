@@ -1,10 +1,11 @@
-import { FileService, Process, defaultProcess, defaultFs } from "./services";
+import { defaultProcess, defaultFs, defaultLogger } from "./services";
 import { execute, Unknown } from "./command";
 import { Environment } from "./types";
 
 export function createMain() {
   const env: Environment = {
     process: defaultProcess,
+    logger: defaultLogger,
     fs: defaultFs,
     date: {
       now: () => new Date(),
@@ -17,9 +18,8 @@ export function createMain() {
 }
 
 export async function main(argv: string[], env: Environment) {
-  const commandName = argv.shift();
   try {
-    await execute(commandName, argv, env);
+    await execute(argv, env);
   } catch (e) {
     if (e instanceof Unknown) {
       console.error(`jit: ${e.message}`);
@@ -29,6 +29,6 @@ export async function main(argv: string[], env: Environment) {
         console.error(e.stack);
       }
     }
-    process.exit(1);
+    process.exit(0);
   }
 }
