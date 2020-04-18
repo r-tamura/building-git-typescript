@@ -1,8 +1,8 @@
 import * as path from "path";
 import { Runnable } from "./types";
 import { Environment, Pathname, EnvVars } from "../types";
-import { Repository } from "~/repository";
-import { Logger } from "~/services";
+import { Repository } from "../repository";
+import { Logger } from "../services";
 
 /** process.exit 代替え */
 export class Exit {}
