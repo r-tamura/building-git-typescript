@@ -1,5 +1,4 @@
 import * as path from "path";
-import { Runnable } from "./types";
 import { Environment } from "../types";
 import * as Database from "../database";
 import { asserts, stripIndent } from "../util";
@@ -43,7 +42,7 @@ export class Add extends Base {
     try {
       pathnameslist = await Promise.all(
         entryPaths.map((entryPath) => {
-          const absPath = path.resolve(entryPath);
+          const absPath = this.expeandedPathname(entryPath);
           return repo.workspace.listFiles(absPath);
         })
       );
@@ -72,8 +71,10 @@ export class Add extends Base {
         repo.index.add(pathname, blob.oid, stat);
       } catch (e) {
         if (e instanceof NoPermission) {
-          logger.error(`error: ${e.message}`);
-          logger.error(`fatal: adding files failed`);
+          logger.error(stripIndent`
+          error: ${e.message}
+          fatal: adding files failed
+        `);
         } else {
           logger.error(e.stack);
         }

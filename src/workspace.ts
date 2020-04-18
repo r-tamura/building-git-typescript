@@ -68,12 +68,15 @@ export class Workspace {
   }
 
   private async isDirectory(pathname: Pathname) {
+    const relavtive = path.relative(this.#pathname, pathname);
     try {
       return (await this.#fs.stat(pathname)).isDirectory();
     } catch (e) {
       switch (e.code) {
         case "ENOENT":
-          throw new MissingFile(`pathspec ${pathname} did not match any files`);
+          throw new MissingFile(
+            `pathspec '${relavtive}' did not match any files`
+          );
         default:
           throw e;
       }
