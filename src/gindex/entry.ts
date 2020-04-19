@@ -115,6 +115,10 @@ export class Entry {
     return this.name;
   }
 
+  statMatch(stat: Stats) {
+    return this.size === 0 || this.size === stat.size;
+  }
+
   toString() {
     const packed = this.pack();
     return packed.toString("binary");

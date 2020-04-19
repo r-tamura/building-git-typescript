@@ -9,6 +9,7 @@ export interface IEntry {
   mode: 0o0100644 | 0o0100755 | 0o40000 | "100644" | "100755";
   name: Pathname;
   oid: OID;
+  statMatch(stat: Stats): boolean;
 }
 
 export class Entry implements IEntry {
@@ -44,6 +45,11 @@ export class Entry implements IEntry {
 
   get basename() {
     return path.basename(this.name);
+  }
+
+  statMatch(stat: Stats) {
+    // TBI
+    return false;
   }
 
   private isExecutable() {

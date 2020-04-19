@@ -80,4 +80,26 @@ describe("Command.Status", () => {
     ?? outer/
     `);
   });
+
+  describe("index/workspace changes", () => {
+    beforeEach(async () => {
+      await t.writeFile("1.txt", "one");
+      await t.writeFile("a/2.txt", "two");
+      await t.writeFile("a/b/3.txt", "three");
+
+      await t.jitCmd("add", ".");
+      await t.commit("commit message");
+    });
+
+    it("prints nothing when no files are changed", async () => {
+      await assertStatus("");
+    });
+
+    it("reports files with modified contents", async () => {
+      await t.writeFile("1.txt", "changed");
+      await t.writeFile("a/2.txt", "modified");
+
+      await assertStatus([" M 1.txt", " M a/2.txt"].join("\n"));
+    });
+  });
 });

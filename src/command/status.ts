@@ -2,27 +2,54 @@ import * as path from "path";
 import { Base } from "./base";
 import { Pathname } from "../types";
 import { Stats } from "fs";
+import { IEntry } from "~/entry";
 
 export class Status extends Base {
   #untracked!: Set<Pathname>;
+  #changed!: Set<Pathname>;
+  #stats: { [s: string]: Stats } = {};
   async run() {
     await this.repo.index.load();
 
     this.#untracked = new Set();
+    this.#changed = new Set();
 
     await this.scanWorkspace();
+    await this.detectWorkspaceChanged();
 
-    Array.from(this.#untracked)
+    this.print(this.#changed, (p) => ` M ${p}`);
+    this.print(this.#untracked, (p) => `?? ${p}`);
+  }
+
+  private print(alike: Iterable<Pathname>, formatter: (p: Pathname) => string) {
+    return Array.from(alike)
       .sort()
-      .forEach((pathname) => {
-        this.log(`?? ${pathname}`);
+      .forEach((p) => {
+        this.log(formatter(p));
       });
+  }
+
+  private checkIndexEntry(entry: IEntry) {
+    const stat = this.#stats[entry.name];
+    if (!entry.statMatch(stat)) {
+      this.#changed.add(entry.name);
+    }
+  }
+
+  private async detectWorkspaceChanged() {
+    for (const entry of this.repo.index.eachEntry()) {
+      this.checkIndexEntry(entry);
+    }
   }
 
   private async scanWorkspace(prefix?: string) {
     const entries = await this.repo.workspace.listDir(prefix);
     for (const [pathname, stat] of Object.entries(entries)) {
       if (this.repo.index.tracked(pathname)) {
+        if (stat.isFile()) {
+          // Stat情報をキャッシュする
+          this.#stats[pathname] = stat;
+        }
         if (stat.isDirectory()) {
           await this.scanWorkspace(pathname);
         }
