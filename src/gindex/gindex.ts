@@ -75,6 +75,10 @@ export class Index {
     return this.#lockfile.rollback();
   }
 
+  tracked(pathname: Pathname) {
+    return !!this.#entries[pathname] || this.#parents.has(pathname);
+  }
+
   async writeUpdates() {
     if (!this.#changed) {
       await this.#lockfile.rollback();

@@ -1,22 +1,25 @@
 import { promises } from "fs";
+import { Readable } from "stream";
 import * as rmfr from "rmfr";
 import * as path from "path";
 import * as assert from "power-assert";
 import { Environment } from "~/types";
-import { defaultFs, defaultProcess } from "~/services";
+import { defaultFs, Logger, Process } from "~/services";
 import { Repository } from "~/repository";
 import { makeLogger } from "~/__test__/util";
 import * as Command from "~/command";
 import { asserts } from "~/util";
 
+let envvars: Process["env"] = {};
+
 const fs = promises;
 
-export const env: Environment = {
+const _env: Environment = {
   fs: defaultFs,
   logger: makeLogger(),
   process: {
-    ...defaultProcess,
-    env: {},
+    stdin: Readable.from([""]),
+    env: envvars,
     cwd: jest.fn().mockReturnValue(repoPath()),
   },
   date: {
@@ -24,9 +27,24 @@ export const env: Environment = {
   },
 };
 
-function assertLog(level: "info" | "warn" | "error", expected: string) {
+function getEnv() {
+  return _env;
+}
+
+function setEnvvar(key: string, value: string) {
+  envvars[key] = value;
+}
+
+function setStdin(s: string) {
+  _env.process = { ..._env.process, stdin: Readable.from([s]) };
+}
+
+function assertLog(level: Exclude<keyof Logger, "level">, expected: string) {
+  const env = getEnv();
   const log = env.logger[level] as jest.Mock;
-  assert.equal(log.mock.calls?.[0]?.[0] ?? "", expected);
+
+  const eachOut = log.mock.calls.map((call) => call.join(""));
+  assert.equal(eachOut?.join("\n") ?? "", expected);
 }
 
 export function assertStatus(expected: number) {
@@ -52,8 +70,20 @@ export async function afterHook() {
   await rmfr(repoPath());
 }
 
+export async function commit(message: string) {
+  setEnvvar("GIT_AUTHOR_NAME", "A. U. Thor");
+  setEnvvar("GIT_AUTHOR_EMAIL", "author@example.com");
+  setStdin(message);
+  await jitCmd("commit");
+}
+
 export function repoPath() {
   return path.resolve(__dirname, "../tmp-repo");
+}
+
+export async function mkdir(name: string) {
+  const pathname = path.join(repoPath(), name);
+  await fs.mkdir(path.dirname(pathname), { recursive: true });
 }
 
 export async function writeFile(name: string, contents: string) {
@@ -72,11 +102,15 @@ export async function makeUnreadable(name: string) {
 
 let _repo: Repository;
 export function repo(): Repository {
+  const env = getEnv();
   return (_repo = _repo ?? new Repository(path.join(repoPath(), ".git"), env));
 }
 
 let cmd: Command.Base;
 export async function jitCmd(...args: string[]) {
+  // コマンド実行ごとにロガーはリセットする
+  const env = getEnv();
+  env.logger = makeLogger();
   cmd = await Command.execute(args, env);
   return;
 }

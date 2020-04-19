@@ -1,8 +1,6 @@
-import * as path from "path";
 import { Environment, Pathname } from "../types";
 import * as Database from "../database";
 import { asserts, stripIndent, asyncForEach } from "../util";
-import { Repository } from "../repository";
 import { LockDenied } from "../refs";
 import { MissingFile, NoPermission } from "../workspace";
 import { Base } from "./base";
@@ -24,14 +22,18 @@ export class Add extends Base {
       await asyncForEach(this.addToIndex.bind(this), pathnames);
       await this.repo.index.writeUpdates();
     } catch (e) {
-      if (e instanceof LockDenied) {
-        await this.handleLockedIndex(e);
-      } else if (e instanceof NoPermission) {
-        await this.handleUnreadableFile(e);
-      } else if (e instanceof MissingFile) {
-        await this.handleMissingFile(e);
-      } else {
-        throw e;
+      switch ((e as Error).constructor) {
+        case LockDenied:
+          await this.handleLockedIndex(e);
+          break;
+        case NoPermission:
+          await this.handleUnreadableFile(e);
+          break;
+        case MissingFile:
+          await this.handleMissingFile(e);
+          break;
+        default:
+          throw e;
       }
     }
   }

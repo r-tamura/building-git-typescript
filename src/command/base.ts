@@ -44,10 +44,12 @@ export abstract class Base implements Runnable {
     try {
       await this.run();
     } catch (e) {
-      if (e instanceof Exit) {
-        return;
+      switch (e.constructor) {
+        case Exit:
+          return;
+        default:
+          throw e;
       }
-      throw e;
     }
   }
 

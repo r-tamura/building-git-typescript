@@ -1,16 +1,8 @@
-import { promises } from "fs";
 import * as assert from "assert";
 import * as t from "./helper";
 import { stripIndent } from "~/util";
 
-const fs = promises;
-
-afterEach(async () => {});
-
 describe("add", () => {
-  beforeEach(t.beforeHook);
-  afterEach(t.afterHook);
-
   async function assertIndex(expected: [number, string][]) {
     const repo = t.repo();
     await repo.index.load();
@@ -19,6 +11,9 @@ describe("add", () => {
       .map((e) => [e.mode, e.name]);
     assert.deepEqual(actual, expected);
   }
+
+  beforeEach(t.beforeHook);
+  afterEach(t.afterHook);
 
   it("adds a regular file to the index", async () => {
     await t.writeFile("hello.txt", "hello");

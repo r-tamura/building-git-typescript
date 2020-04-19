@@ -1,7 +1,8 @@
 import * as path from "path";
 import { FileService, defaultFs } from "./services";
 import { Pathname } from "./types";
-import { BaseError } from "./util";
+import { BaseError, asyncMap } from "./util";
+import { Stats } from "fs";
 
 type Environment = {
   fs?: FileService;
@@ -20,7 +21,22 @@ export class Workspace {
     this.#fs = env.fs ?? defaultFs;
   }
 
-  async listFiles(pathname: string = this.#pathname): Promise<string[]> {
+  async listDir(dirname: Pathname = "") {
+    const pathname = path.join(this.#pathname, dirname);
+    const entries = await this.#fs
+      .readdir(pathname)
+      .then((names) => names.filter((name) => !this.#IGNORE.includes(name)));
+
+    const stats: { [s: string]: Stats } = {};
+    for (const name of entries) {
+      const absPath = path.join(pathname, name);
+      const relativeFromRoot = path.relative(this.#pathname, absPath);
+      stats[relativeFromRoot] = await this.#fs.stat(absPath);
+    }
+    return stats;
+  }
+
+  async listFiles(pathname: Pathname = this.#pathname): Promise<string[]> {
     if (await this.isDirectory(pathname)) {
       const names = await this.#fs
         .readdir(pathname)

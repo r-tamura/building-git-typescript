@@ -114,3 +114,27 @@ describe("Entry#toString", () => {
     assert.deepStrictEqual(Buffer.from(actual, "binary"), expected);
   });
 });
+
+describe("Entry#parentDirectories", () => {
+  it("全ての親ディレクトリパスを返す", () => {
+    // Act
+    const entry = Entry.create(
+      "test/nested/nested2/file.txt",
+      testOid,
+      makeTestStats()
+    );
+    const actual = entry.parentDirectories;
+
+    // Assert
+    assert.deepEqual(actual, ["test", "test/nested", "test/nested/nested2"]);
+  });
+
+  it("パスがファイル名のとき、空リストを返す", () => {
+    // Act
+    const entry = Entry.create("file.txt", testOid, makeTestStats());
+    const actual = entry.parentDirectories;
+
+    // Assert
+    assert.deepEqual(actual, []);
+  });
+});

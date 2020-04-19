@@ -2,7 +2,7 @@
   "files.exclude": {
     "**/*.d.ts": true,
     "**/*.map": true,
-    "src/**/*.js": true,
-    "test/**/*.js": true
+    "integ/**/*.js": true,
+    "src/**/*.js": true
   }
 }

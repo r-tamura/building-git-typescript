@@ -100,10 +100,15 @@ export class Entry {
   }
 
   get parentDirectories() {
-    return path
+    const eachDirname = path
       .dirname(this.name)
       .split(path.sep)
       .filter((s) => s !== ".");
+    return eachDirname.reduce((acc, dirname) => {
+      const prev = acc[acc.length - 1] ?? "";
+      acc.push(path.join(prev, dirname));
+      return acc;
+    }, [] as string[]);
   }
 
   get key() {

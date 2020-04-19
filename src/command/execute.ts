@@ -4,6 +4,7 @@ import { Init } from "./init";
 import { Add } from "./add";
 import { Environment } from "../types";
 import { Base, BaseConstructor } from "./base";
+import { Status } from "./status";
 
 export class Unknown extends BaseError {}
 
@@ -13,6 +14,7 @@ const COMMANDS: CommandMap = {
   init: Init,
   add: Add,
   commit: Commit,
+  status: Status,
 } as const;
 
 export async function execute(args: string[], env: Environment) {
@@ -21,7 +23,7 @@ export async function execute(args: string[], env: Environment) {
 
   const Command = COMMANDS[name];
   if (!Command) {
-    throw new Unknown(`'${name} is not a jit command`);
+    throw new Unknown(`'${name}' is not a jit command`);
   }
   const command = new Command(args, env);
   await command.execute();
