@@ -96,10 +96,20 @@ describe("Command.Status", () => {
     });
 
     it("reports files with modified contents", async () => {
+      // Arrange
       await t.writeFile("1.txt", "changed");
       await t.writeFile("a/2.txt", "modified");
 
+      // Act & Assert
       await assertStatus([" M 1.txt", " M a/2.txt"].join("\n"));
+    });
+
+    it("reports files with change modes", async () => {
+      // Arrange
+      await t.makeExecutable("a/2.txt");
+
+      // Act & Assert
+      await assertStatus(" M a/2.txt");
     });
   });
 });

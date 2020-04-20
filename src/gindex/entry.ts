@@ -70,7 +70,7 @@ export class Entry {
   }
 
   static create(name: Pathname, oid: OID, stat: Stats) {
-    const mode = isExecutable(stat) ? this.EXECUTABLE_MODE : this.REGULAR_MODE;
+    const mode = this.modeForStat(stat);
     // nameはasciiのみ想定
     const flags = Math.min(name.length, this.MAX_PATH_SIZE);
     const ctime = Math.floor(stat.ctimeMs / 1000);
@@ -89,6 +89,10 @@ export class Entry {
   static parse(data: Buffer) {
     const args = this.unpack(data);
     return new Entry(...args);
+  }
+
+  static modeForStat(stat: Stats) {
+    return isExecutable(stat) ? this.EXECUTABLE_MODE : this.REGULAR_MODE;
   }
 
   get basename() {
@@ -116,7 +120,9 @@ export class Entry {
   }
 
   statMatch(stat: Stats) {
-    return this.size === 0 || this.size === stat.size;
+    const sizeMatch = this.size === 0 || this.size === stat.size;
+    const modeMatch = Entry.modeForStat(stat) === this.mode;
+    return sizeMatch && modeMatch;
   }
 
   toString() {
