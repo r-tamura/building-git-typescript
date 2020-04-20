@@ -39,6 +39,7 @@ function setStdin(s: string) {
   _env.process = { ..._env.process, stdin: Readable.from([s]) };
 }
 
+/** Logger assertion */
 function assertLog(level: Exclude<keyof Logger, "level">, expected: string) {
   const env = getEnv();
   const log = env.logger[level] as jest.Mock;
@@ -60,6 +61,7 @@ export function assertError(expected: string) {
   assertLog("error", expected);
 }
 
+/** test hooks */
 export async function beforeHook() {
   await fs.mkdir(repoPath());
   await jitCmd("init", repoPath());
@@ -70,17 +72,18 @@ export async function afterHook() {
   await rmfr(repoPath());
 }
 
-export async function commit(message: string) {
-  setEnvvar("GIT_AUTHOR_NAME", "A. U. Thor");
-  setEnvvar("GIT_AUTHOR_EMAIL", "author@example.com");
-  setStdin(message);
-  await jitCmd("commit");
-}
-
+/** path */
 export function repoPath() {
   return path.resolve(__dirname, "../tmp-repo");
 }
 
+let _repo: Repository;
+export function repo(): Repository {
+  const env = getEnv();
+  return (_repo = _repo ?? new Repository(path.join(repoPath(), ".git"), env));
+}
+
+/** fs */
 export async function mkdir(name: string) {
   const pathname = path.join(repoPath(), name);
   await fs.mkdir(path.dirname(pathname), { recursive: true });
@@ -100,12 +103,16 @@ export async function makeUnreadable(name: string) {
   await fs.chmod(path.join(repoPath(), name), 0o200);
 }
 
-let _repo: Repository;
-export function repo(): Repository {
-  const env = getEnv();
-  return (_repo = _repo ?? new Repository(path.join(repoPath(), ".git"), env));
+export async function touch(name: string) {
+  const now = new Date(2020, 3, 21);
+  await fs.utimes(path.join(repoPath(), name), now, now);
 }
 
+export async function delay(ms: number) {
+  return new Promise((resolve, _) => setTimeout(resolve, ms));
+}
+
+/** simple git command */
 let cmd: Command.Base;
 export async function jitCmd(...args: string[]) {
   // コマンド実行ごとにロガーはリセットする
@@ -113,4 +120,11 @@ export async function jitCmd(...args: string[]) {
   env.logger = makeLogger();
   cmd = await Command.execute(args, env);
   return;
+}
+
+export async function commit(message: string) {
+  setEnvvar("GIT_AUTHOR_NAME", "A. U. Thor");
+  setEnvvar("GIT_AUTHOR_EMAIL", "author@example.com");
+  setStdin(message);
+  await jitCmd("commit");
 }

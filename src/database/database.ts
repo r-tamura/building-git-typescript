@@ -42,14 +42,26 @@ export class Database {
     this.#zlib = env.zlib ?? defaultZlib;
   }
 
-  async store(obj: GitObject) {
+  hashObject(obj: GitObject) {
+    return this.hashContent(this.seliarizeObject(obj));
+  }
+
+  private seliarizeObject(obj: GitObject) {
     const str = obj.toString();
     const contentStr = `${obj.type()} ${str.length}\0${str}`;
-    const content = Buffer.from(contentStr, "binary");
+    const bytes = Buffer.from(contentStr, "binary");
+    return bytes;
+  }
 
-    obj.oid = createHash("sha1").update(content).digest("hex");
+  private hashContent(bytes: Buffer) {
+    return createHash("sha1").update(bytes).digest("hex");
+  }
 
-    this.writeObject(obj.oid, content);
+  async store(obj: GitObject) {
+    const content = this.seliarizeObject(obj);
+    obj.oid = this.hashContent(content);
+
+    await this.writeObject(obj.oid, content);
   }
 
   async writeObject(oid: OID, content: Buffer) {

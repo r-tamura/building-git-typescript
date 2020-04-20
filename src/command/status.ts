@@ -1,8 +1,9 @@
+import { Stats } from "fs";
 import * as path from "path";
+import * as Database from "../database";
 import { Base } from "./base";
 import { Pathname } from "../types";
-import { Stats } from "fs";
-import { IEntry } from "~/entry";
+import { IEntry } from "../entry";
 
 export class Status extends Base {
   #untracked!: Set<Pathname>;
@@ -29,16 +30,32 @@ export class Status extends Base {
       });
   }
 
-  private checkIndexEntry(entry: IEntry) {
+  private async checkIndexEntry(entry: IEntry) {
     const stat = this.#stats[entry.name];
     if (!entry.statMatch(stat)) {
       this.#changed.add(entry.name);
+      return;
+    }
+
+    if (entry.timesMatch(stat)) {
+      return;
+    }
+
+    const data = await this.repo.workspace.readFile(entry.name);
+    const blob = new Database.Blob(data);
+    const oid = this.repo.database.hashObject(blob);
+
+    if (entry.oid === oid) {
+      this.repo.index.updateEntryStat(entry, stat);
+    } else {
+      this.#changed.add(entry.name);
+      return;
     }
   }
 
   private async detectWorkspaceChanged() {
     for (const entry of this.repo.index.eachEntry()) {
-      this.checkIndexEntry(entry);
+      await this.checkIndexEntry(entry);
     }
   }
 

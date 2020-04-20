@@ -10,6 +10,8 @@ export interface IEntry {
   name: Pathname;
   oid: OID;
   statMatch(stat: Stats): boolean;
+  timesMatch(stat: Stats): boolean;
+  updateStat(stat: Stats): void;
 }
 
 export class Entry implements IEntry {
@@ -50,6 +52,16 @@ export class Entry implements IEntry {
   statMatch(stat: Stats) {
     // TBI
     return false;
+  }
+
+  timesMatch(stat: Stats) {
+    // TBI
+    return false;
+  }
+
+  updateStat(stat: Stats) {
+    // TBI
+    return;
   }
 
   private isExecutable() {

@@ -6,6 +6,30 @@ import * as path from "path";
 import { Blob } from "./blob";
 import { Z_BEST_SPEED } from "zlib";
 
+const makeEnv = () => {
+  return {
+    fs: { ...defaultFs },
+    rand: {
+      sample: jest.fn().mockReturnValue("0"),
+    },
+    zlib: {
+      deflate: jest.fn(),
+    },
+  };
+};
+
+describe("Database#hashObject", () => {
+  it("GitオブジェクトのSH1ハッシュを生成する", () => {
+    // Arrange
+    const blob = new Blob("test content");
+    const db = new Database(".git/objects", makeEnv());
+    const actual = db.hashObject(blob);
+
+    // Assert
+    assert.equal(actual, "08cf6101416f0ce0dda3c80e627f333854c4085c");
+  });
+});
+
 describe("Database#store", () => {
   describe("blobの場合、オブジェクトタイプをblobとする", () => {
     const testRepoPath = "/test/jit";

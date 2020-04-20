@@ -111,5 +111,18 @@ describe("Command.Status", () => {
       // Act & Assert
       await assertStatus(" M a/2.txt");
     });
+
+    it("reports modified files with unchanged size", async () => {
+      await t.delay(1000); // Note: nano秒をtimestampで比較しないため, timestampを変えるために少し待つ
+      await t.writeFile("a/b/3.txt", "hello");
+
+      await assertStatus(" M a/b/3.txt");
+    });
+
+    it("prints nothing if a file is touched", async () => {
+      await t.touch("1.txt");
+
+      await assertStatus("");
+    });
   });
 });

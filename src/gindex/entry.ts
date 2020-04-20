@@ -73,8 +73,8 @@ export class Entry {
     const mode = this.modeForStat(stat);
     // nameはasciiのみ想定
     const flags = Math.min(name.length, this.MAX_PATH_SIZE);
-    const ctime = Math.floor(stat.ctimeMs / 1000);
-    const mtime = Math.floor(stat.mtimeMs / 1000);
+    const ctime = this.statTimeToIndexTime(stat.ctimeMs);
+    const mtime = this.statTimeToIndexTime(stat.mtimeMs);
     // https://nodejs.org/api/fs.html#fs_class_fs_stats
     // NodeJSのStats時刻はmilli second
     // prettier-ignore
@@ -125,9 +125,30 @@ export class Entry {
     return sizeMatch && modeMatch;
   }
 
+  timesMatch(stat: Stats) {
+    const ctimeMatch = Entry.statTimeToIndexTime(stat.ctimeMs) === this.ctime;
+    const mtimeMatch = Entry.statTimeToIndexTime(stat.mtimeMs) === this.mtime;
+    return ctimeMatch && mtimeMatch;
+  }
+
+  updateStat(stat: Stats) {
+    this.ctime = Entry.statTimeToIndexTime(stat.ctimeMs);
+    this.mtime = Entry.statTimeToIndexTime(stat.mtimeMs);
+    this.dev = stat.dev;
+    this.ino = stat.ino;
+    this.mod = Entry.modeForStat(stat);
+    this.uid = stat.uid;
+    this.gid = stat.gid;
+    this.size = stat.size;
+  }
+
   toString() {
     const packed = this.pack();
     return packed.toString("binary");
+  }
+
+  private static statTimeToIndexTime(timeMs: number) {
+    return Math.floor(timeMs / 1000);
   }
 
   private static unpack(data: Buffer) {

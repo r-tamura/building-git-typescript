@@ -9,6 +9,7 @@ import { Invalid } from "../util";
 import { Entry } from "./entry";
 import { Checksum } from "./checksum";
 import { FileService, defaultFs } from "../services";
+import { IEntry } from "../entry";
 
 type IndexEntryMap = { [s: string]: Entry };
 
@@ -77,6 +78,11 @@ export class Index {
 
   tracked(pathname: Pathname) {
     return !!this.#entries[pathname] || this.#parents.has(pathname);
+  }
+
+  updateEntryStat(entry: IEntry, stat: Stats) {
+    entry.updateStat(stat);
+    this.#changed = true;
   }
 
   async writeUpdates() {
