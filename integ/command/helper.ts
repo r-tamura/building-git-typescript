@@ -69,7 +69,7 @@ export async function beforeHook() {
 }
 
 export async function afterHook() {
-  await rmfr(repoPath());
+  await fs.rmdir(repoPath(), { recursive: true });
 }
 
 /** path */
@@ -84,6 +84,18 @@ export function repo(): Repository {
 }
 
 /** fs */
+// Note: 書籍中は'delete'と言う関数名だが、JavaScriptでは予約後のため'rm'にする
+export async function rm(name: string) {
+  const pathname = path.join(repoPath(), name);
+  const stat = await fs.stat(pathname);
+
+  if (stat.isDirectory()) {
+    await fs.rmdir(pathname, { recursive: true });
+  } else {
+    await fs.unlink(pathname);
+  }
+}
+
 export async function mkdir(name: string) {
   const pathname = path.join(repoPath(), name);
   await fs.mkdir(path.dirname(pathname), { recursive: true });
@@ -104,12 +116,8 @@ export async function makeUnreadable(name: string) {
 }
 
 export async function touch(name: string) {
-  const now = new Date(2020, 3, 21);
+  const now = new Date();
   await fs.utimes(path.join(repoPath(), name), now, now);
-}
-
-export async function delay(ms: number) {
-  return new Promise((resolve, _) => setTimeout(resolve, ms));
 }
 
 /** simple git command */
@@ -127,4 +135,9 @@ export async function commit(message: string) {
   setEnvvar("GIT_AUTHOR_EMAIL", "author@example.com");
   setStdin(message);
   await jitCmd("commit");
+}
+
+/** other utils */
+export async function delay(ms: number) {
+  return new Promise((resolve, _) => setTimeout(resolve, ms));
 }

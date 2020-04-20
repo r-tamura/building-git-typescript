@@ -3,11 +3,17 @@ import * as path from "path";
 import * as Database from "../database";
 import { Base } from "./base";
 import { Pathname } from "../types";
-import { IEntry } from "../entry";
+import { IEntry, Entry } from "../entry";
 
+type D = "D";
+type M = "M";
+type ChangedType = D | M;
 export class Status extends Base {
+  static readonly WorkspaceDeleted: D = "D";
+  static readonly WorkspaceModified: M = "M";
   #untracked!: Set<Pathname>;
   #changed!: Set<Pathname>;
+  #changes: Map<Pathname, Set<ChangedType>> = new Map();
   #stats: { [s: string]: Stats } = {};
   async run() {
     await this.repo.index.load();
@@ -18,22 +24,19 @@ export class Status extends Base {
     await this.scanWorkspace();
     await this.detectWorkspaceChanged();
 
-    this.print(this.#changed, (p) => ` M ${p}`);
-    this.print(this.#untracked, (p) => `?? ${p}`);
-  }
-
-  private print(alike: Iterable<Pathname>, formatter: (p: Pathname) => string) {
-    return Array.from(alike)
-      .sort()
-      .forEach((p) => {
-        this.log(formatter(p));
-      });
+    this.printResults();
   }
 
   private async checkIndexEntry(entry: IEntry) {
     const stat = this.#stats[entry.name];
+
+    if (!stat) {
+      this.recordChange(entry.name, Status.WorkspaceDeleted);
+      return;
+    }
+
     if (!entry.statMatch(stat)) {
-      this.#changed.add(entry.name);
+      this.recordChange(entry.name, Status.WorkspaceModified);
       return;
     }
 
@@ -48,7 +51,7 @@ export class Status extends Base {
     if (entry.oid === oid) {
       this.repo.index.updateEntryStat(entry, stat);
     } else {
-      this.#changed.add(entry.name);
+      this.recordChange(entry.name, Status.WorkspaceModified);
       return;
     }
   }
@@ -57,6 +60,30 @@ export class Status extends Base {
     for (const entry of this.repo.index.eachEntry()) {
       await this.checkIndexEntry(entry);
     }
+  }
+
+  private recordChange(pathname: Pathname, type: ChangedType) {
+    this.#changed.add(pathname);
+    if (!this.#changes.has(pathname)) {
+      this.#changes.set(pathname, new Set());
+    }
+    this.#changes.get(pathname)?.add(type);
+  }
+
+  private printResults() {
+    this.print(this.#changed, (p) => {
+      const status = this.statusFor(p);
+      return `${status} ${p}`;
+    });
+    this.print(this.#untracked, (p) => `?? ${p}`);
+  }
+
+  private print(alike: Iterable<Pathname>, formatter: (p: Pathname) => string) {
+    return Array.from(alike)
+      .sort()
+      .forEach((p) => {
+        this.log(formatter(p));
+      });
   }
 
   private async scanWorkspace(prefix?: string) {
@@ -75,6 +102,14 @@ export class Status extends Base {
         this.#untracked.add(outputName);
       }
     }
+  }
+
+  private statusFor(pathname: Pathname) {
+    const changes = this.#changes.get(pathname);
+    // prettier-ignore
+    return changes?.has(Status.WorkspaceModified) ? " M"
+      : changes?.has(Status.WorkspaceDeleted) ? " D"
+      : "  "
   }
 
   private async trackableFile(pathname: Pathname, stat: Stats) {

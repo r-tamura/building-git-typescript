@@ -120,9 +120,22 @@ describe("Command.Status", () => {
     });
 
     it("prints nothing if a file is touched", async () => {
+      await t.delay(1000);
       await t.touch("1.txt");
 
       await assertStatus("");
+    });
+
+    it("reports deleted files", async () => {
+      await t.rm("a/2.txt");
+
+      await assertStatus(" D a/2.txt");
+    });
+
+    it("reports files in deleted directories", async () => {
+      await t.rm("a");
+
+      await assertStatus([" D a/2.txt", " D a/b/3.txt"].join("\n"));
     });
   });
 });
