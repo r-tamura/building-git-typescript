@@ -1,9 +1,13 @@
 import { createHash } from "crypto";
 import { constants } from "fs";
-import { FileService, defaultFs, Zlib, defaultZlib } from "../services";
-import path = require("path");
-import { GitObject, OID } from "../types";
 import { Z_BEST_SPEED } from "zlib";
+import path = require("path");
+import { FileService, defaultFs, Zlib, defaultZlib } from "../services";
+import { GitObject, GitObjectParser, OID } from "../types";
+import { Blob } from "./blob";
+import { asserts, scanUntil } from "../util";
+import { Tree } from "./tree";
+import { Commit } from "./commit";
 
 const TEMP_CHARS =
   "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
@@ -24,14 +28,24 @@ const defaultRand: Rand = {
   sample,
 };
 
-type Environment = {
+export type Environment = {
   fs?: FileService;
   rand?: Rand;
   zlib?: Zlib;
 };
 
+type Parsers = Record<"blob" | "tree" | "commit", GitObjectParser>;
+
+const TYPES: Parsers = {
+  blob: Blob,
+  tree: Tree,
+  commit: Commit,
+} as const;
 export class Database {
   #pathname: string;
+  #objects: { [s: string]: GitObject } = {};
+
+  // modules
   #fs: NonNullable<Environment["fs"]>;
   #rand: NonNullable<Environment["rand"]>;
   #zlib: NonNullable<Environment["zlib"]>;
@@ -46,15 +60,20 @@ export class Database {
     return this.hashContent(this.seliarizeObject(obj));
   }
 
-  private seliarizeObject(obj: GitObject) {
-    const str = obj.toString();
-    const contentStr = `${obj.type()} ${str.length}\0${str}`;
-    const bytes = Buffer.from(contentStr, "binary");
-    return bytes;
+  async load(oid: OID) {
+    return (this.#objects[oid] =
+      this.#objects[oid] ?? (await this.readObject(oid)));
   }
 
-  private hashContent(bytes: Buffer) {
-    return createHash("sha1").update(bytes).digest("hex");
+  async readObject(oid: OID) {
+    const objPath = this.objectPath(oid);
+    const compressed = await this.#fs.readFile(objPath);
+    const data = await this.#zlib.inflate(compressed);
+
+    const object = parseObject(data);
+    object.oid = oid;
+
+    return object;
   }
 
   async store(obj: GitObject) {
@@ -64,15 +83,22 @@ export class Database {
     await this.writeObject(obj.oid, content);
   }
 
-  async writeObject(oid: OID, content: Buffer) {
-    const [dirname, basename] = [oid.slice(0, 2), oid.slice(2)];
-    const objectPath = path.join(this.#pathname, dirname, basename);
+  private genTempName() {
+    let suffix = "";
+    for (let i = 0; i < 6; i++) {
+      suffix += this.#rand.sample(TEMP_CHARS);
+    }
+    return `tmp_obj_${suffix}`;
+  }
 
-    if (await this.fileExists(objectPath)) {
+  async writeObject(oid: OID, content: Buffer) {
+    const objPathname = this.objectPath(oid);
+
+    if (await this.fileExists(objPathname)) {
       return;
     }
 
-    const dirPath = path.join(this.#pathname, dirname);
+    const dirPath = path.dirname(objPathname);
     const tempPath = path.join(dirPath, this.genTempName());
 
     const flags = constants.O_RDWR | constants.O_CREAT | constants.O_EXCL;
@@ -89,22 +115,29 @@ export class Database {
         throw e;
       }
     }
-    const compressed = (await this.#zlib.deflate(content, {
+    const compressed = await this.#zlib.deflate(content, {
       level: Z_BEST_SPEED,
-    })) as Buffer;
+    });
     await this.#fs.writeFile(fileHandle, compressed);
-    this.#fs.rename(tempPath, objectPath);
+    this.#fs.rename(tempPath, objPathname);
     if (fileHandle) {
       await fileHandle.close();
     }
   }
 
-  private genTempName() {
-    let suffix = "";
-    for (let i = 0; i < 6; i++) {
-      suffix += this.#rand.sample(TEMP_CHARS);
-    }
-    return `tmp_obj_${suffix}`;
+  private hashContent(bytes: Buffer) {
+    return createHash("sha1").update(bytes).digest("hex");
+  }
+
+  private objectPath(oid: OID) {
+    return path.join(this.#pathname, oid.slice(0, 2), oid.slice(2));
+  }
+
+  private seliarizeObject(obj: GitObject) {
+    const str = obj.toString();
+    const contentStr = `${obj.type()} ${str.length}\0${str}`;
+    const bytes = Buffer.from(contentStr, "binary");
+    return bytes;
   }
 
   private async fileExists(filepath: string) {
@@ -119,4 +152,13 @@ export class Database {
     }
     return true;
   }
+}
+
+function parseObject(obj: Buffer) {
+  const [type, next] = scanUntil(" ", obj);
+  const [size, endHeader] = scanUntil("\0", obj, next);
+  asserts(type === "blob" || type === "tree" || type === "commit");
+
+  const object = TYPES[type].parse(obj.slice(endHeader));
+  return object;
 }

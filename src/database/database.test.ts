@@ -1,19 +1,30 @@
-import { Database } from ".";
-import { defaultFs, defaultZlib } from "../services";
+import * as path from "path";
 import * as assert from "power-assert";
 import { constants } from "fs";
-import * as path from "path";
 import { Blob } from "./blob";
+import { defaultFs, defaultZlib } from "../services";
 import { Z_BEST_SPEED } from "zlib";
+import { Database, Environment } from "./database";
 
-const makeEnv = () => {
+type EnvMocker = {
+  file?: string | Buffer;
+  zlib?: string | Buffer;
+};
+
+const makeEnv = ({ file, zlib }: EnvMocker = {}): Environment => {
   return {
-    fs: { ...defaultFs },
+    fs: {
+      ...defaultFs,
+      read: jest.fn(),
+      readFile: jest.fn().mockResolvedValue(file),
+      stat: jest.fn(),
+    },
     rand: {
       sample: jest.fn().mockReturnValue("0"),
     },
     zlib: {
-      deflate: jest.fn(),
+      deflate: jest.fn().mockResolvedValue(zlib),
+      inflate: jest.fn().mockResolvedValue(zlib),
     },
   };
 };
@@ -43,7 +54,7 @@ describe("Database#store", () => {
       db.writeObject = mockedWriteObject;
 
       // Act
-      db.store(blob);
+      await db.store(blob);
     });
     // Assert
     it("オブジェクトID", () => {
@@ -178,5 +189,25 @@ describe("Database#writeObject", () => {
         path.join(testRepoPath, "ab/cdefghijklmnopqrstu012345"),
       ]);
     });
+  });
+});
+
+describe("Database#readObject", () => {
+  it("オブジェクトIDのオブジェクトを読み込む", async () => {
+    // Arrange
+    const testObject = "blob 12\0hello world";
+    // Act
+    const db = new Database(
+      ".git/objects",
+      makeEnv({ zlib: Buffer.from(testObject) })
+    );
+    const actual = await db.readObject(
+      "08cf6101416f0ce0dda3c80e627f333854c4085c"
+    );
+
+    // Assert
+    const blob = new Blob("hello world");
+    blob.oid = "08cf6101416f0ce0dda3c80e627f333854c4085c";
+    assert.equal(actual.toString(), blob.toString());
   });
 });

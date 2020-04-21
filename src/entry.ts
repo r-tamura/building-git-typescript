@@ -3,10 +3,21 @@ import { OID, Pathname } from "./types";
 import { Stats } from "fs";
 import { isExecutable } from "./util/fs";
 
+type ValueOf<T> = T[keyof T];
+
+export const MODE = {
+  readable: 0o0100644,
+  executable: 0o0100755,
+  directory: 0o040000,
+} as const;
+
+export type ModeNumber = ValueOf<typeof MODE>;
+export type ModeStr = "100644" | "100755";
+
 export interface IEntry {
   readonly parentDirectories: string[];
   readonly basename: Pathname;
-  mode: 0o0100644 | 0o0100755 | 0o40000 | "100644" | "100755";
+  mode: ModeNumber | ModeStr;
   name: Pathname;
   oid: OID;
   statMatch(stat: Stats): boolean;
@@ -17,7 +28,6 @@ export interface IEntry {
 export class Entry implements IEntry {
   static readonly REGULAR_MODE = "100644";
   static readonly EXECUTABLE_MODE = "100755";
-  static readonly DIRECTORY_MODE = 0o040000;
 
   oid: OID;
   name: Pathname;

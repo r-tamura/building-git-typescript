@@ -37,7 +37,8 @@ export class Refs {
    */
   async readHead() {
     try {
-      return await this.#fs.readFile(this.headPath, { encoding: "ascii" });
+      const ref = await this.#fs.readFile(this.headPath, { encoding: "ascii" });
+      return ref.trim();
     } catch (e) {
       const nodeErr = e as NodeJS.ErrnoException;
       if (nodeErr.code === "ENOENT") {

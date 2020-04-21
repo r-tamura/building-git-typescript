@@ -1,12 +1,16 @@
 import { GitObject, OID } from "../types";
 
-export type Data = string;
+export type Data = Buffer;
 
 export class Blob implements GitObject {
   oid: OID | null = null;
-  #data: Data;
-  constructor(data: Data) {
-    this.#data = data;
+  data: Data;
+  constructor(strdata: string) {
+    this.data = Buffer.from(strdata, "utf-8");
+  }
+
+  static parse(buf: Buffer) {
+    return new Blob(buf.toString());
   }
 
   type() {
@@ -14,6 +18,6 @@ export class Blob implements GitObject {
   }
 
   toString() {
-    return this.#data;
+    return this.data.toString();
   }
 }

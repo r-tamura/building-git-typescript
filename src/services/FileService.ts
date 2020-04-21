@@ -20,15 +20,20 @@ export type FileService = Pick<
 >;
 
 export const defaultFs: FileService = fs;
+
+/** zlib */
 const deflate = promisify(zlib.deflate) as (
   buf: Parameters<typeof zlib.deflate>[0],
   options: Parameters<typeof zlib.deflate>[1]
 ) => Promise<Buffer>;
+const inflate = promisify<zlib.InputType, Buffer>(zlib.deflate);
 export type Zlib = {
   deflate: typeof deflate;
+  inflate: typeof inflate;
 };
 export const defaultZlib = {
   deflate: promisify(zlib.deflate) as typeof deflate,
+  inflate: promisify(zlib.inflate) as typeof inflate,
 };
 
 /**

@@ -2,19 +2,13 @@ import { Commit } from "./commit";
 import { Author } from "./author";
 import * as assert from "power-assert";
 
-jest.mock("./author", () => ({
-  Author: jest.fn().mockImplementation(() => ({
-    toString: () => "JohnDoe <johndoe@test.local> 1585666800000 +0900",
-  })),
-}));
-
 describe("Commit#toString", () => {
   it("parentが存在しないとき、tree,author,commiter,messageが指定されたフォーマットで返される", () => {
     // Arrange
     const parentOId = null;
     const treeOId = "123456789abcdeffedcba98765abcdef12345678";
     const author = new Author(
-      "John Doe",
+      "JohnDoe",
       "johndoe@test.local",
       new Date(2020, 3, 1)
     );
@@ -27,8 +21,8 @@ describe("Commit#toString", () => {
     assert.equal(
       actual,
       `tree ${treeOId}
-author JohnDoe <johndoe@test.local> 1585666800000 +0900
-committer JohnDoe <johndoe@test.local> 1585666800000 +0900
+author JohnDoe <johndoe@test.local> 1585666800 +0900
+committer JohnDoe <johndoe@test.local> 1585666800 +0900
 
 test commit`
     );
@@ -39,7 +33,7 @@ test commit`
     const parentOId = "abcdef987654321fedcba98765abcdef12345678";
     const treeOId = "123456789abcdeffedcba98765abcdef12345678";
     const author = new Author(
-      "John Doe",
+      "JohnDoe",
       "johndoe@test.local",
       new Date(2020, 3, 1)
     );
@@ -53,10 +47,50 @@ test commit`
       actual,
       `tree ${treeOId}
 parent ${parentOId}
-author JohnDoe <johndoe@test.local> 1585666800000 +0900
-committer JohnDoe <johndoe@test.local> 1585666800000 +0900
+author JohnDoe <johndoe@test.local> 1585666800 +0900
+committer JohnDoe <johndoe@test.local> 1585666800 +0900
 
 test commit`
     );
+  });
+});
+
+describe("Commit.parse", () => {
+  it("rootコミットのとき、parentなしのコミットオブジェクトとしてパースする", () => {
+    // Arrange
+    const rawCommit = Buffer.from(
+      new Commit(
+        null,
+        "123456789abcdeffedcba98765abcdef12345678",
+        new Author("JohnDoe", "johndoe@test.local", new Date(2020, 3, 1)),
+        "test commit"
+      ).toString(),
+      "binary"
+    );
+
+    // Act
+    const actual = Commit.parse(rawCommit);
+
+    // Assert
+    assert.deepEqual(actual.toString(), rawCommit.toString());
+  });
+
+  it("rootコミット以外のとき、parentありのコミットオブジェクトとしてパースする", () => {
+    // Arrange
+    const rawCommit = Buffer.from(
+      new Commit(
+        "d8fd39d0bbdd2dcf322d8b11390a4c5825b11495",
+        "123456789abcdeffedcba98765abcdef12345678",
+        new Author("JohnDoe", "johndoe@test.local", new Date(2020, 3, 1)),
+        "test commit"
+      ).toString(),
+      "binary"
+    );
+
+    // Act
+    const actual = Commit.parse(rawCommit);
+
+    // Assert
+    assert.deepEqual(actual.toString(), rawCommit.toString());
   });
 });

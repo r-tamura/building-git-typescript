@@ -5,6 +5,10 @@ import { Process, FileService, Logger } from "./services";
  * .git/objectsへ保存することができるデータ
  */
 export type OID = string;
+
+export interface GitObjectParser {
+  parse(buf: Buffer): GitObject;
+}
 export interface GitObject {
   oid: OID | null;
   type: () => string;

@@ -1,18 +1,21 @@
 import * as path from "path";
-import { Entry, IEntry } from "../entry";
-import { asserts, packHex } from "../util";
+import * as Database from "../database";
+import { IEntry } from "../entry";
+import { asserts, packHex, scanUntil, unpackHex } from "../util";
 import { GitObject, OID, Pathname } from "../types";
 
-export type EntryMap = { [s: string]: IEntry | Tree };
+export type EntryMap = { [s: string]: ReadEntry | Tree };
 export type TraverseCallbackFn = (t: Tree) => Promise<void>;
-export class Tree implements GitObject {
-  oid: OID | null = null;
-  #entries: EntryMap;
-  constructor(entries: EntryMap = {}) {
-    this.#entries = entries;
-  }
 
-  static build(entries: IEntry[]) {
+export type WriteEntry = IEntry;
+export type ReadEntry = Pick<IEntry, "mode" | "oid">;
+export class Tree implements GitObject {
+  static readonly TREE_MODE = 0o040000;
+
+  oid: OID | null = null;
+  constructor(public entries: EntryMap = {}) {}
+
+  static build(entries: WriteEntry[]) {
     entries.sort(this.ascending);
     const root = new this();
 
@@ -23,13 +26,33 @@ export class Tree implements GitObject {
     return root;
   }
 
-  addEntry(parents: Pathname[], entry: IEntry) {
+  static parse(buf: Buffer) {
+    const entries: EntryMap = {};
+    let p: number = 0;
+    while (p < buf.length) {
+      const [modeStr, offsetName] = scanUntil(" ", buf, p);
+      const [name, offsetHash] = scanUntil("\0", buf, offsetName);
+      const oid = unpackHex(buf.slice(offsetHash, offsetHash + 20));
+      p += offsetHash + 20;
+      const mode = Number.parseInt(modeStr, 8);
+      asserts(
+        mode === 0o0100644 || mode === 0o0100755 || mode === 0o040000,
+        `'${mode}'は数値タイプのモード`
+      );
+      entries[name] = new Database.Entry(oid, mode);
+    }
+
+    const root = new this(entries);
+    return root;
+  }
+
+  addEntry(parents: Pathname[], entry: WriteEntry) {
     if (parents.length === 0) {
-      this.#entries[entry.basename] = entry;
+      this.entries[entry.basename] = entry;
     } else {
-      const treeName = parents[0];
-      const tree = (this.#entries[treeName] =
-        this.#entries[treeName] ?? new Tree());
+      const treeName = path.basename(parents[0]);
+      const tree = (this.entries[treeName] =
+        this.entries[treeName] ?? new Tree());
       asserts(tree instanceof Tree);
       parents.shift();
       tree.addEntry(parents, entry);
@@ -38,7 +61,7 @@ export class Tree implements GitObject {
 
   async traverse(act: TraverseCallbackFn) {
     // deepest subtree first 深さ優先走査
-    for (const [name, entry] of Object.entries(this.#entries)) {
+    for (const [name, entry] of Object.entries(this.entries)) {
       if (entry instanceof Tree) {
         await entry.traverse(act);
       }
@@ -51,7 +74,7 @@ export class Tree implements GitObject {
   }
 
   get mode() {
-    return Entry.DIRECTORY_MODE;
+    return Tree.TREE_MODE;
   }
 
   /**
@@ -60,7 +83,7 @@ export class Tree implements GitObject {
    */
   toString() {
     // this.#entries.sort(Tree.ascending)
-    const entries = Object.entries(this.#entries).map(([name, entry]) => {
+    const entries = Object.entries(this.entries).map(([name, entry]) => {
       asserts(entry.oid !== null, `Entry.oid of '${name}' is not set yet.`);
       const encodedMode = Buffer.from(entry.mode.toString(8) + " ", "ascii");
       const encodedName = Buffer.from(name + "\0", "ascii");
@@ -73,7 +96,7 @@ export class Tree implements GitObject {
     return bytes.toString("binary");
   }
 
-  private static ascending(e1: IEntry, e2: IEntry) {
+  private static ascending(e1: WriteEntry, e2: WriteEntry) {
     return e1.name <= e2.name ? -1 : 1;
   }
 }

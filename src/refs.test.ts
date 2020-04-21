@@ -11,7 +11,7 @@ describe("Refs#readHead", () => {
     // Arrange
     const mockedReadFile = jest
       .fn()
-      .mockResolvedValue("ref: refs/heads/master");
+      .mockResolvedValue("ref: refs/heads/master\n");
     const env = {
       fs: { ...defaultFs, readFile: mockedReadFile },
     };
