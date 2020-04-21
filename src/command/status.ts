@@ -5,22 +5,21 @@ import { Base } from "./base";
 import { Pathname, OID } from "../types";
 import { IEntry } from "../entry";
 import { asserts } from "../util";
+import { type } from "os";
 
-const status = {
-  INDEX_ADDED: Symbol("A"),
-  INDEX_MODIFIED: Symbol("M"),
-  INDEX_DELETED: Symbol("D"),
-  WORKSPACE_DELETED: Symbol("D"),
-  WORKSPACE_MODIFIED: Symbol("M"),
-} as const;
+type IndexStatus = "ADDED" | "MODIFIED" | "DELETED" | "NOCHANGE";
+type WorkspaceStatus = "MODIFIED" | "DELETED" | "NOCHANGE";
 
-type ChangedType = typeof status[keyof typeof status];
+type ChangeType = IndexStatus | WorkspaceStatus;
 export class Status extends Base {
   #untracked: Set<Pathname> = new Set();
   #changed: Set<Pathname> = new Set();
-  #changes: Map<Pathname, Set<ChangedType>> = new Map();
   #stats: { [s: string]: Stats } = {};
   #headTree: { [s: string]: Database.Entry } = {};
+
+  #indexChanges: Map<Pathname, IndexStatus> = new Map();
+  #workspaceChanges: Map<Pathname, WorkspaceStatus> = new Map();
+
   async run() {
     await this.repo.index.loadForUpdate();
 
@@ -46,17 +45,17 @@ export class Status extends Base {
 
     if (item) {
       if (entry.mode !== item.mode || entry.oid !== item.oid) {
-        this.recordChange(entry.name, status.INDEX_MODIFIED);
+        this.recordChange(entry.name, this.#indexChanges, "MODIFIED");
       }
     } else {
-      this.recordChange(entry.name, status.INDEX_ADDED);
+      this.recordChange(entry.name, this.#indexChanges, "ADDED");
     }
   }
 
   private collectDeletedHeadFiles() {
     Object.keys(this.#headTree).forEach((name) => {
       if (!this.repo.index.trackedFile(name)) {
-        this.recordChange(name, status.INDEX_DELETED);
+        this.recordChange(name, this.#indexChanges, "DELETED");
       }
     });
   }
@@ -65,12 +64,12 @@ export class Status extends Base {
     const stat = this.#stats[entry.name];
 
     if (!stat) {
-      this.recordChange(entry.name, status.WORKSPACE_DELETED);
+      this.recordChange(entry.name, this.#workspaceChanges, "DELETED");
       return;
     }
 
     if (!entry.statMatch(stat)) {
-      this.recordChange(entry.name, status.WORKSPACE_MODIFIED);
+      this.recordChange(entry.name, this.#workspaceChanges, "MODIFIED");
       return;
     }
 
@@ -85,7 +84,7 @@ export class Status extends Base {
     if (entry.oid === oid) {
       this.repo.index.updateEntryStat(entry, stat);
     } else {
-      this.recordChange(entry.name, status.WORKSPACE_MODIFIED);
+      this.recordChange(entry.name, this.#workspaceChanges, "MODIFIED");
       return;
     }
   }
@@ -133,12 +132,9 @@ export class Status extends Base {
     }
   }
 
-  private recordChange(pathname: Pathname, type: ChangedType) {
+  private recordChange<T>(pathname: Pathname, set: Map<Pathname, T>, type: T) {
     this.#changed.add(pathname);
-    if (!this.#changes.has(pathname)) {
-      this.#changes.set(pathname, new Set());
-    }
-    this.#changes.get(pathname)?.add(type);
+    set.set(pathname, type);
   }
 
   private async scanWorkspace(prefix?: string) {
@@ -160,16 +156,16 @@ export class Status extends Base {
   }
 
   private statusFor(pathname: Pathname) {
-    const changes = this.#changes.get(pathname);
-    // prettier-ignore
-    const left  = changes?.has(status.INDEX_ADDED)    ? "A"
-                : changes?.has(status.INDEX_MODIFIED) ? "M"
-                : changes?.has(status.INDEX_DELETED)  ? "D"
-                : " "
-    // prettier-ignore
-    const right = changes?.has(status.WORKSPACE_MODIFIED) ? "M"
-                : changes?.has(status.WORKSPACE_DELETED)  ? "D"
-                : " "
+    const ShortStatus: Record<ChangeType, string> = {
+      DELETED: "D",
+      ADDED: "A",
+      MODIFIED: "M",
+      NOCHANGE: " ",
+    } as const;
+
+    const left = ShortStatus[this.#indexChanges.get(pathname) ?? "NOCHANGE"];
+    const right =
+      ShortStatus[this.#workspaceChanges.get(pathname) ?? "NOCHANGE"];
 
     return left + right;
   }
