@@ -16,10 +16,8 @@
   "devDependencies": {
     "@types/jest": "^25.2.1",
     "@types/power-assert": "^1.5.3",
-    "@types/rmfr": "^2.0.0",
     "jest": "^25.2.7",
     "power-assert": "^1.6.1",
-    "rmfr": "^2.0.0",
     "ts-jest": "^25.3.1"
   }
 }

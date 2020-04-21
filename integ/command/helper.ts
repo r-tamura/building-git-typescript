@@ -1,6 +1,5 @@
 import { promises } from "fs";
 import { Readable } from "stream";
-import * as rmfr from "rmfr";
 import * as path from "path";
 import * as assert from "power-assert";
 import { Environment } from "~/types";
