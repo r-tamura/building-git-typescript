@@ -4,11 +4,12 @@ import * as Database from "../database";
 import { Base } from "./base";
 import { Pathname, OID } from "../types";
 import { IEntry } from "../entry";
-import { asserts } from "~/util";
+import { asserts } from "../util";
 
 const status = {
   INDEX_ADDED: Symbol("A"),
   INDEX_MODIFIED: Symbol("M"),
+  INDEX_DELETED: Symbol("D"),
   WORKSPACE_DELETED: Symbol("D"),
   WORKSPACE_MODIFIED: Symbol("M"),
 } as const;
@@ -26,6 +27,7 @@ export class Status extends Base {
     await this.scanWorkspace();
     await this.loadHeadTree();
     await this.checkIndexEntries();
+    this.collectDeletedHeadFiles();
 
     await this.repo.index.writeUpdates();
 
@@ -39,31 +41,24 @@ export class Status extends Base {
     }
   }
 
-  private async loadHeadTree() {
-    const headOid = await this.repo.refs.readHead();
-    if (!headOid) {
-      return;
-    }
+  private checkIndexAgainstHeadTree(entry: IEntry) {
+    const item = this.#headTree[entry.name];
 
-    const commit = await this.repo.database.load(headOid);
-    asserts(commit instanceof Database.Commit, "instanceof Commit");
-    await this.readTree(commit.tree);
+    if (item) {
+      if (entry.mode !== item.mode || entry.oid !== item.oid) {
+        this.recordChange(entry.name, status.INDEX_MODIFIED);
+      }
+    } else {
+      this.recordChange(entry.name, status.INDEX_ADDED);
+    }
   }
 
-  private async readTree(treeOid: OID, pathname: Pathname = "") {
-    const tree = await this.repo.database.load(treeOid);
-    asserts(tree instanceof Database.Tree);
-
-    for (const [name, entry] of Object.entries(tree.entries)) {
-      const nextPath = path.join(pathname, name);
-      const readEntry = entry as Database.Entry;
-      if (readEntry.tree()) {
-        asserts(entry.oid !== null);
-        await this.readTree(entry.oid, nextPath);
-      } else {
-        this.#headTree[nextPath] = readEntry;
+  private collectDeletedHeadFiles() {
+    Object.keys(this.#headTree).forEach((name) => {
+      if (!this.repo.index.trackedFile(name)) {
+        this.recordChange(name, status.INDEX_DELETED);
       }
-    }
+    });
   }
 
   private async checkIndexAgainstWorkspace(entry: IEntry) {
@@ -95,24 +90,15 @@ export class Status extends Base {
     }
   }
 
-  private checkIndexAgainstHeadTree(entry: IEntry) {
-    const item = this.#headTree[entry.name];
-
-    if (item) {
-      if (entry.mode !== item.mode || entry.oid !== item.oid) {
-        this.recordChange(entry.name, status.INDEX_MODIFIED);
-      }
-    } else {
-      this.recordChange(entry.name, status.INDEX_ADDED);
+  private async loadHeadTree() {
+    const headOid = await this.repo.refs.readHead();
+    if (!headOid) {
+      return;
     }
-  }
 
-  private recordChange(pathname: Pathname, type: ChangedType) {
-    this.#changed.add(pathname);
-    if (!this.#changes.has(pathname)) {
-      this.#changes.set(pathname, new Set());
-    }
-    this.#changes.get(pathname)?.add(type);
+    const commit = await this.repo.database.load(headOid);
+    asserts(commit instanceof Database.Commit, "instanceof Commit");
+    await this.readTree(commit.tree);
   }
 
   private printResults() {
@@ -129,6 +115,30 @@ export class Status extends Base {
       .forEach((p) => {
         this.log(formatter(p));
       });
+  }
+
+  private async readTree(treeOid: OID, pathname: Pathname = "") {
+    const tree = await this.repo.database.load(treeOid);
+    asserts(tree instanceof Database.Tree);
+
+    for (const [name, entry] of Object.entries(tree.entries)) {
+      const nextPath = path.join(pathname, name);
+      const readEntry = entry as Database.Entry;
+      if (readEntry.tree()) {
+        asserts(entry.oid !== null);
+        await this.readTree(entry.oid, nextPath);
+      } else {
+        this.#headTree[nextPath] = readEntry;
+      }
+    }
+  }
+
+  private recordChange(pathname: Pathname, type: ChangedType) {
+    this.#changed.add(pathname);
+    if (!this.#changes.has(pathname)) {
+      this.#changes.set(pathname, new Set());
+    }
+    this.#changes.get(pathname)?.add(type);
   }
 
   private async scanWorkspace(prefix?: string) {
@@ -152,8 +162,9 @@ export class Status extends Base {
   private statusFor(pathname: Pathname) {
     const changes = this.#changes.get(pathname);
     // prettier-ignore
-    const left  = changes?.has(status.INDEX_ADDED) ? "A"
+    const left  = changes?.has(status.INDEX_ADDED)    ? "A"
                 : changes?.has(status.INDEX_MODIFIED) ? "M"
+                : changes?.has(status.INDEX_DELETED)  ? "D"
                 : " "
     // prettier-ignore
     const right = changes?.has(status.WORKSPACE_MODIFIED) ? "M"

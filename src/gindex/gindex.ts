@@ -77,7 +77,12 @@ export class Index {
   }
 
   tracked(pathname: Pathname) {
-    return !!this.#entries[pathname] || this.#parents.has(pathname);
+    // untracked検出の場合はディレクトリも検出する
+    return this.trackedFile(pathname) || this.#parents.has(pathname);
+  }
+
+  trackedFile(pathname: Pathname) {
+    return !!this.#entries[pathname];
   }
 
   updateEntryStat(entry: IEntry, stat: Stats) {

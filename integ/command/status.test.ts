@@ -176,5 +176,24 @@ describe("Command.Status", () => {
 
       await assertStatus("M  a/b/3.txt");
     });
+
+    it("reports deleted files", async () => {
+      await t.rm("1.txt");
+      await t.rm(".git/index");
+      await t.jitCmd("add", ".");
+
+      await assertStatus("D  1.txt");
+    });
+
+    it("reports all deleted files inside directories", async () => {
+      await t.rm("a");
+      await t.rm(".git/index");
+      await t.jitCmd("add", ".");
+
+      await assertStatus(stripIndent`
+      D  a/2.txt
+      D  a/b/3.txt
+      `);
+    });
   });
 });
