@@ -18,13 +18,6 @@ export function unpackHex(packed: Buffer | string) {
  * @param buf バッファ
  * @param offset 検索を開始するオフセット
  */
-interface scanUntil {
-  (char: string, buf: Buffer, offset?: number, encoding?: BufferEncoding): [
-    string,
-    number
-  ];
-  (char: string, buf: Buffer, offset?: number): [Buffer, number];
-}
 export function scanUntil(
   char: string,
   buf: Buffer,

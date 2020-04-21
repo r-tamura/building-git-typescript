@@ -4,10 +4,10 @@ import { IEntry } from "../entry";
 import { asserts, packHex, scanUntil, unpackHex } from "../util";
 import { GitObject, OID, Pathname } from "../types";
 
-export type EntryMap = { [s: string]: ReadEntry | Tree };
 export type TraverseCallbackFn = (t: Tree) => Promise<void>;
 
 export type WriteEntry = IEntry;
+export type EntryMap = { [s: string]: ReadEntry | Tree };
 export type ReadEntry = Pick<IEntry, "mode" | "oid">;
 export class Tree implements GitObject {
   static readonly TREE_MODE = 0o040000;

@@ -2,41 +2,79 @@ import { Stats } from "fs";
 import * as path from "path";
 import * as Database from "../database";
 import { Base } from "./base";
-import { Pathname } from "../types";
-import { IEntry, Entry } from "../entry";
+import { Pathname, OID } from "../types";
+import { IEntry } from "../entry";
+import { asserts } from "~/util";
 
-type D = "D";
-type M = "M";
-type ChangedType = D | M;
+const status = {
+  INDEX_ADDED: Symbol("A"),
+  WORKSPACE_DELETED: Symbol("D"),
+  WORKSPACE_MODIFIED: Symbol("M"),
+} as const;
+
+type ChangedType = typeof status[keyof typeof status];
 export class Status extends Base {
-  static readonly WorkspaceDeleted: D = "D";
-  static readonly WorkspaceModified: M = "M";
-  #untracked!: Set<Pathname>;
-  #changed!: Set<Pathname>;
+  #untracked: Set<Pathname> = new Set();
+  #changed: Set<Pathname> = new Set();
   #changes: Map<Pathname, Set<ChangedType>> = new Map();
   #stats: { [s: string]: Stats } = {};
+  #headTree: { [s: string]: Database.Entry } = {};
   async run() {
-    await this.repo.index.load();
-
-    this.#untracked = new Set();
-    this.#changed = new Set();
+    await this.repo.index.loadForUpdate();
 
     await this.scanWorkspace();
-    await this.detectWorkspaceChanged();
+    await this.loadHeadTree();
+    await this.checkIndexEntries();
+
+    await this.repo.index.writeUpdates();
 
     this.printResults();
   }
 
-  private async checkIndexEntry(entry: IEntry) {
+  private async checkIndexEntries() {
+    for (const entry of this.repo.index.eachEntry()) {
+      await this.checkIndexAgainstWorkspace(entry);
+      this.checkIndexAgainstHeadTree(entry);
+    }
+  }
+
+  private async loadHeadTree() {
+    const headOid = await this.repo.refs.readHead();
+    if (!headOid) {
+      return;
+    }
+
+    const commit = await this.repo.database.load(headOid);
+    asserts(commit instanceof Database.Commit, "instanceof Commit");
+    await this.readTree(commit.tree);
+  }
+
+  private async readTree(treeOid: OID, pathname: Pathname = "") {
+    const tree = await this.repo.database.load(treeOid);
+    asserts(tree instanceof Database.Tree);
+
+    for (const [name, entry] of Object.entries(tree.entries)) {
+      const nextPath = path.join(pathname, name);
+      const readEntry = entry as Database.Entry;
+      if (readEntry.tree()) {
+        asserts(entry.oid !== null);
+        await this.readTree(entry.oid, nextPath);
+      } else {
+        this.#headTree[nextPath] = readEntry;
+      }
+    }
+  }
+
+  private async checkIndexAgainstWorkspace(entry: IEntry) {
     const stat = this.#stats[entry.name];
 
     if (!stat) {
-      this.recordChange(entry.name, Status.WorkspaceDeleted);
+      this.recordChange(entry.name, status.WORKSPACE_DELETED);
       return;
     }
 
     if (!entry.statMatch(stat)) {
-      this.recordChange(entry.name, Status.WorkspaceModified);
+      this.recordChange(entry.name, status.WORKSPACE_MODIFIED);
       return;
     }
 
@@ -51,14 +89,16 @@ export class Status extends Base {
     if (entry.oid === oid) {
       this.repo.index.updateEntryStat(entry, stat);
     } else {
-      this.recordChange(entry.name, Status.WorkspaceModified);
+      this.recordChange(entry.name, status.WORKSPACE_MODIFIED);
       return;
     }
   }
 
-  private async detectWorkspaceChanged() {
-    for (const entry of this.repo.index.eachEntry()) {
-      await this.checkIndexEntry(entry);
+  private checkIndexAgainstHeadTree(entry: IEntry) {
+    const item = this.#headTree[entry.name];
+
+    if (!item) {
+      this.recordChange(entry.name, status.INDEX_ADDED);
     }
   }
 
@@ -107,9 +147,14 @@ export class Status extends Base {
   private statusFor(pathname: Pathname) {
     const changes = this.#changes.get(pathname);
     // prettier-ignore
-    return changes?.has(Status.WorkspaceModified) ? " M"
-      : changes?.has(Status.WorkspaceDeleted) ? " D"
-      : "  "
+    const left  = changes?.has(status.INDEX_ADDED) ? "A"
+                : " "
+    // prettier-ignore
+    const right = changes?.has(status.WORKSPACE_MODIFIED) ? "M"
+                : changes?.has(status.WORKSPACE_DELETED)  ? "D"
+                : " "
+
+    return left + right;
   }
 
   private async trackableFile(pathname: Pathname, stat: Stats) {

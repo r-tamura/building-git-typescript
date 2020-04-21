@@ -138,4 +138,29 @@ describe("Command.Status", () => {
       await assertStatus([" D a/2.txt", " D a/b/3.txt"].join("\n"));
     });
   });
+
+  describe("head/index changes", () => {
+    beforeEach(async () => {
+      await t.writeFile("1.txt", "one");
+      await t.writeFile("a/2.txt", "two");
+      await t.writeFile("a/b/3.txt", "three");
+
+      await t.jitCmd("add", ".");
+      await t.commit("first commit");
+    });
+
+    it("reports a file added to a tracked directory", async () => {
+      await t.writeFile("a/4.txt", "four");
+      await t.jitCmd("add", ".");
+
+      await assertStatus("A  a/4.txt");
+    });
+
+    it("reports a file added to an untracked directory", async () => {
+      await t.writeFile("d/e/5.txt", "five");
+      await t.jitCmd("add", ".");
+
+      await assertStatus("A  d/e/5.txt");
+    });
+  });
 });
