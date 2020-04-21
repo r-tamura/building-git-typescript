@@ -80,7 +80,7 @@ describe("Command.Status", () => {
     ?? outer/
     `);
   });
-
+  type a = jest.ProvidesCallback;
   describe("index/workspace changes", () => {
     beforeEach(async () => {
       await t.writeFile("1.txt", "one");
@@ -161,6 +161,20 @@ describe("Command.Status", () => {
       await t.jitCmd("add", ".");
 
       await assertStatus("A  d/e/5.txt");
+    });
+
+    it("reports modified modes", async () => {
+      await t.makeExecutable("1.txt");
+      await t.jitCmd("add", ".");
+
+      await assertStatus("M  1.txt");
+    });
+
+    it("reports modified content", async () => {
+      await t.writeFile("a/b/3.txt", "changed");
+      await t.jitCmd("add", ".");
+
+      await assertStatus("M  a/b/3.txt");
     });
   });
 });

@@ -8,6 +8,7 @@ import { asserts } from "~/util";
 
 const status = {
   INDEX_ADDED: Symbol("A"),
+  INDEX_MODIFIED: Symbol("M"),
   WORKSPACE_DELETED: Symbol("D"),
   WORKSPACE_MODIFIED: Symbol("M"),
 } as const;
@@ -97,7 +98,11 @@ export class Status extends Base {
   private checkIndexAgainstHeadTree(entry: IEntry) {
     const item = this.#headTree[entry.name];
 
-    if (!item) {
+    if (item) {
+      if (entry.mode !== item.mode || entry.oid !== item.oid) {
+        this.recordChange(entry.name, status.INDEX_MODIFIED);
+      }
+    } else {
       this.recordChange(entry.name, status.INDEX_ADDED);
     }
   }
@@ -148,6 +153,7 @@ export class Status extends Base {
     const changes = this.#changes.get(pathname);
     // prettier-ignore
     const left  = changes?.has(status.INDEX_ADDED) ? "A"
+                : changes?.has(status.INDEX_MODIFIED) ? "M"
                 : " "
     // prettier-ignore
     const right = changes?.has(status.WORKSPACE_MODIFIED) ? "M"
