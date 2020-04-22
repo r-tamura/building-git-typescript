@@ -7,6 +7,11 @@ describe("Command.Status", () => {
     t.assertInfo(expected);
   }
 
+  async function assertStatusPorcelain(expected: string) {
+    await t.jitCmd("status", "--porcelain");
+    t.assertInfo(expected);
+  }
+
   beforeEach(t.beforeHook);
   afterEach(t.afterHook);
 
@@ -16,9 +21,18 @@ describe("Command.Status", () => {
     await t.writeFile("another.txt", "");
 
     // Act & Assert
-    await assertStatus(stripIndent`
+    await assertStatusPorcelain(stripIndent`
     ?? another.txt
     ?? file.txt
+    `);
+
+    await assertStatus(stripIndent`
+    Untracked files:
+
+    \tanother.txt
+    \tfile.txt
+
+    nothing added to commit but untracked files present
     `);
   });
 
@@ -32,7 +46,7 @@ describe("Command.Status", () => {
     await t.writeFile("file.txt", "");
 
     // Act & Assert
-    await assertStatus(stripIndent`
+    await assertStatusPorcelain(stripIndent`
     ?? file.txt
     `);
   });
@@ -43,7 +57,7 @@ describe("Command.Status", () => {
     await t.writeFile("dir/another.txt", "");
 
     // Act & Assert
-    await assertStatus(stripIndent`
+    await assertStatusPorcelain(stripIndent`
     ?? dir/
     ?? file.txt
     `);
@@ -59,7 +73,7 @@ describe("Command.Status", () => {
     await t.writeFile("a/b/c/file.txt", "");
 
     // Act & Assert
-    await assertStatus(stripIndent`
+    await assertStatusPorcelain(stripIndent`
     ?? a/b/c/
     ?? a/outer.txt
     `);
@@ -70,17 +84,17 @@ describe("Command.Status", () => {
     await t.mkdir("outer");
 
     // Act & Assert
-    await assertStatus("");
+    await assertStatusPorcelain("");
   });
 
   it("lists untracked directories that indirectly contain files", async () => {
     await t.writeFile("outer/inner/file.txt", "");
 
-    await assertStatus(stripIndent`
+    await assertStatusPorcelain(stripIndent`
     ?? outer/
     `);
   });
-  type a = jest.ProvidesCallback;
+
   describe("index/workspace changes", () => {
     beforeEach(async () => {
       await t.writeFile("1.txt", "one");
@@ -92,7 +106,8 @@ describe("Command.Status", () => {
     });
 
     it("prints nothing when no files are changed", async () => {
-      await assertStatus("");
+      await assertStatusPorcelain("");
+      await assertStatus("nothing to commit, working tree clean");
     });
 
     it("reports files with modified contents", async () => {
@@ -101,7 +116,15 @@ describe("Command.Status", () => {
       await t.writeFile("a/2.txt", "modified");
 
       // Act & Assert
-      await assertStatus([" M 1.txt", " M a/2.txt"].join("\n"));
+      await assertStatusPorcelain([" M 1.txt", " M a/2.txt"].join("\n"));
+      await assertStatus(stripIndent`
+      Changes not staged for commit:
+
+      \tmodified:   1.txt
+      \tmodified:   a/2.txt
+
+      no changes added to commit
+      `);
     });
 
     it("reports files with change modes", async () => {
@@ -109,33 +132,41 @@ describe("Command.Status", () => {
       await t.makeExecutable("a/2.txt");
 
       // Act & Assert
-      await assertStatus(" M a/2.txt");
+      await assertStatusPorcelain(" M a/2.txt");
     });
 
     it("reports modified files with unchanged size", async () => {
       await t.delay(1000); // Note: nano秒をtimestampで比較しないため, timestampを変えるために少し待つ
       await t.writeFile("a/b/3.txt", "hello");
 
-      await assertStatus(" M a/b/3.txt");
+      await assertStatusPorcelain(" M a/b/3.txt");
     });
 
     it("prints nothing if a file is touched", async () => {
       await t.delay(1000);
       await t.touch("1.txt");
 
-      await assertStatus("");
+      await assertStatusPorcelain("");
     });
 
     it("reports deleted files", async () => {
       await t.rm("a/2.txt");
 
-      await assertStatus(" D a/2.txt");
+      await assertStatusPorcelain(" D a/2.txt");
     });
 
     it("reports files in deleted directories", async () => {
       await t.rm("a");
 
-      await assertStatus([" D a/2.txt", " D a/b/3.txt"].join("\n"));
+      await assertStatusPorcelain([" D a/2.txt", " D a/b/3.txt"].join("\n"));
+      await assertStatus(stripIndent`
+      Changes not staged for commit:
+
+      \tdeleted:    a/2.txt
+      \tdeleted:    a/b/3.txt
+
+      no changes added to commit
+      `);
     });
   });
 
@@ -153,28 +184,34 @@ describe("Command.Status", () => {
       await t.writeFile("a/4.txt", "four");
       await t.jitCmd("add", ".");
 
-      await assertStatus("A  a/4.txt");
+      await assertStatusPorcelain("A  a/4.txt");
+      await assertStatus(stripIndent`
+      Changes to be committed:
+
+      \tnew file:   a/4.txt
+
+      `);
     });
 
     it("reports a file added to an untracked directory", async () => {
       await t.writeFile("d/e/5.txt", "five");
       await t.jitCmd("add", ".");
 
-      await assertStatus("A  d/e/5.txt");
+      await assertStatusPorcelain("A  d/e/5.txt");
     });
 
     it("reports modified modes", async () => {
       await t.makeExecutable("1.txt");
       await t.jitCmd("add", ".");
 
-      await assertStatus("M  1.txt");
+      await assertStatusPorcelain("M  1.txt");
     });
 
     it("reports modified content", async () => {
       await t.writeFile("a/b/3.txt", "changed");
       await t.jitCmd("add", ".");
 
-      await assertStatus("M  a/b/3.txt");
+      await assertStatusPorcelain("M  a/b/3.txt");
     });
 
     it("reports deleted files", async () => {
@@ -182,7 +219,7 @@ describe("Command.Status", () => {
       await t.rm(".git/index");
       await t.jitCmd("add", ".");
 
-      await assertStatus("D  1.txt");
+      await assertStatusPorcelain("D  1.txt");
     });
 
     it("reports all deleted files inside directories", async () => {
@@ -190,7 +227,7 @@ describe("Command.Status", () => {
       await t.rm(".git/index");
       await t.jitCmd("add", ".");
 
-      await assertStatus(stripIndent`
+      await assertStatusPorcelain(stripIndent`
       D  a/2.txt
       D  a/b/3.txt
       `);

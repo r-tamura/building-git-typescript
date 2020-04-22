@@ -5,14 +5,13 @@ import { Base } from "./base";
 import { Pathname, OID } from "../types";
 import { IEntry } from "../entry";
 import { asserts } from "../util";
-import { type } from "os";
 
 type IndexStatus = "ADDED" | "MODIFIED" | "DELETED" | "NOCHANGE";
 type WorkspaceStatus = "MODIFIED" | "DELETED" | "NOCHANGE";
 
 type ChangeType = IndexStatus | WorkspaceStatus;
 export class Status extends Base {
-  #untracked: Set<Pathname> = new Set();
+  #untrackedFiles: Set<Pathname> = new Set();
   #changed: Set<Pathname> = new Set();
   #stats: { [s: string]: Stats } = {};
   #headTree: { [s: string]: Database.Entry } = {};
@@ -100,20 +99,75 @@ export class Status extends Base {
     await this.readTree(commit.tree);
   }
 
-  private printResults() {
-    this.print(this.#changed, (p) => {
-      const status = this.statusFor(p);
-      return `${status} ${p}`;
-    });
-    this.print(this.#untracked, (p) => `?? ${p}`);
-  }
-
   private print(alike: Iterable<Pathname>, formatter: (p: Pathname) => string) {
     return Array.from(alike)
       .sort()
       .forEach((p) => {
         this.log(formatter(p));
       });
+  }
+
+  static readonly LABEL_WIDTH = 12;
+  static LONG_STATUS = {
+    ADDED: "new file:",
+    DELETED: "deleted:",
+    MODIFIED: "modified:",
+  } as const;
+  private printChanges(
+    message: string,
+    changeset: Map<Pathname, ChangeType> | Set<Pathname>
+  ) {
+    if (changeset.size === 0) {
+      return;
+    }
+
+    this.log(`${message}:`);
+    this.log("");
+    changeset.forEach((type: string, name: string) => {
+      const status = this.isStatusType(type)
+        ? Status.LONG_STATUS[type].padEnd(Status.LABEL_WIDTH, " ")
+        : "";
+      this.log(`\t${status}${name}`);
+    });
+    this.log("");
+  }
+
+  private printCommitStatus() {
+    if (this.#indexChanges.size > 0) {
+      return;
+    }
+
+    if (this.#workspaceChanges.size > 0) {
+      this.log("no changes added to commit");
+    } else if (this.#untrackedFiles.size > 0) {
+      this.log("nothing added to commit but untracked files present");
+    } else {
+      this.log("nothing to commit, working tree clean");
+    }
+  }
+
+  private printResults() {
+    if (this.args[0] === "--porcelain") {
+      this.printPorcelainFormat();
+    } else {
+      this.printLongFormat();
+    }
+  }
+
+  private printLongFormat() {
+    this.printChanges("Changes to be committed", this.#indexChanges);
+    this.printChanges("Changes not staged for commit", this.#workspaceChanges);
+    this.printChanges("Untracked files", this.#untrackedFiles);
+
+    this.printCommitStatus();
+  }
+
+  private printPorcelainFormat() {
+    this.print(this.#changed, (p) => {
+      const status = this.statusFor(p);
+      return `${status} ${p}`;
+    });
+    this.print(this.#untrackedFiles, (p) => `?? ${p}`);
   }
 
   private async readTree(treeOid: OID, pathname: Pathname = "") {
@@ -150,7 +204,7 @@ export class Status extends Base {
         }
       } else if (await this.trackableFile(pathname, stat)) {
         const outputName = stat.isDirectory() ? pathname + path.sep : pathname;
-        this.#untracked.add(outputName);
+        this.#untrackedFiles.add(outputName);
       }
     }
   }
@@ -194,5 +248,11 @@ export class Status extends Base {
       }
     }
     return false;
+  }
+
+  private isStatusType(
+    status: string
+  ): status is keyof typeof Status.LONG_STATUS {
+    return Object.keys(Status.LONG_STATUS).includes(status);
   }
 }

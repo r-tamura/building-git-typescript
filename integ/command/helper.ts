@@ -64,7 +64,6 @@ export function assertError(expected: string) {
 export async function beforeHook() {
   await fs.mkdir(repoPath());
   await jitCmd("init", repoPath());
-  jest.clearAllMocks();
 }
 
 export async function afterHook() {
