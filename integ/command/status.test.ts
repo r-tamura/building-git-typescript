@@ -232,5 +232,22 @@ describe("Command.Status", () => {
       D  a/b/3.txt
       `);
     });
+
+    it("reports all types of status in the right order", async () => {
+      await t.writeFile("z.txt", "z");
+      await t.rm("a/2.txt");
+      await t.writeFile("1.txt", "changed");
+      await t.rm(".git/index");
+      await t.jitCmd("add", ".");
+
+      await assertStatus(stripIndent`
+      Changes to be committed:
+
+      \tmodified:   1.txt
+      \tdeleted:    a/2.txt
+      \tnew file:   z.txt
+
+      `);
+    });
   });
 });

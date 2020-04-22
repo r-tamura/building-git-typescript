@@ -10,14 +10,36 @@ type IndexStatus = "ADDED" | "MODIFIED" | "DELETED" | "NOCHANGE";
 type WorkspaceStatus = "MODIFIED" | "DELETED" | "NOCHANGE";
 
 type ChangeType = IndexStatus | WorkspaceStatus;
+
+class SortedMap<T, U> extends Map<T, U> {
+  #keys: Set<T> = new Set();
+
+  set(key: T, value: U) {
+    this.#keys.add(key);
+    super.set(key, value);
+    return this;
+  }
+
+  forEach(callbackfn: (value: U, key: T, map: Map<T, U>) => void): void {
+    Array.from(this.#keys)
+      .sort()
+      .forEach((key) => {
+        const value = super.get(key);
+        if (typeof value === "undefined") {
+          return;
+        }
+        callbackfn(value, key, this);
+      });
+  }
+}
 export class Status extends Base {
   #untrackedFiles: Set<Pathname> = new Set();
   #changed: Set<Pathname> = new Set();
   #stats: { [s: string]: Stats } = {};
   #headTree: { [s: string]: Database.Entry } = {};
 
-  #indexChanges: Map<Pathname, IndexStatus> = new Map();
-  #workspaceChanges: Map<Pathname, WorkspaceStatus> = new Map();
+  #indexChanges: Map<Pathname, IndexStatus> = new SortedMap();
+  #workspaceChanges: Map<Pathname, WorkspaceStatus> = new SortedMap();
 
   async run() {
     await this.repo.index.loadForUpdate();
