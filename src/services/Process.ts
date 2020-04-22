@@ -1,4 +1,2 @@
-import { Readable } from "stream";
-
-export type Process = Pick<typeof process, "cwd" | "env"> & { stdin: Readable };
+export type Process = Pick<typeof process, "cwd" | "env" | "stdout" | "stdin">;
 export const defaultProcess = process;

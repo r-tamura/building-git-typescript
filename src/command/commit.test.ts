@@ -69,14 +69,6 @@ describe("commit", () => {
   let cmd: Commit;
   beforeAll(async () => {
     jest.clearAllMocks();
-    // MockedDatabase.mockImplementation(() => ({
-    //   store: mockedStore,
-    // }));
-    // MockedRefs.mockImplementation((pathname: string) => ({
-    //   updateHead: mockedUpdateHead,
-    //   readHead: jest.fn(),
-    //   headPath: pathname + "/HEAD",
-    // }));
     const input = Stream.Readable.from("test message");
     const env: Environment = {
       fs: {
@@ -87,7 +79,7 @@ describe("commit", () => {
       logger: makeLogger(),
       process: {
         ...defaultProcess,
-        stdin: input,
+        stdin: input as any,
         env: {
           ...process.env,
           GIT_AUTHOR_NAME: "John Doe",

@@ -5,6 +5,7 @@ import { Base } from "./base";
 import { Pathname, OID } from "../types";
 import { IEntry } from "../entry";
 import { asserts } from "../util";
+import { Style } from "../color";
 
 type IndexStatus = "ADDED" | "MODIFIED" | "DELETED" | "NOCHANGE";
 type WorkspaceStatus = "MODIFIED" | "DELETED" | "NOCHANGE";
@@ -137,7 +138,8 @@ export class Status extends Base {
   } as const;
   private printChanges(
     message: string,
-    changeset: Map<Pathname, ChangeType> | Set<Pathname>
+    changeset: Map<Pathname, ChangeType> | Set<Pathname>,
+    style: Style
   ) {
     if (changeset.size === 0) {
       return;
@@ -149,7 +151,7 @@ export class Status extends Base {
       const status = this.isStatusType(type)
         ? Status.LONG_STATUS[type].padEnd(Status.LABEL_WIDTH, " ")
         : "";
-      this.log(`\t${status}${name}`);
+      this.log("\t" + this.fmt(style, status + name));
     });
     this.log("");
   }
@@ -177,9 +179,13 @@ export class Status extends Base {
   }
 
   private printLongFormat() {
-    this.printChanges("Changes to be committed", this.#indexChanges);
-    this.printChanges("Changes not staged for commit", this.#workspaceChanges);
-    this.printChanges("Untracked files", this.#untrackedFiles);
+    this.printChanges("Changes to be committed", this.#indexChanges, "green");
+    this.printChanges(
+      "Changes not staged for commit",
+      this.#workspaceChanges,
+      "red"
+    );
+    this.printChanges("Untracked files", this.#untrackedFiles, "red");
 
     this.printCommitStatus();
   }

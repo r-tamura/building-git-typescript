@@ -3,6 +3,7 @@ import { Runnable } from "./types";
 import { Environment, Pathname, EnvVars } from "../types";
 import { Repository } from "../repository";
 import { Logger } from "../services";
+import * as Color from "../color";
 
 /** process.exit 代替え */
 export class Exit {}
@@ -38,6 +39,10 @@ export abstract class Base implements Runnable {
   exit(status: number) {
     this.status = status;
     throw new Exit();
+  }
+
+  fmt(style: Color.Style, text: string) {
+    return this.env.process.stdout.isTTY ? Color.format(style, text) : text;
   }
 
   async execute() {

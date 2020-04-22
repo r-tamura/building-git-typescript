@@ -1,5 +1,5 @@
 import { promises } from "fs";
-import { Readable } from "stream";
+import { Readable, Writable, Stream } from "stream";
 import * as path from "path";
 import * as assert from "power-assert";
 import { Environment } from "~/types";
@@ -17,7 +17,8 @@ const _env: Environment = {
   fs: defaultFs,
   logger: makeLogger(),
   process: {
-    stdin: Readable.from([""]),
+    stdin: makeStdin(),
+    stdout: makeStdout(),
     env: envvars,
     cwd: jest.fn().mockReturnValue(repoPath()),
   },
@@ -30,12 +31,16 @@ function getEnv() {
   return _env;
 }
 
-function setEnvvar(key: string, value: string) {
+function mockEnvvar(key: string, value: string) {
   envvars[key] = value;
 }
 
-function setStdin(s: string) {
-  _env.process = { ..._env.process, stdin: Readable.from([s]) };
+function mockStdio(s: string) {
+  _env.process = {
+    ..._env.process,
+    stdin: makeStdin(),
+    stdout: makeStdout(),
+  };
 }
 
 /** Logger assertion */
@@ -118,6 +123,29 @@ export async function touch(name: string) {
   await fs.utimes(path.join(repoPath(), name), now, now);
 }
 
+/** I/O
+ * TODO: stdin/stdoutの良いモック方法を考える
+ */
+function makeStdin(
+  text: string = "",
+  { isTTY = false }: { isTTY?: boolean } = {}
+): typeof process.stdin {
+  const readable = Readable.from(text) as any;
+  return mockStreamAsTTY(readable, { isTTY });
+}
+
+function makeStdout({
+  isTTY = false,
+}: { isTTY?: boolean } = {}): typeof process.stdout {
+  const writable = new Writable() as any;
+  return mockStreamAsTTY(writable, { isTTY });
+}
+
+function mockStreamAsTTY<T>(stream: T, { isTTY }: { isTTY: boolean }): T {
+  (stream as any).isTTY = isTTY;
+  return stream;
+}
+
 /** simple git command */
 let cmd: Command.Base;
 export async function jitCmd(...args: string[]) {
@@ -129,9 +157,9 @@ export async function jitCmd(...args: string[]) {
 }
 
 export async function commit(message: string) {
-  setEnvvar("GIT_AUTHOR_NAME", "A. U. Thor");
-  setEnvvar("GIT_AUTHOR_EMAIL", "author@example.com");
-  setStdin(message);
+  mockEnvvar("GIT_AUTHOR_NAME", "A. U. Thor");
+  mockEnvvar("GIT_AUTHOR_EMAIL", "author@example.com");
+  mockStdio(message);
   await jitCmd("commit");
 }
 
