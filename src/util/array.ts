@@ -25,3 +25,43 @@ export async function asyncMap<T, U>(fn: (t: T) => Promise<U>, xs: T[]) {
   }
   return Promise.all(promises);
 }
+
+export function clone<T>(xs: T[]): T[] {
+  return [...xs];
+}
+
+function jsindex(xs: any[], index: number) {
+  return index >= 0 ? index : xs.length + index;
+}
+
+/**
+ * 添字indexに対応した配列xsの要素を返します。添字indexが負の場合は配列の最後の要素から数えた添字にある要素を返します
+ * @param xs 配列
+ * @param index 添字
+ *
+ * @example 添字が負のとき
+ *  const xs = [1, 2, 3, 4]
+ *  index(xs, -1) // 4
+ *  index(xs, -3) // 2
+ *
+ */
+export function get<T>(xs: T[], index: number): T {
+  if (Math.abs(index) >= xs.length) {
+    throw new RangeError(
+      `index has to be within array's length. ${-xs.length} < index:${index} < ${
+        xs.length
+      }`
+    );
+  }
+  const actualIndex = jsindex(xs, index);
+  return xs[actualIndex];
+}
+
+export function set<T>(xs: T[], index: number, value: T) {
+  const actualIndex = jsindex(xs, index);
+  xs[actualIndex] = value;
+}
+
+export function enumerate<T>(xs: T[]): [T, number][] {
+  return xs.map((x, i) => [x, i]);
+}
