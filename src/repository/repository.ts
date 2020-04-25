@@ -1,10 +1,11 @@
 import * as path from "path";
-import { Database } from "./database";
-import { Index } from "./gindex";
-import { Workspace } from "./workspace";
-import { Refs } from "./refs";
-import { Pathname } from "./types";
-import { Process, FileService } from "./services";
+import { Database } from "../database";
+import { Index } from "../gindex/index";
+import { Workspace } from "../workspace";
+import { Refs } from "../refs";
+import { Pathname } from "../types";
+import { Process, FileService } from "../services";
+import { Status } from "./status";
 
 export type RepositoryEnv = {
   process: Process;
@@ -34,6 +35,10 @@ export class Repository {
 
   get refs() {
     return (this.#refs = this.#refs ?? new Refs(this.gitPath, this.env));
+  }
+
+  get status() {
+    return Status.of(this);
   }
 
   get workspace() {

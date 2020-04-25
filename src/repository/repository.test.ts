@@ -1,11 +1,11 @@
-import { Refs } from "./refs";
-import { Environment } from "./types";
-import { Repository } from "./repository";
-import { defaultFs, defaultProcess } from "./services";
+import { Refs } from "../refs";
+import { Environment } from "../types";
+import { Repository } from "../repository";
+import { defaultFs, defaultProcess } from "../services";
 import * as assert from "assert";
-import { makeLogger } from "./__test__/util";
+import { makeLogger } from "../__test__/util";
 
-jest.mock("./refs");
+jest.mock("../refs");
 let MockedRefs = (Refs as unknown) as jest.Mock<Partial<Refs>>;
 
 const testEnvGlobal: Environment = {
