@@ -115,17 +115,6 @@ export class Refs {
    * HEADのデータを読み込みます。HEADファイルが存在しない場合はnullを返します。
    */
   async readHead() {
-    // try {
-    //   const ref = await this.#fs.readFile(this.headPath, "ascii");
-    //   return ref.trim();
-    // } catch (e) {
-    //   const nodeErr = e as NodeJS.ErrnoException;
-    //   if (nodeErr.code === "ENOENT") {
-    //     return null;
-    //   } else {
-    //     throw e;
-    //   }
-    // }
     return this.readSymRef(path.join(this.#pathname, HEAD));
   }
 
