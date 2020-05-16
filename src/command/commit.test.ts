@@ -109,7 +109,7 @@ describe("commit", () => {
 
     const storingTrees = mockedStore.mock.calls.slice(0, 1);
     storingTrees.forEach((call) => {
-      assert.equal((call[0] as GitObject).type(), "tree");
+      assert.equal((call[0] as GitObject).type, "tree");
     });
 
     assert.equal(MockedCommit.mock.calls.length, 1, "commit objectの生成");

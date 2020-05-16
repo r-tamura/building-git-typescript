@@ -160,7 +160,7 @@ export class Database {
 
   private seliarizeObject(obj: GitObject) {
     const str = obj.toString();
-    const contentStr = `${obj.type()} ${str.length}\0${str}`;
+    const contentStr = `${obj.type} ${str.length}\0${str}`;
     const bytes = Buffer.from(contentStr, "binary");
     return bytes;
   }

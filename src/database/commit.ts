@@ -4,6 +4,7 @@ import { GitObject, OID } from "../types";
 import { scanUntil, asserts, splitByLine } from "../util";
 
 export class Commit {
+  readonly type = "commit";
   oid: OID | null = null;
   tree: OID;
   parent: OID | null = null;
@@ -55,10 +56,6 @@ export class Commit {
 
   titleLine() {
     return splitByLine(this.#message)[0];
-  }
-
-  type() {
-    return "commit";
   }
 
   toString() {

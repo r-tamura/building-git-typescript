@@ -12,6 +12,7 @@ export type ReadEntry = Pick<IEntry, "mode" | "oid">;
 export class Tree {
   static readonly TREE_MODE = 0o040000;
 
+  readonly type = "tree";
   oid: OID | null = null;
   constructor(public entries: EntryMap = {}) {}
 
@@ -67,10 +68,6 @@ export class Tree {
       }
     }
     await act(this);
-  }
-
-  type() {
-    return "tree";
   }
 
   get mode() {

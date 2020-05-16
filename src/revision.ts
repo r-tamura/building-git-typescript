@@ -63,7 +63,7 @@ export class Revision {
     }
 
     const commit = await this.loadTypedObject(oid, COMMIT);
-    if (!(commit instanceof Commit)) {
+    if (commit === null || commit.type !== "commit") {
       return null;
     }
     return commit.parent;
@@ -109,10 +109,10 @@ export class Revision {
 
     const object = await this.#repo.database.load(oid);
 
-    if (object.type() === type) {
+    if (object.type === type) {
       return object;
     }
-    const message = `object ${oid} is a ${object.type()}, not a ${type}`;
+    const message = `object ${oid} is a ${object.type}, not a ${type}`;
     this.errors.push(new HintedError(message, []));
     return null;
   }
@@ -124,9 +124,9 @@ export class Revision {
     for await (const object of loadPromises) {
       asserts(object.oid !== null);
       const short = this.#repo.database.shortOid(object.oid);
-      const info = `  ${short} ${object.type()}`;
+      const info = `  ${short} ${object.type}`;
 
-      if (object instanceof Commit) {
+      if (object.type === "commit") {
         objects.push(
           `${info} ${object.author.shortDate()} - ${object.titleLine()}`
         );

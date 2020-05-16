@@ -51,7 +51,7 @@ export class Status {
     }
 
     const commit = await this.repo.database.load(headOid);
-    asserts(commit instanceof Database.Commit, "instanceof Commit");
+    asserts(commit.type === "commit");
     await this.readTree(commit.tree);
   }
 
