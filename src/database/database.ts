@@ -76,6 +76,10 @@ export class Database {
     return object;
   }
 
+  shortOid(oid: OID) {
+    return oid.slice(0, 7);
+  }
+
   async store(obj: GitObject) {
     const content = this.seliarizeObject(obj);
     obj.oid = this.hashContent(content);

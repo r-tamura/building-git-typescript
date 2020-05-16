@@ -1,10 +1,11 @@
 import { BaseError, asserts } from "../util";
 import { Commit } from "./commit";
 import { Init } from "./init";
+import { BaseConstructor } from "./base";
 import { Add } from "./add";
-import { Environment } from "../types";
-import { Base, BaseConstructor } from "./base";
+import { Diff } from "./diff";
 import { Status } from "./status";
+import { Environment } from "../types";
 
 export class Unknown extends BaseError {}
 
@@ -15,6 +16,7 @@ const COMMANDS: CommandMap = {
   add: Add,
   commit: Commit,
   status: Status,
+  diff: Diff,
 } as const;
 
 export async function execute(args: string[], env: Environment) {

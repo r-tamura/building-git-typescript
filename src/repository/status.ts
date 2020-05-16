@@ -6,8 +6,8 @@ import * as Database from "../database";
 import { asserts } from "../util";
 import { IEntry } from "~/entry";
 
-type IndexStatus = "added" | "modified" | "deleted" | "nochange";
-type WorkspaceStatus = "modified" | "deleted" | "nochange";
+export type IndexStatus = "added" | "modified" | "deleted" | "nochange";
+export type WorkspaceStatus = "modified" | "deleted" | "nochange";
 
 export type ChangeType = IndexStatus | WorkspaceStatus;
 
@@ -18,7 +18,7 @@ export class Status {
   untrackedFiles: Set<Pathname> = new Set();
 
   #headTree: { [s: string]: Database.Entry } = {};
-  #stats: { [s: string]: Stats } = {};
+  stats: { [s: string]: Stats } = {};
 
   constructor(public repo: Repository) {}
 
@@ -61,7 +61,7 @@ export class Status {
       if (this.repo.index.tracked(pathname)) {
         if (stat.isFile()) {
           // Stat情報をキャッシュする
-          this.#stats[pathname] = stat;
+          this.stats[pathname] = stat;
         }
         if (stat.isDirectory()) {
           await this.scanWorkspace(pathname);
@@ -86,7 +86,7 @@ export class Status {
   }
 
   private async checkIndexAgainstWorkspace(entry: IEntry) {
-    const stat = this.#stats[entry.name];
+    const stat = this.stats[entry.name];
 
     if (!stat) {
       this.recordChange(entry.name, this.workspaceChanges, "deleted");

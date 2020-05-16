@@ -48,6 +48,10 @@ export class Index {
     return entries;
   }
 
+  entryForPath(pathname: Pathname) {
+    return this.#entries[pathname];
+  }
+
   async loadForUpdate() {
     await this.#lockfile.holdForUpdate();
     await this.load();

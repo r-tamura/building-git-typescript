@@ -83,7 +83,7 @@ describe("Database#writeObject", () => {
   const errNoEntry = {
     code: "ENOENT",
   };
-  describe("objects内にすでにディレクトリが存在する場合、そのディレクトリ内にオブジェクトを作成する", () => {
+  describe("objects内にすでにディレクトリが存在するとき、そのディレクトリ内にオブジェクトを作成する", () => {
     beforeAll(jest.clearAllMocks);
     beforeAll(async () => {
       // Arrange
@@ -138,7 +138,7 @@ describe("Database#writeObject", () => {
     });
   });
 
-  describe("objects内にディレクトリが存在しない場合、ディレクトリを作成してからオブジェクトを作成する", () => {
+  describe("objects内にディレクトリが存在しないとき、ディレクトリを作成してからオブジェクトを作成する", () => {
     const mockedOpen = jest.fn().mockImplementationOnce(() => {
       throw errNoEntry;
     });
@@ -209,5 +209,16 @@ describe("Database#readObject", () => {
     const blob = new Blob("hello world");
     blob.oid = "08cf6101416f0ce0dda3c80e627f333854c4085c";
     assert.equal(actual.toString(), blob.toString());
+  });
+});
+
+describe("Database#shortOid", () => {
+  it("オブジェクトIDの先頭7文字を返す", () => {
+    // Act
+    const db = new Database(".git/objects", makeEnv());
+    const actual = db.shortOid("08cf6101416f0ce0dda3c80e627f333854c4085c");
+
+    // Assert
+    assert.equal(actual, "08cf610");
   });
 });
