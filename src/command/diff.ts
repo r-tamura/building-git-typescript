@@ -13,23 +13,53 @@ export class Diff extends Base {
   async run() {
     await this.repo.index.load();
     this.#status = await this.repo.status;
+    if (this.args[0] === "--cached") {
+      await this.diffHeadIndex();
+    } else {
+      await this.diffIndexWorkspace();
+    }
+  }
 
-    for (const [pathname, state] of this.#status.workspaceChanges.entries()) {
+  private async diffHeadIndex() {
+    for (const [pathname, state] of this.#status.indexChanges.entries()) {
       switch (state) {
+        case "added": {
+          this.printDiff(this.fromNothing(pathname), this.fromIndex(pathname));
+          break;
+        }
         case "modified": {
-          const a = this.fromIndex(pathname);
-          const b = await this.fromFile(pathname);
-          this.printDiff(a, b);
+          this.printDiff(this.fromHead(pathname), this.fromIndex(pathname));
           break;
         }
         case "deleted": {
-          const a = this.fromIndex(pathname);
-          const b = this.fromNothing(pathname);
-          this.printDiff(a, b);
+          this.printDiff(this.fromHead(pathname), this.fromNothing(pathname));
           break;
         }
       }
     }
+  }
+
+  private async diffIndexWorkspace() {
+    for (const [pathname, state] of this.#status.workspaceChanges.entries()) {
+      switch (state) {
+        case "modified": {
+          this.printDiff(
+            this.fromIndex(pathname),
+            await this.fromFile(pathname)
+          );
+          break;
+        }
+        case "deleted": {
+          this.printDiff(this.fromIndex(pathname), this.fromNothing(pathname));
+          break;
+        }
+      }
+    }
+  }
+
+  private fromHead(pathname: Pathname) {
+    const entry = this.#status.headTree[pathname];
+    return Target.of(pathname, entry.oid, entry.mode.toString(8));
   }
 
   private fromIndex(pathname: Pathname) {
@@ -63,7 +93,9 @@ export class Diff extends Base {
   }
 
   private printMode(a: Target, b: Target) {
-    if (b.mode === null) {
+    if (a.mode === null) {
+      this.log(`new file mode ${b.mode}`);
+    } else if (b.mode === null) {
       this.log(`deleted file mode ${a.mode}`);
     } else if (a.mode !== b.mode) {
       this.log(`old mode ${a.mode}`);

@@ -17,7 +17,7 @@ export class Status {
   workspaceChanges: Map<Pathname, WorkspaceStatus> = new SortedMap();
   untrackedFiles: Set<Pathname> = new Set();
 
-  #headTree: { [s: string]: Database.Entry } = {};
+  headTree: { [s: string]: Database.Entry } = {};
   stats: { [s: string]: Stats } = {};
 
   constructor(public repo: Repository) {}
@@ -37,7 +37,7 @@ export class Status {
     }
   }
   collectDeletedHeadFiles() {
-    Object.keys(this.#headTree).forEach((name) => {
+    Object.keys(this.headTree).forEach((name) => {
       if (!this.repo.index.trackedFile(name)) {
         this.recordChange(name, this.indexChanges, "deleted");
       }
@@ -74,7 +74,7 @@ export class Status {
   }
 
   private checkIndexAgainstHeadTree(entry: IEntry) {
-    const item = this.#headTree[entry.name];
+    const item = this.headTree[entry.name];
 
     if (item) {
       if (entry.mode !== item.mode || entry.oid !== item.oid) {
@@ -125,7 +125,7 @@ export class Status {
         asserts(entry.oid !== null);
         await this.readTree(entry.oid, nextPath);
       } else {
-        this.#headTree[nextPath] = readEntry;
+        this.headTree[nextPath] = readEntry;
       }
     }
   }

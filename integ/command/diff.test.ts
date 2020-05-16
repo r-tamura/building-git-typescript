@@ -10,7 +10,12 @@ describe("diff", () => {
     t.assertInfo(expected);
   }
 
-  describe("workspace/index", () => {
+  async function assertDiffHeadIndex(expected: string) {
+    await t.jitCmd("diff", "--cached");
+    t.assertInfo(expected);
+  }
+
+  describe("index/workspace", () => {
     beforeEach(async () => {
       await t.writeFile("file.txt", "contents");
       await t.jitCmd("add", ".");
@@ -54,6 +59,55 @@ describe("diff", () => {
       await t.rm("file.txt");
 
       await assertDiff(stripIndent`
+        diff --git a/file.txt b/file.txt
+        deleted file mode 100644
+        index 0839b2e..0000000
+        --- a/file.txt
+        +++ /dev/null
+      `);
+    });
+  });
+
+  describe("head/index", () => {
+    beforeEach(async () => {
+      await t.writeFile("file.txt", "contents");
+      await t.jitCmd("add", ".");
+      await t.commit("first commit");
+    });
+
+    it("コンテンツに変更があるとき、行ごとのpatch diffを表示する", async () => {
+      await t.writeFile("file.txt", "changed");
+      await t.rm(".git/index");
+      await t.jitCmd("add", ".");
+
+      await assertDiffHeadIndex(stripIndent`
+        diff --git a/file.txt b/file.txt
+        index 0839b2e..21fb1ec 100644
+        --- a/file.txt
+        +++ b/file.txt
+      `);
+    });
+
+    it("新しいファイルがindexへ追加されたとき、new fileとして表示する", async () => {
+      await t.writeFile("new.txt", "new");
+      await t.rm(".git/index");
+      await t.jitCmd("add", ".");
+
+      await assertDiffHeadIndex(stripIndent`
+        diff --git a/new.txt b/new.txt
+        new file mode 100644
+        index 0000000..3e5126c
+        --- /dev/null
+        +++ b/new.txt
+      `);
+    });
+
+    it("ファイルが削除されたとき、削除されたファイルを表示する", async () => {
+      await t.rm("file.txt");
+      await t.rm(".git/index");
+      await t.jitCmd("add", ".");
+
+      await assertDiffHeadIndex(stripIndent`
         diff --git a/file.txt b/file.txt
         deleted file mode 100644
         index 0839b2e..0000000
