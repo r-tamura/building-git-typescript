@@ -4,7 +4,7 @@ import * as crypto from "crypto";
 import { Index } from "./gindex";
 import { Lockfile } from "../lockfile";
 import { defaultFs } from "../services";
-import { makeTestStats, EEXIST } from "../__test__";
+import { makeTestStats } from "../__test__";
 import { Stats, promises } from "fs";
 import { createFakeRead } from "./__test__/fakeIndex";
 import { LockDenied } from "../refs";
@@ -16,7 +16,7 @@ const testIndexPath = ".git/index";
 const mockedWrite = jest.fn();
 const MockedLockfile = (Lockfile as unknown) as jest.Mock<Partial<Lockfile>>;
 const testObjectPath = "README.md";
-const testOid = "ba78afac62556e840341715936909cc36fe83a77"; // sha1 of 'jit'
+const testOid = "ba78afac62556e840341715936909cc36fe83a77"; // sha1 of 'jit\n'
 
 // book
 describe("Index#add", () => {
@@ -78,6 +78,21 @@ describe("Index#add", () => {
       "alice.txt",
       "nested",
     ]);
+  });
+});
+
+describe("Index#remove", () => {
+  it("インデックスから削除される", () => {
+    // Arrange
+    const index = new Index(".git");
+    index.add("path/to/some/a.txt", "abcdef1", makeTestStats());
+    assert.equal(index.tracked("path/to/some/a.txt"), true);
+
+    // Act
+    index.remove("path/to/some/a.txt");
+
+    // Assert
+    assert.equal(index.tracked("path/to/some/a.txt"), false);
   });
 });
 

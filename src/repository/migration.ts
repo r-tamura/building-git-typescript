@@ -26,6 +26,7 @@ export class Migration {
   async applyChanges() {
     this.planChenges();
     await this.updateWorkspace();
+    await this.updateIndex();
   }
 
   async blobData(oid: OID) {
@@ -37,6 +38,20 @@ export class Migration {
   private planChenges() {
     for (const [pathname, [o, n]] of this.#diff) {
       this.recordChange(pathname, o, n);
+    }
+  }
+
+  private async updateIndex() {
+    for (const [pathname] of this.changes["delete"]) {
+      this.#repo.index.remove(pathname);
+    }
+
+    for (const action of ["create", "update"] as Array<"create" | "update">) {
+      for (const [pathname, entry] of this.changes[action]) {
+        const stat = await this.#repo.workspace.statFile(pathname);
+        asserts(stat !== null);
+        this.#repo.index.add(pathname, entry.oid, stat);
+      }
     }
   }
 

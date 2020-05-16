@@ -1,9 +1,10 @@
 import { Stats, Dirent } from "fs";
 import { FS_ERROR } from "./error";
 
-export const makeTestStats = (
-  props: Partial<Omit<Stats, keyof Dirent>> = {}
-): Stats => {
+export const makeTestStats = (props: Partial<Stats> = {}): Stats => {
+  const isFile = jest.fn().mockReturnValue(props.isFile ?? false);
+  const isDirectory = jest.fn().mockReturnValue(props.isDirectory ?? false);
+
   const defaultProps = {
     dev: 16777221,
     mode: 33188,
@@ -25,7 +26,7 @@ export const makeTestStats = (
     birthtime: new Date("2020-04-08T01:46:45.936Z"),
   };
   const stats = new Stats();
-  return { ...stats, ...defaultProps, ...props };
+  return { ...stats, ...defaultProps, ...props, isFile, isDirectory };
 };
 
 type MockError = "EEXIST" | "ENOENT" | "EACCES";

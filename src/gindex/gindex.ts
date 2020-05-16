@@ -9,7 +9,6 @@ import { Invalid, times } from "../util";
 import { Entry } from "./entry";
 import { Checksum } from "./checksum";
 import { FileService, defaultFs } from "../services";
-import { IEntry } from "../entry";
 import { WriteEntry } from "~/database";
 
 type IndexEntryMap = { [s: string]: Entry };
@@ -20,17 +19,14 @@ export class Index {
   static readonly VERSION = 2;
 
   #pathname: Pathname;
-  #entries: IndexEntryMap;
-  #keys: Set<Pathname>;
-  #parents: Map<string, Set<string>>;
+  #entries: IndexEntryMap = {};
+  #keys: Set<Pathname> = new Set();
+  #parents: Map<string, Set<string>> = new Map();
   #lockfile: Lockfile;
   #changed: boolean = false;
   #fs: FileService;
   constructor(pathname: Pathname, env: LockfileEnvironment = {}) {
     this.#pathname = pathname;
-    this.#entries = {};
-    this.#keys = new Set();
-    this.#parents = new Map();
     this.clear();
     this.#lockfile = new Lockfile(pathname, env);
     this.#fs = env.fs ?? defaultFs;
@@ -79,6 +75,12 @@ export class Index {
 
   async releaseLock() {
     return this.#lockfile.rollback();
+  }
+
+  async remove(pathname: Pathname) {
+    this.removeEntry(pathname);
+    this.removeChildren(pathname);
+    this.#changed = true;
   }
 
   tracked(pathname: Pathname) {
