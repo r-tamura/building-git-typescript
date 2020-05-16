@@ -15,6 +15,9 @@ export class Diff extends Base {
   async run() {
     await this.repo.index.load();
     this.#status = await this.repo.status;
+
+    this.setupPager();
+
     if (this.args[0] === "--cached") {
       await this.diffHeadIndex();
     } else {

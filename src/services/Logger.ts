@@ -1,3 +1,5 @@
+import { Console } from "console";
+
 export type Logger = {
   level: "debug" | "info" | "warn" | "error";
   debug: (...msgs: string[]) => void;
@@ -6,10 +8,19 @@ export type Logger = {
   error: (...msgs: string[]) => void;
 };
 
-export const defaultLogger: Logger = {
-  level: "info",
-  debug: console.debug,
-  info: console.log,
-  warn: console.warn,
-  error: console.error,
-};
+export function createLogger(
+  stdout: NodeJS.WriteStream = process.stdout,
+  stderr: NodeJS.WriteStream = stdout,
+  level: Logger["level"] = "info"
+) {
+  const con = new Console(stdout, stderr, false);
+  return {
+    level,
+    debug: con.debug,
+    info: con.log,
+    warn: con.warn,
+    error: con.error,
+  };
+}
+
+export const defaultLogger = createLogger();

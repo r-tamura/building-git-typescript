@@ -10,7 +10,7 @@ describe("Hunk.filter", () => {
       "編集回数1",
       "A",
       [],
-      [Hunk.of(0, 0, [Edit.of("del", Line.of(1, "A\n"), null)])],
+      [Hunk.of(0, 0, [Edit.of("del", Line.of(1, "A"), null)])],
     ],
     [
       "編集回数2",

@@ -2,9 +2,9 @@ import * as assert from "power-assert";
 import { TextDocument, lines } from "./diff";
 import { Myers } from "./myers";
 const tests: [string, TextDocument, TextDocument, number, string[]][] = [
-  ["編集回数0", "A", "A", 0, [" A\n"]],
-  ["編集回数1", "A", [], 0, ["-A\n"]],
-  ["編集回数2", "A", "B", 2, ["-A\n", "+B\n"]],
+  ["編集回数0", "A", "A", 0, [" A"]],
+  ["編集回数1", "A", [], 0, ["-A"]],
+  ["編集回数2", "A", "B", 2, ["-A", "+B"]],
   [
     "2つの文字列",
     Array.from("ABCABBA"),

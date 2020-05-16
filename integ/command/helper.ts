@@ -19,6 +19,7 @@ const _env: Environment = {
   process: {
     stdin: makeStdin(),
     stdout: makeStdout(),
+    stderr: makeStdout(),
     env: envvars,
     cwd: jest.fn().mockReturnValue(repoPath()),
   },

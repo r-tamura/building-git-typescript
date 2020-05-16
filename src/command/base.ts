@@ -2,8 +2,10 @@ import * as path from "path";
 import { Runnable } from "./types";
 import { Environment, Pathname, EnvVars } from "../types";
 import { Repository } from "../repository";
-import { Logger } from "../services";
+import { Logger, createLogger } from "../services";
 import * as Color from "../color";
+import { Pager } from "../pager";
+import { Console } from "console";
 
 /** process.exit 代替え */
 export class Exit {}
@@ -19,6 +21,14 @@ export abstract class Base implements Runnable {
   protected envvars: EnvVars;
   /** ロガー */
   protected logger: Logger;
+  /** ページャ-  */
+  private pager: Pager | null = null;
+  /** プロセスの出力がTTYか */
+  private isatty: boolean;
+  /** this.env.process.stdoutへのショートカット */
+  protected stdout: NodeJS.WriteStream;
+  /** this.env.process.stderrへのショートカット */
+  protected stderr: NodeJS.WriteStream;
 
   /** 終了ステータス */
   status: number = 0;
@@ -27,6 +37,9 @@ export abstract class Base implements Runnable {
   constructor(protected args: string[], protected env: Environment) {
     this.dir = env.process.cwd();
     this.envvars = env.process.env;
+    this.isatty = env.process.stdout.isTTY;
+    this.stdout = env.process.stdout;
+    this.stderr = env.process.stderr;
     this.logger = env.logger;
   }
 
@@ -42,12 +55,16 @@ export abstract class Base implements Runnable {
   }
 
   fmt(style: Color.Style, text: string) {
-    return this.env.process.stdout.isTTY ? Color.format(style, text) : text;
+    return this.isatty ? Color.format(style, text) : text;
   }
 
   async execute() {
     try {
       await this.run();
+
+      if (this.pager) {
+        this.stdout.end();
+      }
     } catch (e) {
       switch (e.constructor) {
         case Exit:
@@ -71,6 +88,31 @@ export abstract class Base implements Runnable {
       // fmtでカラーリングされた場合
       message = message.replace("\n\x1b[m", "\x1b[m");
     }
-    this.env.logger.info(message);
+
+    try {
+      this.logger.info(message);
+    } catch (e) {
+      const nodeErr = e as NodeJS.ErrnoException;
+      switch (nodeErr.code) {
+        case "EPIPE":
+          this.exit(0);
+        default:
+          throw e;
+      }
+    }
+  }
+
+  protected setupPager() {
+    if (this.pager !== null) {
+      return;
+    }
+
+    if (!this.isatty) {
+      return;
+    }
+
+    this.pager = Pager.of(this.envvars, this.stdout, this.stderr);
+    this.stdout = this.pager.input;
+    this.logger = createLogger(this.stdout);
   }
 }
