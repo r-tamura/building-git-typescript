@@ -46,7 +46,7 @@ export class Migration {
       this.#repo.index.remove(pathname);
     }
 
-    for (const action of ["create", "update"] as Array<"create" | "update">) {
+    for (const action of ["create", "update"] as const) {
       for (const [pathname, entry] of this.changes[action]) {
         const stat = await this.#repo.workspace.statFile(pathname);
         asserts(stat !== null);

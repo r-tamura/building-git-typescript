@@ -5,9 +5,7 @@ import { Repository } from "./repository";
 import * as Database from "../database";
 import { asserts } from "../util";
 import * as Index from "../gindex";
-
-export type IndexStatus = "added" | "modified" | "deleted" | "nochange";
-export type WorkspaceStatus = "modified" | "deleted" | "nochange";
+import { Inspector, IndexStatus, WorkspaceStatus } from "./inspector";
 
 export type ChangeType = IndexStatus | WorkspaceStatus;
 
@@ -20,7 +18,11 @@ export class Status {
   headTree: { [s: string]: Database.Entry } = {};
   stats: { [s: string]: Stats } = {};
 
-  constructor(public repo: Repository) {}
+  #inspector: Inspector;
+
+  constructor(public repo: Repository) {
+    this.#inspector = new Inspector(repo);
+  }
 
   static async of(repo: Repository) {
     const status = new this(repo);
@@ -66,7 +68,7 @@ export class Status {
         if (stat.isDirectory()) {
           await this.scanWorkspace(pathname);
         }
-      } else if (await this.trackableFile(pathname, stat)) {
+      } else if (await this.#inspector.trackableFile(pathname, stat)) {
         const outputName = stat.isDirectory() ? pathname + path.sep : pathname;
         this.untrackedFiles.add(outputName);
       }
@@ -74,43 +76,23 @@ export class Status {
   }
 
   private checkIndexAgainstHeadTree(entry: Index.Entry) {
-    const item = this.headTree[entry.name];
+    const item = this.headTree[entry.name] ?? null;
+    const status = this.#inspector.compareTreeToIndex(item, entry);
 
-    if (item) {
-      if (entry.mode !== item.mode || entry.oid !== item.oid) {
-        this.recordChange(entry.name, this.indexChanges, "modified");
-      }
-    } else {
-      this.recordChange(entry.name, this.indexChanges, "added");
+    if (status) {
+      this.recordChange(entry.name, this.indexChanges, status);
     }
   }
 
   private async checkIndexAgainstWorkspace(entry: Index.Entry) {
-    const stat = this.stats[entry.name];
+    const stat = this.stats[entry.name] ?? null;
+    const status = await this.#inspector.compareIndexToWorkspace(entry, stat);
 
-    if (!stat) {
-      this.recordChange(entry.name, this.workspaceChanges, "deleted");
-      return;
-    }
-
-    if (!entry.statMatch(stat)) {
-      this.recordChange(entry.name, this.workspaceChanges, "modified");
-      return;
-    }
-
-    if (entry.timesMatch(stat)) {
-      return;
-    }
-
-    const data = await this.repo.workspace.readFile(entry.name);
-    const blob = new Database.Blob(data);
-    const oid = this.repo.database.hashObject(blob);
-
-    if (entry.oid === oid) {
-      this.repo.index.updateEntryStat(entry, stat);
+    if (status) {
+      this.recordChange(entry.name, this.workspaceChanges, status);
     } else {
-      this.recordChange(entry.name, this.workspaceChanges, "modified");
-      return;
+      // コンテンツ内容に変更がないとき、index上のstat情報をworkspace上のファイルと同期する
+      this.repo.index.updateEntryStat(entry, stat);
     }
   }
 
@@ -133,32 +115,6 @@ export class Status {
   private recordChange<T>(pathname: Pathname, set: Map<Pathname, T>, type: T) {
     this.changed.add(pathname);
     set.set(pathname, type);
-  }
-
-  private async trackableFile(pathname: Pathname, stat: Stats) {
-    if (stat.isFile()) {
-      return !this.repo.index.tracked(pathname);
-    }
-    if (!stat.isDirectory()) {
-      return false;
-    }
-
-    const entries = await this.repo.workspace.listDir(pathname);
-
-    const files = Object.entries(entries).filter(([p, stat]) => stat.isFile());
-    const dirs = Object.entries(entries).filter(([p, stat]) =>
-      stat.isDirectory()
-    );
-
-    for (const map of [files, dirs]) {
-      for (const [p, s] of map) {
-        const res = await this.trackableFile(p, s);
-        if (res) {
-          return true;
-        }
-      }
-    }
-    return false;
   }
 }
 

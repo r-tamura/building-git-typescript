@@ -12,7 +12,7 @@ describe("Migration#applyChanges", () => {
     const rmdir = jest.fn().mockResolvedValue(undefined);
     const unlink = jest.fn().mockResolvedValue(undefined);
     const mkdir = jest.fn().mockResolvedValue(undefined);
-    const writeFile = jest.fn().mockResolvedValue("undefinddded");
+    const writeFile = jest.fn().mockResolvedValue(undefined);
     const chmod = jest.fn().mockResolvedValue(undefined);
 
     const testStat = makeTestStats();

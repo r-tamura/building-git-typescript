@@ -2,12 +2,17 @@ import { Base } from "./base";
 import { Pathname } from "../types";
 import { Style } from "../color";
 import * as Repository from "../repository";
+import { asserts } from "../util";
 
-const SHORT_STATUS: Record<Repository.ChangeType, string> = {
+const SHORT_STATUS: Record<
+  Exclude<Repository.ChangeType, null> | "nochange",
+  string
+> = {
   deleted: "D",
   added: "A",
   modified: "M",
   nochange: " ",
+  untracked: "??",
 } as const;
 
 const LABEL_WIDTH = 12;
@@ -47,7 +52,8 @@ export class Status extends Base {
 
     this.log(`${message}:`);
     this.log("");
-    changeset.forEach((type: string, name: string) => {
+    changeset.forEach((type: string | null, name: string) => {
+      asserts(type !== null);
       const status = this.isStatusType(type)
         ? LONG_STATUS[type].padEnd(LABEL_WIDTH, " ")
         : "";
@@ -99,7 +105,10 @@ export class Status extends Base {
       const status = this.statusFor(p);
       return `${status} ${p}`;
     });
-    this.print(this.#status.untrackedFiles, (p) => `?? ${p}`);
+    this.print(
+      this.#status.untrackedFiles,
+      (p) => `${SHORT_STATUS.untracked} ${p}`
+    );
   }
 
   private statusFor(pathname: Pathname) {
