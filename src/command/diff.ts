@@ -6,11 +6,16 @@ import * as Database from "../database";
 import * as Index from "../gindex";
 import { asserts } from "../util";
 import { diff, Hunk, TextDocument, Edit } from "../diff";
+import arg = require("arg");
 
 const NULL_OID = "0".repeat(40);
 const NULL_PATH = "/dev/null";
 
-export class Diff extends Base {
+interface Option {
+  cached: boolean;
+}
+
+export class Diff extends Base<Option> {
   #status!: Repository.Status;
   async run() {
     await this.repo.index.load();
@@ -18,11 +23,26 @@ export class Diff extends Base {
 
     this.setupPager();
 
-    if (this.args[0] === "--cached") {
+    if (this.options.cached) {
       await this.diffHeadIndex();
     } else {
       await this.diffIndexWorkspace();
     }
+  }
+
+  initOptions() {
+    this.options = {
+      cached: false,
+    };
+  }
+
+  defineSpec() {
+    return {
+      "--cached": arg.flag(() => {
+        this.options.cached = true;
+      }),
+      "--staged": "--cached",
+    };
   }
 
   private async diffHeadIndex() {

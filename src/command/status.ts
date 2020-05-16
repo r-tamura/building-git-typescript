@@ -3,6 +3,7 @@ import { Pathname } from "../types";
 import { Style } from "../color";
 import * as Repository from "../repository";
 import { asserts } from "../util";
+import arg = require("arg");
 
 const SHORT_STATUS: Record<
   Exclude<Repository.ChangeType, null> | "nochange",
@@ -22,7 +23,11 @@ const LONG_STATUS = {
   modified: "modified:",
 } as const;
 
-export class Status extends Base {
+interface Option {
+  format: "long" | "porcelain";
+}
+
+export class Status extends Base<Option> {
   #status!: Repository.Status;
 
   async run() {
@@ -31,6 +36,20 @@ export class Status extends Base {
     await this.repo.index.writeUpdates();
 
     this.printResults();
+  }
+
+  protected initOptions() {
+    this.options = {
+      format: "long",
+    };
+  }
+
+  protected defineSpec() {
+    return {
+      "--porcelain": arg.flag(() => {
+        this.options.format = "porcelain";
+      }),
+    };
   }
 
   private print(alike: Iterable<Pathname>, formatter: (p: Pathname) => string) {
@@ -77,10 +96,13 @@ export class Status extends Base {
   }
 
   private printResults() {
-    if (this.args[0] === "--porcelain") {
-      this.printPorcelainFormat();
-    } else {
-      this.printLongFormat();
+    switch (this.options.format) {
+      case "long":
+        this.printLongFormat();
+        break;
+      case "porcelain":
+        this.printPorcelainFormat();
+        break;
     }
   }
 

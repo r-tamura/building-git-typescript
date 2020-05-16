@@ -11,7 +11,7 @@ import { Checkout } from "./checkout";
 
 export class Unknown extends BaseError {}
 
-type CommandMap = { [s: string]: BaseConstructor };
+type CommandMap = { [s: string]: BaseConstructor<any> };
 
 const COMMANDS: CommandMap = {
   init: Init,

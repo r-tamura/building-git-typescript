@@ -1,4 +1,5 @@
 import * as path from "path";
+import * as arg from "arg";
 import { Runnable } from "./types";
 import { Environment, Pathname, EnvVars } from "../types";
 import { Repository } from "../repository";
@@ -9,11 +10,11 @@ import { Pager } from "../pager";
 /** process.exit 代替え */
 export class Exit {}
 
-export type BaseConstructor = {
-  new (args: string[], env: Environment): Base;
+export type BaseConstructor<O extends arg.Spec = {}> = {
+  new (args: string[], env: Environment): Base<O>;
 };
 
-export abstract class Base implements Runnable {
+export abstract class Base<O extends object = {}> implements Runnable {
   /** 作業ディレクトリ */
   protected dir: string;
   /** 環境変数 */
@@ -28,6 +29,9 @@ export abstract class Base implements Runnable {
   protected stdout: NodeJS.WriteStream;
   /** this.env.process.stderrへのショートカット */
   protected stderr: NodeJS.WriteStream;
+
+  /** options */
+  protected options!: O;
 
   /** 終了ステータス */
   status: number = 0;
@@ -58,6 +62,7 @@ export abstract class Base implements Runnable {
   }
 
   async execute() {
+    this.parseOptions();
     try {
       await this.run();
 
@@ -113,5 +118,18 @@ export abstract class Base implements Runnable {
     this.pager = Pager.of(this.envvars, this.stdout, this.stderr);
     this.stdout = this.pager.input;
     this.logger = createLogger(this.stdout);
+  }
+
+  protected defineSpec(): arg.Spec {
+    return {};
+  }
+
+  protected initOptions() {}
+
+  private parseOptions() {
+    this.initOptions();
+    const spec = this.defineSpec();
+    /** Note: ライブラリの意図した使い方とは違うが、RubyのOptionParserの使い方へ合わせる */
+    arg(spec, { argv: this.args });
   }
 }

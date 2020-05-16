@@ -1,7 +1,7 @@
 import * as path from "path";
 import { Environment } from "../types";
+import { Refs } from "../refs";
 import { Base } from "./base";
-import { Refs } from "~/refs";
 
 const DEFAULT_BRANCH = "master";
 export class Init extends Base {
