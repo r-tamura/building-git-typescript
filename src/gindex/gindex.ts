@@ -5,7 +5,7 @@ import { Stats, constants } from "fs";
 import * as assert from "assert";
 import { Pathname, OID } from "../types";
 import { Lockfile, LockfileEnvironment } from "../lockfile";
-import { Invalid } from "../util";
+import { Invalid, times } from "../util";
 import { Entry } from "./entry";
 import { Checksum } from "./checksum";
 import { FileService, defaultFs } from "../services";
@@ -176,7 +176,7 @@ export class Index {
   }
 
   private async readEntries(reader: Checksum, count: number) {
-    for (const i of this.times(count)) {
+    for (const i of times(count)) {
       // ファイルメタ情報の読み込み
       let entry = await reader.read(Entry.MIN_SIZE);
 
@@ -236,12 +236,6 @@ export class Index {
     const version = header.readUInt32BE(4);
     const count = header.readUInt32BE(8);
     return [signature, version, count] as const;
-  }
-
-  private *times(count: number) {
-    for (let i = 0; i < count; i++) {
-      yield i;
-    }
   }
 
   private isNullChar(char: Buffer) {

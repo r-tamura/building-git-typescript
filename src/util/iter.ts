@@ -3,3 +3,9 @@ export function* range(start = 0, end = 0, step = 1) {
     yield i;
   }
 }
+
+export function* times(count: number) {
+  for (let i = 0; i < count; i++) {
+    yield i;
+  }
+}

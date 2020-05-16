@@ -1,4 +1,5 @@
 import { Stats, Dirent } from "fs";
+import { FS_ERROR } from "./error";
 
 export const makeTestStats = (
   props: Partial<Omit<Stats, keyof Dirent>> = {}
@@ -26,3 +27,9 @@ export const makeTestStats = (
   const stats = new Stats();
   return { ...stats, ...defaultProps, ...props };
 };
+
+type MockError = "EEXIST" | "ENOENT" | "EACCES";
+export const mockFsError = (err: MockError) =>
+  jest.fn().mockImplementation(() => {
+    throw FS_ERROR[err];
+  });

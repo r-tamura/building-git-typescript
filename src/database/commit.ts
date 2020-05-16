@@ -6,12 +6,12 @@ import { scanUntil, asserts } from "../util";
 export class Commit implements GitObject {
   oid: OID | null = null;
   tree: OID;
-  #parent: OID | null = null;
+  parent: OID | null = null;
   #author: Author;
   #message: string;
 
   constructor(parent: OID | null, tree: OID, author: Author, message: string) {
-    this.#parent = parent;
+    this.parent = parent;
     this.tree = tree;
     this.#author = author;
     this.#message = message;
@@ -57,8 +57,8 @@ export class Commit implements GitObject {
   toString() {
     const lines = [];
     lines.push(`tree ${this.tree}`);
-    if (this.#parent) {
-      lines.push(`parent ${this.#parent}`);
+    if (this.parent) {
+      lines.push(`parent ${this.parent}`);
     }
     lines.push(`author ${this.#author}`);
     lines.push(`committer ${this.#author}`);

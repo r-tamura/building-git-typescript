@@ -13,19 +13,29 @@ describe("", () => {
     await t.jitCmd("add", ".");
     await t.commit("first commit");
   });
-  it("新しいブランチを作る", async () => {
-    // Arrange
-
+  it("HEADから新しいブランチを作る", async () => {
     // Act
     await t.jitCmd("branch", "master");
 
     // Assert
     assert.equal(
-      await fs.readFile(
-        path.join(t.repoPath(), ".git/refs/heads/master"),
-        "utf-8"
-      ),
-      (await t.repo().refs.readHead()) + "\n"
+      await t.repo().refs.readRef("master"),
+      await t.repo().refs.readHead()
+    );
+  });
+
+  it("特定のコミットから新しいブランチを作る", async () => {
+    // Arrange
+    await t.writeFile("hello.txt", "changed");
+    await t.commit("second commit");
+
+    // Act
+    await t.jitCmd("branch", "topic", "HEAD^");
+
+    // Assert
+    assert.equal(
+      "8b86eb4ae21c63c6b983509337e797cab17ec6ad",
+      await t.repo().refs.readRef("topic")
     );
   });
 });

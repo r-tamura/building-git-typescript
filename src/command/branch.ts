@@ -1,5 +1,7 @@
 import { Base } from "./base";
 import { InvalidBranch } from "../refs";
+import { InvalidObject, Revision } from "../revision";
+import { asserts } from "../util";
 
 export class Branch extends Base {
   async run() {
@@ -7,14 +9,23 @@ export class Branch extends Base {
   }
 
   private async createBranch() {
-    const branchName = this.args[0];
-
+    const [branchName, startPoint] = this.args;
     try {
-      await this.repo.refs.createBranch(branchName);
+      let resolved;
+      if (startPoint) {
+        const revision = new Revision(this.repo, startPoint);
+        resolved = await revision.resolve();
+      } else {
+        resolved = await this.repo.refs.readHead();
+        asserts(resolved !== null);
+      }
+
+      await this.repo.refs.createBranch(branchName, resolved);
     } catch (e) {
       const err = e as Error;
       switch (err.constructor) {
         case InvalidBranch:
+        case InvalidObject:
           this.logger.error(`fatal: ${err.message}`);
           this.exit(128);
           break;

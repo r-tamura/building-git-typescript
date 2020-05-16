@@ -36,7 +36,7 @@ export class Refs {
     this.#fs = env.fs ?? defaultFs;
   }
 
-  async createBranch(branchName: string) {
+  async createBranch(branchName: string, startOid: string) {
     const pathname = path.join(this.#headspath, branchName);
 
     if (INVALID_BRANCH_NAME.some((r) => r.test(branchName))) {
@@ -47,9 +47,7 @@ export class Refs {
       throw new InvalidBranch(`A branch named '${branchName}' already exists.`);
     }
 
-    const head = await this.readHead();
-    asserts(head !== null);
-    await this.updateRefFile(pathname, head);
+    await this.updateRefFile(pathname, startOid);
   }
 
   /**
@@ -95,7 +93,7 @@ export class Refs {
    */
   async readHead() {
     try {
-      const ref = await this.#fs.readFile(this.headPath, { encoding: "ascii" });
+      const ref = await this.#fs.readFile(this.headPath, "ascii");
       return ref.trim();
     } catch (e) {
       const nodeErr = e as NodeJS.ErrnoException;
@@ -107,7 +105,40 @@ export class Refs {
     }
   }
 
+  async readRef(name: string) {
+    const pathname = await this.pathForName(name);
+    return pathname ? this.readRefFile(pathname) : null;
+  }
+
   private get headPath() {
     return path.join(this.#pathname, HEAD);
+  }
+
+  private async pathForName(name: string) {
+    const prefixies = [this.#pathname, this.#refspath, this.#headspath];
+    let prefix = null;
+    for (const candidatePrefix of prefixies) {
+      const candidate = path.join(candidatePrefix, name);
+      const exist = await exists(this.#fs, candidate);
+      if (exist) {
+        prefix = candidate;
+        break;
+      }
+    }
+    return prefix;
+  }
+
+  private async readRefFile(pathname: Pathname) {
+    try {
+      const content = await this.#fs.readFile(pathname, "utf-8");
+      return content.trim();
+    } catch (e) {
+      const nodeErr = e as NodeJS.ErrnoException;
+      if (nodeErr.code === "ENOENT") {
+        return null;
+      } else {
+        throw e;
+      }
+    }
   }
 }

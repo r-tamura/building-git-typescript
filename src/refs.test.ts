@@ -2,9 +2,52 @@ import { Refs, LockDenied, InvalidBranch } from "./refs";
 import * as Service from "./services";
 import * as assert from "power-assert";
 import { Lockfile } from "./lockfile";
+import { defaultFs, FileService } from "./services";
 
 jest.mock("./lockfile");
 const MockedLockfile = (Lockfile as unknown) as jest.Mock<Partial<Lockfile>>;
+
+const mockEnv = (mock: Partial<FileService> = {}) => ({
+  fs: {
+    ...defaultFs,
+    ...mock,
+  },
+});
+
+describe("Refs#createBranch", () => {
+  describe("不正なブランチ名のとき、例外を発生させる", () => {
+    it.each([
+      ["'.'で始まる", ".branch"],
+      ["'/.'で始まる", "/.branch"],
+      ["'..'を含む", ".."],
+      ["'/'で終わる", "branch/"],
+      ["'.lock'で終わる", "branch.lock"],
+      ["'@{'を含む", "br@{nch"],
+      ["ASCII制御文字を含む(タブ)", "br\tanch"],
+      ["ASCII制御文字を含む(DEL)", "\u007F"],
+    ])("%s", async (_title, branchName) => {
+      const refs = new Refs(".git");
+      // Act & Assert
+      await expect(refs.createBranch(branchName, "3a3c4ec")).rejects.toThrow(
+        InvalidBranch
+      );
+    });
+  });
+
+  it("ブランチがすでに存在するとき、例外を発生させる", async () => {
+    // Arrange
+    const alreadyExists = jest.spyOn(Service, "exists").mockResolvedValue(true);
+
+    // Act
+    const refs = new Refs(".git");
+    const actual = refs.createBranch("topic", "3a3c4ec");
+
+    // Assert
+    await expect(actual).rejects.toThrow(InvalidBranch);
+
+    alreadyExists.mockReset();
+  });
+});
 
 describe("Refs#readHead", () => {
   const testRootPath = "/test/project";
@@ -40,6 +83,55 @@ describe("Refs#readHead", () => {
 
     // Assert
     assert.equal(actual, null);
+  });
+});
+
+describe("Refs#readRef", () => {
+  describe("refファイルが存在するとき、Ref IDを返す", () => {
+    const mockedReadFile = jest
+      .fn()
+      .mockResolvedValue("3a3c4ec0ae9589c881029c161dd129bcc318dc08\n");
+    let spyServiceExists: jest.SpyInstance;
+    let actual: string | null;
+    beforeAll(async () => {
+      // Arrange
+      spyServiceExists = jest
+        .spyOn(Service, "exists")
+        .mockImplementation(async (_fs, pathname) =>
+          pathname.includes("heads")
+        );
+      const env = mockEnv({ readFile: mockedReadFile });
+
+      // Act
+      const refs = new Refs(".git", env);
+      actual = await refs.readRef("master");
+    });
+
+    afterAll(() => {
+      spyServiceExists.mockReset();
+    });
+    it("ファイルパス", () => {
+      assert.equal(mockedReadFile.mock.calls[0][0], ".git/refs/heads/master");
+    });
+
+    it("返り値", () => {
+      assert.equal(actual, "3a3c4ec0ae9589c881029c161dd129bcc318dc08");
+    });
+  });
+
+  it("refファイルが存在しないとき、nullを返す", async () => {
+    // Arrange
+    const spyServiceExists = jest
+      .spyOn(Service, "exists")
+      .mockImplementation(async (_fs, pathname) => false);
+    // Act
+    const refs = new Refs(".git");
+    const actual = await refs.readRef("master");
+
+    // Assert
+    assert.equal(actual, null);
+
+    spyServiceExists.mockReset();
   });
 });
 
@@ -99,40 +191,5 @@ describe("Refs#updateHead", () => {
     it("ファイルにOIDが書き込まれない", () => {
       assert.equal(mockedWrite.mock.calls.length, 0);
     });
-  });
-});
-
-describe("Refs#createBranch", () => {
-  describe("不正なブランチ名のとき、例外を発生させる", () => {
-    it.each([
-      ["'.'で始まる", ".branch"],
-      ["'/.'で始まる", "/.branch"],
-      ["'..'を含む", ".."],
-      ["'/'で終わる", "branch/"],
-      ["'.lock'で終わる", "branch.lock"],
-      ["'@{'を含む", "br@{nch"],
-      ["ASCII制御文字を含む(タブ)", "br\tanch"],
-      ["ASCII制御文字を含む(DEL)", "\u007F"],
-    ])("%s", async (_title, branchName) => {
-      const refs = new Refs(".git");
-      // Act & Assert
-      await expect(refs.createBranch(branchName)).rejects.toThrow(
-        InvalidBranch
-      );
-    });
-  });
-
-  it("ブランチがすでに存在するとき、例外を発生させる", async () => {
-    // Arrange
-    const alreadyExists = jest.spyOn(Service, "exists").mockResolvedValue(true);
-
-    // Act
-    const refs = new Refs(".git");
-    const actual = refs.createBranch("topic");
-
-    // Assert
-    await expect(actual).rejects.toThrow(InvalidBranch);
-
-    alreadyExists.mockReset();
   });
 });
