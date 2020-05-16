@@ -31,3 +31,7 @@ export function descend(pathname: Pathname) {
     return acc;
   }, [] as string[]);
 }
+
+export function ascend(pathname: Pathname) {
+  return descend(pathname).reverse();
+}

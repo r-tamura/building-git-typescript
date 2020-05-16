@@ -92,6 +92,7 @@ export class Diff extends Base {
 
   private async fromIndex(pathname: Pathname) {
     const entry = this.repo.index.entryForPath(pathname);
+    asserts(entry !== null);
     const blob = await this.repo.database.load(entry.oid);
     asserts(blob instanceof Database.Blob);
     return Target.of(

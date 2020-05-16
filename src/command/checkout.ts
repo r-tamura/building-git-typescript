@@ -2,6 +2,7 @@ import { OID } from "../types";
 import { Base } from "./base";
 import { Revision, InvalidObject } from "../revision";
 import { asserts } from "../util";
+import { Migration, Conflict } from "../repository";
 
 export class Checkout extends Base {
   #target!: string;
@@ -33,10 +34,20 @@ export class Checkout extends Base {
       this.#targetOid
     );
     const migration = this.repo.migration(treeDiff);
-    await migration.applyChanges();
+    try {
+      await migration.applyChanges();
+    } catch (e) {
+      switch (e.constructor) {
+        case Conflict:
+          await this.handleMigrationConflict(migration);
+          break;
+        default:
+          throw e;
+      }
+    }
 
-    this.repo.index.writeUpdates();
-    this.repo.refs.updateHead(this.#targetOid);
+    await this.repo.index.writeUpdates();
+    await this.repo.refs.updateHead(this.#targetOid);
   }
 
   private handleInvalidObject(revision: Revision, error: InvalidObject) {
@@ -45,5 +56,14 @@ export class Checkout extends Base {
       err.hint.forEach((line) => this.logger.error(`hint: ${line}`));
     });
     this.logger.error(`error: ${error.message}`);
+  }
+
+  private async handleMigrationConflict(migration: Migration) {
+    await this.repo.index.releaseLock();
+    migration.errors.forEach((message) => {
+      this.logger.error(`error: ${message}`);
+    });
+    this.logger.error(`Aborting.`);
+    this.exit(1);
   }
 }

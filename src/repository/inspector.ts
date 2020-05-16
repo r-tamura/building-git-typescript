@@ -14,9 +14,17 @@ export class Inspector {
     this.#repo = repo;
   }
 
+  /**
+   * ファイルがtrackableであるかを判定します
+   * trackableの条件は以下のいづれかです
+   *  - untacked file
+   *  - untracked fileを持つディレクトリ
+   * @param pathname ファイルパス
+   * @param stat ファイルstat
+   */
   async trackableFile(pathname: Pathname, stat: Stats) {
     if (stat.isFile()) {
-      return !this.#repo.index.tracked(pathname);
+      return !this.#repo.index.trackedFile(pathname);
     }
     if (!stat.isDirectory()) {
       return false;

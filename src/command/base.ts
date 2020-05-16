@@ -48,7 +48,7 @@ export abstract class Base implements Runnable {
     return path.resolve(this.dir, pathname);
   }
 
-  exit(status: number) {
+  exit(status: 0 | 1 | 128) {
     this.status = status;
     throw new Exit();
   }

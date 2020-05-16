@@ -43,6 +43,9 @@ export async function rmrf(fs: FileService, pathname: Pathname) {
     switch (nodeErr.code) {
       case "EISDIR":
         await fs.rmdir(pathname, { recursive: true });
+        break;
+      case "ENOENT":
+        return;
       default:
         throw e;
     }

@@ -100,6 +100,7 @@ export class Workspace {
     const handleError = (e: NodeJS.ErrnoException) => {
       switch (e.code) {
         case "ENOENT":
+        case "ENOTDIR":
           return null;
         case "EACCES":
           throw new NoPermission(`stat('${rpath}'): Permission denied`);

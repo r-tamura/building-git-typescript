@@ -45,8 +45,8 @@ export class Index {
     return entries;
   }
 
-  entryForPath(pathname: Pathname) {
-    return this.#entries[pathname];
+  entryForPath(pathname: Pathname): Entry | null {
+    return this.#entries[pathname] ?? null;
   }
 
   async loadForUpdate() {

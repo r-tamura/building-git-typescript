@@ -7,6 +7,7 @@ import { Diff } from "./diff";
 import { Status } from "./status";
 import { Environment } from "../types";
 import { Branch } from "./branch";
+import { Checkout } from "./checkout";
 
 export class Unknown extends BaseError {}
 
@@ -16,6 +17,7 @@ const COMMANDS: CommandMap = {
   init: Init,
   add: Add,
   branch: Branch,
+  checkout: Checkout,
   commit: Commit,
   status: Status,
   diff: Diff,

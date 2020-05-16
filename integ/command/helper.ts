@@ -3,7 +3,7 @@ import { Readable, Writable, Stream } from "stream";
 import * as path from "path";
 import * as assert from "power-assert";
 import { Environment } from "~/types";
-import { defaultFs, Logger, Process } from "~/services";
+import { defaultFs, Logger, Process, exists } from "~/services";
 import { Repository } from "~/repository";
 import { makeLogger } from "~/__test__/util";
 import * as Command from "~/command";
@@ -42,6 +42,26 @@ function mockStdio(s: string) {
     stdin: makeStdin(),
     stdout: makeStdout(),
   };
+}
+
+/** Assersion */
+export type Contents = [string, string][];
+export async function assertWorkspace(
+  contents: Contents,
+  repository: Repository = repo()
+) {
+  const files: Contents = [];
+  const pathnames = await repository.workspace.listFiles();
+
+  for (const pathname of pathnames) {
+    files.push([pathname, await repository.workspace.readFile(pathname)]);
+  }
+
+  assert.deepEqual(files, contents);
+}
+
+export async function assertNoent(filename: string) {
+  assert.equal(await exists(fs, path.join(repoPath(), filename)), false);
 }
 
 /** Logger assertion */
