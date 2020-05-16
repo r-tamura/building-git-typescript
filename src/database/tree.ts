@@ -1,14 +1,25 @@
 import * as path from "path";
 import * as Database from "../database";
-import { IEntry } from "../entry";
+import { IEntry, Entry } from "../entry";
 import { asserts, packHex, scanUntil, unpackHex } from "../util";
 import { OID, Pathname } from "../types";
+import { Entry as IndexEntry } from "../gindex";
 
 export type TraverseCallbackFn = (t: Tree) => Promise<void>;
 
-export type WriteEntry = IEntry;
-export type EntryMap = { [s: string]: ReadEntry | Tree };
-export type ReadEntry = Pick<IEntry, "mode" | "oid">;
+type ValueOf<T> = T[keyof T];
+
+export const MODE = {
+  readable: 0o0100644,
+  executable: 0o0100755,
+  directory: 0o040000,
+} as const;
+export type ModeNumber = ValueOf<typeof MODE>;
+export type ModeStr = "100644" | "100755";
+type CommitEntry = Entry | Tree;
+export type WriteEntry = Entry | IndexEntry;
+export type ReadEntry = Database.Entry;
+export type EntryMap = { [s: string]: ReadEntry | IndexEntry | CommitEntry };
 export class Tree {
   static readonly TREE_MODE = 0o040000;
 
@@ -70,7 +81,7 @@ export class Tree {
     await act(this);
   }
 
-  get mode() {
+  get mode(): ReadEntry["mode"] {
     return Tree.TREE_MODE;
   }
 

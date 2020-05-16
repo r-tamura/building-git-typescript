@@ -2,6 +2,8 @@ import * as path from "path";
 import { OID, Pathname } from "./types";
 import { Stats } from "fs";
 import { isExecutable } from "./util/fs";
+import * as Database from "./database";
+import * as Index from "./gindex";
 
 type ValueOf<T> = T[keyof T];
 
@@ -14,21 +16,24 @@ export const MODE = {
 export type ModeNumber = ValueOf<typeof MODE>;
 export type ModeStr = "100644" | "100755";
 
-export interface IEntry {
-  readonly parentDirectories: string[];
-  readonly basename: Pathname;
-  mode: ModeNumber | ModeStr;
-  name: Pathname;
-  oid: OID;
-  statMatch(stat: Stats): boolean;
-  timesMatch(stat: Stats): boolean;
-  updateStat(stat: Stats): void;
-}
+// export interface IEntry {
+//   readonly parentDirectories: string[];
+//   readonly basename: Pathname;
+//   mode: ModeNumber | ModeStr;
+//   name: Pathname;
+//   oid: OID;
+//   statMatch(stat: Stats): boolean;
+//   timesMatch(stat: Stats): boolean;
+//   updateStat(stat: Stats): void;
+// }
 
-export class Entry implements IEntry {
+export type IEntry = Entry | Database.Entry | Index.Entry;
+
+export class Entry {
   static readonly REGULAR_MODE = "100644";
   static readonly EXECUTABLE_MODE = "100755";
 
+  readonly type = "entry";
   oid: OID;
   name: Pathname;
   #stat: Stats;

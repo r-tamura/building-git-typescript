@@ -8,6 +8,7 @@ import { Blob } from "./blob";
 import { asserts, scanUntil } from "../util";
 import { Tree } from "./tree";
 import { Commit } from "./commit";
+import { TreeDiff } from "./tree_diff";
 
 const TEMP_CHARS =
   "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
@@ -106,6 +107,12 @@ export class Database {
     obj.oid = this.hashContent(content);
 
     await this.writeObject(obj.oid, content);
+  }
+
+  async treeDiff(a: OID, b: OID) {
+    const diff = new TreeDiff(this);
+    await diff.compareOids(a, b);
+    return diff.changes;
   }
 
   private genTempName() {

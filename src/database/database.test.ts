@@ -13,7 +13,7 @@ type EnvMocker = {
   direntries?: string[] | ((...args: any) => any);
 };
 
-const mockEnv = ({
+export const mockEnv = ({
   file,
   direntries = [],
   zlib,

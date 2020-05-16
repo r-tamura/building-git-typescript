@@ -10,6 +10,7 @@ import { Entry } from "./entry";
 import { Checksum } from "./checksum";
 import { FileService, defaultFs } from "../services";
 import { IEntry } from "../entry";
+import { WriteEntry } from "~/database";
 
 type IndexEntryMap = { [s: string]: Entry };
 
@@ -89,7 +90,7 @@ export class Index {
     return !!this.#entries[pathname];
   }
 
-  updateEntryStat(entry: IEntry, stat: Stats) {
+  updateEntryStat(entry: WriteEntry, stat: Stats) {
     entry.updateStat(stat);
     this.#changed = true;
   }

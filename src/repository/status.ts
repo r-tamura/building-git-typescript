@@ -4,7 +4,7 @@ import { Pathname, OID } from "../types";
 import { Repository } from "./repository";
 import * as Database from "../database";
 import { asserts } from "../util";
-import { IEntry } from "../entry";
+import * as Index from "../gindex";
 
 export type IndexStatus = "added" | "modified" | "deleted" | "nochange";
 export type WorkspaceStatus = "modified" | "deleted" | "nochange";
@@ -73,7 +73,7 @@ export class Status {
     }
   }
 
-  private checkIndexAgainstHeadTree(entry: IEntry) {
+  private checkIndexAgainstHeadTree(entry: Index.Entry) {
     const item = this.headTree[entry.name];
 
     if (item) {
@@ -85,7 +85,7 @@ export class Status {
     }
   }
 
-  private async checkIndexAgainstWorkspace(entry: IEntry) {
+  private async checkIndexAgainstWorkspace(entry: Index.Entry) {
     const stat = this.stats[entry.name];
 
     if (!stat) {

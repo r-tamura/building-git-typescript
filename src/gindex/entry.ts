@@ -2,24 +2,6 @@ import * as path from "path";
 import { OID, Pathname } from "../types";
 import { Stats } from "fs";
 import { isExecutable } from "../util/fs";
-import { IEntry } from "../entry";
-
-type EntryStats = {
-  ctime: number;
-  ctimeNsec: number;
-  mtime: number;
-  mtimeNsec: number;
-  dev: number;
-  ino: number;
-  mod: 0o0100644 | 0o0100755;
-  uid: number;
-  gid: number;
-  size: number;
-  flags: number;
-};
-
-export interface Entry extends EntryStats, IEntry {}
-
 // prettier-ignore
 type EntryConstructor = (
   citme: number, ctimeNsec: number, mtime: number, mtimeNsec: number,
@@ -31,6 +13,21 @@ type EntryConstructor = (
 // prettier-ignore
 type EntryConstructorParameters = Parameters<EntryConstructor>
 
+type EntryStats = Pick<
+  Entry,
+  | "ctime"
+  | "ctimeNsec"
+  | "mtime"
+  | "mtimeNsec"
+  | "dev"
+  | "ino"
+  | "mod"
+  | "uid"
+  | "gid"
+  | "size"
+  | "flags"
+>;
+
 export class Entry {
   static readonly REGULAR_MODE = 0o0100644;
   static readonly EXECUTABLE_MODE = 0o0100755;
@@ -41,6 +38,21 @@ export class Entry {
   static readonly META_COUNT = 10;
   static readonly OID_SIZE = 20;
   static readonly FILE_LENGTH_SIZE = 2;
+
+  readonly type = "index";
+  ctime: number;
+  ctimeNsec: number;
+  mtime: number;
+  mtimeNsec: number;
+  dev: number;
+  ino: number;
+  mod: 0o0100644 | 0o0100755;
+  uid: number;
+  gid: number;
+  size: number;
+  flags: number;
+  oid: OID;
+  name: Pathname;
 
   private constructor(
     // prettier-ignore

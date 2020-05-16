@@ -7,8 +7,8 @@ import { defaultFs } from "../services";
 import { makeTestStats, EEXIST } from "../__test__";
 import { Stats, promises } from "fs";
 import { createFakeRead } from "./__test__/fakeIndex";
-import { IEntry } from "../entry";
 import { LockDenied } from "../refs";
+import { Entry } from "./entry";
 
 jest.mock("../lockfile");
 const testIndexPath = ".git/index";
@@ -26,7 +26,7 @@ describe("Index#add", () => {
 
   const stat = makeTestStats();
   const oid = crypto.randomBytes(20).toString("hex");
-  const extractName = (e: IEntry) => e.name;
+  const extractName = (e: Entry) => e.name;
 
   it("adds a single file", () => {
     // Act
