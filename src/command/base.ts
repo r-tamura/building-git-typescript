@@ -67,6 +67,9 @@ export abstract class Base implements Runnable {
     // Note: rubyのputsは文字列が'\n'で終わると改行を挿入しない
     if (message.endsWith("\n")) {
       message = message.trimRight();
+    } else if (message.endsWith("\n\x1b[m")) {
+      // fmtでカラーリングされた場合
+      message = message.replace("\n\x1b[m", "\x1b[m");
     }
     this.env.logger.info(message);
   }

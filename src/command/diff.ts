@@ -5,7 +5,7 @@ import { Pathname, OID } from "../types";
 import * as Database from "../database";
 import * as Index from "../gindex";
 import { asserts } from "../util";
-import { diff, Hunk, TextDocument } from "../diff";
+import { diff, Hunk, TextDocument, Edit } from "../diff";
 
 const NULL_OID = "0".repeat(40);
 const NULL_PATH = "/dev/null";
@@ -111,6 +111,10 @@ export class Diff extends Base {
     return Target.of(pathname, NULL_OID, null, "");
   }
 
+  private header(text: string) {
+    this.log(this.fmt("bold", text));
+  }
+
   private printDiff(a: Target, b: Target) {
     if (a.equals(b)) {
       return;
@@ -126,12 +130,12 @@ export class Diff extends Base {
 
   private printMode(a: Target, b: Target) {
     if (a.mode === null) {
-      this.log(`new file mode ${b.mode}`);
+      this.header(`new file mode ${b.mode}`);
     } else if (b.mode === null) {
-      this.log(`deleted file mode ${a.mode}`);
+      this.header(`deleted file mode ${a.mode}`);
     } else if (a.mode !== b.mode) {
-      this.log(`old mode ${a.mode}`);
-      this.log(`new mode ${b.mode}`);
+      this.header(`old mode ${a.mode}`);
+      this.header(`new mode ${b.mode}`);
     }
   }
 
@@ -152,10 +156,27 @@ export class Diff extends Base {
     hunks.forEach(this.printDiffHunk.bind(this));
   }
 
+  private printDiffEdit(edit: Edit) {
+    const text = edit.toString();
+    switch (edit.type) {
+      case "eql":
+        this.log(text);
+        break;
+      case "ins":
+        this.log(this.fmt("green", text));
+        break;
+      case "del":
+        this.log(this.fmt("red", text));
+        break;
+      default:
+        throw TypeError(`diff: invalid type '${edit.type}'`);
+    }
+  }
+
   private printDiffHunk(hunk: Hunk) {
-    this.log(hunk.header());
+    this.log(this.fmt("cyan", hunk.header()));
     hunk.edits.forEach((e) => {
-      this.log(e.toString());
+      this.printDiffEdit(e);
     });
   }
 
