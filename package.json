@@ -1,6 +1,6 @@
 {
   "name": "@rtamura30/jit",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "main": "./dist/main.js",
   "types": "./dist/main.d.ts",
   "bin": "./bin/jit",
@@ -10,6 +10,7 @@
   },
   "license": "ISC",
   "scripts": {
+    "clean": "rm -rf dist/*",
     "build:release": "tsc --project tsconfig.prod.json",
     "build": "tsc",
     "watch": "tsc -w",
