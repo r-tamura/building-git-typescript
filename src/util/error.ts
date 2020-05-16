@@ -1,6 +1,11 @@
 /**
  * アプリケーション内のエラーで利用されるベースエラー
  */
+
+export interface ErrorConstructor {
+  new (message?: string): BaseError;
+}
+
 export class BaseError extends Error {
   name: string;
 

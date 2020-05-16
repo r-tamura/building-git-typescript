@@ -26,7 +26,7 @@ describe("TreeDiff#compareOids", () => {
   describe("a/bが異なるOIDのとき、変更点がある", () => {
     it.each([
       [
-        "modeに変更がある",
+        "modeが異なる",
         "3a3c4ecaaa",
         new Tree({
           "hello.txt": new Entry("3a3c4ecxxx", 0o0100644),
@@ -41,7 +41,7 @@ describe("TreeDiff#compareOids", () => {
         ],
       ],
       [
-        "contentsに変更がある",
+        "contentsが異なる",
         "3a3c4ecaaa",
         new Tree({
           "hello.txt": new Entry("3a3c4ecxxx", 0o0100644),

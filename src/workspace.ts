@@ -1,8 +1,10 @@
 import * as path from "path";
-import { FileService, defaultFs } from "./services";
+import { FileService, defaultFs, rmrf } from "./services";
 import { Pathname } from "./types";
-import { BaseError, asyncMap } from "./util";
+import { BaseError, asserts } from "./util";
 import { Stats } from "fs";
+import { Migration, Changes } from "./repository";
+import { O_WRONLY, O_CREAT, O_EXCL } from "constants";
 
 type Environment = {
   fs?: FileService;
@@ -19,6 +21,30 @@ export class Workspace {
   constructor(pathname: string, env: Environment = {}) {
     this.#pathname = pathname;
     this.#fs = env.fs ?? defaultFs;
+  }
+
+  async applyMigration(migration: Migration) {
+    await this.applyChangeList(migration, "delete");
+
+    // サブディレクトリから削除していく
+    // @example
+    //   rmdir a/b
+    //   rmdir a
+    const reversed = Array.from(migration.rmdirs).sort().reverse();
+    for (const dir of reversed) {
+      await this.removeDirectory(dir);
+    }
+
+    // 親ディレクトリから作成していく
+    // @example
+    //   mkdir a
+    //   mkdir a/b
+    const sorted = Array.from(migration.mkdirs).sort();
+    for (const dir of sorted) {
+      await this.makeDirectory(dir);
+    }
+    await this.applyChangeList(migration, "update");
+    await this.applyChangeList(migration, "create");
   }
 
   async listDir(dirname: Pathname = "") {
@@ -71,12 +97,35 @@ export class Workspace {
   }
 
   async statFile(rpath: string) {
-    return this.#fs.stat(this.join(rpath)).catch((e: NodeJS.ErrnoException) => {
-      if (e.code === "EACCES") {
-        throw new NoPermission(`stat('${rpath}'): Permission denied`);
+    const handleError = (e: NodeJS.ErrnoException) => {
+      switch (e.code) {
+        case "ENOENT":
+          return null;
+        case "EACCES":
+          throw new NoPermission(`stat('${rpath}'): Permission denied`);
+        default:
+          throw e;
       }
-      throw e;
-    });
+    };
+
+    return this.#fs.stat(this.join(rpath)).catch(handleError);
+  }
+
+  private async applyChangeList(migration: Migration, action: keyof Changes) {
+    for (const [filename, entry] of migration.changes[action]) {
+      const pathname = this.join(filename);
+      await rmrf(this.#fs, pathname);
+      if (action === "delete") {
+        continue;
+      }
+
+      asserts(entry !== null, ":update, :createのときは必ずエントリが存在する");
+
+      const flags = O_WRONLY | O_CREAT | O_EXCL;
+      const data = await migration.blobData(entry.oid);
+      await this.#fs.writeFile(pathname, data, { flag: flags });
+      await this.#fs.chmod(pathname, entry.mode);
+    }
   }
 
   private join(rpath: string) {
@@ -96,6 +145,38 @@ export class Workspace {
         default:
           throw e;
       }
+    }
+  }
+
+  private async removeDirectory(dirname: Pathname) {
+    // ディレクトリの存在、空であるかは考えずにrmdirを試み
+    // エラーであれば何もしない
+    return this.#fs
+      .rmdir(this.join(dirname))
+      .catch((e: NodeJS.ErrnoException) => {
+        switch (e.code) {
+          case "ENOENT":
+          case "ENOTDIR":
+          case "ENOTEMPTY":
+            return;
+          default:
+            throw e;
+        }
+      });
+  }
+
+  private async makeDirectory(dirname: Pathname) {
+    const pathname = path.join(this.#pathname, dirname);
+    const stat = await this.statFile(dirname);
+
+    // ファイルからディレクトリへ変更されたエントリは
+    // ファイルを削除してからディレクトリを作成する
+    if (stat?.isFile()) {
+      this.#fs.unlink(pathname);
+    }
+
+    if (!stat?.isDirectory()) {
+      this.#fs.mkdir(pathname);
     }
   }
 }

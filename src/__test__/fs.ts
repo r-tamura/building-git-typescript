@@ -29,7 +29,19 @@ export const makeTestStats = (
 };
 
 type MockError = "EEXIST" | "ENOENT" | "EACCES";
-export const mockFsError = (err: MockError) =>
+
+/**
+ * fsモジュールの例外を発生ささせます
+ * asyncがtrueのときはPromise.rejectを返します
+ *
+ * @param err エラーコード
+ * @param async
+ */
+export const mockFsError = (err: MockError, async: "sync" | "async" = "sync") =>
   jest.fn().mockImplementation(() => {
-    throw FS_ERROR[err];
+    if (async === "async") {
+      return Promise.reject(FS_ERROR[err]);
+    } else {
+      throw FS_ERROR[err];
+    }
   });

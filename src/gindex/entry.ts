@@ -1,7 +1,7 @@
 import * as path from "path";
 import { OID, Pathname } from "../types";
 import { Stats } from "fs";
-import { isExecutable } from "../util/fs";
+import { isExecutable, descend } from "../util";
 // prettier-ignore
 type EntryConstructor = (
   citme: number, ctimeNsec: number, mtime: number, mtimeNsec: number,
@@ -116,15 +116,7 @@ export class Entry {
   }
 
   get parentDirectories() {
-    const eachDirname = path
-      .dirname(this.name)
-      .split(path.sep)
-      .filter((s) => s !== ".");
-    return eachDirname.reduce((acc, dirname) => {
-      const prev = acc[acc.length - 1] ?? "";
-      acc.push(path.join(prev, dirname));
-      return acc;
-    }, [] as string[]);
+    return descend(path.dirname(this.name));
   }
 
   get key() {

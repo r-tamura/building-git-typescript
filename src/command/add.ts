@@ -45,6 +45,7 @@ export class Add extends Base {
     const blob = new Database.Blob(data);
     await this.repo.database.store(blob);
     asserts(typeof blob.oid === "string");
+    asserts(stat !== null);
     this.repo.index.add(pathname, blob.oid, stat);
   }
 

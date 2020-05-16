@@ -1,11 +1,18 @@
 import { join } from "path";
 import * as assert from "power-assert";
-import { Workspace, MissingFile } from "./workspace";
+import { Repository } from "./repository";
+import { Workspace, MissingFile, NoPermission } from "./workspace";
 import { defaultFs } from "./services";
+import * as Services from "./services";
 import { Stats } from "fs";
-import { ENOENT } from "./__test__";
+import { ENOENT, mockFsError, assertAsyncError } from "./__test__";
+import { Migration } from "./repository";
+import { Changes, Entry } from "./database";
 
 jest.mock("fs");
+jest.mock("./repository/repository");
+
+const MockedStat = (Stats as unknown) as jest.Mock<Partial<Stats>>;
 
 type FakeFile = {
   type: "f";
@@ -91,11 +98,9 @@ const fakeReaddir = jest
 const fakeStat = jest
   .fn<Promise<Stats>, [any]>()
   .mockImplementation(async (pathname) => {
-    ((Stats as unknown) as jest.Mock<Partial<Stats>>).mockImplementation(
-      () => ({
-        isDirectory: jest.fn().mockReturnValue(retrieve(pathname).type === "d"),
-      })
-    );
+    MockedStat.mockImplementation(() => ({
+      isDirectory: jest.fn().mockReturnValue(retrieve(pathname).type === "d"),
+    }));
     return new Stats();
   });
 
@@ -192,5 +197,34 @@ describe("Workspace#readFile", () => {
   it("ファイルの全データを返す", () => {
     const expected = testContent;
     assert.equal(expected, actual);
+  });
+});
+
+describe("Workspace#statFile", () => {
+  it("エントリが存在しないとき、nullを返す", async () => {
+    // Arrange
+    const env = {
+      fs: { stat: mockFsError("ENOENT", "async") },
+    } as any;
+
+    // Act
+    const ws = new Workspace("/tmp", env);
+    const actual = await ws.statFile("path/to/nothing/");
+
+    // Assert
+    assert.equal(actual, null);
+  });
+
+  it("エントリへのアクセス権限がないとき、例外を発生させる", () => {
+    // Arrange
+    const env = {
+      fs: { stat: mockFsError("EACCES", "async") },
+    } as any;
+    // Act
+    const ws = new Workspace("/tmp", env);
+    const actual = ws.statFile("path/to/nopermission");
+
+    // Assert
+    return assertAsyncError(actual, NoPermission);
   });
 });

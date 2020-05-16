@@ -6,6 +6,8 @@ import { Refs } from "../refs";
 import { Pathname } from "../types";
 import { Process, FileService } from "../services";
 import { Status } from "./status";
+import { Changes } from "../database";
+import { Migration } from "./migration";
 
 export type RepositoryEnv = {
   process: Process;
@@ -44,5 +46,9 @@ export class Repository {
   get workspace() {
     return (this.#workspace =
       this.#workspace ?? new Workspace(path.dirname(this.gitPath), this.env));
+  }
+
+  migration(treeDiff: Changes) {
+    return new Migration(this, treeDiff);
   }
 }

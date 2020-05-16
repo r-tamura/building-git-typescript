@@ -2,11 +2,13 @@ import * as CallbackFs from "fs";
 import * as zlib from "zlib";
 import { promisify } from "util";
 import { Readable } from "stream";
+import { Pathname } from "../types";
 const fs = CallbackFs.promises;
 
 export type FileService = Pick<
   typeof fs,
   | "access"
+  | "chmod"
   | "mkdir"
   | "open"
   | "read"
@@ -17,16 +19,33 @@ export type FileService = Pick<
   | "unlink"
   | "write"
   | "writeFile"
+  | "rmdir"
 >;
 
 export const defaultFs: FileService = fs;
 
-export async function exists(fs: FileService, pathname: string) {
+export async function exists(fs: FileService, pathname: Pathname) {
   try {
     await fs.access(pathname);
     return true;
   } catch (e) {
     return false;
+  }
+}
+
+export async function rmrf(fs: FileService, pathname: Pathname) {
+  // rimraf.jsのようにファイルであると仮定してunlink -> EISDIRエラーならrmdirする
+  // https://github.com/isaacs/rimraf/blob/master/rimraf.js
+  try {
+    await fs.unlink(pathname);
+  } catch (e) {
+    const nodeErr = e as NodeJS.ErrnoException;
+    switch (nodeErr.code) {
+      case "EISDIR":
+        await fs.rmdir(pathname, { recursive: true });
+      default:
+        throw e;
+    }
   }
 }
 

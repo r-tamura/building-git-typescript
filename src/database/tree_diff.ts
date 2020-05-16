@@ -7,8 +7,8 @@ import { asserts } from "../util";
 
 type A = Entry | null;
 type B = A;
-type Change = [A, B];
-type Changes = Map<string, Change>;
+export type Change = [A, B];
+export type Changes = Map<string, Change>;
 export class TreeDiff {
   #database: Database;
   changes: Changes = new Map();
