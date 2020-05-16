@@ -5,7 +5,6 @@ import { Repository } from "../repository";
 import { Logger, createLogger } from "../services";
 import * as Color from "../color";
 import { Pager } from "../pager";
-import { Console } from "console";
 
 /** process.exit 代替え */
 export class Exit {}

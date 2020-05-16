@@ -21,6 +21,15 @@ export type FileService = Pick<
 
 export const defaultFs: FileService = fs;
 
+export async function exists(fs: FileService, pathname: string) {
+  try {
+    await fs.access(pathname);
+    return true;
+  } catch (e) {
+    return false;
+  }
+}
+
 /** zlib */
 const deflate = promisify(zlib.deflate) as (
   buf: Parameters<typeof zlib.deflate>[0],

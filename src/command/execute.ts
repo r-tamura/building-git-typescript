@@ -6,6 +6,7 @@ import { Add } from "./add";
 import { Diff } from "./diff";
 import { Status } from "./status";
 import { Environment } from "../types";
+import { Branch } from "./branch";
 
 export class Unknown extends BaseError {}
 
@@ -14,6 +15,7 @@ type CommandMap = { [s: string]: BaseConstructor };
 const COMMANDS: CommandMap = {
   init: Init,
   add: Add,
+  branch: Branch,
   commit: Commit,
   status: Status,
   diff: Diff,
