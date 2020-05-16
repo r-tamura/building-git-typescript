@@ -4,7 +4,7 @@ import { Pathname, OID } from "../types";
 import { Repository } from "./repository";
 import * as Database from "../database";
 import { asserts } from "../util";
-import { IEntry } from "~/entry";
+import { IEntry } from "../entry";
 
 export type IndexStatus = "added" | "modified" | "deleted" | "nochange";
 export type WorkspaceStatus = "modified" | "deleted" | "nochange";

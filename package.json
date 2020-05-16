@@ -1,13 +1,16 @@
 {
-  "name": "git-internal",
-  "version": "1.0.0",
-  "main": "index.js",
-  "license": "MIT",
-  "dependencies": {
-    "@types/node": "^13.11.0",
-    "typescript": "^3.8.3"
+  "name": "@rtamura30/jit",
+  "version": "0.0.0",
+  "main": "./dist/main.js",
+  "types": "./dist/main.d.ts",
+  "bin": "./bin/jit",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/r-tamura/building-git-typescript.git"
   },
+  "license": "ISC",
   "scripts": {
+    "build:release": "tsc --project tsconfig.prod.json",
     "build": "tsc",
     "watch": "tsc -w",
     "test": "jest",
@@ -15,9 +18,11 @@
   },
   "devDependencies": {
     "@types/jest": "^25.2.1",
+    "@types/node": "^13.13.4",
     "@types/power-assert": "^1.5.3",
     "jest": "^25.2.7",
     "power-assert": "^1.6.1",
-    "ts-jest": "^25.3.1"
+    "ts-jest": "^25.3.1",
+    "typescript": "^3.8.3"
   }
 }
