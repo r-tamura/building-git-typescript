@@ -21,6 +21,18 @@ const INVALID_BRANCH_NAME = [
 
 const HEAD = "HEAD";
 
+type SymRef = {
+  type: "symref";
+  path: string;
+};
+
+type Ref = {
+  type: "ref";
+  oid: OID;
+};
+
+const SYMREF = /^ref: (.+)$/;
+
 export class LockDenied extends BaseError {}
 export class InvalidBranch extends BaseError {}
 export class Refs {
@@ -47,6 +59,18 @@ export class Refs {
     }
 
     await this.updateRefFile(pathname, startOid);
+  }
+
+  async setHead(revision: string, oid: OID) {
+    const head = path.join(this.#pathname, HEAD);
+    const headpath = path.join(this.#headspath, revision);
+
+    if (await exists(this.#fs, headpath)) {
+      const relative = path.relative(this.#pathname, headpath);
+      await this.updateRefFile(head, `ref: ${relative}`);
+    } else {
+      await this.updateRefFile(head, oid);
+    }
   }
 
   /**
@@ -91,22 +115,61 @@ export class Refs {
    * HEADのデータを読み込みます。HEADファイルが存在しない場合はnullを返します。
    */
   async readHead() {
+    // try {
+    //   const ref = await this.#fs.readFile(this.headPath, "ascii");
+    //   return ref.trim();
+    // } catch (e) {
+    //   const nodeErr = e as NodeJS.ErrnoException;
+    //   if (nodeErr.code === "ENOENT") {
+    //     return null;
+    //   } else {
+    //     throw e;
+    //   }
+    // }
+    return this.readSymRef(path.join(this.#pathname, HEAD));
+  }
+
+  /**
+   *  Refファイルを読み取り、ファイルの形式によりOIDもしくはsymrefを返します。
+   *  ファイルが存在しない時は、nullを返します。
+   *  @pathname refファイルパス
+   */
+  async readOidOrSymRef(pathname: Pathname): Promise<SymRef | Ref | null> {
+    let data: string;
     try {
-      const ref = await this.#fs.readFile(this.headPath, "ascii");
-      return ref.trim();
+      data = await this.#fs.readFile(pathname, "utf-8").then((s) => s.trim());
     } catch (e) {
       const nodeErr = e as NodeJS.ErrnoException;
-      if (nodeErr.code === "ENOENT") {
-        return null;
-      } else {
-        throw e;
+      switch (nodeErr.code) {
+        case "ENOENT":
+          return null;
+        default:
+          throw e;
       }
     }
+
+    const match = SYMREF.exec(data);
+    return match
+      ? { type: "symref", path: match[1] }
+      : { type: "ref", oid: data };
   }
 
   async readRef(name: string) {
     const pathname = await this.pathForName(name);
-    return pathname ? this.readRefFile(pathname) : null;
+    return pathname ? this.readSymRef(pathname) : null;
+  }
+
+  async readSymRef(name: string): Promise<OID | null> {
+    const ref = await this.readOidOrSymRef(name);
+
+    switch (ref?.type) {
+      case "symref":
+        return this.readSymRef(path.join(this.#pathname, ref.path));
+      case "ref":
+        return ref.oid;
+      default:
+        return null;
+    }
   }
 
   private get headPath() {

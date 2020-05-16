@@ -47,7 +47,7 @@ export class Checkout extends Base {
     }
 
     await this.repo.index.writeUpdates();
-    await this.repo.refs.updateHead(this.#targetOid);
+    await this.repo.refs.setHead(this.#target, this.#targetOid);
   }
 
   private handleInvalidObject(revision: Revision, error: InvalidObject) {

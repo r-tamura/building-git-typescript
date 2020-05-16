@@ -57,7 +57,8 @@ describe("Refs#readHead", () => {
     // Arrange
     const mockedReadFile = jest
       .fn()
-      .mockResolvedValue("ref: refs/heads/master\n");
+      .mockResolvedValueOnce("ref: refs/heads/master\n")
+      .mockResolvedValueOnce("3a3c4ec\n");
     const env = {
       fs: { ...Service.defaultFs, readFile: mockedReadFile },
     };
@@ -67,7 +68,7 @@ describe("Refs#readHead", () => {
     const actual = await refs.readHead();
 
     // Assert
-    assert.equal(actual, "ref: refs/heads/master");
+    assert.equal(actual, "3a3c4ec");
   });
 
   it("HEADファイルが存在しないとき、nullを返す", async () => {

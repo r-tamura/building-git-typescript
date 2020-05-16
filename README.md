@@ -14,8 +14,10 @@ yarn integ
 
 # run
 # ./bin/jit <subcommand>
-./bin/jit init
-./bin/jit commit
-./bin/jit add
-./bin/jit status
+jit init
+jit commit
+jit add
+jit status
+jit branch
+jit checkout
 ```
