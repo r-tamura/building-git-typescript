@@ -65,6 +65,27 @@ export class Database {
       this.#objects[oid] ?? (await this.readObject(oid)));
   }
 
+  async prefixMatch(oidPrefix: OID) {
+    const dirname = path.dirname(this.objectPath(oidPrefix));
+
+    let filenames: string[];
+    try {
+      filenames = await this.#fs.readdir(dirname);
+    } catch (e) {
+      const nodeErr = e as NodeJS.ErrnoException;
+      switch (nodeErr.code) {
+        case "ENOENT":
+          return [];
+        default:
+          throw e;
+      }
+    }
+
+    return filenames
+      .map((fn) => `${path.basename(dirname)}${fn}`)
+      .filter((oid) => oid.startsWith(oidPrefix));
+  }
+
   async readObject(oid: OID) {
     const objPath = this.objectPath(oid);
     const compressed = await this.#fs.readFile(objPath);

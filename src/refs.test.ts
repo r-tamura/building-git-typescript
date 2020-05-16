@@ -24,7 +24,9 @@ describe("Refs#createBranch", () => {
       ["'.lock'で終わる", "branch.lock"],
       ["'@{'を含む", "br@{nch"],
       ["ASCII制御文字を含む(タブ)", "br\tanch"],
-      ["ASCII制御文字を含む(DEL)", "\u007F"],
+      ["ASCII制御文字を含む(DEL)", "a\u007F"],
+      ["'^'を含む", "branch^"],
+      ["' '(SP)を含む", "a b"],
     ])("%s", async (_title, branchName) => {
       const refs = new Refs(".git");
       // Act & Assert

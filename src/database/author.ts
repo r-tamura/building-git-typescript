@@ -10,6 +10,28 @@ export class Author {
     this.time = time;
   }
 
+  static parse(str: string) {
+    const match = /(.+) <(.+)> (.+) (.+)/.exec(str);
+    if (match === null) {
+      throw TypeError(`'${str}' doesn't match author format`);
+    }
+    const [_, name, email, timestamp, timezone] = match;
+    const author = new Author(
+      name,
+      email,
+      // commitオブジェクトは秒までだが、Dateはmsまで必要
+      new Date(Number.parseInt(timestamp) * 1000)
+    );
+    return author;
+  }
+
+  shortDate() {
+    const year = this.time.getFullYear().toString();
+    const month = (this.time.getMonth() + 1).toString().padStart(2, "0");
+    const day = this.time.getDate().toString().padStart(2, "0");
+    return `${year}-${month}-${day}`;
+  }
+
   toString() {
     // ミリ秒なしのタイムスタンプ
     const timestamp = this.time.getTime() / 1000;

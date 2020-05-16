@@ -1,19 +1,22 @@
 import * as os from "os";
 import { Author } from "./author";
 import { GitObject, OID } from "../types";
-import { scanUntil, asserts } from "../util";
+import { scanUntil, asserts, splitByLine } from "../util";
 
-export class Commit implements GitObject {
+export class Commit {
   oid: OID | null = null;
   tree: OID;
   parent: OID | null = null;
-  #author: Author;
   #message: string;
 
-  constructor(parent: OID | null, tree: OID, author: Author, message: string) {
+  constructor(
+    parent: OID | null,
+    tree: OID,
+    public author: Author,
+    message: string
+  ) {
     this.parent = parent;
     this.tree = tree;
-    this.#author = author;
     this.#message = message;
   }
 
@@ -21,33 +24,37 @@ export class Commit implements GitObject {
     const headers: { [s: string]: string } = {};
 
     let offset = 0;
-    let author;
     while (true) {
       const [linebytes, position] = scanUntil("\n", buf, offset);
       const line = linebytes.toString();
       if (line === "") {
         break;
       }
-      const [key, ...values] = line.split(" ");
-
-      if (key === "author") {
-        author = new Author(
-          values[0],
-          values[1].replace("<", "").replace(">", ""),
-          // commitオブジェクトは秒までだが、Dateはmsまで必要
-          new Date(Number.parseInt(values[2]) * 1000)
-        );
-      } else {
-        headers[key] = values.join(" ");
+      const match = /^(?<key>[^ ]+) (?<value>.+)$/.exec(line);
+      if (match === null) {
+        throw TypeError(`'${line}' doesn't match commit header format.`);
       }
+      const key = match.groups?.key;
+      const value = match.groups?.value;
+      if (!key || !value) {
+        throw TypeError(`'${line}' doesn't match commit header format.`);
+      }
+
+      headers[key] = value;
 
       offset = position;
     }
     const comment = buf.slice(offset + 1).toString();
+    return new Commit(
+      headers["parent"],
+      headers["tree"],
+      Author.parse(headers["author"]),
+      comment
+    );
+  }
 
-    asserts(typeof author !== "undefined");
-
-    return new Commit(headers["parent"], headers["tree"], author, comment);
+  titleLine() {
+    return splitByLine(this.#message)[0];
   }
 
   type() {
@@ -60,8 +67,8 @@ export class Commit implements GitObject {
     if (this.parent) {
       lines.push(`parent ${this.parent}`);
     }
-    lines.push(`author ${this.#author}`);
-    lines.push(`committer ${this.#author}`);
+    lines.push(`author ${this.author}`);
+    lines.push(`committer ${this.author}`);
     lines.push("");
     lines.push(this.#message);
 

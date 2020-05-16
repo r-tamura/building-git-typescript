@@ -1,10 +1,9 @@
 import * as path from "path";
 import { FileService, defaultFs, exists } from "./services";
 import { OID } from "./types";
-import { BaseError, asserts } from "./util";
+import { BaseError } from "./util";
 import { Lockfile, MissingParent } from "./lockfile";
 import { Pathname } from "./types";
-import { MissingFile } from "./workspace";
 
 type Environment = {
   fs?: FileService;
@@ -17,7 +16,7 @@ const INVALID_BRANCH_NAME = [
   /\/$/, // Unixのディレクトリ名の形式
   /\.lock$/, // .lockファイルの形式
   /@\{/, // Gitの形式の一つ
-  /[^ -~]+/, // ASCII制御文字 https://stackoverflow.com/questions/24229262/match-non-printable-non-ascii-characters-and-remove-from-text
+  /[\x00-\x20*~?:\[\\^~\x7f]+/, // ASCII制御文字
 ];
 
 const HEAD = "HEAD";

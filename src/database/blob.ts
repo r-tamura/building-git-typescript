@@ -2,7 +2,7 @@ import { GitObject, OID } from "../types";
 
 export type Data = Buffer;
 
-export class Blob implements GitObject {
+export class Blob {
   oid: OID | null = null;
   data: Data;
   constructor(strdata: string) {

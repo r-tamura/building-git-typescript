@@ -5,17 +5,26 @@ import { Blob } from "./blob";
 import { defaultFs, defaultZlib } from "../services";
 import { Z_BEST_SPEED } from "zlib";
 import { Database, Environment } from "./database";
+import { mockFsError } from "../__test__";
 
 type EnvMocker = {
   file?: string | Buffer;
   zlib?: string | Buffer;
+  direntries?: string[] | ((...args: any) => any);
 };
 
-const makeEnv = ({ file, zlib }: EnvMocker = {}): Environment => {
+const mockEnv = ({
+  file,
+  direntries = [],
+  zlib,
+}: EnvMocker = {}): Environment => {
   return {
     fs: {
       ...defaultFs,
       read: jest.fn(),
+      readdir: Array.isArray(direntries)
+        ? jest.fn().mockResolvedValue(direntries)
+        : jest.fn().mockImplementation(direntries),
       readFile: jest.fn().mockResolvedValue(file),
       stat: jest.fn(),
     },
@@ -33,11 +42,76 @@ describe("Database#hashObject", () => {
   it("GitオブジェクトのSH1ハッシュを生成する", () => {
     // Arrange
     const blob = new Blob("test content");
-    const db = new Database(".git/objects", makeEnv());
+    const db = new Database(".git/objects", mockEnv());
     const actual = db.hashObject(blob);
 
     // Assert
     assert.equal(actual, "08cf6101416f0ce0dda3c80e627f333854c4085c");
+  });
+});
+
+describe("Database#prefixMatch", () => {
+  it("該当するオブジェクトが存在しないとき、空配列を返す", async () => {
+    // Arrange
+    const env = mockEnv({ direntries: mockFsError("ENOENT") });
+
+    // Act
+    const db = new Database(".git", env);
+    const actual = await db.prefixMatch("08cf61");
+
+    // Assert
+    assert.deepEqual(actual, []);
+  });
+
+  it("該当するオブジェクトが1つ以上存在するとき、オブジェクトIDのリストを返す", async () => {
+    // Arrange
+    const env = mockEnv({
+      direntries: [
+        "cf6101416f0ce0dda3c80e627f333854caaaaa",
+        "cf6101416f0ce0dda3c80e627f333854c4085c",
+      ],
+    });
+
+    // Act
+    const db = new Database(".git", env);
+    const actual = await db.prefixMatch("08cf61");
+
+    // Assert
+    assert.deepEqual(actual, [
+      "08cf6101416f0ce0dda3c80e627f333854caaaaa",
+      "08cf6101416f0ce0dda3c80e627f333854c4085c",
+    ]);
+  });
+});
+
+describe("Database#readObject", () => {
+  it("オブジェクトIDのオブジェクトを読み込む", async () => {
+    // Arrange
+    const testObject = "blob 12\0hello world";
+    // Act
+    const db = new Database(
+      ".git/objects",
+      mockEnv({ zlib: Buffer.from(testObject) })
+    );
+    const actual = await db.readObject(
+      "08cf6101416f0ce0dda3c80e627f333854c4085c"
+    );
+
+    // Assert
+    const blob = new Blob("hello world");
+    blob.oid = "08cf6101416f0ce0dda3c80e627f333854c4085c";
+    assert.equal(actual.toString(), blob.toString());
+  });
+});
+
+describe("Database#shortOid", () => {
+  it("オブジェクトIDの先頭7文字を返す", () => {
+    // Act
+    const db = new Database(".git/objects", mockEnv());
+    const actual = db.shortOid("08cf6101416f0ce0dda3c80e627f333854c4085c");
+
+    // Assert
+    assert.equal(actual, "08cf610");
   });
 });
 
@@ -189,36 +263,5 @@ describe("Database#writeObject", () => {
         path.join(testRepoPath, "ab/cdefghijklmnopqrstu012345"),
       ]);
     });
-  });
-});
-
-describe("Database#readObject", () => {
-  it("オブジェクトIDのオブジェクトを読み込む", async () => {
-    // Arrange
-    const testObject = "blob 12\0hello world";
-    // Act
-    const db = new Database(
-      ".git/objects",
-      makeEnv({ zlib: Buffer.from(testObject) })
-    );
-    const actual = await db.readObject(
-      "08cf6101416f0ce0dda3c80e627f333854c4085c"
-    );
-
-    // Assert
-    const blob = new Blob("hello world");
-    blob.oid = "08cf6101416f0ce0dda3c80e627f333854c4085c";
-    assert.equal(actual.toString(), blob.toString());
-  });
-});
-
-describe("Database#shortOid", () => {
-  it("オブジェクトIDの先頭7文字を返す", () => {
-    // Act
-    const db = new Database(".git/objects", makeEnv());
-    const actual = db.shortOid("08cf6101416f0ce0dda3c80e627f333854c4085c");
-
-    // Assert
-    assert.equal(actual, "08cf610");
   });
 });

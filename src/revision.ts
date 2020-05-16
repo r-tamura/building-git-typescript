@@ -10,7 +10,7 @@ const INVALID_BRANCH_NAME = [
   /\/$/, // Unixのディレクトリ名の形式
   /\.lock$/, // .lockファイルの形式
   /@\{/, // Gitの形式の一つ
-  /[^ -~]+/, // ASCII制御文字
+  /[\x00-\x20*~?:\[\\^~\x7f]+/, // ASCII制御文字
 ];
 
 const PARENT = /^(.+)\^$/;
@@ -20,16 +20,25 @@ const REF_ALIASES: { [s: string]: string } = {
   "@": "HEAD",
 };
 
+const COMMIT = "commit";
+
 export class InvalidObject extends BaseError {}
+export class HintedError extends BaseError {
+  constructor(public message: string, public hint: string[]) {
+    super(message);
+  }
+}
 
 export class Revision {
   #repo: Repository;
   #expr: string;
   #query: Rev | null;
+  errors: HintedError[];
   constructor(repo: Repository, expression: string) {
     this.#repo = repo;
     this.#expr = expression;
     this.#query = Revision.parse(expression);
+    this.errors = [];
   }
 
   static parse(revision: string): Rev | null {
@@ -48,29 +57,87 @@ export class Revision {
     return null;
   }
 
-  async commitParent(commitOid: OID | null) {
-    if (commitOid === null) {
+  async commitParent(oid: OID | null) {
+    if (oid === null) {
       return null;
     }
 
-    const commit = await this.#repo.database.load(commitOid);
-    asserts(
-      commit instanceof Commit,
-      `commitのオブジェクトID以外はサポートしていません ${commit.oid}`
-    );
+    const commit = await this.loadTypedObject(oid, COMMIT);
+    if (!(commit instanceof Commit)) {
+      return null;
+    }
     return commit.parent;
   }
 
-  async resolve() {
-    const oid = await this.#query?.resolve(this);
+  async resolve(type: "commit" | null = null) {
+    let oid = (await this.#query?.resolve(this)) ?? null;
+    if (type && !(await this.loadTypedObject(oid, type))) {
+      oid = null;
+    }
+
     if (!oid) {
       throw new InvalidObject(`Not a valid object name: '${this.#expr}'.`);
     }
+
     return oid;
   }
 
   async readRef(name: string) {
-    return this.#repo.refs.readRef(name);
+    const oid = await this.#repo.refs.readRef(name);
+
+    // オブジェクトIDが見つかった場合
+    if (oid) {
+      return oid;
+    }
+
+    const candidates = await this.#repo.database.prefixMatch(name);
+    if (candidates.length === 1) {
+      return candidates[0];
+    }
+
+    if (candidates.length > 1) {
+      await this.logAnbiguousSha1(name, candidates);
+    }
+
+    return null;
+  }
+
+  private async loadTypedObject(oid: OID | null, type: typeof COMMIT) {
+    if (oid === null) {
+      return null;
+    }
+
+    const object = await this.#repo.database.load(oid);
+
+    if (object.type() === type) {
+      return object;
+    }
+    const message = `object ${oid} is a ${object.type()}, not a ${type}`;
+    this.errors.push(new HintedError(message, []));
+    return null;
+  }
+
+  private async logAnbiguousSha1(name: string, condidates: OID[]) {
+    const objects: string[] = [];
+    const sorted = condidates.sort();
+    const loadPromises = sorted.map(this.#repo.database.load);
+    for await (const object of loadPromises) {
+      asserts(object.oid !== null);
+      const short = this.#repo.database.shortOid(object.oid);
+      const info = `  ${short} ${object.type()}`;
+
+      if (object instanceof Commit) {
+        objects.push(
+          `${info} ${object.author.shortDate()} - ${object.titleLine()}`
+        );
+      } else {
+        objects.push(info);
+      }
+    }
+
+    const message = `short SHA1 ${name} is ambiguous`;
+    const hint = ["The candidates are:"].concat(objects);
+    this.errors.push(new HintedError(message, hint));
   }
 
   private static validRef(revision: string) {

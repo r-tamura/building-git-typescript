@@ -2,14 +2,14 @@ import * as path from "path";
 import * as Database from "../database";
 import { IEntry } from "../entry";
 import { asserts, packHex, scanUntil, unpackHex } from "../util";
-import { GitObject, OID, Pathname } from "../types";
+import { OID, Pathname } from "../types";
 
 export type TraverseCallbackFn = (t: Tree) => Promise<void>;
 
 export type WriteEntry = IEntry;
 export type EntryMap = { [s: string]: ReadEntry | Tree };
 export type ReadEntry = Pick<IEntry, "mode" | "oid">;
-export class Tree implements GitObject {
+export class Tree {
   static readonly TREE_MODE = 0o040000;
 
   oid: OID | null = null;
@@ -61,7 +61,7 @@ export class Tree implements GitObject {
 
   async traverse(act: TraverseCallbackFn) {
     // deepest subtree first 深さ優先走査
-    for (const [name, entry] of Object.entries(this.entries)) {
+    for (const [, entry] of Object.entries(this.entries)) {
       if (entry instanceof Tree) {
         await entry.traverse(act);
       }

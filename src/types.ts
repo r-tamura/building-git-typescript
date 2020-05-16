@@ -1,5 +1,6 @@
 import { promises } from "fs";
 import { Process, FileService, Logger } from "./services";
+import * as Database from "./database";
 
 /**
  * .git/objectsへ保存することができるデータ
@@ -9,11 +10,7 @@ export type OID = string;
 export interface GitObjectParser {
   parse(buf: Buffer): GitObject;
 }
-export interface GitObject {
-  oid: OID | null;
-  type: () => string;
-  toString: () => string;
-}
+export type GitObject = Database.Commit | Database.Tree | Database.Blob;
 
 /**
  * ファイルパス

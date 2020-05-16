@@ -10,22 +10,31 @@ export class Branch extends Base {
 
   private async createBranch() {
     const [branchName, startPoint] = this.args;
+    let resolved;
+    let revision;
     try {
-      let resolved;
       if (startPoint) {
-        const revision = new Revision(this.repo, startPoint);
-        resolved = await revision.resolve();
+        revision = new Revision(this.repo, startPoint);
+        resolved = await revision.resolve("commit");
       } else {
         resolved = await this.repo.refs.readHead();
         asserts(resolved !== null);
       }
-
       await this.repo.refs.createBranch(branchName, resolved);
     } catch (e) {
       const err = e as Error;
       switch (err.constructor) {
         case InvalidBranch:
+          this.logger.error(`fatal: ${err.message}`);
+          this.exit(128);
+          break;
         case InvalidObject:
+          revision?.errors.forEach((e) => {
+            this.logger.error(`error: ${e.message}`);
+            e.hint.forEach((line) => {
+              this.logger.error(`hint: ${line}`);
+            });
+          });
           this.logger.error(`fatal: ${err.message}`);
           this.exit(128);
           break;

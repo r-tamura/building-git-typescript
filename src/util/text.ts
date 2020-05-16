@@ -1,4 +1,16 @@
 /**
+ * 改行コード付きで行ごとに分割します
+ * Rubyの string#lines 相当の関数
+ * @param str
+ */
+export function splitByLine(str: string) {
+  // sep = '\n'
+  // [^\n]+\n? or \n
+  // Reference: https://stackoverflow.com/questions/36464953/split-string-in-javascript-but-keep-delimiter/36465144#36465144
+  return str.match(/[^\n]+\n?|\n/g) ?? [];
+}
+
+/**
  * template literalのインデントを調整します。
  * 空行を除いた行の中で、インデント数が最小の行のインデント数分、全行からインデントを取り除きます。
  * 先頭行と最終行が空行の場合は、それらも取り除かれます。
