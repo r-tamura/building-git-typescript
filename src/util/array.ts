@@ -46,9 +46,9 @@ function jsindex(xs: any[], index: number) {
  *
  */
 export function get<T>(xs: T[], index: number): T {
-  if (Math.abs(index) >= xs.length) {
+  if (index < -xs.length || xs.length <= index) {
     throw new RangeError(
-      `index has to be within array's length. ${-xs.length} < index:${index} < ${
+      `index has to be within array's length. ${-xs.length} <= actual:${index} < ${
         xs.length
       }`
     );

@@ -28,6 +28,9 @@ describe("diff", () => {
         index 0839b2e..21fb1ec 100644
         --- a/file.txt
         +++ b/file.txt
+        @@ -1,1 +1,1 @@
+        -contents
+        +changed
       `);
     });
 
@@ -52,6 +55,9 @@ describe("diff", () => {
         index 0839b2e..21fb1ec
         --- a/file.txt
         +++ b/file.txt
+        @@ -1,1 +1,1 @@
+        -contents
+        +changed
       `);
     });
 
@@ -64,6 +70,8 @@ describe("diff", () => {
         index 0839b2e..0000000
         --- a/file.txt
         +++ /dev/null
+        @@ -1,1 +0,0 @@
+        -contents
       `);
     });
   });
@@ -85,6 +93,9 @@ describe("diff", () => {
         index 0839b2e..21fb1ec 100644
         --- a/file.txt
         +++ b/file.txt
+        @@ -1,1 +1,1 @@
+        -contents
+        +changed
       `);
     });
 
@@ -99,6 +110,8 @@ describe("diff", () => {
         index 0000000..3e5126c
         --- /dev/null
         +++ b/new.txt
+        @@ -0,0 +1,1 @@
+        +new
       `);
     });
 
@@ -113,6 +126,8 @@ describe("diff", () => {
         index 0839b2e..0000000
         --- a/file.txt
         +++ /dev/null
+        @@ -1,1 +0,0 @@
+        -contents
       `);
     });
   });

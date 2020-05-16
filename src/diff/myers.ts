@@ -1,10 +1,11 @@
-import { range, get, set, clone, enumerate } from "./util";
+import { range, get, set, clone, enumerate, asserts } from "../util";
+import { Line } from "./diff";
 
 export class Myers {
-  constructor(public a: string[], public b: string[]) {}
+  constructor(public a: Line[], public b: Line[]) {}
 
-  static diff(a: string[], b: string[]) {
-    return new this(a, b);
+  static diff(a: Line[], b: Line[]) {
+    return new this(a, b).diff();
   }
 
   *backTrack() {
@@ -21,7 +22,7 @@ export class Myers {
       const k = x - y;
       // 下に動いた = k + 1 された / 右に動いた = k - 1 された
       const prev_k = shouldMoveDown(v, d, k) ? k + 1 : k - 1;
-      const prev_x = v[prev_k];
+      const prev_x = get(v, prev_k);
       const prev_y = prev_x - prev_k;
 
       while (canMoveDiagnally(x, prev_x, y, prev_y)) {
@@ -40,16 +41,15 @@ export class Myers {
     const diff: Edit[] = [];
     for (const [prev_x, prev_y, x, y] of this.backTrack()) {
       const [a_line, b_line] = [this.a[prev_x], this.b[prev_y]];
-
       if (x === prev_x) {
         // x変化なし => yが変化した => 下へ移動した => bのテキストを挿入
-        diff.push(Edit.of("ins", b_line));
+        diff.push(Edit.of("ins", null, b_line));
       } else if (y === prev_y) {
         // y変化なし => xが変化した => 右へ移動した => aのテキストを削除
-        diff.push(Edit.of("del", a_line));
+        diff.push(Edit.of("del", a_line, null));
       } else {
         // 対角に移動した => a/bの行が同じ
-        diff.push(Edit.of("eql", a_line));
+        diff.push(Edit.of("eql", a_line, b_line));
       }
     }
 
@@ -73,7 +73,7 @@ export class Myers {
         let y = x - k;
 
         // move diagonal
-        while (x < n && y < m && this.a[x] === this.b[y]) {
+        while (x < n && y < m && this.a[x].text === this.b[y].text) {
           [x, y] = [x + 1, y + 1];
         }
         set(v, k, x);
@@ -94,15 +94,29 @@ const SYMBOLS = {
 };
 type SymbolKey = keyof typeof SYMBOLS;
 
-class Edit {
-  constructor(public type: SymbolKey, public text: string) {}
+export class Edit {
+  constructor(
+    public type: SymbolKey,
+    public a_line: Line | null,
+    public b_line: Line | null
+  ) {
+    this.throwOnInvalid();
+  }
 
-  static of(type: SymbolKey, text: string) {
-    return new this(type, text);
+  static of(type: SymbolKey, a_line: Line | null, b_line: Line | null) {
+    return new this(type, a_line, b_line);
   }
 
   toString() {
-    return SYMBOLS[this.type] + this.text;
+    const line = this.a_line ?? this.b_line;
+    asserts(line !== null);
+    return SYMBOLS[this.type] + line.text;
+  }
+
+  private throwOnInvalid() {
+    if (this.a_line === null && this.b_line === null) {
+      throw TypeError("Either a_line or b_line should be valid line");
+    }
   }
 }
 

@@ -63,7 +63,11 @@ export abstract class Base implements Runnable {
       this.#repo ?? new Repository(path.join(this.dir, ".git"), this.env));
   }
 
-  log(...messages: string[]) {
-    this.env.logger.info(...messages);
+  log(message: string) {
+    // Note: rubyのputsは文字列が'\n'で終わると改行を挿入しない
+    if (message.endsWith("\n")) {
+      message = message.trimRight();
+    }
+    this.env.logger.info(message);
   }
 }
