@@ -16,73 +16,100 @@ export class Diff extends Base {
 
     for (const [pathname, state] of this.#status.workspaceChanges.entries()) {
       switch (state) {
-        case "modified":
-          await this.diffFileModified(pathname);
+        case "modified": {
+          const a = this.fromIndex(pathname);
+          const b = await this.fromFile(pathname);
+          this.printDiff(a, b);
           break;
-        case "deleted":
-          await this.diffFileDeleted(pathname);
+        }
+        case "deleted": {
+          const a = this.fromIndex(pathname);
+          const b = this.fromNothing(pathname);
+          this.printDiff(a, b);
           break;
+        }
       }
     }
   }
 
-  private async diffFileModified(pathname: Pathname) {
+  private fromIndex(pathname: Pathname) {
     const entry = this.repo.index.entryForPath(pathname);
+    return Target.of(entry.name, entry.oid, entry.mode.toString(8));
+  }
 
-    // a
-    const a_oid = entry.oid;
-    const a_mode = entry.mode.toString(8);
-    const a_path = path.join("a", pathname);
+  private async fromFile(pathname: Pathname) {
+    const content = await this.repo.workspace.readFile(pathname);
+    const blob = new Database.Blob(content);
+    const oid = this.repo.database.hashObject(blob);
+    const mode = Index.Entry.modeForStat(this.#status.stats[pathname]);
+    return Target.of(pathname, oid, mode.toString(8));
+  }
 
-    // b
-    const wsContents = await this.repo.workspace.readFile(pathname);
-    const blob = new Database.Blob(wsContents);
-    const b_oid = this.repo.database.hashObject(blob);
-    const b_mode = Index.Entry.modeForStat(
-      this.#status.stats[pathname]
-    ).toString(8);
-    const b_path = path.join("b", pathname);
+  private fromNothing(pathname: Pathname) {
+    return Target.of(pathname, NULL_OID, null);
+  }
 
-    this.log(`diff --git ${a_path} ${b_path}`);
-
-    if (a_mode !== b_mode) {
-      this.log(`old mode ${a_mode}`);
-      this.log(`new mode ${b_mode}`);
-    }
-
-    if (a_oid === b_oid) {
+  private printDiff(a: Target, b: Target) {
+    if (a.equals(b)) {
       return;
     }
 
-    let oidRange = `index ${this.short(a_oid)}..${this.short(b_oid)}`;
-    if (a_mode === b_mode) {
-      oidRange += ` ${a_mode}`;
-    }
-    this.log(oidRange);
-    this.log(`--- ${a_path}`);
-    this.log(`+++ ${b_path}`);
+    a.name = path.join("a", a.name);
+    b.name = path.join("b", b.name);
+
+    this.log(`diff --git ${a.name} ${b.name}`);
+    this.printMode(a, b);
+    this.printDiffContent(a, b);
   }
 
-  private diffFileDeleted(pathname: Pathname) {
-    const entry = this.repo.index.entryForPath(pathname);
+  private printMode(a: Target, b: Target) {
+    if (b.mode === null) {
+      this.log(`deleted file mode ${a.mode}`);
+    } else if (a.mode !== b.mode) {
+      this.log(`old mode ${a.mode}`);
+      this.log(`new mode ${b.mode}`);
+    }
+  }
 
-    // a
-    const a_oid = entry.oid;
-    const a_mode = entry.mode.toString(8);
-    const a_path = path.join("a", pathname);
+  private printDiffContent(a: Target, b: Target) {
+    if (a.equalsContent(b)) {
+      return;
+    }
 
-    // b
-    const b_oid = NULL_OID;
-    const b_path = path.join("b", pathname);
-
-    this.log(`diff --git ${a_path} ${b_path}`);
-    this.log(`deleted file mode ${a_mode}`);
-    this.log(`index ${this.short(a_oid)}..${this.short(b_oid)}`);
-    this.log(`--- ${a_path}`);
-    this.log(`+++ ${NULL_PATH}`);
+    let oidRange = `index ${this.short(a.oid)}..${this.short(b.oid)}`;
+    if (a.mode === b.mode) {
+      oidRange += ` ${a.mode}`;
+    }
+    this.log(oidRange);
+    this.log(`--- ${a.deffPath}`);
+    this.log(`+++ ${b.deffPath}`);
   }
 
   private short(oid: OID) {
     return this.repo.database.shortOid(oid);
+  }
+}
+
+class Target {
+  constructor(
+    public name: Pathname,
+    public oid: OID,
+    public mode: string | null
+  ) {}
+
+  static of(name: Pathname, oid: OID, mode: string | null) {
+    return new this(name, oid, mode);
+  }
+
+  get deffPath() {
+    return this.mode ? this.name : NULL_PATH;
+  }
+
+  equals(b: Target) {
+    return this.oid === b.oid && this.mode === b.mode;
+  }
+
+  equalsContent(b: Target) {
+    return this.oid === b.oid;
   }
 }
