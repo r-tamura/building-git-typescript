@@ -25,8 +25,9 @@ export function isExecutable(stat: Stats) {
  */
 export function descend(pathname: Pathname) {
   const eachDirname = pathname.split(path.sep).filter((s) => s !== ".");
+  const initial = path.isAbsolute(pathname) ? "/" : "";
   return eachDirname.reduce((acc, dirname) => {
-    const prev = acc[acc.length - 1] ?? "";
+    const prev = acc[acc.length - 1] ?? initial;
     acc.push(path.join(prev, dirname));
     return acc;
   }, [] as string[]);

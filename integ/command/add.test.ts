@@ -1,6 +1,8 @@
 import * as assert from "assert";
-import * as t from "./helper";
+import * as T from "./helper";
 import { stripIndent } from "~/util";
+
+const t = T.create();
 
 describe("add", () => {
   async function assertIndex(expected: [number, string][]) {

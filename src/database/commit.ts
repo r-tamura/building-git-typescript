@@ -1,7 +1,7 @@
 import * as os from "os";
 import { Author } from "./author";
-import { GitObject, OID } from "../types";
-import { scanUntil, asserts, splitByLine } from "../util";
+import { OID } from "../types";
+import { scanUntil, splitByLine } from "../util";
 
 export class Commit {
   readonly type = "commit";

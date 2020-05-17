@@ -1,8 +1,9 @@
-import { Refs, LockDenied, InvalidBranch } from "./refs";
+import { Refs, LockDenied, InvalidBranch, Environment, symref } from "./refs";
 import * as Service from "./services";
 import * as assert from "power-assert";
 import { Lockfile } from "./lockfile";
 import { defaultFs, FileService } from "./services";
+import { mockFsError } from "./__test__";
 
 jest.mock("./lockfile");
 const MockedLockfile = (Lockfile as unknown) as jest.Mock<Partial<Lockfile>>;
@@ -48,6 +49,52 @@ describe("Refs#createBranch", () => {
     await expect(actual).rejects.toThrow(InvalidBranch);
 
     alreadyExists.mockReset();
+  });
+});
+
+describe("Refs#listBranch", () => {
+  it("headsディレクトリ内のブランチを取得する", async () => {
+    // Arrange
+    const spyDirectory = jest
+      .spyOn(Service, "directory")
+      .mockResolvedValue(false);
+    const readdir = jest.fn().mockResolvedValueOnce(["foo", "bar", "qux"]);
+    const env: Environment = mockEnv({ readdir });
+    // Act
+    const refs = new Refs(".git", env);
+    const actual = await refs.listBranchs();
+
+    // Assert
+    assert.equal(
+      readdir.mock.calls[0][0],
+      ".git/refs/heads",
+      "headsディレクトリ"
+    );
+
+    assert.deepEqual(
+      actual,
+      [
+        symref(refs, "refs/heads/foo"),
+        symref(refs, "refs/heads/bar"),
+        symref(refs, "refs/heads/qux"),
+      ],
+      "返り値"
+    );
+
+    spyDirectory.mockReset();
+  });
+
+  it("headsディレクトリが存在しないとき、空のリストを返す", async () => {
+    // Arrange
+    const readdir = jest.fn().mockImplementationOnce(mockFsError("ENOENT"));
+    const env: Environment = mockEnv({ readdir });
+
+    // Act
+    const refs = new Refs(".git", env);
+    const actual = await refs.listBranchs();
+
+    // Assert
+    assert.deepEqual(actual, []);
   });
 });
 
@@ -135,6 +182,22 @@ describe("Refs#readRef", () => {
     assert.equal(actual, null);
 
     spyServiceExists.mockReset();
+  });
+});
+
+describe("Refs#shortName", () => {
+  it("headsディレクトリにrefファイルがあるとき、ref名を返す", () => {
+    const refs = new Refs(".git");
+    const actual = refs.shortName("refs/heads/bar");
+
+    assert.equal(actual, "bar");
+  });
+
+  it(".gitディレクトリにrefファイルがあるとき、ref名を返す", () => {
+    const refs = new Refs(".git");
+    const actual = refs.shortName("bar");
+
+    assert.equal(actual, "bar");
   });
 });
 

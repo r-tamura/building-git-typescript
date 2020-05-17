@@ -1,4 +1,5 @@
 import { Logger } from "../services";
+import { GitObject, NonNullGitObject, OID } from "~/types";
 
 export function getMockedMethod<T>(Cls: T, method: keyof T, index: number = 0) {
   const Mocked = (Cls as unknown) as jest.Mock<T>;
@@ -15,4 +16,15 @@ export function makeLogger(): Logger {
     warn: jest.fn(),
     error: jest.fn(),
   };
+}
+
+/**
+ * GitObjectへoidを設定する
+ */
+export function setOid(
+  o: GitObject,
+  oid: OID = "3a3c4ec0ae9589c881029c161dd129bcc318dc08"
+): NonNullGitObject {
+  o.oid = oid;
+  return o as NonNullGitObject;
 }

@@ -16,7 +16,7 @@ export class Init extends Base {
     const rootPath = this.expeandedPathname(directory);
 
     const gitPath = path.join(rootPath, ".git");
-    const creations = ["objects", "refs"].map((dir) =>
+    const creations = ["objects", path.join("refs", "heads")].map((dir) =>
       this.env.fs
         .mkdir(path.join(gitPath, dir), { recursive: true })
         .catch((err: NodeJS.ErrnoException) => {

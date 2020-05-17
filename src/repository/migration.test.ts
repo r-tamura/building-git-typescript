@@ -4,6 +4,7 @@ import { Repository } from "./repository";
 import { Migration } from "./migration";
 import { Entry, Changes, Blob } from "../database";
 import { makeTestStats } from "../__test__";
+import { setOid } from "../__test__/util";
 
 describe.skip("Migration#applyChanges", () => {
   describe("削除されるエントリがあるとき、そのエントリを削除する", () => {
@@ -30,7 +31,9 @@ describe.skip("Migration#applyChanges", () => {
     beforeAll(async () => {
       // Arrange
       const repo = new Repository("/tmp/.git", env as any);
-      jest.spyOn(repo.database, "load").mockResolvedValue(new Blob("hello"));
+      jest
+        .spyOn(repo.database, "load")
+        .mockResolvedValue(setOid(new Blob("hello")));
       remove = jest.spyOn(repo.index, "remove").mockResolvedValue(undefined);
       add = jest.spyOn(repo.index, "add");
       const diff: Changes = new Map([

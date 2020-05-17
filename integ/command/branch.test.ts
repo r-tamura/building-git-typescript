@@ -1,77 +1,144 @@
-import * as t from "./helper";
+import * as T from "./helper";
 import * as assert from "power-assert";
 import { stripIndent } from "~/util";
 
-describe("", () => {
+const t = T.create();
+
+describe("branch", () => {
   beforeEach(t.beforeHook);
   afterEach(t.afterHook);
 
-  beforeEach(async () => {
-    await t.writeFile("hello.txt", "hello");
+  async function writeCommit(message: string) {
+    await t.writeFile("file.txt", message);
     await t.jitCmd("add", ".");
-    await t.commit("first commit");
-  });
-  it("HEADから新しいブランチを作る", async () => {
-    // Act
-    await t.jitCmd("branch", "master");
+    await t.commit(message);
+  }
 
-    // Assert
-    assert.equal(
-      await t.repo().refs.readRef("master"),
-      await t.repo().refs.readHead()
-    );
-  });
+  describe("with no commit", () => {
+    it.skip("無効なmasterブランチのため失敗する", async () => {
+      // TODO: fix
+      await t.jitCmd("branch", "topic");
+      t.assertError("fatal: Not a valid object name: 'master'.");
+    });
 
-  it("特定のコミットから新しいブランチを作る", async () => {
-    // Arrange
-    await t.writeFile("hello.txt", "changed");
-    await t.commit("second commit");
-
-    // Act
-    await t.jitCmd("branch", "topic", "HEAD^");
-
-    // Assert
-    assert.equal(
-      "8b86eb4ae21c63c6b983509337e797cab17ec6ad",
-      await t.repo().refs.readRef("topic")
-    );
+    it("空のリストが出力される", async () => {
+      await t.jitCmd("branch");
+      t.assertInfo("");
+    });
   });
 
-  it("コミットIDのプレフィックスから新しいブランチを作る", async () => {
-    // Arrange
-    await t.writeFile("hello.txt", "changed");
-    await t.commit("second commit");
+  describe("with a chain of commits", () => {
+    beforeEach(async () => {
+      for (const msg of ["first", "second", "third"]) {
+        await writeCommit(msg);
+      }
+    });
 
-    // Act
-    await t.jitCmd("branch", "topic", "8b86eb");
+    it("creates a branch pointing at HEAD", async () => {
+      await t.jitCmd("branch", "topic");
 
-    // Assert
-    assert.equal(
-      await t.repo().refs.readRef("topic"),
-      "8b86eb4ae21c63c6b983509337e797cab17ec6ad"
-    );
-  });
+      assert.equal(
+        await t.repo().refs.readHead(),
+        await t.repo().refs.readRef("topic")
+      );
+    });
 
-  it("コミットIDプレフィックスに該当するオブジェクトが存在しないとき、エラーメッセージを表示する", async () => {
-    // Act
-    await t.jitCmd("branch", "topic", "aaaaaa~1");
+    it("fails for invalid branch names", async () => {
+      await t.jitCmd("branch", "^");
 
-    // Assert
-    t.assertError(stripIndent`
-      fatal: Not a valid object name: 'aaaaaa~1'.
-    `);
-    t.assertStatus(128);
-  });
+      t.assertError(stripIndent`
+        fatal: '^' is not a valid branch name.
+      `);
+    });
 
-  it("コミットIDプレフィックスの該当オブジェクトがcommitでないとき、エラーメッセージを表示する", async () => {
-    // Act
-    await t.jitCmd("branch", "topic", "b6fc4c6");
+    it("fails for existing branch names", async () => {
+      await t.jitCmd("branch", "topic");
+      await t.jitCmd("branch", "topic");
 
-    // Assert
-    t.assertError(stripIndent`
-      error: object b6fc4c620b67d95f953a5c1c1230aaab5db5a1b0 is a blob, not a commit
-      fatal: Not a valid object name: 'b6fc4c6'.
-    `);
-    t.assertStatus(128);
+      t.assertError(stripIndent`
+        fatal: A branch named 'topic' already exists.
+      `);
+    });
+
+    it("creats a branch from a short commit ID", async () => {
+      const id = await t.resolveRevision("@~2");
+      await t.jitCmd("branch", "topic", t.repo().database.shortOid(id));
+
+      assert.equal(await t.repo().refs.readRef("topic"), id);
+    });
+
+    it("fails for invalid revisions", async () => {
+      await t.jitCmd("branch", "topic", "^");
+
+      t.assertError("fatal: Not a valid object name: '^'.");
+    });
+
+    it("fails for invalid refs", async () => {
+      await t.jitCmd("branch", "topic", "no-such-branch");
+
+      t.assertError("fatal: Not a valid object name: 'no-such-branch'.");
+    });
+
+    it("fails for invalid parents", async () => {
+      await t.jitCmd("branch", "topic", "@^^^");
+
+      t.assertError("fatal: Not a valid object name: '@^^^'.");
+    });
+
+    it.skip("fails for invalid parents 2", async () => {
+      // TODO: fix
+      await t.jitCmd("branch", "topic", "@^^^^");
+
+      t.assertError("fatal: Not a valid object name: '@^^^^'.");
+    });
+
+    it.skip("fails for invalid ancestors", async () => {
+      // TODO: fix
+      await t.jitCmd("branch", "topic", "@~50");
+
+      t.assertError("fatail: Not a valid object name '@~50'.");
+    });
+
+    it("fails for parents of revisions that are not commit", async () => {
+      const head = await t.repo().refs.readHead();
+      if (head === null) {
+        assert.fail();
+      }
+      const o = await t.repo().database.load(head);
+      if (o.type !== "commit") {
+        assert.fail();
+      }
+
+      await t.jitCmd("branch", "topic", `${o.tree}^^`);
+
+      t.assertError(stripIndent`
+        error: object ${o.tree} is a tree, not a commit
+        fatal: Not a valid object name: '${o.tree}^^'.
+      `);
+    });
+
+    it("lists existing branchs with verbose info", async () => {
+      await t.jitCmd("branch", "new-feature");
+      await t.jitCmd("branch");
+      t.assertInfo(stripIndent`
+        * master
+          new-feature
+      `);
+    });
+
+    it("lists existing branches with verbose info", async () => {
+      const a = await t.loadCommit("@^");
+      const b = await t.loadCommit("@");
+
+      await t.jitCmd("branch", "new-feature", "@^");
+      await t.jitCmd("branch", "--verbose");
+
+      const a_short = t.repo().database.shortOid(a.oid);
+      const b_short = t.repo().database.shortOid(b.oid);
+      t.assertInfo(stripIndent`
+        * master      ${b_short} third
+          new-feature ${a_short} second
+      `);
+    });
   });
 });

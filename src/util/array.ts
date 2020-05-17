@@ -65,3 +65,8 @@ export function set<T>(xs: T[], index: number, value: T) {
 export function enumerate<T>(xs: T[]): [T, number][] {
   return xs.map((x, i) => [x, i]);
 }
+
+export function find<T>(xs: T[], pred: (x: T) => boolean): T | null {
+  const filtered = xs.filter(pred);
+  return filtered.length === 0 ? null : filtered[0];
+}

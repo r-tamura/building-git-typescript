@@ -1,5 +1,8 @@
-import * as t from "./helper";
+import * as T from "./helper";
 import { stripIndent } from "~/util";
+import { Repository } from "~/repository";
+
+const t = T.create();
 
 describe("diff", () => {
   beforeEach(t.beforeHook);
@@ -21,6 +24,7 @@ describe("diff", () => {
       await t.jitCmd("add", ".");
     });
     it("コンテンツに変更があるとき、行ごとのpatch diffを表示する", async () => {
+      new Repository("", {} as any);
       await t.writeFile("file.txt", "changed");
 
       await assertDiff(stripIndent`

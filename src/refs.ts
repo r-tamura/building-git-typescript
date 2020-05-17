@@ -1,11 +1,12 @@
+import * as os from "os";
 import * as path from "path";
-import { FileService, defaultFs, exists } from "./services";
+import { FileService, defaultFs, exists, directory } from "./services";
 import { OID } from "./types";
-import { BaseError } from "./util";
+import { BaseError, find, ascend, asserts } from "./util";
 import { Lockfile, MissingParent } from "./lockfile";
 import { Pathname } from "./types";
 
-type Environment = {
+export type Environment = {
   fs?: FileService;
 };
 
@@ -21,15 +22,57 @@ const INVALID_BRANCH_NAME = [
 
 const HEAD = "HEAD";
 
-type SymRef = {
+export const symref = (refs: Refs, p: Pathname): SymRef => SymRef.of(refs, p);
+export interface SymRef {
   type: "symref";
   path: string;
-};
+  shortName(): string;
+  readOid(): Promise<string>;
+  ord(other: SymRef): number;
+}
 
-type Ref = {
+export class SymRef {
+  type = "symref" as const;
+  #refs: Refs;
+  constructor(refs: Refs, public path: Pathname) {
+    this.#refs = refs;
+  }
+  static of(refs: Refs, p: Pathname) {
+    const symref = new SymRef(refs, p);
+    return symref;
+  }
+
+  shortName() {
+    return this.#refs.shortName(this.path);
+  }
+
+  readOid() {
+    return this.#refs.readRef(this.path);
+  }
+
+  ord(other: SymRef) {
+    return this.path.localeCompare(other.path);
+  }
+}
+
+const ref = (oid: OID): Ref => Ref.of(oid);
+export interface Ref {
   type: "ref";
   oid: OID;
-};
+  readOid(): Promise<string>;
+}
+export class Ref {
+  type = "ref" as const;
+  constructor(public oid: OID) {}
+  static of(oid: OID) {
+    const ref = new Ref(oid);
+    return ref;
+  }
+
+  async readOid() {
+    return this.oid;
+  }
+}
 
 const SYMREF = /^ref: (.+)$/;
 
@@ -51,7 +94,7 @@ export class Refs {
     const pathname = path.join(this.#headspath, branchName);
 
     if (INVALID_BRANCH_NAME.some((r) => r.test(branchName))) {
-      throw new InvalidBranch(`'${branchName}' is not valid branch name.`);
+      throw new InvalidBranch(`'${branchName}' is not a valid branch name.`);
     }
 
     if (await exists(this.#fs, pathname)) {
@@ -59,6 +102,26 @@ export class Refs {
     }
 
     await this.updateRefFile(pathname, startOid);
+  }
+
+  /**
+   * ソースが指しているrefを取得します。detached状態のときはコミットIDを取得します。
+   * ソースが指定されないときはHEADが参照しているrefを取得します。
+   */
+  async currentRef(source: string = HEAD): Promise<SymRef> {
+    const ref = await this.readOidOrSymRef(path.join(this.#pathname, source));
+
+    switch (ref?.type) {
+      case "symref":
+        return this.currentRef(ref.path);
+      case "ref":
+      case undefined:
+        return symref(this, source);
+    }
+  }
+
+  async listBranchs() {
+    return this.listRefs(this.#headspath);
   }
 
   async setHead(revision: string, oid: OID) {
@@ -79,7 +142,7 @@ export class Refs {
    * @param oid オブジェクトID
    */
   async updateHead(oid: OID) {
-    await this.updateRefFile(this.headPath, oid);
+    await this.updateSymRef(this.headPath, oid);
   }
 
   private async updateRefFile(
@@ -89,12 +152,9 @@ export class Refs {
   ) {
     try {
       const lockfile = new Lockfile(pathname, { fs: this.#fs });
-
       await lockfile.holdForUpdate();
 
-      await lockfile.write(oid);
-      await lockfile.write("\n");
-      await lockfile.commit();
+      await this.writeLockfile(lockfile, oid);
     } catch (e) {
       switch (e.constructor) {
         case MissingParent:
@@ -109,6 +169,27 @@ export class Refs {
           throw e;
       }
     }
+  }
+
+  private async updateSymRef(pathname: Pathname, oid: OID) {
+    const lockfile = new Lockfile(pathname);
+    await lockfile.holdForUpdate();
+    const ref = await this.readOidOrSymRef(pathname);
+    if (ref === null || ref.type !== "symref") {
+      return this.writeLockfile(lockfile, oid);
+    }
+
+    try {
+      await this.updateSymRef(path.join(this.#pathname, ref.path), oid);
+    } finally {
+      await lockfile.rollback();
+    }
+  }
+
+  private async writeLockfile(lockfile: Lockfile, oid: OID) {
+    await lockfile.write(oid);
+    await lockfile.write(os.EOL);
+    lockfile.commit();
   }
 
   /**
@@ -136,11 +217,8 @@ export class Refs {
           throw e;
       }
     }
-
     const match = SYMREF.exec(data);
-    return match
-      ? { type: "symref", path: match[1] }
-      : { type: "ref", oid: data };
+    return match ? symref(this, match[1]) : ref(data);
   }
 
   async readRef(name: string) {
@@ -150,7 +228,6 @@ export class Refs {
 
   async readSymRef(name: string): Promise<OID | null> {
     const ref = await this.readOidOrSymRef(name);
-
     switch (ref?.type) {
       case "symref":
         return this.readSymRef(path.join(this.#pathname, ref.path));
@@ -161,8 +238,52 @@ export class Refs {
     }
   }
 
+  shortName(pathname: Pathname) {
+    const fullpath = path.join(this.#pathname, pathname);
+    const prefix = find([this.#headspath, this.#pathname], (dir) => {
+      return ascend(path.dirname(fullpath)).some((parent) => parent === dir);
+    });
+    asserts(prefix !== null);
+    return path.relative(prefix, fullpath);
+  }
+
   private get headPath() {
     return path.join(this.#pathname, HEAD);
+  }
+
+  /**
+   * 全てのrefのリストを取得します
+   * @param dirname refsディレクトリ
+   */
+  private async listRefs(dirname: Pathname): Promise<SymRef[]> {
+    const EXCLUDE_DIRS = [".", ".."];
+    let names;
+    try {
+      names = await this.#fs
+        .readdir(dirname)
+        .then((names) => names.filter((name) => !EXCLUDE_DIRS.includes(name)));
+    } catch (e) {
+      const nodeErr = e as NodeJS.ErrnoException;
+      switch (nodeErr.code) {
+        case "ENOENT":
+          return [];
+        default:
+          throw e;
+      }
+    }
+
+    const pathnames = names.map((name) => path.join(dirname, name));
+
+    const symrefs: (SymRef | SymRef[])[] = [];
+    for (const pathname of pathnames) {
+      if (await directory(this.#fs, pathname)) {
+        symrefs.push(await this.listRefs(pathname));
+      } else {
+        const relative = path.relative(this.#pathname, pathname);
+        symrefs.push(symref(this, relative));
+      }
+    }
+    return symrefs.flat();
   }
 
   private async pathForName(name: string) {
@@ -177,19 +298,5 @@ export class Refs {
       }
     }
     return prefix;
-  }
-
-  private async readRefFile(pathname: Pathname) {
-    try {
-      const content = await this.#fs.readFile(pathname, "utf-8");
-      return content.trim();
-    } catch (e) {
-      const nodeErr = e as NodeJS.ErrnoException;
-      if (nodeErr.code === "ENOENT") {
-        return null;
-      } else {
-        throw e;
-      }
-    }
   }
 }

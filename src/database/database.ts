@@ -3,7 +3,8 @@ import { constants } from "fs";
 import { Z_BEST_SPEED } from "zlib";
 import path = require("path");
 import { FileService, defaultFs, Zlib, defaultZlib } from "../services";
-import { GitObject, GitObjectParser, OID } from "../types";
+import { GitObject, GitObjectParser, OID, NonNullGitObject } from "../types";
+import * as assert from "assert";
 import { Blob } from "./blob";
 import { asserts, scanUntil } from "../util";
 import { Tree } from "./tree";
@@ -20,8 +21,8 @@ type Rand = {
 const sample = (str: string) => {
   const index = Math.floor(Math.random() * str.length);
   const char = str[index];
-  console.assert(char.length === 1);
-  console.assert(str.includes(char));
+  assert.equal(char.length, 1);
+  assert(str.includes(char));
   return char;
 };
 
@@ -42,9 +43,10 @@ const TYPES: Parsers = {
   tree: Tree,
   commit: Commit,
 } as const;
+
 export class Database {
   #pathname: string;
-  #objects: { [s: string]: GitObject } = {};
+  #objects: { [s: string]: NonNullGitObject } = {};
 
   // modules
   #fs: NonNullable<Environment["fs"]>;
@@ -94,8 +96,7 @@ export class Database {
 
     const object = parseObject(data);
     object.oid = oid;
-
-    return object;
+    return object as NonNullGitObject;
   }
 
   shortOid(oid: OID) {

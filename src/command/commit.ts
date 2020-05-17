@@ -37,7 +37,6 @@ export class Commit extends Base {
     await repo.database.store(commit);
 
     asserts(commit.oid !== null);
-
     await repo.refs.updateHead(commit.oid);
 
     const isRoot = parent === null ? "(root-commit) " : "";

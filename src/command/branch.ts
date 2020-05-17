@@ -1,11 +1,35 @@
+import * as arg from "arg";
 import { Base } from "./base";
-import { InvalidBranch } from "../refs";
+import { InvalidBranch, SymRef } from "../refs";
 import { InvalidObject, Revision } from "../revision";
-import { asserts } from "../util";
+import { asserts, shallowEqual } from "../util";
 
-export class Branch extends Base {
+interface Option {
+  verbose: boolean;
+}
+
+export class Branch extends Base<Option> {
   async run() {
-    await this.createBranch();
+    if (this.args.length === 0) {
+      await this.listBranches();
+    } else {
+      await this.createBranch();
+    }
+  }
+
+  initOptions() {
+    this.options = {
+      verbose: false,
+    };
+  }
+
+  defineSpec() {
+    return {
+      "--verbose": arg.flag(() => {
+        this.options.verbose = true;
+      }),
+      "-v": "--verbose",
+    };
   }
 
   private async createBranch() {
@@ -42,5 +66,42 @@ export class Branch extends Base {
           throw e;
       }
     }
+  }
+
+  private async listBranches() {
+    const ascending = (s1: SymRef, s2: SymRef) => s1.ord(s2);
+    const current = await this.repo.refs.currentRef();
+    const branches = await this.repo.refs
+      .listBranchs()
+      .then((branches) => branches.sort(ascending));
+
+    const maxWidth = Math.max(...branches.map((b) => b.shortName().length));
+
+    this.setupPager();
+
+    for (const ref of branches) {
+      let info = this.formatRef(ref, current);
+      info += await this.extendedBranchInfo(ref, maxWidth);
+      this.log(info);
+    }
+  }
+
+  private formatRef(ref: SymRef, current: SymRef) {
+    return shallowEqual(ref, current)
+      ? `* ${this.fmt("green", ref.shortName())}`
+      : `  ${ref.shortName()}`;
+  }
+
+  private async extendedBranchInfo(ref: SymRef, maxWidth: number) {
+    if (!this.options.verbose) {
+      return "";
+    }
+    const oid = await ref.readOid();
+    asserts(oid !== null);
+    const commit = await this.repo.database.load(oid);
+    asserts(commit.type === "commit");
+    const short = this.repo.database.shortOid(commit.oid);
+    const space = " ".repeat(maxWidth - ref.shortName().length);
+    return `${space} ${short} ${commit.titleLine()}`;
   }
 }

@@ -1,5 +1,6 @@
-import * as t from "./helper";
+import * as T from "./helper";
 import { stripIndent } from "~/util";
+const t = T.create();
 
 describe("checkout", () => {
   beforeEach(t.beforeHook);
@@ -40,7 +41,7 @@ describe("checkout", () => {
       t.assertInfo(status);
     }
 
-    const basefiles: t.Contents = [
+    const basefiles: T.Contents = [
       ["1.txt", "1"],
       ["outer/2.txt", "2"],
       ["outer/inner/3.txt", "3"],

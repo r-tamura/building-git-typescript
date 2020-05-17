@@ -130,6 +130,7 @@ export abstract class Base<O extends object = {}> implements Runnable {
     this.initOptions();
     const spec = this.defineSpec();
     /** Note: ライブラリの意図した使い方とは違うが、RubyのOptionParserの使い方へ合わせる */
-    arg(spec, { argv: this.args });
+    const args = arg(spec, { argv: this.args });
+    this.args = args._;
   }
 }

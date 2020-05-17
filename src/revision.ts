@@ -20,7 +20,7 @@ const REF_ALIASES: { [s: string]: string } = {
   "@": "HEAD",
 };
 
-const COMMIT = "commit";
+const COMMIT = "commit" as const;
 
 export class InvalidObject extends BaseError {}
 export class HintedError extends BaseError {
@@ -62,7 +62,7 @@ export class Revision {
       return null;
     }
 
-    const commit = await this.loadTypedObject(oid, COMMIT);
+    const commit = await this.loadTypedObject(oid, "commit");
     if (commit === null || commit.type !== "commit") {
       return null;
     }
@@ -71,6 +71,7 @@ export class Revision {
 
   async resolve(type: "commit" | null = null) {
     let oid = (await this.#query?.resolve(this)) ?? null;
+
     if (type && !(await this.loadTypedObject(oid, type))) {
       oid = null;
     }
@@ -106,7 +107,6 @@ export class Revision {
     if (oid === null) {
       return null;
     }
-
     const object = await this.#repo.database.load(oid);
 
     if (object.type === type) {

@@ -11,6 +11,7 @@ import * as assert from "power-assert";
 import { Database, Commit, Author, Blob } from "./database";
 import { Refs } from "./refs";
 import { Repository } from "./repository";
+import { NonNullGitObject } from "./types";
 
 const mockCommit = (oid: string) => {
   const commit = new Commit(
@@ -20,12 +21,12 @@ const mockCommit = (oid: string) => {
     [`message is ${oid}`].join("\n")
   );
   commit.oid = oid;
-  return commit;
+  return commit as NonNullGitObject;
 };
 const mockBlob = (oid: string) => {
   const blob = new Blob("");
   blob.oid = oid;
-  return blob;
+  return blob as NonNullGitObject;
 };
 
 const mockRepo = () => new Repository(".git", {} as any);

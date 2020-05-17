@@ -33,6 +33,11 @@ export async function exists(fs: FileService, pathname: Pathname) {
   }
 }
 
+export async function directory(fs: FileService, pathname: Pathname) {
+  const stat = await fs.stat(pathname);
+  return stat.isDirectory();
+}
+
 export async function rmrf(fs: FileService, pathname: Pathname) {
   // rimraf.jsのようにファイルであると仮定してunlink -> EISDIRエラーならrmdirする
   // https://github.com/isaacs/rimraf/blob/master/rimraf.js
