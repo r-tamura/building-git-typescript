@@ -29,6 +29,7 @@ export interface SymRef {
   shortName(): string;
   readOid(): Promise<string>;
   ord(other: SymRef): number;
+  head(): boolean;
 }
 
 export class SymRef {
@@ -40,6 +41,10 @@ export class SymRef {
   static of(refs: Refs, p: Pathname) {
     const symref = new SymRef(refs, p);
     return symref;
+  }
+
+  head() {
+    return this.path === HEAD;
   }
 
   shortName() {
@@ -109,7 +114,9 @@ export class Refs {
    * ソースが指定されないときはHEADが参照しているrefを取得します。
    */
   async currentRef(source: string = HEAD): Promise<SymRef> {
+    // console.log("source", source);
     const ref = await this.readOidOrSymRef(path.join(this.#pathname, source));
+    // console.log(ref);
 
     switch (ref?.type) {
       case "symref":
@@ -142,7 +149,7 @@ export class Refs {
    * @param oid オブジェクトID
    */
   async updateHead(oid: OID) {
-    await this.updateSymRef(this.headPath, oid);
+    return this.updateSymRef(this.headPath, oid);
   }
 
   private async updateRefFile(
@@ -189,7 +196,7 @@ export class Refs {
   private async writeLockfile(lockfile: Lockfile, oid: OID) {
     await lockfile.write(oid);
     await lockfile.write(os.EOL);
-    lockfile.commit();
+    await lockfile.commit();
   }
 
   /**

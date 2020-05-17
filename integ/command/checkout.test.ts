@@ -1,3 +1,4 @@
+import * as assert from "power-assert";
 import * as T from "./helper";
 import { stripIndent } from "~/util";
 const t = T.create();
@@ -397,6 +398,77 @@ describe("checkout", () => {
 
       await t.assertWorkspace(basefiles);
       await assertStatus("");
+    });
+  });
+
+  describe("with a chain of commits", () => {
+    beforeEach(async () => {
+      for (const message of ["first", "second", "third"]) {
+        await t.writeFile("file.txt", message);
+        await t.jitCmd("add", ".");
+        await t.commit(message);
+      }
+      t.jitCmd("branch", "topic");
+      t.jitCmd("branch", "second", "@^");
+    });
+
+    describe("checking out a branch", () => {
+      beforeEach(async () => {
+        await t.jitCmd("checkout", "topic");
+      });
+
+      it("links HEAD to the branch", async () => {
+        assert.equal(
+          await t
+            .repo()
+            .refs.currentRef()
+            .then((res) => res.path),
+          "refs/heads/topic"
+        );
+      });
+
+      it("resolves HEAD to the same object as the branch", async () => {
+        assert.equal(
+          await t.repo().refs.readHead(),
+          await t.repo().refs.readRef("topic")
+        );
+      });
+
+      it("prints a message when switing to the same branch", async () => {
+        await t.jitCmd("checkout", "topic");
+
+        t.assertError("Already on 'topic'");
+      });
+
+      it("prints a message when swtching to another branch", async () => {
+        await t.jitCmd("checkout", "second");
+
+        t.assertError("Switched to branch 'second'");
+      });
+
+      it("prints a warning message when detaching HEAD", async () => {
+        const shortOid = await t
+          .resolveRevision("@")
+          .then((rev) => t.repo().database.shortOid(rev));
+
+        await t.jitCmd("checkout", "@");
+
+        t.assertWarn(stripIndent`
+          Note: checking out '@'.
+
+          You are in 'detached HEAD' state. You can look around, make experimental
+          changes and commit them, and you can discard any commits you make in this
+          state without impacting any branches by performing another checkout.
+
+          If you want to create a new branch to retain commits you create, you may
+          do so (now or later) by using the branch command. Example:
+
+            jit branch <new-branch-name>
+
+        `);
+
+        t.assertError(`HEAD is now at ${shortOid} third`);
+      });
     });
   });
 });

@@ -100,6 +100,10 @@ export class TestUtil {
     this.assertLog("info", expected);
   }
 
+  assertWarn(expected: string) {
+    this.assertLog("warn", expected);
+  }
+
   assertError(expected: string) {
     this.assertLog("error", expected);
   }
