@@ -1,6 +1,9 @@
+import * as fsCb from "fs";
+import * as path from "path";
 import * as T from "./helper";
 import * as assert from "power-assert";
 import { stripIndent } from "~/util";
+const fs = fsCb.promises;
 
 const t = T.create();
 
@@ -139,6 +142,53 @@ describe("branch", () => {
         * master      ${b_short} third
           new-feature ${a_short} second
       `);
+    });
+
+    it("lists nested directory branch", async () => {
+      await t.jitCmd("branch", "fix/delete-branches");
+      await t.jitCmd("branch");
+
+      t.assertInfo(stripIndent`
+          fix/delete-branches
+        * master
+      `);
+    });
+
+    it("deletes a branch", async () => {
+      const head = await t.repo().refs.readHead();
+      if (head === null) {
+        assert.fail();
+      }
+
+      await t.jitCmd("branch", "bug-fix");
+      await t.jitCmd("branch", "--force", "--delete", "bug-fix");
+
+      const short = await t.repo().database.shortOid(head);
+      t.assertInfo(`Deleted branch bug-fix (was ${short})`);
+
+      const branches = await t.repo().refs.listBranchs();
+      assert(!branches.map((b) => b.shortName()).includes("buf-fix"));
+    });
+
+    it("fails to delete a non-existent branch", async () => {
+      await t.jitCmd("branch", "-D", "no-such-branch");
+
+      t.assertStatus(1);
+      t.assertError("error: branch 'no-such-branch' not found.");
+    });
+
+    it("delete a branch and its parent directory", async () => {
+      await t.jitCmd("branch", "fix/delete-branches");
+      await t.jitCmd("branch", "-d", "-f", "fix/delete-branches");
+
+      const branches = await t.repo().refs.listBranchs();
+      assert(
+        !branches.map((b) => b.shortName()).includes("fix/delete-branches")
+      );
+      const heads = await fs.readdir(
+        path.join(t.repoPath, ".git", "refs", "heads")
+      );
+      assert(!heads.includes("fix"));
     });
   });
 });

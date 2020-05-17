@@ -2,15 +2,19 @@ import * as arg from "arg";
 import { Base } from "./base";
 import { InvalidBranch, SymRef } from "../refs";
 import { InvalidObject, Revision } from "../revision";
-import { asserts, shallowEqual } from "../util";
+import { asserts, shallowEqual, BaseError } from "../util";
 
 interface Option {
   verbose: boolean;
+  delete: boolean;
+  force: boolean;
 }
 
 export class Branch extends Base<Option> {
   async run() {
-    if (this.args.length === 0) {
+    if (this.options.delete) {
+      await this.deleteBranches();
+    } else if (this.args.length === 0) {
       await this.listBranches();
     } else {
       await this.createBranch();
@@ -20,6 +24,8 @@ export class Branch extends Base<Option> {
   initOptions() {
     this.options = {
       verbose: false,
+      delete: false,
+      force: false,
     };
   }
 
@@ -28,7 +34,18 @@ export class Branch extends Base<Option> {
       "--verbose": arg.flag(() => {
         this.options.verbose = true;
       }),
+      "--delete": arg.flag(() => {
+        this.options.delete = true;
+      }),
+      "--force": arg.flag(() => {
+        this.options.force = true;
+      }),
+      "-D": arg.flag(() => {
+        this.options.delete = this.options.force = true;
+      }),
       "-v": "--verbose",
+      "-d": "--delete",
+      "-f": "--force",
     };
   }
 
@@ -66,6 +83,33 @@ export class Branch extends Base<Option> {
           throw e;
       }
     }
+  }
+
+  private async deleteBranches() {
+    for (const branch of this.args) {
+      await this.deleteBranch(branch);
+    }
+  }
+
+  private async deleteBranch(branchName: string) {
+    if (!this.options.force) {
+      return;
+    }
+
+    const oid = await this.repo.refs
+      .deleteBranch(branchName)
+      .catch((e: BaseError) => {
+        switch (e.constructor) {
+          case InvalidBranch:
+            this.logger.error(`error: ${e.message}`);
+            this.exit(1);
+          default:
+            throw e;
+        }
+      });
+    const short = this.repo.database.shortOid(oid);
+
+    this.log(`Deleted branch ${branchName} (was ${short})`);
   }
 
   private async listBranches() {

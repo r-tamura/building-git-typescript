@@ -52,6 +52,48 @@ describe("Refs#createBranch", () => {
   });
 });
 
+describe("Refs#deleteBranch", () => {
+  it("削除したファイルのOIDを返す", async () => {
+    // Arrange
+    const oid = "3a3c4ec0ae9589c881029c161dd129bcc318dc08";
+    const readFile = jest.fn().mockResolvedValueOnce(oid);
+    const env = mockEnv({
+      readFile,
+      unlink: jest.fn().mockResolvedValue(null),
+      rmdir: jest.fn().mockResolvedValue(null),
+    });
+
+    // Act
+    const refs = new Refs(".git", env);
+    const actual = await refs.deleteBranch("topic");
+
+    // Assert
+    assert.equal(
+      readFile.mock.calls[0][0],
+      ".git/refs/heads/topic",
+      "symrefの読み込み"
+    );
+    assert.equal(actual, oid, "返り値");
+  });
+
+  it("symrefが解決できなかったとき、例外を発生させる", async () => {
+    // Arrange
+    const readFile = jest.fn().mockImplementation(mockFsError("ENOENT"));
+    const env = mockEnv({
+      readFile,
+      unlink: jest.fn().mockResolvedValue(null),
+      rmdir: jest.fn().mockResolvedValue(null),
+    });
+
+    // Act
+    const refs = new Refs(".git", env);
+    const actual = refs.deleteBranch("topic");
+
+    // Assert
+    await expect(actual).rejects.toThrow(InvalidBranch);
+  });
+});
+
 describe("Refs#listBranch", () => {
   it("headsディレクトリ内のブランチを取得する", async () => {
     // Arrange

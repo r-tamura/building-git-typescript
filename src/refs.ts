@@ -127,6 +127,25 @@ export class Refs {
     }
   }
 
+  async deleteBranch(branchName: string) {
+    const pathname = path.join(this.#headspath, branchName);
+    const lockfile = new Lockfile(pathname);
+    await lockfile.holdForUpdate();
+
+    let oid;
+    try {
+      oid = await this.readSymRef(pathname);
+      if (oid === null) {
+        throw new InvalidBranch(`branch '${branchName}' not found.`);
+      }
+      await this.#fs.unlink(pathname);
+    } finally {
+      await lockfile.rollback();
+    }
+    await this.deleteParentDirectories(pathname);
+    return oid;
+  }
+
   async listBranchs() {
     return this.listRefs(this.#headspath);
   }
@@ -174,6 +193,22 @@ export class Refs {
           break;
         default:
           throw e;
+      }
+    }
+  }
+
+  private async deleteParentDirectories(pathname: Pathname) {
+    for (const dirname of ascend(path.dirname(pathname))) {
+      if (dirname === this.headPath) {
+        break;
+      }
+
+      const e = await this.#fs
+        .rmdir(dirname)
+        .catch((e: NodeJS.ErrnoException) => e);
+
+      if (e && e.code === "ENOTEMPTY") {
+        break;
       }
     }
   }
