@@ -1,13 +1,14 @@
 import { BaseError, asserts } from "../util";
 import { Commit } from "./commit";
-import { Init } from "./init";
 import { BaseConstructor } from "./base";
+import { Init } from "./init";
 import { Add } from "./add";
 import { Diff } from "./diff";
 import { Status } from "./status";
-import { Environment } from "../types";
 import { Branch } from "./branch";
 import { Checkout } from "./checkout";
+import { Log } from "./log";
+import { Environment } from "../types";
 
 export class Unknown extends BaseError {}
 
@@ -19,6 +20,7 @@ const COMMANDS: CommandMap = {
   branch: Branch,
   checkout: Checkout,
   commit: Commit,
+  log: Log,
   status: Status,
   diff: Diff,
 } as const;

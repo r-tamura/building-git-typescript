@@ -8,7 +8,7 @@ export class Commit {
   oid: OID | null = null;
   tree: OID;
   parent: OID | null = null;
-  #message: string;
+  message: string;
 
   constructor(
     parent: OID | null,
@@ -18,7 +18,7 @@ export class Commit {
   ) {
     this.parent = parent;
     this.tree = tree;
-    this.#message = message;
+    this.message = message;
   }
 
   static parse(buf: Buffer) {
@@ -55,7 +55,7 @@ export class Commit {
   }
 
   titleLine() {
-    return splitByLine(this.#message)[0];
+    return splitByLine(this.message)[0];
   }
 
   toString() {
@@ -67,7 +67,7 @@ export class Commit {
     lines.push(`author ${this.author}`);
     lines.push(`committer ${this.author}`);
     lines.push("");
-    lines.push(this.#message);
+    lines.push(this.message);
 
     return lines.join(os.EOL);
   }

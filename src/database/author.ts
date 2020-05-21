@@ -1,3 +1,5 @@
+import { timeForPrint } from "../util";
+
 export type AuthorName = string;
 export type AuthorEmail = string;
 export class Author {
@@ -25,10 +27,17 @@ export class Author {
     return author;
   }
 
+  get readableTime() {
+    const { year, smonth, date, day, hour, minute, second } = timeForPrint(
+      this.time
+    );
+    const tz = this.getTimezoneString();
+
+    return `${day} ${smonth} ${date} ${hour}:${minute}:${second} ${year} ${tz}`;
+  }
+
   shortDate() {
-    const year = this.time.getFullYear().toString();
-    const month = (this.time.getMonth() + 1).toString().padStart(2, "0");
-    const day = this.time.getDate().toString().padStart(2, "0");
+    const { year, month, day } = timeForPrint(this.time);
     return `${year}-${month}-${day}`;
   }
 
