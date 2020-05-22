@@ -1,6 +1,7 @@
 import { promises } from "fs";
 import { Process, FileService, Logger } from "./services";
 import * as Database from "./database";
+import { Commit } from "./database";
 
 /**
  * Type utility
@@ -18,6 +19,8 @@ export interface GitObjectParser {
   parse(buf: Buffer): GitObject;
 }
 export type GitObject = Database.Commit | Database.Tree | Database.Blob;
+
+export type NonNullCommit = NonNullProps<Commit>;
 export type NonNullGitObject = NonNullProps<GitObject>;
 
 /**

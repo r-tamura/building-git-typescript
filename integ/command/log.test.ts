@@ -1,6 +1,7 @@
 import * as T from "./helper";
 import { Commit } from "~/database";
 import { stripIndent } from "~/util";
+import { NonNullCommit } from "~/types";
 
 const t = T.create();
 
@@ -15,7 +16,7 @@ describe("log", () => {
   }
 
   describe("with a chain of commits", () => {
-    const commits: Commit[] = [];
+    const commits: NonNullCommit[] = [];
     beforeEach(async () => {
       const messages = ["A", "B", "C"];
       for (const msg of messages) {
@@ -23,7 +24,7 @@ describe("log", () => {
       }
       await t.jitCmd("branch", "topic", "@^");
       for await (const o of ["@", "@^", "@^^"].map(t.loadCommit.bind(t))) {
-        commits.push(o as Commit);
+        commits.push(o as NonNullCommit);
       }
     });
     afterEach(() => {
@@ -54,6 +55,28 @@ describe("log", () => {
       `);
     });
 
-    it.skip("prints a log in medium format with abbreviated commit IDs", async () => {});
+    it("prints a log in medium format with abbreviated commit IDs", async () => {
+      await t.jitCmd("log", "--abbrev-commit");
+
+      t.assertInfo(stripIndent`
+        commit ${t.repo().database.shortOid(commits[0].oid)}
+        Author: A. U. Thor <author@example.com>
+        Date:   ${commits[0].author.readableTime}
+
+            C
+
+        commit ${t.repo().database.shortOid(commits[1].oid)}
+        Author: A. U. Thor <author@example.com>
+        Date:   ${commits[1].author.readableTime}
+
+            B
+
+        commit ${t.repo().database.shortOid(commits[2].oid)}
+        Author: A. U. Thor <author@example.com>
+        Date:   ${commits[2].author.readableTime}
+
+            A
+      `);
+    });
   });
 });
