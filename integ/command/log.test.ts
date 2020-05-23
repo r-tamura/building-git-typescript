@@ -1,7 +1,6 @@
 import * as T from "./helper";
-import { Commit } from "~/database";
 import { stripIndent } from "~/util";
-import { NonNullCommit } from "~/types";
+import { CompleteCommit } from "~/types";
 
 const t = T.create();
 
@@ -16,7 +15,7 @@ describe("log", () => {
   }
 
   describe("with a chain of commits", () => {
-    const commits: NonNullCommit[] = [];
+    const commits: CompleteCommit[] = [];
     beforeEach(async () => {
       const messages = ["A", "B", "C"];
       for (const msg of messages) {
@@ -24,7 +23,7 @@ describe("log", () => {
       }
       await t.jitCmd("branch", "topic", "@^");
       for await (const o of ["@", "@^", "@^^"].map(t.loadCommit.bind(t))) {
-        commits.push(o as NonNullCommit);
+        commits.push(o as CompleteCommit);
       }
     });
     afterEach(() => {
@@ -76,6 +75,16 @@ describe("log", () => {
         Date:   ${commits[2].author.readableTime}
 
             A
+      `);
+    });
+
+    it("prints a log in oneline format", async () => {
+      await t.jitCmd("log", "--oneline");
+
+      t.assertInfo(stripIndent`
+        ${t.repo().database.shortOid(commits[0].oid)} C
+        ${t.repo().database.shortOid(commits[1].oid)} B
+        ${t.repo().database.shortOid(commits[2].oid)} A
       `);
     });
   });

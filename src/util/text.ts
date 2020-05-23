@@ -1,3 +1,4 @@
+import { EOL } from "os";
 /**
  * 改行コード付きで行ごとに分割します
  * Rubyの string#lines 相当の関数
@@ -10,6 +11,14 @@ export function splitByLine(str: string) {
   return str.match(/[^\n]+\n?|\n/g) ?? [];
 }
 
+function minIndent(str: string) {
+  const match = str.match(/^[ \t]*(?=\S)/gm);
+  if (match === null) {
+    return 0;
+  }
+  return Math.min(...match.map((chunk) => chunk.length));
+}
+
 /**
  * template literalのインデントを調整します。
  * 空行を除いた行の中で、インデント数が最小の行のインデント数分、全行からインデントを取り除きます。
@@ -19,19 +28,16 @@ export function splitByLine(str: string) {
  * @param args
  */
 export function stripIndent(strings: TemplateStringsArray, ...args: any[]) {
-  const strs = strings.map((s, i) => s + (args[i] ?? ""));
-  const countIndent = (s: string) => s.match(/^\s*/)?.[0].length ?? 0;
-  const tripIndent = (n: number) => (s: string) => s.slice(n);
-  const filterEmptyLine = (i: number, lines: string[]) =>
-    lines[i] !== "" ? lines : [...lines.slice(0, i), ...lines.slice(i + 1)];
-  const lines = strs.join("").split("\n");
-  const minIndent = lines
-    .filter((s) => s.trim().length > 0)
-    .reduce((min, line) => {
-      return Math.min(min, countIndent(line));
-    }, Number.MAX_SAFE_INTEGER);
-  let trimedLines = lines.map(tripIndent(minIndent));
-  trimedLines = filterEmptyLine(0, trimedLines);
-  trimedLines = filterEmptyLine(trimedLines.length - 1, trimedLines);
-  return trimedLines.join("\n");
+  const notIsEmptyFirstLastLine = (line: string, i: number, lines: string[]) =>
+    !((i === 0 || i === lines.length - 1) && line.trim() === "");
+
+  const lines = strings
+    .map((s, i) => s + (args[i] ?? ""))
+    .join("")
+    .split(EOL)
+    .filter(notIsEmptyFirstLastLine);
+  const str = lines.join(EOL);
+  const min = minIndent(str);
+  const indent = new RegExp(`[ \\t]{${min}}`, "gm");
+  return str.replace(indent, "");
 }

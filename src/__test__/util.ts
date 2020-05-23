@@ -1,5 +1,5 @@
 import { Logger } from "../services";
-import { GitObject, NonNullGitObject, OID } from "~/types";
+import { GitObject, CompleteGitObject, OID } from "~/types";
 
 export function getMockedMethod<T>(Cls: T, method: keyof T, index: number = 0) {
   const Mocked = (Cls as unknown) as jest.Mock<T>;
@@ -24,7 +24,7 @@ export function makeLogger(): Logger {
 export function setOid(
   o: GitObject,
   oid: OID = "3a3c4ec0ae9589c881029c161dd129bcc318dc08"
-): NonNullGitObject {
+): CompleteGitObject {
   o.oid = oid;
-  return o as NonNullGitObject;
+  return o as CompleteGitObject;
 }

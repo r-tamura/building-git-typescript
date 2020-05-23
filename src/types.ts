@@ -20,8 +20,8 @@ export interface GitObjectParser {
 }
 export type GitObject = Database.Commit | Database.Tree | Database.Blob;
 
-export type NonNullCommit = NonNullProps<Commit>;
-export type NonNullGitObject = NonNullProps<GitObject>;
+export type CompleteCommit = NonNullProps<Commit>;
+export type CompleteGitObject = NonNullProps<GitObject>;
 
 /**
  * ファイルパス

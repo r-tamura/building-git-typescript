@@ -17,17 +17,21 @@ export async function asyncForEach<T>(fn: ForEachCallback<T>, xs: T[]) {
   return;
 }
 
-export async function asyncMap<T, U>(fn: (t: T) => Promise<U>, xs: T[]) {
-  const promises: Promise<U>[] = [];
-  for (let i = 0; i < xs.length; i++) {
-    const x = xs[i];
-    promises.push(fn(x));
-  }
-  return Promise.all(promises);
-}
-
 export function clone<T>(xs: T[]): T[] {
   return [...xs];
+}
+
+type Primitive = number | string | symbol | bigint | null | undefined;
+/**
+ * xがリストxsに含まれるかを判定します
+ * @params x 判定対象
+ * @params xs
+ */
+export function includes<X extends Primitive, XS extends readonly X[]>(
+  x: X,
+  xs: XS
+): x is XS[number] {
+  return xs.includes(x);
 }
 
 function jsindex(xs: any[], index: number) {

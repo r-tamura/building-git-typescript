@@ -1,12 +1,13 @@
 import * as os from "os";
-import { Base } from "./base";
-import { Commit } from "../database";
-import { asserts } from "../util";
 import arg = require("arg");
-import { NonNullCommit } from "~/types";
+import { Base } from "./base";
+import { asserts, includes } from "../util";
+import { CompleteCommit } from "../types";
 
+const FORMAT = ["medium", "oneline"] as const;
 interface Options {
   abbrev: "auto" | boolean;
+  format: typeof FORMAT[number];
 }
 
 export class Log extends Base<Options> {
@@ -28,16 +29,31 @@ export class Log extends Base<Options> {
       "--no-abbrev-commit": arg.flag(() => {
         this.options.abbrev = false;
       }),
+      "--pretty": (format: string) => {
+        if (includes(format, FORMAT)) {
+          const f: Options["format"] = format;
+          this.options.format = format;
+        }
+        throw TypeError(`format should be one of ${FORMAT.join(", ")}.`);
+      },
+      "--format": "--pretty",
+      "--oneline": arg.flag(() => {
+        if (this.options.abbrev === "auto") {
+          this.options.abbrev = true;
+        }
+        this.options.format = "oneline";
+      }),
     };
   }
 
   initOptions() {
     this.options = {
       abbrev: "auto",
+      format: "medium",
     };
   }
 
-  private abbrev(commit: NonNullCommit) {
+  private abbrev(commit: CompleteCommit) {
     if (this.options.abbrev === true) {
       return this.repo.database.shortOid(commit.oid);
     } else {
@@ -56,7 +72,16 @@ export class Log extends Base<Options> {
     }
   }
 
-  private showCommit(commit: NonNullCommit) {
+  private showCommit(commit: CompleteCommit) {
+    switch (this.options.format) {
+      case "medium":
+        return this.showCommitMedium(commit);
+      case "oneline":
+        return this.showCommitOneline(commit);
+    }
+  }
+
+  private showCommitMedium(commit: CompleteCommit) {
     const author = commit.author;
 
     this.blankLine();
@@ -67,6 +92,12 @@ export class Log extends Base<Options> {
     for (const line of commit.message.split(os.EOL)) {
       this.log(`    ${line}`);
     }
+  }
+
+  private showCommitOneline(commit: CompleteCommit) {
+    this.log(
+      `${this.fmt("yellow", this.abbrev(commit))} ${commit.titleLine()}`
+    );
   }
 
   private blankLine() {

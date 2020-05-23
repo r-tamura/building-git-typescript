@@ -3,7 +3,7 @@ import { constants } from "fs";
 import { Z_BEST_SPEED } from "zlib";
 import path = require("path");
 import { FileService, defaultFs, Zlib, defaultZlib } from "../services";
-import { GitObject, GitObjectParser, OID, NonNullGitObject } from "../types";
+import { GitObject, GitObjectParser, OID, CompleteGitObject } from "../types";
 import * as assert from "assert";
 import { Blob } from "./blob";
 import { asserts, scanUntil } from "../util";
@@ -46,7 +46,7 @@ const TYPES: Parsers = {
 
 export class Database {
   #pathname: string;
-  #objects: { [s: string]: NonNullGitObject } = {};
+  #objects: { [s: string]: CompleteGitObject } = {};
 
   // modules
   #fs: NonNullable<Environment["fs"]>;
@@ -96,7 +96,7 @@ export class Database {
 
     const object = parseObject(data);
     object.oid = oid;
-    return object as NonNullGitObject;
+    return object as CompleteGitObject;
   }
 
   shortOid(oid: OID) {
