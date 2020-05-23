@@ -1,4 +1,4 @@
-# Building Git
+# kit
 
 An implementation of jit ([Building Git](https://shop.jcoglan.com/building-git/)) in TypeScript
 
@@ -14,10 +14,10 @@ yarn integ
 
 # run
 # ./bin/jit <subcommand>
-jit init
-jit commit
-jit add
-jit status
-jit branch
-jit checkout
+kit init
+kit commit
+kit add
+kit status
+kit branch
+kit checkout
 ```

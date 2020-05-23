@@ -1,9 +1,9 @@
 {
-  "name": "@rtamura30/jit",
+  "name": "@rtamura30/kit",
   "version": "0.1.0",
   "main": "./dist/main.js",
   "types": "./dist/main.d.ts",
-  "bin": "./bin/jit",
+  "bin": "./bin/kit",
   "repository": {
     "type": "git",
     "url": "https://github.com/r-tamura/building-git-typescript.git"
