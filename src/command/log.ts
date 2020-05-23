@@ -30,11 +30,14 @@ export class Log extends Base<Options> {
         this.options.abbrev = false;
       }),
       "--pretty": (format: string) => {
-        if (includes(format, FORMAT)) {
-          const f: Options["format"] = format;
-          this.options.format = format;
+        if (!includes(format, FORMAT)) {
+          throw TypeError(
+            `invalid format '${format}', should be one of ${FORMAT.join(
+              ", "
+            )}. `
+          );
         }
-        throw TypeError(`format should be one of ${FORMAT.join(", ")}.`);
+        this.options.format = format;
       },
       "--format": "--pretty",
       "--oneline": arg.flag(() => {
