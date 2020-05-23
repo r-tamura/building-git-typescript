@@ -9,7 +9,18 @@ const SRG_CODES = {
 
 export type Style = keyof typeof SRG_CODES;
 
-export function format(style: Style, text: string) {
-  const code = SRG_CODES[style];
-  return `\x1b[${code}m${text}\x1b[m`;
+// Ruby coerce to array [*x] 相当
+function coerce<T>(x: T | T[]) {
+  return Array.isArray(x) ? x : [x];
+}
+
+/**
+ * ターミナル上での装飾用のコマンドをテキストへ付加します
+ * @param style SGR名 or SGR名リスト
+ * @param text 制御シーケンス付きテキスト
+ */
+export function format(style: Style | Style[], text: string) {
+  const codes = coerce(style).map((name) => SRG_CODES[name]);
+  // ';' がエスケープシーケンス引数の区切り文字
+  return `\x1b[${codes.join(";")}m${text}\x1b[m`;
 }

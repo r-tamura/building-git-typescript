@@ -5,6 +5,7 @@ import { OID } from "./types";
 import { BaseError, find, ascend, asserts } from "./util";
 import { Lockfile, MissingParent } from "./lockfile";
 import { Pathname } from "./types";
+import { stringify } from "querystring";
 
 export type Environment = {
   fs?: FileService;
@@ -148,6 +149,24 @@ export class Refs {
 
   async listBranchs() {
     return this.listRefs(this.#headspath);
+  }
+
+  async reverseRefs() {
+    const table: Map<string, SymRef[]> = new Map();
+
+    const allRefs = await this.listAllRefs();
+    for (const ref of allRefs) {
+      const oid = await ref.readOid();
+      if (oid) {
+        if (!table.has(oid)) {
+          table.set(oid, []);
+        }
+        const refs = table.get(oid);
+        asserts(typeof refs !== "undefined");
+        refs.push(ref);
+      }
+    }
+    return table;
   }
 
   async setHead(revision: string, oid: OID) {
@@ -294,7 +313,7 @@ export class Refs {
   }
 
   /**
-   * 全てのrefのリストを取得します
+   * 指定されたディレクトリないの全てのrefのリストを取得します
    * @param dirname refsディレクトリ
    */
   private async listRefs(dirname: Pathname): Promise<SymRef[]> {
@@ -326,6 +345,13 @@ export class Refs {
       }
     }
     return symrefs.flat();
+  }
+
+  /**
+   * HEADを含めた全てのrefのリストを取得します
+   */
+  private async listAllRefs() {
+    return [symref(this, HEAD), ...(await this.listRefs(this.#refspath))];
   }
 
   private async pathForName(name: string) {

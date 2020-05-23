@@ -57,7 +57,7 @@ export abstract class Base<O extends object = {}> implements Runnable {
     throw new Exit();
   }
 
-  fmt(style: Color.Style, text: string) {
+  fmt(style: Color.Style | Color.Style[], text: string) {
     return this.isatty ? Color.format(style, text) : text;
   }
 

@@ -3,7 +3,7 @@ import * as Service from "./services";
 import * as assert from "power-assert";
 import { Lockfile } from "./lockfile";
 import { defaultFs, FileService } from "./services";
-import { mockFsError } from "./__test__";
+import { mockFsError, mockFs } from "./__test__";
 
 jest.mock("./lockfile");
 const MockedLockfile = (Lockfile as unknown) as jest.Mock<Partial<Lockfile>>;
@@ -48,7 +48,7 @@ describe("Refs#createBranch", () => {
     // Assert
     await expect(actual).rejects.toThrow(InvalidBranch);
 
-    alreadyExists.mockReset();
+    alreadyExists.mockRestore();
   });
 });
 
@@ -123,7 +123,7 @@ describe("Refs#listBranch", () => {
       "返り値"
     );
 
-    spyDirectory.mockReset();
+    spyDirectory.mockRestore();
   });
 
   it("headsディレクトリが存在しないとき、空のリストを返す", async () => {
@@ -200,7 +200,7 @@ describe("Refs#readRef", () => {
     });
 
     afterAll(() => {
-      spyServiceExists.mockReset();
+      spyServiceExists.mockRestore();
     });
     it("ファイルパス", () => {
       assert.equal(mockedReadFile.mock.calls[0][0], ".git/refs/heads/master");
@@ -223,7 +223,31 @@ describe("Refs#readRef", () => {
     // Assert
     assert.equal(actual, null);
 
-    spyServiceExists.mockReset();
+    spyServiceExists.mockRestore();
+  });
+});
+
+describe("reverseRefs", () => {
+  it("HEADと唯一のブランチを返す", async () => {
+    // Arrange
+    const oid = "3a3c4ec";
+    const files = {
+      ".git/HEAD": "ref: refs/heads/master",
+      ".git/refs/heads/master": oid,
+    } as any;
+    const dirs = {
+      ".git/refs": ["heads"],
+      ".git/refs/heads": ["master"],
+    } as any;
+    const env = mockEnv(mockFs(dirs, files));
+
+    // Act
+    const refs = new Refs(".git", env);
+    const actual = await refs.reverseRefs();
+
+    // Assert
+    assert.equal(actual.get(oid)?.length, 2);
+    assert.equal(actual.get(oid)?.[0]?.path, "HEAD");
   });
 });
 
@@ -251,7 +275,7 @@ describe("Refs#updateHead", () => {
     const mockedWrite = jest.fn();
     const mockedCommit = jest.fn();
     beforeAll(async () => {
-      MockedLockfile.mockReset();
+      MockedLockfile.mockRestore();
       MockedLockfile.mockImplementationOnce((pathname: string) => ({
         holdForUpdate: jest.fn().mockResolvedValue(undefined),
         write: mockedWrite,
@@ -283,7 +307,7 @@ describe("Refs#updateHead", () => {
       throw new LockDenied();
     });
     beforeAll(async () => {
-      MockedLockfile.mockReset();
+      MockedLockfile.mockRestore();
       MockedLockfile.mockImplementationOnce((pathname: string) => ({
         holdForUpdate: throwLockDenied,
         write: mockedWrite,

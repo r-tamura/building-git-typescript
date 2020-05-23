@@ -5,12 +5,12 @@ const t = T.create();
 
 describe("Command.Status", () => {
   async function assertStatus(expected: string) {
-    await t.jitCmd("status");
+    await t.kitCmd("status");
     t.assertInfo(expected);
   }
 
   async function assertStatusPorcelain(expected: string) {
-    await t.jitCmd("status", "--porcelain");
+    await t.kitCmd("status", "--porcelain");
     t.assertInfo(expected);
   }
 
@@ -41,7 +41,7 @@ describe("Command.Status", () => {
   it("lists files as untracked if they are not in the index", async () => {
     // Arrange
     await t.writeFile("committed.txt", "");
-    await t.jitCmd("add", ".");
+    await t.kitCmd("add", ".");
 
     await t.commit("commit message");
 
@@ -68,7 +68,7 @@ describe("Command.Status", () => {
   it("lists untracked files inside tracked directories", async () => {
     // Arrange
     await t.writeFile("a/b/inner.txt", "");
-    await t.jitCmd("add", ".");
+    await t.kitCmd("add", ".");
     await t.commit("commit message");
 
     await t.writeFile("a/outer.txt", "");
@@ -103,7 +103,7 @@ describe("Command.Status", () => {
       await t.writeFile("a/2.txt", "two");
       await t.writeFile("a/b/3.txt", "three");
 
-      await t.jitCmd("add", ".");
+      await t.kitCmd("add", ".");
       await t.commit("commit message");
     });
 
@@ -178,13 +178,13 @@ describe("Command.Status", () => {
       await t.writeFile("a/2.txt", "two");
       await t.writeFile("a/b/3.txt", "three");
 
-      await t.jitCmd("add", ".");
+      await t.kitCmd("add", ".");
       await t.commit("first commit");
     });
 
     it("reports a file added to a tracked directory", async () => {
       await t.writeFile("a/4.txt", "four");
-      await t.jitCmd("add", ".");
+      await t.kitCmd("add", ".");
 
       await assertStatusPorcelain("A  a/4.txt");
       await assertStatus(stripIndent`
@@ -197,21 +197,21 @@ describe("Command.Status", () => {
 
     it("reports a file added to an untracked directory", async () => {
       await t.writeFile("d/e/5.txt", "five");
-      await t.jitCmd("add", ".");
+      await t.kitCmd("add", ".");
 
       await assertStatusPorcelain("A  d/e/5.txt");
     });
 
     it("reports modified modes", async () => {
       await t.makeExecutable("1.txt");
-      await t.jitCmd("add", ".");
+      await t.kitCmd("add", ".");
 
       await assertStatusPorcelain("M  1.txt");
     });
 
     it("reports modified content", async () => {
       await t.writeFile("a/b/3.txt", "changed");
-      await t.jitCmd("add", ".");
+      await t.kitCmd("add", ".");
 
       await assertStatusPorcelain("M  a/b/3.txt");
     });
@@ -219,7 +219,7 @@ describe("Command.Status", () => {
     it("reports deleted files", async () => {
       await t.rm("1.txt");
       await t.rm(".git/index");
-      await t.jitCmd("add", ".");
+      await t.kitCmd("add", ".");
 
       await assertStatusPorcelain("D  1.txt");
     });
@@ -227,7 +227,7 @@ describe("Command.Status", () => {
     it("reports all deleted files inside directories", async () => {
       await t.rm("a");
       await t.rm(".git/index");
-      await t.jitCmd("add", ".");
+      await t.kitCmd("add", ".");
 
       await assertStatusPorcelain(stripIndent`
       D  a/2.txt
@@ -240,7 +240,7 @@ describe("Command.Status", () => {
       await t.rm("a/2.txt");
       await t.writeFile("1.txt", "changed");
       await t.rm(".git/index");
-      await t.jitCmd("add", ".");
+      await t.kitCmd("add", ".");
 
       await assertStatus(stripIndent`
       Changes to be committed:

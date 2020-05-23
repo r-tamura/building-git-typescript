@@ -20,4 +20,5 @@ kit add
 kit status
 kit branch
 kit checkout
+kit log
 ```

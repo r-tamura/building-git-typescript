@@ -29,6 +29,33 @@ export const makeTestStats = (props: Partial<Stats> = {}): Stats => {
   return { ...stats, ...defaultProps, ...props, isFile, isDirectory };
 };
 
+type Dict<T = string> = { [s: string]: T };
+
+/**
+ * ディレクトリとファイルを指定することでfsモジュールのmockを作成します
+ * @param dirs
+ * @param files
+ */
+export function mockFs(dirs: Dict, files: Dict) {
+  return {
+    readdir: jest.fn().mockImplementation(async (p: string) => dirs[p]),
+    readFile: jest.fn().mockImplementation(async (p: string) => files[p]),
+    stat: jest.fn().mockImplementation(async (p: string) => {
+      return files[p]
+        ? { isFile: () => true, isDirectory: () => false }
+        : dirs[p]
+        ? { isFile: () => false, isDirectory: () => true }
+        : null;
+    }),
+    access: jest.fn().mockImplementation(async (p: string) => {
+      if (dirs[p] || files[p]) {
+        return;
+      }
+      throw mockFsError("ENOENT")();
+    }),
+  };
+}
+
 type MockError = "EEXIST" | "ENOENT" | "EACCES";
 
 /**

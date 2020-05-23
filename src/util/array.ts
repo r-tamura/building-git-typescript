@@ -74,3 +74,21 @@ export function find<T>(xs: T[], pred: (x: T) => boolean): T | null {
   const filtered = xs.filter(pred);
   return filtered.length === 0 ? null : filtered[0];
 }
+
+/**
+ * predの条件によりリストxsを2つのリストへ分割します
+ * @param xs 分割するリスト
+ * @param pred 分割の条件
+ */
+export function partition<T>(xs: T[], pred: (x: T) => boolean): [T[], T[]] {
+  const t: T[] = [];
+  const f: T[] = [];
+  for (const x of xs) {
+    if (pred(x)) {
+      t.push(x);
+    } else {
+      f.push(x);
+    }
+  }
+  return [t, f];
+}

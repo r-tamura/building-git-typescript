@@ -21,7 +21,7 @@ describe("log", () => {
       for (const msg of messages) {
         await commitFile(msg);
       }
-      await t.kitCmd("branch", "topic", "@^");
+      await t.kitCmd("branch", "topic", "@^^");
       for await (const o of ["@", "@^", "@^^"].map(t.loadCommit.bind(t))) {
         commits.push(o as CompleteCommit);
       }
@@ -85,6 +85,37 @@ describe("log", () => {
         ${t.repo().database.shortOid(commits[0].oid)} C
         ${t.repo().database.shortOid(commits[1].oid)} B
         ${t.repo().database.shortOid(commits[2].oid)} A
+      `);
+    });
+
+    it("prints a log with short decorations", async () => {
+      await t.kitCmd("log", "--pretty=oneline", "--decorate=short");
+
+      t.assertInfo(stripIndent`
+        ${commits[0].oid} (HEAD -> master) C
+        ${commits[1].oid} B
+        ${commits[2].oid} (topic) A
+      `);
+    });
+
+    it("prints a log with detached HEAD", async () => {
+      await t.kitCmd("checkout", "@");
+      await t.kitCmd("log", "--pretty=oneline", "--decorate=short");
+
+      t.assertInfo(stripIndent`
+      ${commits[0].oid} (HEAD, master) C
+      ${commits[1].oid} B
+      ${commits[2].oid} (topic) A
+      `);
+    });
+
+    it("prints a log with detached HEAD", async () => {
+      await t.kitCmd("log", "--pretty=oneline", "--decorate=full");
+
+      t.assertInfo(stripIndent`
+      ${commits[0].oid} (HEAD -> refs/heads/master) C
+      ${commits[1].oid} B
+      ${commits[2].oid} (refs/heads/topic) A
       `);
     });
   });
