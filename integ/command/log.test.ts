@@ -10,7 +10,7 @@ afterEach(t.afterHook);
 describe("log", () => {
   async function commitFile(message: string) {
     await t.writeFile("file.txt", message);
-    await t.jitCmd("add", ".");
+    await t.kitCmd("add", ".");
     await t.commit(message);
   }
 
@@ -21,7 +21,7 @@ describe("log", () => {
       for (const msg of messages) {
         await commitFile(msg);
       }
-      await t.jitCmd("branch", "topic", "@^");
+      await t.kitCmd("branch", "topic", "@^");
       for await (const o of ["@", "@^", "@^^"].map(t.loadCommit.bind(t))) {
         commits.push(o as CompleteCommit);
       }
@@ -31,7 +31,7 @@ describe("log", () => {
     });
 
     it("prints a log in medium format", async () => {
-      await t.jitCmd("log");
+      await t.kitCmd("log");
 
       t.assertInfo(stripIndent`
         commit ${commits[0].oid}
@@ -55,7 +55,7 @@ describe("log", () => {
     });
 
     it("prints a log in medium format with abbreviated commit IDs", async () => {
-      await t.jitCmd("log", "--abbrev-commit");
+      await t.kitCmd("log", "--abbrev-commit");
 
       t.assertInfo(stripIndent`
         commit ${t.repo().database.shortOid(commits[0].oid)}
@@ -79,7 +79,7 @@ describe("log", () => {
     });
 
     it("prints a log in oneline format", async () => {
-      await t.jitCmd("log", "--oneline");
+      await t.kitCmd("log", "--oneline");
 
       t.assertInfo(stripIndent`
         ${t.repo().database.shortOid(commits[0].oid)} C

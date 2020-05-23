@@ -11,7 +11,7 @@ describe("init", () => {
 
   it("creates HEAD file", async () => {
     await fs.mkdir(t.repoPath);
-    await t.jitCmd("init", t.repoPath);
+    await t.kitCmd("init", t.repoPath);
 
     // Assert
     const gitPath = path.join(t.repoPath, ".git");

@@ -111,7 +111,7 @@ export class TestUtil {
   /** test hooks */
   beforeHook = async () => {
     await fs.mkdir(this.repoPath);
-    await this.jitCmd("init", this.repoPath);
+    await this.kitCmd("init", this.repoPath);
   };
 
   afterHook = async () => {
@@ -189,7 +189,7 @@ export class TestUtil {
 
   /** simple git command */
 
-  async jitCmd(...args: string[]) {
+  async kitCmd(...args: string[]) {
     // コマンド実行ごとにロガーはリセットする
     const env = this.getEnv();
     env.logger = makeLogger();
@@ -201,7 +201,7 @@ export class TestUtil {
     this.mockEnvvar("GIT_AUTHOR_NAME", "A. U. Thor");
     this.mockEnvvar("GIT_AUTHOR_EMAIL", "author@example.com");
     this.mockStdio(message);
-    await this.jitCmd("commit");
+    await this.kitCmd("commit");
   }
 
   async resolveRevision(expression: string) {

@@ -9,19 +9,19 @@ describe("diff", () => {
   afterEach(t.afterHook);
 
   async function assertDiff(expected: string) {
-    await t.jitCmd("diff");
+    await t.kitCmd("diff");
     t.assertInfo(expected);
   }
 
   async function assertDiffHeadIndex(expected: string) {
-    await t.jitCmd("diff", "--cached");
+    await t.kitCmd("diff", "--cached");
     t.assertInfo(expected);
   }
 
   describe("index/workspace", () => {
     beforeEach(async () => {
       await t.writeFile("file.txt", "contents");
-      await t.jitCmd("add", ".");
+      await t.kitCmd("add", ".");
     });
     it("コンテンツに変更があるとき、行ごとのpatch diffを表示する", async () => {
       new Repository("", {} as any);
@@ -83,14 +83,14 @@ describe("diff", () => {
   describe("head/index", () => {
     beforeEach(async () => {
       await t.writeFile("file.txt", "contents");
-      await t.jitCmd("add", ".");
+      await t.kitCmd("add", ".");
       await t.commit("first commit");
     });
 
     it("コンテンツに変更があるとき、行ごとのpatch diffを表示する", async () => {
       await t.writeFile("file.txt", "changed");
       await t.rm(".git/index");
-      await t.jitCmd("add", ".");
+      await t.kitCmd("add", ".");
 
       await assertDiffHeadIndex(stripIndent`
         diff --git a/file.txt b/file.txt
@@ -106,7 +106,7 @@ describe("diff", () => {
     it("新しいファイルがindexへ追加されたとき、new fileとして表示する", async () => {
       await t.writeFile("new.txt", "new");
       await t.rm(".git/index");
-      await t.jitCmd("add", ".");
+      await t.kitCmd("add", ".");
 
       await assertDiffHeadIndex(stripIndent`
         diff --git a/new.txt b/new.txt
@@ -122,7 +122,7 @@ describe("diff", () => {
     it("ファイルが削除されたとき、削除されたファイルを表示する", async () => {
       await t.rm("file.txt");
       await t.rm(".git/index");
-      await t.jitCmd("add", ".");
+      await t.kitCmd("add", ".");
 
       await assertDiffHeadIndex(stripIndent`
         diff --git a/file.txt b/file.txt

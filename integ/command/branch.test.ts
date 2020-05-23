@@ -13,19 +13,19 @@ describe("branch", () => {
 
   async function writeCommit(message: string) {
     await t.writeFile("file.txt", message);
-    await t.jitCmd("add", ".");
+    await t.kitCmd("add", ".");
     await t.commit(message);
   }
 
   describe("with no commit", () => {
     it.skip("無効なmasterブランチのため失敗する", async () => {
       // TODO: fix
-      await t.jitCmd("branch", "topic");
+      await t.kitCmd("branch", "topic");
       t.assertError("fatal: Not a valid object name: 'master'.");
     });
 
     it("空のリストが出力される", async () => {
-      await t.jitCmd("branch");
+      await t.kitCmd("branch");
       t.assertInfo("");
     });
   });
@@ -38,7 +38,7 @@ describe("branch", () => {
     });
 
     it("creates a branch pointing at HEAD", async () => {
-      await t.jitCmd("branch", "topic");
+      await t.kitCmd("branch", "topic");
 
       assert.equal(
         await t.repo().refs.readHead(),
@@ -47,7 +47,7 @@ describe("branch", () => {
     });
 
     it("fails for invalid branch names", async () => {
-      await t.jitCmd("branch", "^");
+      await t.kitCmd("branch", "^");
 
       t.assertError(stripIndent`
         fatal: '^' is not a valid branch name.
@@ -55,8 +55,8 @@ describe("branch", () => {
     });
 
     it("fails for existing branch names", async () => {
-      await t.jitCmd("branch", "topic");
-      await t.jitCmd("branch", "topic");
+      await t.kitCmd("branch", "topic");
+      await t.kitCmd("branch", "topic");
 
       t.assertError(stripIndent`
         fatal: A branch named 'topic' already exists.
@@ -65,39 +65,39 @@ describe("branch", () => {
 
     it("creats a branch from a short commit ID", async () => {
       const id = await t.resolveRevision("@~2");
-      await t.jitCmd("branch", "topic", t.repo().database.shortOid(id));
+      await t.kitCmd("branch", "topic", t.repo().database.shortOid(id));
 
       assert.equal(await t.repo().refs.readRef("topic"), id);
     });
 
     it("fails for invalid revisions", async () => {
-      await t.jitCmd("branch", "topic", "^");
+      await t.kitCmd("branch", "topic", "^");
 
       t.assertError("fatal: Not a valid object name: '^'.");
     });
 
     it("fails for invalid refs", async () => {
-      await t.jitCmd("branch", "topic", "no-such-branch");
+      await t.kitCmd("branch", "topic", "no-such-branch");
 
       t.assertError("fatal: Not a valid object name: 'no-such-branch'.");
     });
 
     it("fails for invalid parents", async () => {
-      await t.jitCmd("branch", "topic", "@^^^");
+      await t.kitCmd("branch", "topic", "@^^^");
 
       t.assertError("fatal: Not a valid object name: '@^^^'.");
     });
 
     it.skip("fails for invalid parents 2", async () => {
       // TODO: fix
-      await t.jitCmd("branch", "topic", "@^^^^");
+      await t.kitCmd("branch", "topic", "@^^^^");
 
       t.assertError("fatal: Not a valid object name: '@^^^^'.");
     });
 
     it.skip("fails for invalid ancestors", async () => {
       // TODO: fix
-      await t.jitCmd("branch", "topic", "@~50");
+      await t.kitCmd("branch", "topic", "@~50");
 
       t.assertError("fatail: Not a valid object name '@~50'.");
     });
@@ -112,7 +112,7 @@ describe("branch", () => {
         assert.fail();
       }
 
-      await t.jitCmd("branch", "topic", `${o.tree}^^`);
+      await t.kitCmd("branch", "topic", `${o.tree}^^`);
 
       t.assertError(stripIndent`
         error: object ${o.tree} is a tree, not a commit
@@ -121,8 +121,8 @@ describe("branch", () => {
     });
 
     it("lists existing branchs with verbose info", async () => {
-      await t.jitCmd("branch", "new-feature");
-      await t.jitCmd("branch");
+      await t.kitCmd("branch", "new-feature");
+      await t.kitCmd("branch");
       t.assertInfo(stripIndent`
         * master
           new-feature
@@ -133,8 +133,8 @@ describe("branch", () => {
       const a = await t.loadCommit("@^");
       const b = await t.loadCommit("@");
 
-      await t.jitCmd("branch", "new-feature", "@^");
-      await t.jitCmd("branch", "--verbose");
+      await t.kitCmd("branch", "new-feature", "@^");
+      await t.kitCmd("branch", "--verbose");
 
       const a_short = t.repo().database.shortOid(a.oid);
       const b_short = t.repo().database.shortOid(b.oid);
@@ -145,8 +145,8 @@ describe("branch", () => {
     });
 
     it("lists nested directory branch", async () => {
-      await t.jitCmd("branch", "fix/delete-branches");
-      await t.jitCmd("branch");
+      await t.kitCmd("branch", "fix/delete-branches");
+      await t.kitCmd("branch");
 
       t.assertInfo(stripIndent`
           fix/delete-branches
@@ -160,8 +160,8 @@ describe("branch", () => {
         assert.fail();
       }
 
-      await t.jitCmd("branch", "bug-fix");
-      await t.jitCmd("branch", "--force", "--delete", "bug-fix");
+      await t.kitCmd("branch", "bug-fix");
+      await t.kitCmd("branch", "--force", "--delete", "bug-fix");
 
       const short = await t.repo().database.shortOid(head);
       t.assertInfo(`Deleted branch bug-fix (was ${short})`);
@@ -171,15 +171,15 @@ describe("branch", () => {
     });
 
     it("fails to delete a non-existent branch", async () => {
-      await t.jitCmd("branch", "-D", "no-such-branch");
+      await t.kitCmd("branch", "-D", "no-such-branch");
 
       t.assertStatus(1);
       t.assertError("error: branch 'no-such-branch' not found.");
     });
 
     it("delete a branch and its parent directory", async () => {
-      await t.jitCmd("branch", "fix/delete-branches");
-      await t.jitCmd("branch", "-d", "-f", "fix/delete-branches");
+      await t.kitCmd("branch", "fix/delete-branches");
+      await t.kitCmd("branch", "-d", "-f", "fix/delete-branches");
 
       const branches = await t.repo().refs.listBranchs();
       assert(

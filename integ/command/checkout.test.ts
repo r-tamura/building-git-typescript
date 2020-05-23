@@ -10,13 +10,13 @@ describe("checkout", () => {
   describe("with a set of files", () => {
     async function commitAll() {
       await t.rm(".git/index");
-      await t.jitCmd("add", ".");
+      await t.kitCmd("add", ".");
       await t.commit("change");
     }
 
     async function commitAndCheckout(revision: string) {
       await commitAll();
-      await t.jitCmd("checkout", revision);
+      await t.kitCmd("checkout", revision);
     }
 
     function assertStaleFile(filename: string) {
@@ -38,7 +38,7 @@ describe("checkout", () => {
     }
 
     async function assertStatus(status: string) {
-      await t.jitCmd("status", "--porcelain");
+      await t.kitCmd("status", "--porcelain");
       t.assertInfo(status);
     }
 
@@ -52,7 +52,7 @@ describe("checkout", () => {
       await Promise.all(
         basefiles.map(([name, content]) => t.writeFile(name, content))
       );
-      await t.jitCmd("add", ".");
+      await t.kitCmd("add", ".");
       await t.commit("first");
     });
 
@@ -71,7 +71,7 @@ describe("checkout", () => {
 
       await t.writeFile("1.txt", "conflict");
 
-      await t.jitCmd("checkout", "@^");
+      await t.kitCmd("checkout", "@^");
 
       // Assert
       assertStaleFile("1.txt");
@@ -82,7 +82,7 @@ describe("checkout", () => {
       await commitAll();
 
       await t.writeFile("1.txt", "1");
-      await t.jitCmd("checkout", "@^");
+      await t.kitCmd("checkout", "@^");
 
       assertStaleFile("1.txt");
     });
@@ -92,7 +92,7 @@ describe("checkout", () => {
       await commitAll();
 
       await t.makeExecutable("1.txt");
-      await t.jitCmd("checkout", "@^");
+      await t.kitCmd("checkout", "@^");
 
       assertStaleFile("1.txt");
     });
@@ -102,7 +102,7 @@ describe("checkout", () => {
       await commitAll();
 
       await t.rm("1.txt");
-      await t.jitCmd("checkout", "@^");
+      await t.kitCmd("checkout", "@^");
 
       await t.assertWorkspace(basefiles);
       await assertStatus("");
@@ -113,7 +113,7 @@ describe("checkout", () => {
       await commitAll();
 
       await t.rm("outer");
-      await t.jitCmd("checkout", "@^");
+      await t.kitCmd("checkout", "@^");
 
       await t.assertWorkspace(
         basefiles.filter(([n, c]) => n !== "outer/2.txt")
@@ -126,10 +126,10 @@ describe("checkout", () => {
       await commitAll();
 
       await t.writeFile("1.txt", "conflict");
-      await t.jitCmd("add", ".");
+      await t.kitCmd("add", ".");
 
       // Assert
-      await t.jitCmd("checkout", "@^");
+      await t.kitCmd("checkout", "@^");
       assertStaleFile("1.txt");
     });
 
@@ -138,8 +138,8 @@ describe("checkout", () => {
       await commitAll();
 
       await t.writeFile("1.txt", "1");
-      await t.jitCmd("add", ".");
-      await t.jitCmd("checkout", "@^");
+      await t.kitCmd("add", ".");
+      await t.kitCmd("checkout", "@^");
 
       // Assert
       await t.assertWorkspace(basefiles);
@@ -151,9 +151,9 @@ describe("checkout", () => {
       await commitAll();
 
       await t.makeExecutable("1.txt");
-      await t.jitCmd("add", ".");
+      await t.kitCmd("add", ".");
 
-      await t.jitCmd("checkout", "@^");
+      await t.kitCmd("checkout", "@^");
       assertStaleFile("1.txt");
     });
 
@@ -163,10 +163,10 @@ describe("checkout", () => {
 
       await t.rm("1.txt");
       await t.rm(".git/index");
-      await t.jitCmd("add", ".");
+      await t.kitCmd("add", ".");
       await t.writeFile("1.txt", "conflict");
 
-      await t.jitCmd("checkout", "@^");
+      await t.kitCmd("checkout", "@^");
       assertStaleFile("1.txt");
     });
 
@@ -176,9 +176,9 @@ describe("checkout", () => {
 
       await t.rm("outer/inner");
       await t.rm(".git/index");
-      await t.jitCmd("add", ".");
+      await t.kitCmd("add", ".");
 
-      await t.jitCmd("checkout", "@^");
+      await t.kitCmd("checkout", "@^");
       assertStaleFile("outer/inner/3.txt");
     });
 
@@ -189,7 +189,7 @@ describe("checkout", () => {
       await t.rm("outer/inner");
       await t.writeFile("outer/inner", "conflict");
 
-      await t.jitCmd("checkout", "@^");
+      await t.kitCmd("checkout", "@^");
       assertStaleFile("outer/inner/3.txt");
     });
 
@@ -199,9 +199,9 @@ describe("checkout", () => {
 
       await t.rm("outer/inner");
       await t.writeFile("outer/inner", "conflict");
-      await t.jitCmd("add", ".");
+      await t.kitCmd("add", ".");
 
-      await t.jitCmd("checkout", "@^");
+      await t.kitCmd("checkout", "@^");
       assertStaleFile("outer/inner/3.txt");
     });
 
@@ -211,10 +211,10 @@ describe("checkout", () => {
 
       await t.rm("outer/inner");
       await t.rm(".git/index");
-      await t.jitCmd("add", ".");
+      await t.kitCmd("add", ".");
       await t.writeFile("outer/inner", "conflict");
 
-      await t.jitCmd("checkout", "@^");
+      await t.kitCmd("checkout", "@^");
       assertStaleFile("outer/inner/3.txt");
     });
 
@@ -225,7 +225,7 @@ describe("checkout", () => {
       await t.rm("outer/2.txt");
       await t.writeFile("outer/2.txt/extra.log", "conflict");
 
-      await t.jitCmd("checkout", "@^");
+      await t.kitCmd("checkout", "@^");
       assertStaleFile("outer/2.txt");
     });
 
@@ -235,9 +235,9 @@ describe("checkout", () => {
 
       await t.rm("outer/2.txt");
       await t.writeFile("outer/2.txt/extra.log", "conflict");
-      await t.jitCmd("add", ".");
+      await t.kitCmd("add", ".");
 
-      await t.jitCmd("checkout", "@^");
+      await t.kitCmd("checkout", "@^");
       assertStaleFile("outer/2.txt");
     });
 
@@ -289,7 +289,7 @@ describe("checkout", () => {
 
       await t.writeFile("outer/94.txt", "conflict");
 
-      await t.jitCmd("checkout", "@^");
+      await t.kitCmd("checkout", "@^");
       assertStaleFile("outer/94.txt");
     });
 
@@ -298,7 +298,7 @@ describe("checkout", () => {
       await commitAll();
 
       await t.makeExecutable("outer/94.txt");
-      await t.jitCmd("checkout", "@^");
+      await t.kitCmd("checkout", "@^");
       assertStaleFile("outer/94.txt");
     });
 
@@ -307,7 +307,7 @@ describe("checkout", () => {
       await commitAll();
 
       await t.rm("outer/94.txt");
-      await t.jitCmd("checkout", "@^");
+      await t.kitCmd("checkout", "@^");
 
       await t.assertWorkspace(basefiles);
       await assertStatus("");
@@ -318,7 +318,7 @@ describe("checkout", () => {
       await commitAll();
 
       await t.rm("outer/inner");
-      await t.jitCmd("checkout", "@^");
+      await t.kitCmd("checkout", "@^");
 
       await t.assertWorkspace([
         ["1.txt", "1"],
@@ -333,9 +333,9 @@ describe("checkout", () => {
       await commitAll();
 
       await t.writeFile("outer/94.txt", "conflict");
-      await t.jitCmd("add", ".");
+      await t.kitCmd("add", ".");
 
-      await t.jitCmd("checkout", "@^");
+      await t.kitCmd("checkout", "@^");
       assertStaleFile("outer/94.txt");
     });
 
@@ -344,9 +344,9 @@ describe("checkout", () => {
       await commitAll();
 
       await t.makeExecutable("outer/94.txt");
-      await t.jitCmd("add", ".");
+      await t.kitCmd("add", ".");
 
-      await t.jitCmd("checkout", "@^");
+      await t.kitCmd("checkout", "@^");
       assertStaleFile("outer/94.txt");
     });
 
@@ -356,8 +356,8 @@ describe("checkout", () => {
 
       await t.rm("outer/94.txt");
       await t.rm(".git/index");
-      await t.jitCmd("add", ".");
-      await t.jitCmd("checkout", "@^");
+      await t.kitCmd("add", ".");
+      await t.kitCmd("checkout", "@^");
 
       await t.assertWorkspace(basefiles);
       await assertStatus("");
@@ -369,10 +369,10 @@ describe("checkout", () => {
 
       await t.rm("outer/94.txt");
       await t.rm(".git/index");
-      await t.jitCmd("add", ".");
+      await t.kitCmd("add", ".");
       await t.writeFile("outer/94.txt", "conflict");
 
-      await t.jitCmd("checkout", "@^");
+      await t.kitCmd("checkout", "@^");
       assertRemoveConflict("outer/94.txt");
     });
 
@@ -382,8 +382,8 @@ describe("checkout", () => {
 
       await t.rm("outer/inner");
       await t.rm(".git/index");
-      await t.jitCmd("add", ".");
-      await t.jitCmd("checkout", "@^");
+      await t.kitCmd("add", ".");
+      await t.kitCmd("checkout", "@^");
 
       await t.assertWorkspace([
         ["1.txt", "1"],
@@ -405,16 +405,16 @@ describe("checkout", () => {
     beforeEach(async () => {
       for (const message of ["first", "second", "third"]) {
         await t.writeFile("file.txt", message);
-        await t.jitCmd("add", ".");
+        await t.kitCmd("add", ".");
         await t.commit(message);
       }
-      t.jitCmd("branch", "topic");
-      t.jitCmd("branch", "second", "@^");
+      t.kitCmd("branch", "topic");
+      t.kitCmd("branch", "second", "@^");
     });
 
     describe("checking out a branch", () => {
       beforeEach(async () => {
-        await t.jitCmd("checkout", "topic");
+        await t.kitCmd("checkout", "topic");
       });
 
       it("links HEAD to the branch", async () => {
@@ -435,13 +435,13 @@ describe("checkout", () => {
       });
 
       it("prints a message when switing to the same branch", async () => {
-        await t.jitCmd("checkout", "topic");
+        await t.kitCmd("checkout", "topic");
 
         t.assertError("Already on 'topic'");
       });
 
       it("prints a message when swtching to another branch", async () => {
-        await t.jitCmd("checkout", "second");
+        await t.kitCmd("checkout", "second");
 
         t.assertError("Switched to branch 'second'");
       });
@@ -451,7 +451,7 @@ describe("checkout", () => {
           .resolveRevision("@")
           .then((rev) => t.repo().database.shortOid(rev));
 
-        await t.jitCmd("checkout", "@");
+        await t.kitCmd("checkout", "@");
 
         t.assertWarn(stripIndent`
           Note: checking out '@'.

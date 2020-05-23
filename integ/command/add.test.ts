@@ -20,7 +20,7 @@ describe("add", () => {
   it("adds a regular file to the index", async () => {
     await t.writeFile("hello.txt", "hello");
 
-    await t.jitCmd("add", "hello.txt");
+    await t.kitCmd("add", "hello.txt");
 
     await assertIndex([[0o0100644, "hello.txt"]]);
   });
@@ -29,7 +29,7 @@ describe("add", () => {
     await t.writeFile("hello.txt", "hello");
     await t.makeExecutable("hello.txt");
 
-    await t.jitCmd("add", "hello.txt");
+    await t.kitCmd("add", "hello.txt");
 
     await assertIndex([[0o0100755, "hello.txt"]]);
   });
@@ -38,7 +38,7 @@ describe("add", () => {
     await t.writeFile("hello.txt", "hello");
     await t.writeFile("world.txt", "world");
 
-    await t.jitCmd("add", "hello.txt", "world.txt");
+    await t.kitCmd("add", "hello.txt", "world.txt");
 
     await assertIndex([
       [0o0100644, "hello.txt"],
@@ -50,11 +50,11 @@ describe("add", () => {
     await t.writeFile("hello.txt", "hello");
     await t.writeFile("world.txt", "world");
 
-    await t.jitCmd("add", "world.txt");
+    await t.kitCmd("add", "world.txt");
 
     await assertIndex([[0o0100644, "world.txt"]]);
 
-    await t.jitCmd("add", "hello.txt");
+    await t.kitCmd("add", "hello.txt");
 
     await assertIndex([
       [0o0100644, "hello.txt"],
@@ -65,21 +65,21 @@ describe("add", () => {
   it("adds a directory to the index", async () => {
     await t.writeFile("a-dir/nested.txt", "content");
 
-    await t.jitCmd("add", "a-dir");
+    await t.kitCmd("add", "a-dir");
 
     await assertIndex([[0o0100644, "a-dir/nested.txt"]]);
   });
 
   it("adds the repository root to the index", async () => {
     await t.writeFile("a/b/c/file.txt", "content");
-    await t.jitCmd("add", ".");
+    await t.kitCmd("add", ".");
     await assertIndex([[0o0100644, "a/b/c/file.txt"]]);
   });
 
   it("is silent on success", async () => {
     await t.writeFile("hello.txt", "hello");
 
-    await t.jitCmd("add", "hello.txt");
+    await t.kitCmd("add", "hello.txt");
 
     t.assertStatus(0);
     t.assertInfo("");
@@ -87,7 +87,7 @@ describe("add", () => {
   });
 
   it("fails for no-existent files", async () => {
-    await t.jitCmd("add", "no-such-file");
+    await t.kitCmd("add", "no-such-file");
 
     t.assertError("fatal: pathspec 'no-such-file' did not match any files");
     t.assertStatus(128);
@@ -100,7 +100,7 @@ describe("add", () => {
     await t.makeUnreadable("secret.txt");
 
     // Act
-    await t.jitCmd("add", "secret.txt");
+    await t.kitCmd("add", "secret.txt");
 
     // Assert
     t.assertError(stripIndent`
