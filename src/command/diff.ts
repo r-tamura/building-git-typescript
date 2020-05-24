@@ -7,12 +7,11 @@ import * as Index from "../gindex";
 import { asserts } from "../util";
 import { diff, Hunk, TextDocument, Edit } from "../diff";
 import arg = require("arg");
-
-const NULL_OID = "0".repeat(40);
-const NULL_PATH = "/dev/null";
+import { definePrintDiffOptions, Target, NULL_OID } from "./shared/print_diff";
 
 interface Option {
   cached: boolean;
+  patch: boolean;
 }
 
 export class Diff extends Base<Option> {
@@ -33,19 +32,25 @@ export class Diff extends Base<Option> {
   initOptions() {
     this.options = {
       cached: false,
+      patch: true,
     };
   }
 
-  defineSpec() {
+  defineSpec(): arg.Spec {
+    const printDiffOptions = definePrintDiffOptions(this);
     return {
       "--cached": arg.flag(() => {
         this.options.cached = true;
       }),
       "--staged": "--cached",
+      ...printDiffOptions,
     };
   }
 
   private async diffHeadIndex() {
+    if (!this.options.patch) {
+      return;
+    }
     for (const [pathname, state] of this.#status.indexChanges.entries()) {
       switch (state) {
         case "added": {
@@ -74,6 +79,10 @@ export class Diff extends Base<Option> {
   }
 
   private async diffIndexWorkspace() {
+    if (!this.options.patch) {
+      return;
+    }
+
     for (const [pathname, state] of this.#status.workspaceChanges.entries()) {
       switch (state) {
         case "modified": {
@@ -206,30 +215,5 @@ export class Diff extends Base<Option> {
 
   private short(oid: OID) {
     return this.repo.database.shortOid(oid);
-  }
-}
-
-class Target {
-  constructor(
-    public name: Pathname,
-    public oid: OID,
-    public mode: string | null,
-    public data: string
-  ) {}
-
-  static of(name: Pathname, oid: OID, mode: string | null, data: string) {
-    return new this(name, oid, mode, data);
-  }
-
-  get deffPath() {
-    return this.mode ? this.name : NULL_PATH;
-  }
-
-  equals(b: Target) {
-    return this.oid === b.oid && this.mode === b.mode;
-  }
-
-  equalsContent(b: Target) {
-    return this.oid === b.oid;
   }
 }

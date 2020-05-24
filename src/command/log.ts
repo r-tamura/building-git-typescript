@@ -2,9 +2,16 @@ import * as os from "os";
 import arg = require("arg");
 import { Base } from "./base";
 import { asserts, includes, shallowEqual, partition } from "../util";
-import { CompleteCommit } from "../types";
+import { CompleteCommit, Pathname } from "../types";
 import { SymRef } from "../refs";
 import { Style } from "../color";
+import {
+  definePrintDiffOptions,
+  printDiff,
+  Target,
+  NULL_OID,
+} from "./shared/print_diff";
+import { Entry } from "../database";
 
 const FORMAT = ["medium", "oneline"] as const;
 const DECORATE = ["auto", "short", "full", "no"] as const;
@@ -12,6 +19,7 @@ interface Options {
   abbrev: "auto" | boolean;
   format: typeof FORMAT[number];
   decorate: typeof DECORATE[number];
+  patch: boolean;
 }
 
 export class Log extends Base<Options> {
@@ -26,11 +34,12 @@ export class Log extends Base<Options> {
     this.#currentRef = await this.repo.refs.currentRef();
 
     for await (const commit of this.eachCommit()) {
-      this.showCommit(commit);
+      await this.showCommit(commit);
     }
   }
 
-  protected defineSpec() {
+  protected defineSpec(): arg.Spec {
+    const printDiffOptions = definePrintDiffOptions(this);
     return {
       "--abbrev-commit": arg.flag(() => {
         this.options.abbrev = true;
@@ -61,6 +70,7 @@ export class Log extends Base<Options> {
       "--no-decorate": arg.flag(() => {
         this.options.decorate = "no";
       }),
+      ...printDiffOptions,
     };
   }
 
@@ -69,6 +79,7 @@ export class Log extends Base<Options> {
       abbrev: "auto",
       format: "medium",
       decorate: "auto",
+      patch: false,
     };
   }
 
@@ -143,13 +154,17 @@ export class Log extends Base<Options> {
     return ref.head() ? ["bold", "cyan"] : ["bold", "green"];
   }
 
-  private showCommit(commit: CompleteCommit) {
+  private async showCommit(commit: CompleteCommit) {
     switch (this.options.format) {
       case "medium":
-        return this.showCommitMedium(commit);
+        this.showCommitMedium(commit);
+        break;
       case "oneline":
-        return this.showCommitOneline(commit);
+        this.showCommitOneline(commit);
+        break;
     }
+
+    await this.showPatch(commit);
   }
 
   private showCommitMedium(commit: CompleteCommit) {
@@ -173,7 +188,45 @@ export class Log extends Base<Options> {
     this.log(`${id} ${commit.titleLine()}`);
   }
 
+  private async showPatch(commit: CompleteCommit) {
+    if (!this.options.patch) {
+      return;
+    }
+
+    const diff = await this.repo.database.treeDiff(commit.parent, commit.oid);
+    const paths = Array.from(diff.keys()).sort();
+
+    this.blankLine();
+
+    for (const pathname of paths) {
+      const change = diff.get(pathname);
+      asserts(typeof change !== "undefined");
+      const [oldItem, newItem] = change;
+      const a = await this.fromDiffItem(pathname, oldItem);
+      const b = await this.fromDiffItem(pathname, newItem);
+      printDiff(a, b, this);
+    }
+  }
+
+  private async fromDiffItem(pathname: Pathname, item: Entry | null) {
+    if (item) {
+      const blob = await this.repo.database.load(item.oid);
+      asserts(blob.type === "blob");
+      return Target.of(
+        pathname,
+        item.oid,
+        item.mode.toString(8),
+        blob.data.toString()
+      );
+    } else {
+      return Target.of(pathname, NULL_OID, null, "");
+    }
+  }
+
   private blankLine() {
+    if (this.options.format === "oneline") {
+      return;
+    }
     if (this.#blankLine) {
       this.log("");
     }

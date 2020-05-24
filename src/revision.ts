@@ -97,7 +97,7 @@ export class Revision {
     }
 
     if (candidates.length > 1) {
-      await this.logAnbiguousSha1(name, candidates);
+      await this.logAmbiguousSha1(name, candidates);
     }
 
     return null;
@@ -117,7 +117,7 @@ export class Revision {
     return null;
   }
 
-  private async logAnbiguousSha1(name: string, condidates: OID[]) {
+  private async logAmbiguousSha1(name: string, condidates: OID[]) {
     const objects: string[] = [];
     const sorted = condidates.sort();
     const loadPromises = sorted.map(this.#repo.database.load);

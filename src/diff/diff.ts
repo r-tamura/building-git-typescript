@@ -1,4 +1,5 @@
 import { Myers } from "./myers";
+import { Hunk } from "./hunk";
 import { splitByLine } from "../util";
 
 export type TextDocument = string | string[];
@@ -9,6 +10,10 @@ export class Line {
   static of(number: number, text: string) {
     return new Line(number, text);
   }
+}
+
+export function diffHunks(a: TextDocument, b: TextDocument) {
+  return Hunk.filter(diff(a, b));
 }
 
 export function lines(document: TextDocument) {

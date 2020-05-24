@@ -31,7 +31,7 @@ export abstract class Base<O extends object = {}> implements Runnable {
   protected stderr: NodeJS.WriteStream;
 
   /** options */
-  protected options!: O;
+  options!: O;
 
   /** 終了ステータス */
   status: number = 0;

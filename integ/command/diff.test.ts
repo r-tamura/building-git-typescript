@@ -78,6 +78,14 @@ describe("diff", () => {
         -contents
       `);
     });
+
+    it("'--no-patch'オプションが指定されたとき、patch情報を出力しない", async () => {
+      await t.writeFile("file.txt", "changed");
+
+      await t.kitCmd("diff", "--no-patch");
+
+      t.assertInfo("");
+    });
   });
 
   describe("head/index", () => {
@@ -133,6 +141,16 @@ describe("diff", () => {
         @@ -1,1 +0,0 @@
         -contents
       `);
+    });
+
+    it("'--no-patch'オプションが指定されたとき、patch情報を出力しない", async () => {
+      await t.writeFile("file.txt", "changed");
+      await t.rm(".git/index");
+      await t.kitCmd("add", ".");
+
+      await t.kitCmd("diff", "--cached", "--no-patch");
+
+      t.assertInfo("");
     });
   });
 });

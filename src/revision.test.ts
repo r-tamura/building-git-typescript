@@ -89,7 +89,6 @@ describe("Revision#readRef", () => {
 
   it("prefixに該当するOIDが2つ以上存在するとき、エラーメッセージを保存し、nullを返す", async () => {
     // Arrange
-
     const testObjects = {
       "3a3c4ec0ae9589c881029c161dd129bcc318dc08": mockCommit(
         "3a3c4ec0ae9589c881029c161dd129bcc318dc08"
@@ -102,19 +101,19 @@ describe("Revision#readRef", () => {
       ),
     } as const;
 
-    jest.spyOn(Refs.prototype, "readRef").mockResolvedValue(null);
-    jest
-      .spyOn(Database.prototype, "prefixMatch")
-      .mockResolvedValue(Object.keys(testObjects));
-
-    jest
-      .spyOn(Database.prototype, "load")
-      .mockImplementation((oid: string) =>
-        Promise.resolve(testObjects[oid as keyof typeof testObjects])
-      );
     const testPrefix = "3a3c4ec";
-
-    jest.spyOn(Database.prototype, "shortOid").mockReturnValue(testPrefix);
+    const spys = [
+      jest.spyOn(Refs.prototype, "readRef").mockResolvedValue(null),
+      jest
+        .spyOn(Database.prototype, "prefixMatch")
+        .mockResolvedValue(Object.keys(testObjects)),
+      jest
+        .spyOn(Database.prototype, "load")
+        .mockImplementation((oid: string) =>
+          Promise.resolve(testObjects[oid as keyof typeof testObjects])
+        ),
+      jest.spyOn(Database.prototype, "shortOid").mockReturnValue(testPrefix),
+    ];
 
     // Act
     const rev = new Revision(mockRepo(), "HEAD");
@@ -132,6 +131,8 @@ describe("Revision#readRef", () => {
       "エラーメッセージ"
     );
     assert.equal(actual, null, "返り値");
+
+    spys.forEach((spy) => spy.mockRestore());
   });
 });
 

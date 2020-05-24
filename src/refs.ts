@@ -5,7 +5,6 @@ import { OID } from "./types";
 import { BaseError, find, ascend, asserts } from "./util";
 import { Lockfile, MissingParent } from "./lockfile";
 import { Pathname } from "./types";
-import { stringify } from "querystring";
 
 export type Environment = {
   fs?: FileService;
