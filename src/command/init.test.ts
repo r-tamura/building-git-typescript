@@ -38,7 +38,7 @@ describe("init", () => {
     assert.equal(mockedMkdir.mock.calls[0][0], "/test/dir/.git/objects");
   });
 
-  it("'refs'ディレクトリを作成する", () => {
-    assert.equal(mockedMkdir.mock.calls[1][0], "/test/dir/.git/refs");
+  it("'refs/heads'ディレクトリを作成する", () => {
+    assert.equal(mockedMkdir.mock.calls[1][0], "/test/dir/.git/refs/heads");
   });
 });
