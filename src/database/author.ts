@@ -37,8 +37,8 @@ export class Author {
   }
 
   shortDate() {
-    const { year, month, day } = timeForPrint(this.time);
-    return `${year}-${month}-${day}`;
+    const { year, month, date } = timeForPrint(this.time);
+    return `${year}-${month}-${date}`;
   }
 
   toString() {
