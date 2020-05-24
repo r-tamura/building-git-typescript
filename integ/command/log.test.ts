@@ -149,5 +149,14 @@ describe("log", () => {
         +A
       `);
     });
+
+    it("prints a log with a specified commit", async () => {
+      await t.kitCmd("log", "--pretty=oneline", "@^");
+
+      t.assertInfo(stripIndent`
+        ${commits[1].oid} B
+        ${commits[2].oid} A
+      `);
+    });
   });
 });

@@ -1,7 +1,6 @@
 import { OID } from "./types";
 import { Repository } from "./repository";
 import { asserts, times, BaseError } from "./util";
-import { Commit } from "./database";
 
 const INVALID_BRANCH_NAME = [
   /^\./, // Unixの隠しファイルパスの形式
@@ -16,11 +15,12 @@ const INVALID_BRANCH_NAME = [
 const PARENT = /^(.+)\^$/;
 const ANCESTOR = /^(.+)~(\d+)$/;
 
+export const HEAD = "HEAD" as const;
 const REF_ALIASES: { [s: string]: string } = {
-  "@": "HEAD",
+  "@": HEAD,
 };
 
-const COMMIT = "commit" as const;
+export const COMMIT = "commit" as const;
 
 export class InvalidObject extends BaseError {}
 export class HintedError extends BaseError {

@@ -12,6 +12,7 @@ import {
   NULL_OID,
 } from "./shared/print_diff";
 import { Entry } from "../database";
+import { RevList } from "../rev_list";
 
 const FORMAT = ["medium", "oneline"] as const;
 const DECORATE = ["auto", "short", "full", "no"] as const;
@@ -26,6 +27,7 @@ export class Log extends Base<Options> {
   #blankLine: boolean = false;
   #reverseRefs!: Map<string, SymRef[]>;
   #currentRef!: SymRef;
+  #revList!: RevList;
 
   async run() {
     this.setupPager();
@@ -33,7 +35,8 @@ export class Log extends Base<Options> {
     this.#reverseRefs = await this.repo.refs.reverseRefs();
     this.#currentRef = await this.repo.refs.currentRef();
 
-    for await (const commit of this.eachCommit()) {
+    this.#revList = new RevList(this.repo, this.args[0]);
+    for await (const commit of this.#revList.each()) {
       await this.showCommit(commit);
     }
   }
@@ -137,17 +140,6 @@ export class Log extends Base<Options> {
       name = this.fmt(this.refColor(head), `${head.path} -> ${name}`);
     }
     return name;
-  }
-
-  private async *eachCommit() {
-    let oid = await this.repo.refs.readHead();
-
-    while (oid) {
-      const commit = await this.repo.database.load(oid);
-      asserts(commit.type === "commit");
-      yield commit;
-      oid = commit.parent;
-    }
   }
 
   private refColor(ref: SymRef): Style[] {
