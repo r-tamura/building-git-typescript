@@ -59,7 +59,9 @@ export class Branch extends Base<Option> {
         resolved = await revision.resolve("commit");
       } else {
         resolved = await this.repo.refs.readHead();
-        asserts(resolved !== null);
+        if (resolved === null) {
+          throw new InvalidBranch(`Not a valid object name: '${branchName}'.`);
+        }
       }
       await this.repo.refs.createBranch(branchName, resolved);
     } catch (e) {
