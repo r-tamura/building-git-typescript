@@ -21,6 +21,10 @@ export function clone<T>(xs: T[]): T[] {
   return [...xs];
 }
 
+export function isempty<T>(xs: T[]) {
+  return xs.length === 0;
+}
+
 type Primitive = number | string | symbol | bigint | null | undefined;
 /**
  * xがリストxsに含まれるかを判定します
@@ -35,6 +39,7 @@ export function includes<X extends Primitive, XS extends readonly X[]>(
 }
 
 function jsindex(xs: any[], index: number) {
+  // asserts(xs.length <= Math.abs(index), "list index out of range");
   return index >= 0 ? index : xs.length + index;
 }
 
@@ -73,6 +78,16 @@ export function enumerate<T>(xs: T[]): [T, number][] {
 export function find<T>(xs: T[], pred: (x: T) => boolean): T | null {
   const filtered = xs.filter(pred);
   return filtered.length === 0 ? null : filtered[0];
+}
+
+export function found(index: number) {
+  return index !== -1;
+}
+
+export function insert<T>(xs: T[], index: number, x: T): T[] {
+  const cloned = clone(xs);
+  cloned.splice(index, index, x);
+  return cloned;
 }
 
 /**

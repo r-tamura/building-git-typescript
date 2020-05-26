@@ -51,11 +51,19 @@ export class TestUtil {
     return this._env;
   }
 
-  mockEnvvar(key: string, value: string) {
+  private setEnv(env: Partial<Environment>) {
+    this._env = { ...this._env, ...env };
+  }
+
+  private setTime(time: Date) {
+    this.setEnv({ date: { now: () => time } });
+  }
+
+  private mockEnvvar(key: string, value: string) {
     this.envvars[key] = value;
   }
 
-  mockStdio(s: string) {
+  private mockStdio(s: string) {
     this._env.process = {
       ...this._env.process,
       stdin: this.makeStdin(s),
@@ -197,10 +205,11 @@ export class TestUtil {
     return;
   }
 
-  async commit(message: string) {
+  async commit(message: string, time: Date = new Date()) {
     this.mockEnvvar("GIT_AUTHOR_NAME", "A. U. Thor");
     this.mockEnvvar("GIT_AUTHOR_EMAIL", "author@example.com");
     this.mockStdio(message);
+    this.setTime(time);
     await this.kitCmd("commit");
   }
 

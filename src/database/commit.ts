@@ -47,11 +47,15 @@ export class Commit {
     }
     const comment = buf.slice(offset + 1).toString();
     return new Commit(
-      headers["parent"],
+      headers["parent"] ?? null, // parentがない場合はnull
       headers["tree"],
       Author.parse(headers["author"]),
       comment
     );
+  }
+
+  get date() {
+    return this.author.time;
   }
 
   titleLine() {

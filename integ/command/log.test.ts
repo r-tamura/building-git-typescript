@@ -8,13 +8,15 @@ beforeEach(t.beforeHook);
 afterEach(t.afterHook);
 
 describe("log", () => {
-  async function commitFile(message: string) {
+  async function commitFile(message: string, time?: Date) {
     await t.writeFile("file.txt", message);
     await t.kitCmd("add", ".");
-    await t.commit(message);
+    await t.commit(message, time);
   }
 
   describe("with a chain of commits", () => {
+    //   o---o---o
+    //   A   B   C
     const commits: CompleteCommit[] = [];
     beforeEach(async () => {
       const messages = ["A", "B", "C"];
@@ -156,6 +158,62 @@ describe("log", () => {
       t.assertInfo(stripIndent`
         ${commits[1].oid} B
         ${commits[2].oid} A
+      `);
+    });
+  });
+
+  describe("with a tree of commits", () => {
+    let branchTime: Date;
+    let master: string[];
+    let topic: string[];
+    beforeEach(async () => {
+      //  m1  m2  m3
+      //   o---o---o [master]
+      //        \
+      //         o---o---o---o [topic]
+      //        t1  t2  t3  t4
+      branchTime = new Date();
+      for (const n of ["1", "2", "3"]) {
+        await commitFile(`master-${n}`, branchTime);
+      }
+      await t.kitCmd("branch", "topic", "master^");
+      await t.kitCmd("checkout", "topic");
+
+      const _10secLater = branchTime.getSeconds() + 10;
+      branchTime.setSeconds(_10secLater);
+
+      for (const n of ["1", "2", "3", "4"]) {
+        await commitFile(`topic-${n}`, branchTime);
+      }
+      master = [];
+      topic = [];
+      for (const n of ["0", "1", "2"]) {
+        const oid = await t.resolveRevision(`master~${n}`);
+        master.push(oid);
+      }
+      for (const n of ["0", "1", "2", "3"]) {
+        const oid = await t.resolveRevision(`topic~${n}`);
+        topic.push(oid);
+      }
+    });
+
+    it("logs the combined history of multiple branches", async () => {
+      await t.kitCmd(
+        "log",
+        "--pretty=oneline",
+        "--decorate=short",
+        "master",
+        "topic"
+      );
+
+      t.assertInfo(stripIndent`
+        ${topic[0]} (HEAD -> topic) topic-4
+        ${topic[1]} topic-3
+        ${topic[2]} topic-2
+        ${topic[3]} topic-1
+        ${master[0]} (master) master-3
+        ${master[1]} master-2
+        ${master[2]} master-1
       `);
     });
   });

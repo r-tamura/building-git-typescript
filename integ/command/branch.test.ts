@@ -18,10 +18,10 @@ describe("branch", () => {
   }
 
   describe("with no commit", () => {
-    it.skip("無効なmasterブランチのため失敗する", async () => {
+    it("無効なmasterブランチのため失敗する", async () => {
       // TODO: fix
       await t.kitCmd("branch", "topic");
-      t.assertError("fatal: Not a valid object name: 'master'.");
+      t.assertError("fatal: Not a valid object name: 'topic'.");
     });
 
     it("空のリストが出力される", async () => {
@@ -88,18 +88,18 @@ describe("branch", () => {
       t.assertError("fatal: Not a valid object name: '@^^^'.");
     });
 
-    it.skip("fails for invalid parents 2", async () => {
+    it("fails for invalid parents 2", async () => {
       // TODO: fix
       await t.kitCmd("branch", "topic", "@^^^^");
 
       t.assertError("fatal: Not a valid object name: '@^^^^'.");
     });
 
-    it.skip("fails for invalid ancestors", async () => {
+    it("fails for invalid ancestors", async () => {
       // TODO: fix
       await t.kitCmd("branch", "topic", "@~50");
 
-      t.assertError("fatail: Not a valid object name '@~50'.");
+      t.assertError("fatal: Not a valid object name: '@~50'.");
     });
 
     it("fails for parents of revisions that are not commit", async () => {
