@@ -216,5 +216,51 @@ describe("log", () => {
         ${master[2]} master-1
       `);
     });
+
+    it("logs the difference from one branch to another (A..B)", async () => {
+      await t.kitCmd("log", "--pretty=oneline", "master..topic");
+
+      t.assertInfo(stripIndent`
+        ${topic[0]} topic-4
+        ${topic[1]} topic-3
+        ${topic[2]} topic-2
+        ${topic[3]} topic-1
+      `);
+    });
+
+    it("logs the difference from one branch to another (^A)", async () => {
+      await t.kitCmd("log", "--pretty=oneline", "master", "^topic");
+
+      t.assertInfo(stripIndent`
+        ${master[0]} master-3
+      `);
+    });
+
+    it("excludes a long branch when commit times are euqal", async () => {
+      await t.kitCmd("branch", "side", "topic^^");
+      await t.kitCmd("checkout", "side");
+
+      for (let i = 1; i <= 10; i++) {
+        const n = i.toString();
+        await commitFile(`sied-${n}`, branchTime);
+      }
+
+      await t.kitCmd("log", "--pretty=oneline", "side..topic", "^master");
+
+      t.assertInfo(stripIndent`
+        ${topic[0]} topic-4
+        ${topic[1]} topic-3
+      `);
+    });
+
+    it("logs the last few commits on a branch", async () => {
+      await t.kitCmd("log", "--pretty=oneline", "@~3..");
+
+      t.assertInfo(stripIndent`
+        ${topic[0]} topic-4
+        ${topic[1]} topic-3
+        ${topic[2]} topic-2
+      `);
+    });
   });
 });

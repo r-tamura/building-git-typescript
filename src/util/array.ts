@@ -90,6 +90,14 @@ export function insert<T>(xs: T[], index: number, x: T): T[] {
   return cloned;
 }
 
+export function first<T>(xs: T[]) {
+  return xs[0];
+}
+
+export function last<T>(xs: T[]) {
+  return xs[xs.length - 1];
+}
+
 /**
  * predの条件によりリストxsを2つのリストへ分割します
  * @param xs 分割するリスト
