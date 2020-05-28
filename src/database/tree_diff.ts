@@ -1,9 +1,9 @@
-import * as path from "path";
 import { Entry } from "./entry";
 import { Database } from "./database";
-import { Pathname, OID } from "../types";
+import { OID } from "../types";
 import { Tree, EntryMap, ReadEntry } from "./tree";
 import { asserts } from "../util";
+import { PathFilter } from "../path_filter";
 
 type A = Entry | null;
 type B = A;
@@ -16,7 +16,7 @@ export class TreeDiff {
     this.#database = database;
   }
 
-  async compareOids(a: OID | null, b: OID | null, prefix: Pathname = "") {
+  async compareOids(a: OID | null, b: OID | null, filter: PathFilter) {
     if (a === b) {
       return;
     }
@@ -24,8 +24,8 @@ export class TreeDiff {
     const a_tree = a ? (await this.oidToTree(a)).entries : {};
     const b_tree = b ? (await this.oidToTree(b)).entries : {};
 
-    await this.detectDeletions(a_tree, b_tree, prefix);
-    await this.detectAdditions(a_tree, b_tree, prefix);
+    await this.detectDeletions(a_tree, b_tree, filter);
+    await this.detectAdditions(a_tree, b_tree, filter);
   }
 
   private async oidToTree(oid: OID) {
@@ -43,59 +43,56 @@ export class TreeDiff {
     }
   }
 
-  private async detectDeletions(a: EntryMap, b: EntryMap, prefix: Pathname) {
-    for (const [name, entry] of Object.entries(a)) {
-      const pathname = path.join(prefix, name);
+  private async detectDeletions(a: EntryMap, b: EntryMap, filter: PathFilter) {
+    for (const [name, entry] of filter.eachEntry(a)) {
       // aにあるオブジェクトがbにない可能性もある
       // オブジェクトでマッピングをしているため、TypeScript上ではundefinedにならない
       // TODO: Tree entriesにMapオブジェクトを使う
       const other = b[name] ?? null;
-      asserts(
-        entry.type === "database",
-        "データベースから読み込まれたエントリ"
-      );
-      asserts(
-        other === null || other.type === "database",
-        "データベースから読み込まれたエントリ"
-      );
+      // prettier-ignore
+      asserts(entry.type === "database", "データベースから読み込まれたエントリ");
+      // prettier-ignore
+      asserts(other === null || other.type === "database","データベースから読み込まれたエントリ");
       // 同値
       if (other !== null && entry.euqals(other)) {
         continue;
       }
 
+      const subFilter = filter.join(name);
+
       // Treeの場合
       const [tree_a, tree_b] = [entry, other].map((e: Entry | null) =>
         e?.tree() ? e.oid : null
       );
-      await this.compareOids(tree_a, tree_b, pathname);
+      await this.compareOids(tree_a, tree_b, subFilter);
 
       // Blobの場合
       const blobs = [entry, other].map((e: Entry | null) =>
         e?.tree() ? null : e
       ) as Change;
       if (blobs.some((e) => e !== null)) {
-        this.changes.set(pathname, blobs);
+        this.changes.set(subFilter.pathname, blobs);
       }
     }
   }
 
-  private async detectAdditions(a: EntryMap, b: EntryMap, prefix: Pathname) {
-    for (const [name, entry] of Object.entries(b)) {
-      const pathname = path.join(prefix, name);
+  private async detectAdditions(a: EntryMap, b: EntryMap, filter: PathFilter) {
+    for (const [name, entry] of filter.eachEntry(b)) {
       // bにあるオブジェクトがaにない可能性もある
       // オブジェクトでマッピングをしているため、TypeScript上ではundefinedにならない
       // TODO: Tree entriesにMapオブジェクトを使う
       const other = a[name] as Entry;
       asserts(entry.type === "database");
 
+      const subFilter = filter.join(name);
+
       if (other) {
         return;
       }
-
       if (entry.tree()) {
-        await this.compareOids(null, entry.oid, pathname);
+        await this.compareOids(null, entry.oid, subFilter);
       } else {
-        this.changes.set(pathname, [null, entry]);
+        this.changes.set(subFilter.pathname, [null, entry]);
       }
     }
   }

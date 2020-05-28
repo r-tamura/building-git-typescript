@@ -1,11 +1,15 @@
 import { Repository } from "./repository";
 import { Revision, HEAD, COMMIT } from "./revision";
 import { asserts, found, insert, isempty, first, last } from "./util";
-import { OID, CompleteCommit } from "./types";
+import { OID, CompleteCommit, Pathname } from "./types";
+import { PathFilter } from "./path_filter";
+import { Changes } from "./database";
 
-type Flag = "seen" | "added" | "uninteresting";
+type Flag = "seen" | "added" | "uninteresting" | "treesame";
 const RANGE = /^(.*)\.\.(.*)$/;
 const EXCLUDE = /^\^(.+)$/;
+
+type OidPair = [OID, OID];
 export class RevList {
   #repo: Repository;
   #commits: Map<OID, CompleteCommit> = new Map();
@@ -13,6 +17,9 @@ export class RevList {
   #queue: CompleteCommit[] = [];
   #output: CompleteCommit[] = [];
   #limited: boolean = false;
+  #prune: Pathname[] = [];
+  #filter!: PathFilter;
+  #diffs: Map<OidPair, Changes> = new Map();
   private constructor(repo: Repository) {
     this.#repo = repo;
   }
@@ -25,7 +32,23 @@ export class RevList {
     if (isempty(list.#queue)) {
       await list.handleRevision(HEAD);
     }
+    list.#filter = PathFilter.build(list.#prune);
     return list;
+  }
+
+  async treediff(oldOid: OID, newOid: OID) {
+    const key: OidPair = [oldOid, newOid];
+    const diff = this.#diffs.get(key);
+    if (diff) {
+      return diff;
+    }
+    const changes = await this.#repo.database.treeDiff(
+      oldOid,
+      newOid,
+      this.#filter
+    );
+    this.#diffs.set(key, changes);
+    return changes;
   }
 
   async *each(): AsyncGenerator<CompleteCommit> {
@@ -39,6 +62,7 @@ export class RevList {
     if (!this.mark(commit.oid, "added")) {
       return;
     }
+
     const parent = await this.loadCommit(commit.parent);
     if (parent === null) {
       return;
@@ -46,6 +70,8 @@ export class RevList {
 
     if (this.marked(commit.oid, "uninteresting")) {
       this.markParentsUninteresting(parent);
+    } else {
+      await this.simplifyCommit(commit);
     }
 
     this.enqueueCommit(parent);
@@ -67,7 +93,10 @@ export class RevList {
 
   private async handleRevision(rev: string) {
     let match;
-    if ((match = RANGE.exec(rev))) {
+    if (await this.#repo.workspace.statFile(rev)) {
+      // ファイル/ディレクトリ名は別扱い
+      this.#prune.push(rev);
+    } else if ((match = RANGE.exec(rev))) {
       // rev1..rev2 のとき rev1 から見たrev2までの差分を出力
       const [_, rev1, rev2] = match;
       await this.setStartpoint(rev1, false);
@@ -159,7 +188,6 @@ export class RevList {
     const newest_in = first(this.#queue);
 
     if (oldest_out && oldest_out.date <= newest_in.date) {
-      console.log("still");
       return true;
     }
     if (
@@ -168,6 +196,16 @@ export class RevList {
       return true;
     }
     return false;
+  }
+
+  private async simplifyCommit(commit: CompleteCommit) {
+    if (isempty(this.#prune)) {
+      return;
+    }
+    const diffs = await this.treediff(commit.parent, commit.oid);
+    if (diffs.size === 0) {
+      this.mark(commit.oid, "treesame");
+    }
   }
 
   private async *traverseCommits() {
@@ -180,6 +218,10 @@ export class RevList {
       if (this.marked(commit.oid, "uninteresting")) {
         continue;
       }
+      if (this.marked(commit.oid, "treesame")) {
+        continue;
+      }
+
       yield commit;
     }
   }

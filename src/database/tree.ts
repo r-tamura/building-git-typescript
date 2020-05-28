@@ -2,7 +2,7 @@ import * as path from "path";
 import * as Database from "../database";
 import { IEntry, Entry } from "../entry";
 import { asserts, packHex, scanUntil, unpackHex } from "../util";
-import { OID, Pathname } from "../types";
+import { OID, Pathname, Dict } from "../types";
 import { Entry as IndexEntry } from "../gindex";
 
 export type TraverseCallbackFn = (t: Tree) => Promise<void>;
@@ -19,7 +19,7 @@ export type ModeStr = "100644" | "100755";
 type CommitEntry = Entry | Tree;
 export type WriteEntry = Entry | IndexEntry;
 export type ReadEntry = Database.Entry;
-export type EntryMap = { [s: string]: ReadEntry | IndexEntry | CommitEntry };
+export type EntryMap = Dict<ReadEntry | IndexEntry | CommitEntry>;
 export class Tree {
   static readonly TREE_MODE = 0o040000;
 

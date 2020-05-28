@@ -11,7 +11,7 @@ import {
   Target,
   NULL_OID,
 } from "./shared/print_diff";
-import { Entry } from "../database";
+import { Entry, Change } from "../database";
 import { RevList } from "../rev_list";
 
 const FORMAT = ["medium", "oneline"] as const;
@@ -185,14 +185,14 @@ export class Log extends Base<Options> {
       return;
     }
 
-    const diff = await this.repo.database.treeDiff(commit.parent, commit.oid);
+    const diff = await this.#revList.treediff(commit.parent, commit.oid);
     const paths = Array.from(diff.keys()).sort();
 
     this.blankLine();
 
     for (const pathname of paths) {
-      const change = diff.get(pathname);
-      asserts(typeof change !== "undefined");
+      // pathsはdiffのキー要素のみからなる
+      const change = diff.get(pathname) as Change;
       const [oldItem, newItem] = change;
       const a = await this.fromDiffItem(pathname, oldItem);
       const b = await this.fromDiffItem(pathname, newItem);

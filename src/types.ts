@@ -23,9 +23,7 @@ export type GitObject = Database.Commit | Database.Tree | Database.Blob;
 export type CompleteCommit = NonNullProps<Commit>;
 export type CompleteGitObject = NonNullProps<GitObject>;
 
-/**
- * ファイルパス
- */
+// ファイルパス
 export type Pathname = string;
 
 /**
@@ -44,3 +42,6 @@ export type Environment = {
 
 export type EnvVar = string | undefined;
 export type EnvVars = { [s: string]: EnvVar };
+
+// Util
+export type Dict<T> = { [s: string]: T };

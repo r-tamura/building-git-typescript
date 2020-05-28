@@ -33,6 +33,24 @@ export function descend(pathname: Pathname) {
   }, [] as string[]);
 }
 
+/**
+ * パスを子から親へ辿っていったときの各パス名一覧を取得します。ファイルシステムへはアクセスしません。
+ * Rubyの Pathname#descend相当
+ * https://apidock.com/ruby/Pathname/descend
+ *
+ * @param pathname ファイルパス
+ *
+ * @example ディレクトリの深さ2以上のパス
+ * > ascend("/home/username/a.txt")
+ * ["/home/username/a.txt", "/home/username", "/home"]
+ */
 export function ascend(pathname: Pathname) {
   return descend(pathname).reverse();
+}
+
+/**
+ * ファイルパスの各コンポーネントをリストとして取得します
+ */
+export function eachFile(pathname: Pathname) {
+  return pathname.split(path.sep);
 }

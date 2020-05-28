@@ -1,6 +1,6 @@
 import * as T from "./helper";
 import { stripIndent } from "~/util";
-import { CompleteCommit } from "~/types";
+import { CompleteCommit, Dict } from "~/types";
 
 const t = T.create();
 
@@ -260,6 +260,92 @@ describe("log", () => {
         ${topic[0]} topic-4
         ${topic[1]} topic-3
         ${topic[2]} topic-2
+      `);
+    });
+  });
+
+  async function commitTree(message: string, files: Dict<string>, time?: Date) {
+    await Promise.all(
+      Object.entries(files).map(([pathname, contents]) =>
+        t.writeFile(pathname, contents)
+      )
+    );
+    await t.kitCmd("add", ".");
+    await t.commit(message, time);
+  }
+  describe("with commits changing differenct files", () => {
+    let commits: CompleteCommit[];
+    beforeEach(async () => {
+      await commitTree("first", {
+        "a/1.txt": "1",
+        "b/c/2.txt": "2",
+      });
+
+      await commitTree("second", {
+        "a/1.txt": "10",
+        "b/3.txt": "3",
+      });
+
+      await commitTree("third", {
+        "b/c/2.txt": "4",
+      });
+
+      commits = await Promise.all(
+        ["@^^", "@^", "@"].map(
+          (rev) => t.loadCommit(rev) as Promise<CompleteCommit>
+        )
+      );
+    });
+
+    it("logs commits that change a directory", async () => {
+      await t.kitCmd("log", "--pretty=oneline", "b");
+
+      t.assertInfo(stripIndent`
+        ${commits[2].oid} third
+        ${commits[1].oid} second
+        ${commits[0].oid} first
+      `);
+    });
+
+    it("logs commits that change a directory and one of its files", async () => {
+      await t.kitCmd("log", "--pretty=oneline", "b", "b/3.txt");
+
+      t.assertInfo(stripIndent`
+        ${commits[2].oid} third
+        ${commits[1].oid} second
+        ${commits[0].oid} first
+      `);
+    });
+
+    it("logs commits that change a nested directory", async () => {
+      await t.kitCmd("log", "--pretty=oneline", "b/c");
+
+      t.assertInfo(stripIndent`
+        ${commits[2].oid} third
+        ${commits[0].oid} first
+      `);
+    });
+
+    it("logs commits with patches for selected files", async () => {
+      await t.kitCmd("log", "--pretty=oneline", "--patch", "a/1.txt");
+
+      t.assertInfo(stripIndent`
+        ${commits[1].oid} second
+        diff --git a/a/1.txt b/a/1.txt
+        index 56a6051..9a03714 100644
+        --- a/a/1.txt
+        +++ b/a/1.txt
+        @@ -1,1 +1,1 @@
+        -1
+        +10
+        ${commits[0].oid} first
+        diff --git a/a/1.txt b/a/1.txt
+        new file mode 100644
+        index 0000000..56a6051
+        --- /dev/null
+        +++ b/a/1.txt
+        @@ -0,0 +1,1 @@
+        +1
       `);
     });
   });

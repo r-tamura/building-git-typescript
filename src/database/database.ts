@@ -10,6 +10,7 @@ import { asserts, scanUntil } from "../util";
 import { Tree } from "./tree";
 import { Commit } from "./commit";
 import { TreeDiff } from "./tree_diff";
+import { PathFilter } from "../path_filter";
 
 const TEMP_CHARS =
   "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
@@ -110,9 +111,9 @@ export class Database {
     await this.writeObject(obj.oid, content);
   }
 
-  async treeDiff(a: OID, b: OID) {
+  async treeDiff(a: OID, b: OID, filter = new PathFilter()) {
     const diff = new TreeDiff(this);
-    await diff.compareOids(a, b);
+    await diff.compareOids(a, b, filter);
     return diff.changes;
   }
 
