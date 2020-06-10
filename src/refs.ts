@@ -114,9 +114,7 @@ export class Refs {
    * ソースが指定されないときはHEADが参照しているrefを取得します。
    */
   async currentRef(source: string = HEAD): Promise<SymRef> {
-    // console.log("source", source);
     const ref = await this.readOidOrSymRef(path.join(this.#pathname, source));
-    // console.log(ref);
 
     switch (ref?.type) {
       case "symref":

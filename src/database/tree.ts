@@ -99,7 +99,6 @@ export class Tree {
 
       return Buffer.concat([encodedMode, encodedName, encodedOId]);
     });
-
     const bytes = entries.reduce((buf, acc) => Buffer.concat([buf, acc]));
     return bytes.toString("binary");
   }

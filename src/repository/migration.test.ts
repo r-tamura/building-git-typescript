@@ -1,14 +1,20 @@
 import * as assert from "power-assert";
-import * as Services from "../services";
+import * as FileService from "../services/FileService";
 import { Repository } from "./repository";
 import { Migration } from "./migration";
+import * as Index from "../gindex";
 import { Entry, Changes, Blob } from "../database";
 import { makeTestStats } from "../__test__";
 import { setOid } from "../__test__/util";
+import { Dict } from "../types";
 
-describe.skip("Migration#applyChanges", () => {
+describe("Migration#applyChanges", () => {
+  let spyRmrf: jest.SpyInstance;
+  beforeAll(() => {
+    spyRmrf = jest.spyOn(FileService, "rmrf").mockResolvedValue(undefined);
+  });
+
   describe("削除されるエントリがあるとき、そのエントリを削除する", () => {
-    const spyRmrf = jest.spyOn(Services, "rmrf").mockResolvedValue(undefined);
     const rmdir = jest.fn().mockResolvedValue(undefined);
     const unlink = jest.fn().mockResolvedValue(undefined);
     const mkdir = jest.fn().mockResolvedValue(undefined);
@@ -28,22 +34,36 @@ describe.skip("Migration#applyChanges", () => {
     };
     let remove: jest.SpyInstance;
     let add: jest.SpyInstance;
+
+    // mocked index
+    // prettier-ignore
+    const index: Dict<Index.Entry | null> = {
+      "del/ete/deleted.txt": null,
+      "added.txt":           Index.Entry.create("added.txt", "abcdef1", testStat),
+      "dir/updated.txt":     Index.Entry.create("dir/updated.txt", "abcdef4", testStat)
+    }
+    const mockedEntryForPath = (p: string) => index[p];
+    const diff: Changes = new Map([
+      // 削除されるファイル
+      ["del/ete/deleted.txt", [new Entry("abcdef0", 0o0100644), null]],
+      // 追加されるファイル
+      ["added.txt", [null, new Entry("abcdef1", 0o0100644)]],
+      // 更新されるファイル
+      // prettier-ignore
+      ["dir/updated.txt", [new Entry("abcdef3", 0o0100644), new Entry("abcdef4", 0o0100644)]],
+    ]);
+
     beforeAll(async () => {
       // Arrange
       const repo = new Repository("/tmp/.git", env as any);
-      jest
-        .spyOn(repo.database, "load")
-        .mockResolvedValue(setOid(new Blob("hello")));
+      // prettier-ignore
+      jest.spyOn(repo.database, "load").mockResolvedValue(setOid(new Blob("hello")));
       remove = jest.spyOn(repo.index, "remove").mockResolvedValue(undefined);
       add = jest.spyOn(repo.index, "add");
-      const diff: Changes = new Map([
-        ["del/ete/deleted.txt", [new Entry("abcdef0", 0o0100644), null]],
-        ["added.txt", [null, new Entry("abcdef1", 0o0100644)]],
-        [
-          "dir/updated.txt",
-          [new Entry("abcdef3", 0o0100644), new Entry("abcdef4", 0o0100644)],
-        ],
-      ]);
+      jest
+        .spyOn(repo.index, "entryForPath")
+        .mockImplementation(mockedEntryForPath);
+
       // Act
       const mgr = new Migration(repo, diff);
       await mgr.applyChanges();

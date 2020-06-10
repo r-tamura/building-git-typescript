@@ -1,7 +1,6 @@
 import { promises } from "fs";
 import { Process, FileService, Logger } from "./services";
 import * as Database from "./database";
-import { Commit } from "./database";
 
 /**
  * Type utility
@@ -20,7 +19,8 @@ export interface GitObjectParser {
 }
 export type GitObject = Database.Commit | Database.Tree | Database.Blob;
 
-export type CompleteCommit = NonNullProps<Commit>;
+export type CompleteCommit = NonNullProps<Database.Commit>;
+export type CompleteTree = NonNullProps<Database.Tree>;
 export type CompleteGitObject = NonNullProps<GitObject>;
 
 // ファイルパス

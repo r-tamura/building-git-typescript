@@ -33,9 +33,9 @@ MockedWs.mockImplementation((pathname: string) => ({
 const MockedRefs = Refs as jest.Mock;
 const MockedIndex = (Index as unknown) as jest.Mock<Partial<Index>>;
 
-jest
-  .spyOn(Service, "readTextStream")
-  .mockImplementation(() => Promise.resolve("test message"));
+// jest
+//   .spyOn(Service, "readTextStream")
+//   .mockImplementation(() => Promise.resolve("test message"));
 
 const testEnvGlobal: Environment = {
   fs: Service.defaultFs,
@@ -128,6 +128,18 @@ describe("add", () => {
         },
       ],
     ];
+    let spyExit: jest.SpyInstance;
+    beforeEach(() => {
+      // process.exit の返り値が never のため any型へキャスト
+      spyExit = jest
+        .spyOn(process, "exit")
+        .mockImplementation(jest.fn() as any);
+    });
+
+    afterEach(() => {
+      spyExit.mockRestore();
+    });
+
     it.each(tests)(
       "%s, エラーメッセージを表示しプロセスを以上終了する",
       async (_given, Err, code, mocker) => {
@@ -138,10 +150,6 @@ describe("add", () => {
         });
         mocker(throwErr);
 
-        // process.exit の返り値が never のため any型へキャスト
-        const spyExit = jest
-          .spyOn(process, "exit")
-          .mockImplementation(jest.fn() as any);
         // Act
         const cmd = new Add(["."], testEnvGlobal);
         await cmd.execute();

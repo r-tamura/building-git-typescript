@@ -18,7 +18,7 @@ export abstract class Base<O extends object = {}> implements Runnable {
   /** 作業ディレクトリ */
   protected dir: string;
   /** 環境変数 */
-  protected envvars: EnvVars;
+  envvars: EnvVars;
   /** ロガー */
   protected logger: Logger;
   /** ページャ-  */
@@ -37,7 +37,7 @@ export abstract class Base<O extends object = {}> implements Runnable {
   status: number = 0;
 
   #repo!: Repository;
-  constructor(protected args: string[], protected env: Environment) {
+  constructor(protected args: string[], public env: Environment) {
     this.dir = env.process.cwd();
     this.envvars = env.process.env;
     this.isatty = env.process.stdout.isTTY;

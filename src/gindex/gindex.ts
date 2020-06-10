@@ -9,7 +9,7 @@ import { Invalid, times } from "../util";
 import { Entry } from "./entry";
 import { Checksum } from "./checksum";
 import { FileService, defaultFs } from "../services";
-import { WriteEntry } from "~/database";
+import { WriteEntry } from "../database";
 
 type IndexEntryMap = { [s: string]: Entry };
 

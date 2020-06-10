@@ -5,7 +5,6 @@ import * as assert from "power-assert";
 describe("Commit#toString", () => {
   it("parentが存在しないとき、tree,author,commiter,messageが指定されたフォーマットで返される", () => {
     // Arrange
-    const parentOId = null;
     const treeOId = "123456789abcdeffedcba98765abcdef12345678";
     const author = new Author(
       "JohnDoe",
@@ -14,7 +13,7 @@ describe("Commit#toString", () => {
     );
 
     // Act
-    const commit = new Commit(parentOId, treeOId, author, "test commit");
+    const commit = new Commit([], treeOId, author, "test commit");
     const actual = commit.toString();
 
     // Assert
@@ -39,7 +38,7 @@ test commit`
     );
 
     // Act
-    const commit = new Commit(parentOId, treeOId, author, "test commit");
+    const commit = new Commit([parentOId], treeOId, author, "test commit");
     const actual = commit.toString();
 
     // Assert
@@ -60,7 +59,7 @@ describe("Commit.parse", () => {
     // Arrange
     const rawCommit = Buffer.from(
       new Commit(
-        null,
+        [],
         "123456789abcdeffedcba98765abcdef12345678",
         new Author("JohnDoe", "johndoe@test.local", new Date(2020, 3, 1)),
         "test commit"
@@ -79,7 +78,7 @@ describe("Commit.parse", () => {
     // Arrange
     const rawCommit = Buffer.from(
       new Commit(
-        "d8fd39d0bbdd2dcf322d8b11390a4c5825b11495",
+        ["d8fd39d0bbdd2dcf322d8b11390a4c5825b11495"],
         "123456789abcdeffedcba98765abcdef12345678",
         new Author("JohnDoe", "johndoe@test.local", new Date(2020, 3, 1)),
         "test commit"

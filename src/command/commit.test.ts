@@ -114,7 +114,7 @@ describe("commit", () => {
 
     assert.equal(MockedCommit.mock.calls.length, 1, "commit objectの生成");
     assert.deepEqual(MockedCommit.mock.calls[0], [
-      "73f5092ce31a05a69ed5ae13a01b963808776923",
+      ["73f5092ce31a05a69ed5ae13a01b963808776923"],
       "123456789abcdeffedcba98765432112345678",
       new Author("John Doe", "johndoe@test.local", new Date(2020, 3, 1)),
       "test message",

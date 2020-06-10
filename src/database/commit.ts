@@ -1,28 +1,30 @@
 import * as os from "os";
 import { Author } from "./author";
 import { OID } from "../types";
-import { scanUntil, splitByLine } from "../util";
+import { scanUntil, splitByLine, Hash } from "../util";
 
 export class Commit {
   readonly type = "commit";
   oid: OID | null = null;
   tree: OID;
-  parent: OID | null = null;
+  parents: OID[];
   message: string;
 
   constructor(
-    parent: OID | null,
+    parents: OID[],
     tree: OID,
     public author: Author,
     message: string
   ) {
-    this.parent = parent;
+    this.parents = parents;
     this.tree = tree;
     this.message = message;
   }
 
   static parse(buf: Buffer) {
-    const headers: { [s: string]: string } = {};
+    const headers = new Hash<string, string[]>((hash, key) =>
+      hash.set(key, [])
+    );
 
     let offset = 0;
     while (true) {
@@ -41,21 +43,25 @@ export class Commit {
         throw TypeError(`'${line}' doesn't match commit header format.`);
       }
 
-      headers[key] = value;
+      headers.get(key).push(value);
 
       offset = position;
     }
     const comment = buf.slice(offset + 1).toString();
     return new Commit(
-      headers["parent"] ?? null, // parentがない場合はnull
-      headers["tree"],
-      Author.parse(headers["author"]),
+      headers.get("parent"), // parentがない場合はnull
+      headers.get("tree")[0],
+      Author.parse(headers.get("author")[0]),
       comment
     );
   }
 
   get date() {
     return this.author.time;
+  }
+
+  get parent(): OID | null {
+    return this.parents[0] ?? null;
   }
 
   titleLine() {
@@ -65,9 +71,7 @@ export class Commit {
   toString() {
     const lines = [];
     lines.push(`tree ${this.tree}`);
-    if (this.parent) {
-      lines.push(`parent ${this.parent}`);
-    }
+    lines.push(...this.parents.map((oid) => `parent ${oid}`));
     lines.push(`author ${this.author}`);
     lines.push(`committer ${this.author}`);
     lines.push("");

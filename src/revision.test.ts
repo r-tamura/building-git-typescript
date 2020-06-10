@@ -15,7 +15,7 @@ import { CompleteGitObject } from "./types";
 
 const mockCommit = (oid: string) => {
   const commit = new Commit(
-    null,
+    [],
     "testtree123456",
     new Author("", "", new Date(2020, 3, 1)),
     [`message is ${oid}`].join("\n")

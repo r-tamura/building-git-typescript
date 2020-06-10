@@ -1,5 +1,5 @@
 import { Refs, LockDenied, InvalidBranch, Environment, symref } from "./refs";
-import * as Service from "./services";
+import * as Service from "./services/FileService";
 import * as assert from "power-assert";
 import { Lockfile } from "./lockfile";
 import { defaultFs, FileService } from "./services";
