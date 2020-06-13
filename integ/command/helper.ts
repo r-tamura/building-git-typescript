@@ -2,7 +2,7 @@ import { promises } from "fs";
 import { Readable, Writable } from "stream";
 import * as path from "path";
 import * as assert from "power-assert";
-import { Environment, Pathname } from "~/types";
+import { Environment, Pathname, CompleteCommit } from "~/types";
 import { defaultFs, Logger, Process, exists } from "~/services";
 import { Repository } from "~/repository";
 import { makeLogger } from "~/__test__/util";
@@ -63,7 +63,7 @@ export class TestUtil {
     this.envvars[key] = value;
   }
 
-  private mockStdio(s: string) {
+  mockStdio(s: string) {
     this._env.process = {
       ...this._env.process,
       stdin: this.makeStdin(s),
@@ -139,7 +139,15 @@ export class TestUtil {
   // Note: 書籍中は'delete'と言う関数名だが、JavaScriptでは予約後のため'rm'にする
   async rm(name: string) {
     const pathname = path.join(this.repoPath, name);
-    const stat = await fs.stat(pathname);
+    const stat = await fs.stat(pathname).catch((err: NodeJS.ErrnoException) => {
+      if (err.code === "ENOENT") {
+        return new Error(err.message);
+      }
+      throw err;
+    });
+    if (stat instanceof Error) {
+      return;
+    }
 
     if (stat.isDirectory()) {
       await fs.rmdir(pathname, { recursive: true });
@@ -218,8 +226,8 @@ export class TestUtil {
   }
 
   async loadCommit(expression: string) {
-    return this.resolveRevision(expression).then((oid) =>
-      this.repo().database.load(oid)
+    return this.resolveRevision(expression).then(
+      (oid) => this.repo().database.load(oid) as Promise<CompleteCommit>
     );
   }
 }

@@ -1,16 +1,12 @@
 import { Database } from "../database";
 import { OID, CompleteCommit } from "../types";
-import {
-  insert,
-  asserts,
-  isempty,
-  BaseError,
-  Hash,
-  superset,
-  merge,
-} from "../util";
+import { insert, asserts, Hash, superset, merge } from "../util";
 
-type Flag = "parent1" | "parent2";
+/**
+ * result: BCAの候補となったときセットされる
+ * stale: resultフラグを持つコミットの親コミットにセットされる
+ */
+type Flag = "parent1" | "parent2" | "stale" | "result";
 
 const BOTH_PARENTS = new Set<Flag>(["parent1", "parent2"]);
 
@@ -20,55 +16,86 @@ export class CommonAncestors {
   #database: Database;
   #flags: FlagMap = new Hash((hash, oid) => hash.set(oid, new Set()));
   #queue: CompleteCommit[] = [];
+  #results: CompleteCommit[] = [];
   private constructor(database: Database) {
     this.#database = database;
   }
 
-  static async of(database: Database, one: OID, two: OID) {
-    const ca = new CommonAncestors(database);
+  static async of(database: Database, one: OID, twos: OID[]) {
+    const self = new CommonAncestors(database);
     const commitOne = await database.load(one);
     asserts(commitOne.type === "commit");
 
-    ca.#queue = insertByDate(ca.#queue, commitOne);
-    ca.#flags.get(one).add("parent1");
+    self.#queue = insertByDate(self.#queue, commitOne);
+    self.#flags.get(one).add("parent1");
 
-    const commitTwo = await database.load(two);
-    asserts(commitTwo.type === "commit");
-    ca.#queue = insertByDate(ca.#queue, commitTwo);
-    ca.#flags.get(two).add("parent2");
-    return ca;
+    for (const two of twos) {
+      const commitTwo = await database.load(two);
+      asserts(commitTwo.type === "commit");
+      self.#queue = insertByDate(self.#queue, commitTwo);
+      self.#flags.get(two).add("parent2");
+    }
+    return self;
   }
 
   /**
    * BCAを探索する
    */
-  async find(): Promise<OID> {
+  async find(): Promise<OID[]> {
     // queueが空になるまで
     // 1. ququeから取り出す
     // 2. flagを調べる
-    while (!isempty(this.#queue)) {
+    while (!this.allStale()) {
       // 空ではないので、undefinedにはならない
-      const commit = this.#queue.shift() as CompleteCommit;
-      const flags = this.#flags.get(commit.oid);
-      if (isEquallSet(flags, BOTH_PARENTS)) {
-        return commit.oid;
-      }
+      this.processQueue();
     }
-    throw new BaseError("has no Common Ancestor");
+    // "stale"でないコミットIDのみのリストを返す
+    return this.#results
+      .map((c) => c.oid)
+      .filter((oid) => !this.marked(oid, "stale"));
   }
 
+  marked(oid: OID, flag: Flag) {
+    return this.#flags.get(oid).has(flag);
+  }
+
+  /**
+   * あるコミットの親コミットを全て処理キューへ追加する
+   * @param commit
+   * @param flags 親コミットへ付加されるフラグ
+   */
   private async addParents(commit: CompleteCommit, flags: FlagSet) {
     if (!commit.parent) {
       return;
     }
-    // あるcommitのparentはcommit
-    const parent = (await this.#database.load(commit.parent)) as CompleteCommit;
-    // 既に他のルートからparentとして登録されている場合は無視する(?)
-    if (superset(this.#flags.get(parent.oid), flags)) {
-      return;
+    // const parents = commit.parents.map(this.#database.load);
+    for (const parentOid of commit.parents) {
+      const parent = await this.#database.load(parentOid);
+      // あるcommitのparentはcommit
+      asserts(parent.type === "commit");
+      // 既に他のルートからparentとして登録されている場合は無視する
+      if (superset(this.#flags.get(parent.oid), flags)) {
+        continue;
+      }
+      this.#flags.set(parent.oid, merge(this.#flags.get(parent.oid), flags));
+      this.#queue = insertByDate(this.#queue, parent);
     }
-    this.#flags.set(parent.oid, merge(this.#flags.get(parent.oid), flags));
-    this.#queue = insertByDate(this.#queue, parent);
+  }
+
+  private allStale() {
+    return this.#queue.every((commit) => this.marked(commit.oid, "stale"));
+  }
+
+  private async processQueue() {
+    const commit = this.#queue.shift() as CompleteCommit;
+    const flags = this.#flags.get(commit.oid);
+    if (isEquallSet(flags, BOTH_PARENTS)) {
+      flags.add("result");
+      this.#results = insertByDate(this.#results, commit);
+      await this.addParents(commit, new Set([...flags, "stale"]));
+    } else {
+      await this.addParents(commit, flags);
+    }
   }
 }
 

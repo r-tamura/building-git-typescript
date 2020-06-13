@@ -21,6 +21,19 @@ export function clone<T>(xs: T[]): T[] {
   return [...xs];
 }
 
+/**
+ * 第一引数の配列xsから第二引数の配列ysの要素を除いた配列を返します
+ * @param xs
+ * @param ys
+ */
+export function exclude<T>(
+  xs: T[],
+  ys: T[],
+  equal: (x: T, y: T) => boolean = (x, y) => x === y
+) {
+  return xs.filter((x) => !ys.find((y) => equal(x, y)));
+}
+
 export function isempty<T>(xs: T[]) {
   return xs.length === 0;
 }
@@ -80,6 +93,10 @@ export function find<T>(xs: T[], pred: (x: T) => boolean): T | null {
   return filtered.length === 0 ? null : filtered[0];
 }
 
+/**
+ * Arrayの探索系APIの返り値により、探索対象が発見されたかを判定します
+ * @param index
+ */
 export function found(index: number) {
   return index !== -1;
 }
