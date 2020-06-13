@@ -1,6 +1,6 @@
 import { Repository } from "./repository";
 import { Revision, HEAD, COMMIT } from "./revision";
-import { asserts, found, insert, isempty, first, last } from "./util";
+import { asserts, found, insert, isempty, first, last, clone } from "./util";
 import { OID, CompleteCommit, Pathname } from "./types";
 import { PathFilter } from "./path_filter";
 import { Changes } from "./database";
@@ -9,7 +9,7 @@ type Flag = "seen" | "added" | "uninteresting" | "treesame";
 const RANGE = /^(.*)\.\.(.*)$/;
 const EXCLUDE = /^\^(.+)$/;
 
-type OidPair = [OID, OID];
+type OidPair = [OID | null, OID | null];
 export class RevList {
   #repo: Repository;
   #commits: Map<OID, CompleteCommit> = new Map();
@@ -36,7 +36,8 @@ export class RevList {
     return list;
   }
 
-  async treediff(oldOid: OID, newOid: OID) {
+  async treediff(oldOid: OID | null, newOid: OID | null) {
+    // TODO: JSのMapのキーは参照一致の場合に同地とみなされるので、キャッシュがヒットしない
     const key: OidPair = [oldOid, newOid];
     const diff = this.#diffs.get(key);
     if (diff) {
@@ -63,18 +64,17 @@ export class RevList {
       return;
     }
 
-    const parent = await this.loadCommit(commit.parent);
-    if (parent === null) {
-      return;
-    }
-
+    let parents: CompleteCommit[];
     if (this.marked(commit.oid, "uninteresting")) {
-      this.markParentsUninteresting(parent);
+      // prettier-ignore
+      parents = await Promise.all(commit.parents.map((oid) => this.loadCommit(oid)));
+      parents.forEach((parent) => this.markParentsUninteresting(parent));
     } else {
-      await this.simplifyCommit(commit);
+      const parentOids = await this.simplifyCommit(commit);
+      // prettier-ignore
+      parents = await Promise.all(parentOids.map((oid) => this.loadCommit(oid)));
     }
-
-    this.enqueueCommit(parent);
+    parents.forEach((parent) => this.enqueueCommit(parent));
   }
 
   private enqueueCommit(commit: CompleteCommit) {
@@ -108,10 +108,7 @@ export class RevList {
     }
   }
 
-  private async loadCommit(oid: OID | null): Promise<CompleteCommit | null> {
-    if (oid === null) {
-      return null;
-    }
+  private async loadCommit(oid: OID) {
     if (!this.#commits.has(oid)) {
       const commit = await this.#repo.database.load(oid);
       asserts(commit.type === "commit");
@@ -140,12 +137,17 @@ export class RevList {
   }
 
   private markParentsUninteresting(commit: CompleteCommit) {
-    let c: CompleteCommit | null = commit;
-    while (c?.parent) {
+    const queue = clone(commit.parents);
+    while (!isempty(queue)) {
+      // queueが空でないことが保証されている
+      const oid = queue.shift() as OID;
       if (!this.mark(commit.parent, "uninteresting")) {
-        break;
+        continue;
       }
-      c = this.#commits.get(commit.parent) ?? null;
+      const _commit = this.#commits.get(oid);
+      if (_commit) {
+        queue.push(...commit.parents);
+      }
     }
   }
 
@@ -198,14 +200,27 @@ export class RevList {
     return false;
   }
 
+  /**
+   * 親コミットと差分がない場合には、差分がないことを記録する
+   * 現コミットへ採用された親コミットを発見した場合、その親コミットのみを返す。発見できなかった場合は全ての親コミットを返す。
+   * @param commit
+   */
   private async simplifyCommit(commit: CompleteCommit) {
     if (isempty(this.#prune)) {
-      return;
+      return commit.parents;
     }
-    const diffs = await this.treediff(commit.parent, commit.oid);
-    if (diffs.size === 0) {
+
+    const parents = isempty(commit.parents) ? [null] : commit.parents;
+
+    for (const oid of parents) {
+      if (!this.treediff(oid, commit.oid)) {
+        continue;
+      }
       this.mark(commit.oid, "treesame");
+      // rubyの[*oid]相当
+      return oid ? [oid] : [];
     }
+    return commit.parents;
   }
 
   private async *traverseCommits() {

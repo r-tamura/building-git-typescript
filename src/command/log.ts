@@ -181,7 +181,8 @@ export class Log extends Base<Options> {
   }
 
   private async showPatch(commit: CompleteCommit) {
-    if (!this.options.patch) {
+    // TODO: 複数親コミット対応: 一時的にpatch表示を無効に
+    if (!(this.options.patch && commit.parents.length <= 1)) {
       return;
     }
 

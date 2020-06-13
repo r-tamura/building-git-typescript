@@ -111,7 +111,7 @@ export class Database {
     await this.writeObject(obj.oid, content);
   }
 
-  async treeDiff(a: OID, b: OID, filter = new PathFilter()) {
+  async treeDiff(a: OID | null, b: OID | null, filter = new PathFilter()) {
     const diff = new TreeDiff(this);
     await diff.compareOids(a, b, filter);
     return diff.changes;
