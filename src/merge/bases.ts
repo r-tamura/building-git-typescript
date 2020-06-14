@@ -3,7 +3,7 @@ import { OID } from "../types";
 import { CommonAncestors } from "./common_anncestors";
 import { exclude, merge } from "~/util";
 
-export class Base {
+export class Bases {
   #database: Database;
   #common!: CommonAncestors;
   #commits: OID[] = [];
@@ -13,7 +13,7 @@ export class Base {
   }
 
   static async of(database: Database, one: OID, two: OID) {
-    const self = new Base(database);
+    const self = new Bases(database);
     self.#database = database;
     self.#common = await CommonAncestors.of(database, one, [two]);
     return self;

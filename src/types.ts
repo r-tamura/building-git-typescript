@@ -27,6 +27,11 @@ export type CompleteGitObject = NonNullProps<GitObject>;
 export type Pathname = string;
 
 /**
+ * リビジョン文字列 '@', 'HEAD', 'master^2' など
+ */
+export type RevisionName = string;
+
+/**
  * IO
  */
 export type IOHandle = Pick<promises.FileHandle, "write" | "read">;
