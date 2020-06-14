@@ -1,6 +1,6 @@
 import { Repository } from "../repository";
 import { OID, RevisionName } from "../types";
-import { Revision } from "~/revision";
+import { Revision } from "../revision";
 import { Bases } from "./bases";
 
 export class Inputs {

@@ -3,7 +3,7 @@ import { Base } from "./base";
 import { Revision, InvalidObject } from "../revision";
 import { asserts, shallowEqual } from "../util";
 import { Migration, Conflict } from "../repository";
-import { SymRef } from "~/refs";
+import { SymRef } from "../refs";
 
 const DETACHED_HEAD_MESSAGE = `You are in 'detached HEAD' state. You can look around, make experimental
 changes and commit them, and you can discard any commits you make in this

@@ -1,7 +1,7 @@
 import { Database } from "../database";
 import { OID } from "../types";
 import { CommonAncestors } from "./common_anncestors";
-import { exclude, merge } from "~/util";
+import { exclude, merge } from "../util";
 
 export class Bases {
   #database: Database;

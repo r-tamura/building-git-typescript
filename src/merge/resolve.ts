@@ -1,4 +1,4 @@
-import { Repository } from "~/repository";
+import { Repository } from "../repository";
 import { Inputs } from "./inputs";
 
 export class Resolve {

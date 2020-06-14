@@ -1,5 +1,5 @@
 import { Logger } from "../services";
-import { GitObject, CompleteGitObject, OID } from "~/types";
+import { GitObject, CompleteGitObject, OID } from "../types";
 
 export function getMockedMethod<T>(Cls: T, method: keyof T, index: number = 0) {
   const Mocked = (Cls as unknown) as jest.Mock<T>;
