@@ -12,7 +12,7 @@ const INVALID_BRANCH_NAME = [
   /[\x00-\x20*~?:\[\\^~\x7f]+/, // ASCII制御文字
 ];
 
-const PARENT = /^(.+)\^$/;
+const PARENT = /^(.+)\^(\d*)$/;
 const ANCESTOR = /^(.+)~(\d+)$/;
 
 export const HEAD = "HEAD" as const;
@@ -45,7 +45,8 @@ export class Revision {
     let match: RegExpMatchArray | null;
     if ((match = PARENT.exec(revision))) {
       const rev = Revision.parse(match[1]) as Ref;
-      return rev ? Parent.of(rev) : null;
+      const n = match[2] === "" ? 1 : Number.parseInt(match[2], 10);
+      return rev ? Parent.of(rev, n) : null;
     } else if ((match = ANCESTOR.exec(revision))) {
       const rev = Revision.parse(match[1]) as Ref;
       return rev ? Ancestor.of(rev, Number.parseInt(match[2])) : null;
@@ -57,16 +58,17 @@ export class Revision {
     return null;
   }
 
-  async commitParent(oid: OID | null) {
+  async commitParent(oid: OID | null, n = 1) {
     if (oid === null) {
       return null;
     }
 
     const commit = await this.loadTypedObject(oid, "commit");
+    // TODO: commitタイプと分かっているのに、commit.type !== "commit" 必要?
     if (commit === null || commit.type !== "commit") {
       return null;
     }
-    return commit.parent;
+    return commit.parents[n - 1] ?? null;
   }
 
   async resolve(type: "commit" | null = null) {
@@ -161,15 +163,15 @@ export class Ref {
 }
 
 export class Parent {
-  constructor(public rev: Rev) {}
-  static of(rev: Rev) {
-    const parent = new Parent(rev);
+  constructor(public rev: Rev, public n: number) {}
+  static of(rev: Rev, n: number) {
+    const parent = new Parent(rev, n);
     return parent;
   }
 
   async resolve(context: Revision): Promise<ResolveedRevision> {
     const commitOid = await this.rev.resolve(context);
-    return context.commitParent(commitOid);
+    return context.commitParent(commitOid, this.n);
   }
 }
 

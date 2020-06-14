@@ -34,10 +34,11 @@ const mockRepo = () => new Repository(".git", {} as any);
 describe("Revision.parse", () => {
   type Test = [string, string, Rev];
   it.each([
-    ["エイリアス", "@^", Parent.of(Ref.of("HEAD"))],
+    ["エイリアス", "@^", Parent.of(Ref.of("HEAD"), 1)],
     ["~(数字)", "HEAD~42", Ancestor.of(Ref.of("HEAD"), 42)],
-    ["^", "HEAD^^", Parent.of(Parent.of(Ref.of("HEAD")))],
-    ["~と^の混合", "abc123~3^", Parent.of(Ancestor.of(Ref.of("abc123"), 3))],
+    ["^", "HEAD^^", Parent.of(Parent.of(Ref.of("HEAD"), 1), 1)],
+    ["~と^の混合", "abc123~3^", Parent.of(Ancestor.of(Ref.of("abc123"), 3), 1)],
+    ["<rev>^<n>", "@^2", Parent.of(Ref.of("HEAD"), 2)],
   ] as Test[])("%s", (_tilte, revision, expected) => {
     // Act
     const actual = Revision.parse(revision);

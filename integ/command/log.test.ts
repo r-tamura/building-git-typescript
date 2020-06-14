@@ -1,4 +1,5 @@
 import * as T from "./helper";
+import { OID } from "~/types";
 import { stripIndent } from "~/util";
 import { CompleteCommit, Dict } from "~/types";
 
@@ -6,6 +7,10 @@ const t = T.create();
 
 beforeEach(t.beforeHook);
 afterEach(t.afterHook);
+
+function addSeconds(time: Date, n: number) {
+  return new Date(time.getTime() + n * 1000);
+}
 
 describe("log", () => {
   async function commitFile(message: string, time?: Date) {
@@ -346,6 +351,126 @@ describe("log", () => {
         +++ b/a/1.txt
         @@ -0,0 +1,1 @@
         +1
+      `);
+    });
+  });
+
+  describe("with a graph of commits", () => {
+    // A   B   C   D   J   K
+    // o---o---o---o---o---o [master]
+    //      \         /
+    //       o---o---o---o [topic]
+    //       E   F   G   H
+
+    let master: OID[];
+    let topic: OID[];
+    beforeEach(async () => {
+      const time = new Date();
+
+      await commitTree("A", { "f.txt": "0", "g.txt": "0" }, time);
+      await commitTree(
+        "B",
+        {
+          "f.txt": "B",
+          "h.txt": stripIndent`
+        one
+        two
+        three
+      `,
+        },
+        time
+      );
+
+      for (const n of ["C", "D"] as const) {
+        await commitTree(
+          n,
+          {
+            "f.txt": n,
+            "h.txt": stripIndent`
+          ${n}
+          two
+          three
+        `,
+          },
+          addSeconds(time, 1)
+        );
+      }
+
+      await t.kitCmd("branch", "topic", "master~2");
+      await t.kitCmd("checkout", "topic");
+
+      for (const n of ["E", "F", "G", "H"] as const) {
+        await commitTree(
+          n,
+          {
+            "f.txt": n,
+            "h.txt": stripIndent`
+          one
+          two
+          ${n}
+        `,
+          },
+          addSeconds(time, 2)
+        );
+      }
+
+      await t.kitCmd("checkout", "master");
+      // TODO: -m オプション
+      t.mockStdio("J");
+      await t.kitCmd("merge", "topic^");
+
+      await commitTree("K", { "f.txt": "K" }, addSeconds(time, 3));
+
+      // prettier-ignore
+      master = await Promise.all([0, 1, 2, 3, 4, 5].map(n => t.resolveRevision(`master~${n}`)))
+      // prettier-ignore
+      topic = await Promise.all([0, 1, 2, 3].map(n => t.resolveRevision(`topic~${n}`)))
+    });
+
+    it("logs concurrent branches leading to a merge", async () => {
+      await t.kitCmd("log", "--pretty=oneline");
+
+      t.assertInfo(stripIndent`
+        ${master[0]} K
+        ${master[1]} J
+        ${topic[1]} G
+        ${topic[2]} F
+        ${topic[3]} E
+        ${master[2]} D
+        ${master[3]} C
+        ${master[4]} B
+        ${master[5]} A
+      `);
+    });
+
+    it("logs the first parent of a merge", async () => {
+      await t.kitCmd("log", "--pretty=oneline", "master^^");
+
+      t.assertInfo(stripIndent`
+        ${master[2]} D
+        ${master[3]} C
+        ${master[4]} B
+        ${master[5]} A
+      `);
+    });
+
+    it("logs the second parent of a merge", async () => {
+      await t.kitCmd("log", "--pretty=oneline", "master^^2");
+
+      t.assertInfo(stripIndent`
+      ${topic[1]} G
+      ${topic[2]} F
+      ${topic[3]} E
+      ${master[4]} B
+      ${master[5]} A
+      `);
+    });
+
+    it("logs unmerged commits on a branch", async () => {
+      await t.kitCmd("log", "--pretty=oneline", "master..topic");
+
+      t.assertInfo(stripIndent`
+        ${topic[0]} H
       `);
     });
   });

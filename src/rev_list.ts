@@ -139,9 +139,9 @@ export class RevList {
   private markParentsUninteresting(commit: CompleteCommit) {
     const queue = clone(commit.parents);
     while (!isempty(queue)) {
-      // queueが空でないことが保証されている
-      const oid = queue.shift() as OID;
-      if (!this.mark(commit.parent, "uninteresting")) {
+      // コミットキューが空でないことが保証されている
+      const oid = queue.shift()!;
+      if (!this.mark(oid, "uninteresting")) {
         continue;
       }
       const _commit = this.#commits.get(oid);
@@ -171,7 +171,7 @@ export class RevList {
   private async limitList() {
     while (this.stillInteresting()) {
       // stillInterestingがtrueのとき、queueに一つ以上コミットがある
-      const commit = this.#queue.shift() as CompleteCommit;
+      const commit = this.#queue.shift()!;
       await this.addParents(commit);
 
       if (!this.marked(commit.oid, "uninteresting")) {
@@ -226,7 +226,8 @@ export class RevList {
 
   private async *traverseCommits() {
     while (!isempty(this.#queue)) {
-      const commit = this.#queue.shift() as CompleteCommit;
+      // コミットキューが空でないことが保証されている
+      const commit = this.#queue.shift()!;
       if (!this.#limited) {
         await this.addParents(commit);
       }
