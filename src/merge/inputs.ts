@@ -36,6 +36,13 @@ export class Inputs {
     return this.baseOids.length === 1 && this.baseOids[0] === this.rightOid;
   }
 
+  /**
+   * fast-forwardの条件を満たしているかを判定します
+   */
+  fastForward() {
+    return this.baseOids.length === 1 && this.baseOids[0] === this.leftOid;
+  }
+
   private async resolveRev(rev: RevisionName) {
     return new Revision(this.#repo, rev).resolve("commit");
   }

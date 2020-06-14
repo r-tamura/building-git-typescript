@@ -355,7 +355,7 @@ describe("log", () => {
     });
   });
 
-  describe("with a graph of commits", () => {
+  describe.skip("with a graph of commits", () => {
     // A   B   C   D   J   K
     // o---o---o---o---o---o [master]
     //      \         /

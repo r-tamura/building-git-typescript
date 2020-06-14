@@ -13,6 +13,11 @@ export class Merge extends Base {
     if (this.#inputs.alreadyMerged()) {
       this.handleMergedAncestor();
     }
+
+    if (this.#inputs.fastForward()) {
+      await this.handleFastForward();
+    }
+
     await this.resolveMerge();
     await this.commitMerge();
   }
@@ -34,6 +39,27 @@ export class Merge extends Base {
 
   private handleMergedAncestor(): never {
     this.log("Already up to date.");
+    this.exit(0);
+  }
+
+  private async handleFastForward() {
+    const a = this.repo.database.shortOid(this.#inputs.leftOid);
+    const b = this.repo.database.shortOid(this.#inputs.rightOid);
+
+    this.log(`Updating ${a}..${b}`);
+    this.log("Fast-Forward");
+
+    await this.repo.index.loadForUpdate();
+
+    const treeDiff = await this.repo.database.treeDiff(
+      this.#inputs.leftOid,
+      this.#inputs.rightOid
+    );
+    await this.repo.migration(treeDiff).applyChanges();
+
+    await this.repo.index.writeUpdates();
+
+    await this.repo.refs.updateHead(this.#inputs.rightOid);
     this.exit(0);
   }
 }
