@@ -213,7 +213,8 @@ export class RevList {
     const parents = isempty(commit.parents) ? [null] : commit.parents;
 
     for (const oid of parents) {
-      if (!this.treediff(oid, commit.oid)) {
+      const diff = await this.treediff(oid, commit.oid);
+      if (diff.size !== 0) {
         continue;
       }
       this.mark(commit.oid, "treesame");
