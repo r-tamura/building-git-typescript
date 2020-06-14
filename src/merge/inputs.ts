@@ -24,10 +24,16 @@ export class Inputs {
     const self = new this(repo, leftName, rightName);
     self.leftOid = await self.resolveRev(leftName);
     self.rightOid = await self.resolveRev(rightName);
-
     const common = await Bases.of(repo.database, self.leftOid, self.rightOid);
     self.baseOids = await common.find();
     return self;
+  }
+
+  /**
+   * BCAがマージ済みコミットであるかを判定します
+   */
+  alreadyMerged() {
+    return this.baseOids.length === 1 && this.baseOids[0] === this.rightOid;
   }
 
   private async resolveRev(rev: RevisionName) {

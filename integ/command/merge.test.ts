@@ -1,5 +1,6 @@
 import * as T from "./helper";
 import * as assert from "power-assert";
+import { Dict } from "~/types";
 
 const t = T.create();
 
@@ -7,9 +8,8 @@ beforeAll(t.beforeHook);
 afterAll(t.afterHook);
 
 describe("merge", () => {
-  type File = [string, string | string[]];
-  async function commitTree(message: string, files: File[]) {
-    for (const [filepath, contents] of files) {
+  async function commitTree(message: string, files: Dict<string>) {
+    for (const [filepath, contents] of Object.entries(files)) {
       if (contents !== "x") {
         await t.rm(filepath);
       }
@@ -29,15 +29,15 @@ describe("merge", () => {
 
   describe("merging in ancestor", () => {
     beforeEach(async () => {
-      await commitTree("A", [["f.txt", "1"]]);
-      await commitTree("B", [["f.txt", "2"]]);
-      await commitTree("C", [["f.txt", "3"]]);
+      await commitTree("A", { "f.txt": "1" });
+      await commitTree("B", { "f.txt": "2" });
+      await commitTree("C", { "f.txt": "3" });
       t.mockStdio("mergeee");
       await t.kitCmd("merge", "@^");
     });
 
-    it.skip("prints the up-to-date message", async () => {
-      t.assertInfo("Already up to date. \n");
+    it("prints the up-to-date message", async () => {
+      t.assertInfo("Already up to date.");
     });
 
     it.skip("does not change the repository state", async () => {

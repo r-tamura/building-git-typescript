@@ -52,7 +52,7 @@ export abstract class Base<O extends object = {}> implements Runnable {
     return path.resolve(this.dir, pathname);
   }
 
-  exit(status: 0 | 1 | 128) {
+  exit(status: 0 | 1 | 128): never {
     this.status = status;
     throw new Exit();
   }

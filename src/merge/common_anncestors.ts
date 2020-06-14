@@ -1,6 +1,6 @@
 import { Database } from "../database";
 import { OID, CompleteCommit } from "../types";
-import { insert, asserts, Hash, superset, merge } from "../util";
+import { insert, asserts, Hash, superset, merge, equal } from "../util";
 
 /**
  * result: BCAの候補となったときセットされる
@@ -47,7 +47,7 @@ export class CommonAncestors {
     // 2. flagを調べる
     while (!this.allStale()) {
       // 空ではないので、undefinedにはならない
-      this.processQueue();
+      await this.processQueue();
     }
     // "stale"でないコミットIDのみのリストを返す
     return this.#results
@@ -87,9 +87,9 @@ export class CommonAncestors {
   }
 
   private async processQueue() {
-    const commit = this.#queue.shift() as CompleteCommit;
+    const commit = this.#queue.shift()!;
     const flags = this.#flags.get(commit.oid);
-    if (isEquallSet(flags, BOTH_PARENTS)) {
+    if (equal(flags, BOTH_PARENTS)) {
       flags.add("result");
       this.#results = insertByDate(this.#results, commit);
       await this.addParents(commit, new Set([...flags, "stale"]));
@@ -102,16 +102,4 @@ export class CommonAncestors {
 function insertByDate(list: CompleteCommit[], commit: CompleteCommit) {
   const index = list.findIndex((c) => c.date < commit.date);
   return insert(list, index === -1 ? list.length : index, commit);
-}
-
-/*
- * 2つのSetが全て同じ値を持つかを判定します。
- */
-function isEquallSet<T>(s1: Set<T>, s2: Set<T>) {
-  for (const value of s1.values()) {
-    if (!s2.has(value)) {
-      return false;
-    }
-  }
-  return true;
 }

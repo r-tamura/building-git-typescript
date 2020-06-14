@@ -9,6 +9,10 @@ export class Merge extends Base {
 
   async run() {
     this.#inputs = await Inputs.of(this.repo, HEAD, this.args[0]);
+
+    if (this.#inputs.alreadyMerged()) {
+      this.handleMergedAncestor();
+    }
     await this.resolveMerge();
     await this.commitMerge();
   }
@@ -26,5 +30,10 @@ export class Merge extends Base {
     const parents = [this.#inputs.leftOid, this.#inputs.rightOid];
     const message = await readTextStream(this.env.process.stdin);
     await writeCommit(parents, message, this);
+  }
+
+  private handleMergedAncestor(): never {
+    this.log("Already up to date.");
+    this.exit(0);
   }
 }

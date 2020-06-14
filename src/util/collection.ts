@@ -23,7 +23,22 @@ export class Hash<T, S> extends Map<T, S> {
  * s1がs2のスーパーセットであるかを判定します
  */
 export function superset<T>(s1: Set<T>, s2: Set<T>) {
-  return s1.size >= s2.size;
+  for (const v2 of s2) {
+    if (!s1.has(v2)) {
+      return false;
+    }
+  }
+  return true;
+}
+
+/*
+ * 2つのSetが全て同じ値を持つかを判定します。
+ */
+export function equal<T>(s1: Set<T>, s2: Set<T>) {
+  if (s1.size !== s2.size) {
+    return false;
+  }
+  return superset(s1, s2);
 }
 
 export function merge<T>(s1: Set<T>, s2: Set<T>) {
