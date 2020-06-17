@@ -5,13 +5,13 @@ import { Stats, constants } from "fs";
 import * as assert from "assert";
 import { Pathname, OID } from "../types";
 import { Lockfile, LockfileEnvironment } from "../lockfile";
-import { Invalid, times } from "../util";
-import { Entry } from "./entry";
+import { Invalid, times, ObjectKeyHash, ObjectSet } from "../util";
+import { Entry, Key, Stage, STAGES } from "./entry";
 import { Checksum } from "./checksum";
 import { FileService, defaultFs } from "../services";
 import { WriteEntry } from "../database";
 
-type IndexEntryMap = { [s: string]: Entry };
+type IndexEntryMap = ObjectKeyHash<Key, Entry>;
 
 export class Index {
   static readonly HEADER_SIZE = 12;
@@ -19,8 +19,8 @@ export class Index {
   static readonly VERSION = 2;
 
   #pathname: Pathname;
-  #entries: IndexEntryMap = {};
-  #keys: Set<Pathname> = new Set();
+  #entries: IndexEntryMap = new ObjectKeyHash(serialize, deserialize);
+  #keys: ObjectSet<Key> = new ObjectSet(serialize, deserialize);
   #parents: Map<string, Set<string>> = new Map();
   #lockfile: Lockfile;
   #changed: boolean = false;
@@ -41,12 +41,12 @@ export class Index {
 
   eachEntry() {
     const sortedKeys = Array.from(this.#keys).sort();
-    const entries = sortedKeys.map((key) => this.#entries[key]);
+    const entries = sortedKeys.map((key) => this.#entries.get(key)!);
     return entries;
   }
 
-  entryForPath(pathname: Pathname): Entry | null {
-    return this.#entries[pathname] ?? null;
+  entryForPath(pathname: Pathname, stage: Stage = 0): Entry | null {
+    return this.#entries.get([pathname, stage]) ?? null;
   }
 
   async loadForUpdate() {
@@ -89,7 +89,7 @@ export class Index {
   }
 
   trackedFile(pathname: Pathname) {
-    return !!this.#entries[pathname];
+    return STAGES.some((stage) => this.#entries.has([pathname, stage]));
   }
 
   updateEntryStat(entry: WriteEntry, stat: Stats) {
@@ -120,7 +120,7 @@ export class Index {
   private buildHeader() {
     const signature = Index.SIGNATURE;
     const version = Index.VERSION;
-    const entryCount = Object.keys(this.#entries).length;
+    const entryCount = this.#entries.size;
     const bufferSize = 4 + 4 + 4; // Signature + Version + Number of files
     const header = Buffer.alloc(bufferSize);
 
@@ -132,8 +132,8 @@ export class Index {
   }
 
   private clear() {
-    this.#entries = {};
-    this.#keys = new Set();
+    this.#entries = new ObjectKeyHash(serialize, deserialize);
+    this.#keys.clear();
     this.#changed = false;
   }
 
@@ -204,13 +204,17 @@ export class Index {
   }
 
   private removeEntry(pathname: Pathname) {
-    const entry = this.#entries[pathname];
+    STAGES.forEach((stage) => this.removeEntryWithStage(pathname, stage));
+  }
+
+  private removeEntryWithStage(pathname: Pathname, stage: Stage) {
+    const entry = this.#entries.get([pathname, stage]);
     if (!entry) {
       return;
     }
 
     this.#keys.delete(entry.key);
-    delete this.#entries[entry.key];
+    this.#entries.delete(entry.key);
 
     for (const dirname of entry.parentDirectories) {
       const children = this.#parents.get(dirname);
@@ -223,7 +227,7 @@ export class Index {
 
   private storeEntry(entry: Entry) {
     this.#keys.add(entry.key);
-    this.#entries[entry.key] = entry;
+    this.#entries.set(entry.key, entry);
     for (const dirname of entry.parentDirectories) {
       if (!this.#parents.has(dirname)) {
         this.initParentsItem(dirname);
@@ -245,4 +249,15 @@ export class Index {
     assert.equal(char.length, 1);
     return char.toString() === "\0";
   }
+}
+
+function serialize(key: Key) {
+  // NULL文字で区切る
+  return key.join("\0");
+}
+
+function deserialize(s: string) {
+  const [pathname, stageStr] = s.split("\0");
+  const stage = Number.parseInt(stageStr, 10) as Stage;
+  return [pathname, stage] as Key;
 }

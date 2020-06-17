@@ -28,6 +28,10 @@ type EntryStats = Pick<
   | "flags"
 >;
 
+export const STAGES = [0, 1, 2, 3] as const;
+export type Stage = typeof STAGES[number];
+export type Key = readonly [Pathname, Stage];
+
 export class Entry {
   static readonly REGULAR_MODE = 0o0100644;
   static readonly EXECUTABLE_MODE = 0o0100755;
@@ -50,6 +54,12 @@ export class Entry {
   uid: number;
   gid: number;
   size: number;
+  /**
+   * 2バイト
+   * 0            0        11    000000000101
+   * assume-valid extended stage name length
+   * flag         flag
+   */
   flags: number;
   oid: OID;
   name: Pathname;
@@ -119,8 +129,13 @@ export class Entry {
     return descend(path.dirname(this.name));
   }
 
-  get key() {
-    return this.name;
+  get key(): Key {
+    return [this.name, this.stage];
+  }
+
+  // 2バイトフラグ中の 3 bits
+  get stage() {
+    return ((this.flags >> 12) & 0b11) as Stage;
   }
 
   statMatch(stat: Stats) {
@@ -220,4 +235,8 @@ export class Entry {
 
     return buffer;
   }
+}
+
+function serialize(key: [string, number]) {
+  return `${key[0]}.${key[1]}`;
 }
