@@ -10,7 +10,7 @@ type ValueOf<T> = T[keyof T];
 export const MODE = {
   readable: 0o0100644,
   executable: 0o0100755,
-  directory: 0o040000,
+  directory: 0o0040000,
 } as const;
 
 export type ModeNumber = ValueOf<typeof MODE>;

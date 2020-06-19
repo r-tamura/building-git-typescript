@@ -9,6 +9,7 @@ import { Stats, promises } from "fs";
 import { createFakeRead } from "./__test__/fakeIndex";
 import { LockDenied } from "../refs";
 import { Entry } from "./entry";
+import * as Database from "../database";
 
 jest.mock("../lockfile");
 const testIndexPath = ".git/index";
@@ -17,6 +18,8 @@ const mockedWrite = jest.fn();
 const MockedLockfile = (Lockfile as unknown) as jest.Mock<Partial<Lockfile>>;
 const testObjectPath = "README.md";
 const testOid = "ba78afac62556e840341715936909cc36fe83a77"; // sha1 of 'jit\n'
+
+const randOid = () => crypto.createHash("sha1").update(Math.random().toString()).digest("hex");
 
 // book
 describe("Index#add", () => {
@@ -46,10 +49,7 @@ describe("Index#add", () => {
     index.add("alice.txt/nested.txt", oid, stat);
 
     // Assert
-    assert.deepEqual(index.eachEntry().map(extractName), [
-      "alice.txt/nested.txt",
-      "bob.txt",
-    ]);
+    assert.deepEqual(index.eachEntry().map(extractName), ["alice.txt/nested.txt", "bob.txt"]);
   });
 
   it("replaces a directory with a file", () => {
@@ -60,10 +60,7 @@ describe("Index#add", () => {
     index.add("nested", oid, stat);
 
     // Assert
-    assert.deepEqual(index.eachEntry().map(extractName), [
-      "alice.txt",
-      "nested",
-    ]);
+    assert.deepEqual(index.eachEntry().map(extractName), ["alice.txt", "nested"]);
   });
 
   it("recursively replaces a directory with a file", () => {
@@ -74,10 +71,7 @@ describe("Index#add", () => {
     index.add("nested/inner/claire.txt", oid, stat);
 
     index.add("nested", oid, stat);
-    assert.deepEqual(index.eachEntry().map(extractName), [
-      "alice.txt",
-      "nested",
-    ]);
+    assert.deepEqual(index.eachEntry().map(extractName), ["alice.txt", "nested"]);
   });
 });
 
@@ -210,11 +204,7 @@ describe("Index#writeUpdates", () => {
           }),
         ],
 
-        [
-          "README.md",
-          "78e6cf75f4a8afa5a46741523101393381913dd4",
-          makeTestStats(),
-        ],
+        ["README.md", "78e6cf75f4a8afa5a46741523101393381913dd4", makeTestStats()],
       ] as [string, string, Stats][];
       entries.forEach((e) => index.add(...e));
       await index.writeUpdates();
@@ -233,20 +223,15 @@ describe("Index#writeUpdates", () => {
   });
 });
 
-describe("loadForUpdate", () => {
+describe("Index#loadForUpdate", () => {
   // Arrange
   const mockedRead = jest
-    .fn<
-      ReturnType<promises.FileHandle["read"]>,
-      Parameters<promises.FileHandle["read"]>
-    >()
+    .fn<ReturnType<promises.FileHandle["read"]>, Parameters<promises.FileHandle["read"]>>()
     .mockImplementation(createFakeRead());
-  const mockedOpen = jest
-    .fn<Promise<Partial<promises.FileHandle>>, any>()
-    .mockResolvedValue({
-      read: mockedRead as any,
-      close: jest.fn(),
-    });
+  const mockedOpen = jest.fn<Promise<Partial<promises.FileHandle>>, any>().mockResolvedValue({
+    read: mockedRead as any,
+    close: jest.fn(),
+  });
   const env = {
     fs: { ...defaultFs, open: mockedOpen as any },
   };
@@ -310,5 +295,37 @@ describe("loadForUpdate", () => {
         "header + indexファイルのデータx2 + 追加データx1 + checksum"
       );
     });
+  });
+});
+
+describe("Index#conflict", () => {
+  it("ステージ0のエントリのみのとき、コンフリクト状態ではない", () => {
+    // Arrange
+    const env = {} as any;
+    const index = new Index(".git", env);
+    index.add("file.txt", testOid, makeTestStats());
+
+    // Act
+    const actual = index.conflict();
+
+    // Assert
+    assert.equal(actual, false);
+  });
+  // prettier-ignore
+  it.each([
+    ["ステージ 1", new Database.Entry(randOid(), 33261), new Database.Entry(randOid(), 33261), null],
+    ["ステージ 2", null, new Database.Entry(randOid(), 33261), new Database.Entry(randOid(), 33261)],
+    ["ステージ 3", null, null, new Database.Entry(randOid(), 33261)],
+  ])("%s のエントリを含むとき、コンフリクト状態である", (stage, base, left, right) => {
+    // Arrange
+    const env = {} as any;
+    const index = new Index(".git", env);
+    index.addConflictSet("file.txt", [base, left, right]);
+
+    // Act
+    const actual = index.conflict();
+
+    // Assert
+    assert.equal(actual, true);
   });
 });

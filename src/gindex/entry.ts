@@ -1,7 +1,13 @@
 import * as path from "path";
 import { OID, Pathname } from "../types";
 import { Stats } from "fs";
-import { isExecutable, descend } from "../util";
+import { isExecutable, descend, asserts } from "../util";
+import * as Database from "../database";
+import { MODE } from "../entry";
+
+// Git indexファイルのフォーマット仕様
+// https://github.com/git/git/blob/master/Documentation/technical/index-format.txt
+
 // prettier-ignore
 type EntryConstructor = (
   citme: number, ctimeNsec: number, mtime: number, mtimeNsec: number,
@@ -91,10 +97,10 @@ export class Entry {
     this.name = name;
   }
 
-  static create(name: Pathname, oid: OID, stat: Stats) {
+  static create(pathname: Pathname, oid: OID, stat: Stats) {
     const mode = this.modeForStat(stat);
     // nameはasciiのみ想定
-    const flags = Math.min(name.length, this.MAX_PATH_SIZE);
+    const flags = Math.min(pathname.length, this.MAX_PATH_SIZE);
     const ctime = this.statTimeToIndexTime(stat.ctimeMs);
     const mtime = this.statTimeToIndexTime(stat.mtimeMs);
     // https://nodejs.org/api/fs.html#fs_class_fs_stats
@@ -104,8 +110,27 @@ export class Entry {
       ctime, 0, mtime, 0,
       stat.dev, stat.ino, mode,
       stat.uid, stat.gid, stat.size,
-      oid, flags, name
+      oid, flags, pathname
     );
+  }
+
+  /**
+   * objectsエントリからindexのエントリを作成します
+   * @param pathname ファイルパス
+   * @param item objectsエントリ
+   * @param n Stage
+   */
+  static createFromDb(pathname: Pathname, item: Database.Entry, n: Stage) {
+    // n: 2bit
+    // file name length: 12bit
+    // @example ステージ3の場合のflags
+    //  11000000000000 = 3 << 12 = 12288
+    //|            101 = 5
+    //  ----------------
+    //  11000000000101      = 12293
+    const flags = (n << 12) | Math.min(pathname.length, this.MAX_PATH_SIZE);
+    asserts(item.mode !== MODE.directory, "indexファイルのエントリはファイルのみ");
+    return new this(0, 0, 0, 0, 0, 0, item.mode, 0, 0, 0, item.oid, flags, pathname);
   }
 
   static parse(data: Buffer) {
@@ -178,9 +203,7 @@ export class Entry {
       meta.push(data.readUInt32BE(i));
     }
     // oid
-    const oid = data
-      .slice(metaLength, metaLength + Entry.OID_SIZE)
-      .toString("hex");
+    const oid = data.slice(metaLength, metaLength + Entry.OID_SIZE).toString("hex");
 
     // file name
     const length = data.readUInt16BE(metaLength + Entry.OID_SIZE);
@@ -202,8 +225,7 @@ export class Entry {
     const sha1Offset = metaLength;
     const fileSizeOffset = sha1Offset + sha1Length;
     const filenameOffset = fileSizeOffset + fileSizeLength;
-    const bufferSize =
-      metaLength + sha1Length + fileSizeLength + filenameLength;
+    const bufferSize = metaLength + sha1Length + fileSizeLength + filenameLength;
     const padCount = Entry.BLOCK_SIZE - (bufferSize % Entry.BLOCK_SIZE);
 
     // File metadata

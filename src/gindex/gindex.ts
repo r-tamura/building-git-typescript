@@ -5,11 +5,11 @@ import { Stats, constants } from "fs";
 import * as assert from "assert";
 import { Pathname, OID } from "../types";
 import { Lockfile, LockfileEnvironment } from "../lockfile";
-import { Invalid, times, ObjectKeyHash, ObjectSet } from "../util";
+import { Invalid, times, ObjectKeyHash, ObjectSet, some } from "../util";
 import { Entry, Key, Stage, STAGES } from "./entry";
 import { Checksum } from "./checksum";
 import { FileService, defaultFs } from "../services";
-import { WriteEntry } from "../database";
+import * as Database from "../database";
 
 type IndexEntryMap = ObjectKeyHash<Key, Entry>;
 
@@ -37,6 +37,31 @@ export class Index {
     this.discardConflicts(entry);
     this.storeEntry(entry);
     this.#changed = true;
+  }
+
+  /**
+   * 指定されたパスのステージ0(非コンフリクト時)のエントリを削除し、コンフリクト時のエントリ(ステージ1/2/3)を追加します。
+   * @param pathname オブジェクトのファイルパス
+   * @param items コンフリクト時の各ステージエントリ
+   */
+  addConflictSet(
+    pathname: Pathname,
+    items: [Database.Entry | null, Database.Entry | null, Database.Entry | null]
+  ) {
+    this.removeEntryWithStage(pathname, 0);
+
+    items.map((item, n) => {
+      if (!item) {
+        return;
+      }
+      // itemsは3要素のタプルなので、0 <= n < 3
+      const indexEntry = Entry.createFromDb(pathname, item, (n + 1) as Stage);
+      this.storeEntry(indexEntry);
+    });
+  }
+
+  conflict() {
+    return some(this.#entries, ([_key, entry]) => entry.stage > 0);
   }
 
   eachEntry() {
@@ -92,7 +117,7 @@ export class Index {
     return STAGES.some((stage) => this.#entries.has([pathname, stage]));
   }
 
-  updateEntryStat(entry: WriteEntry, stat: Stats) {
+  updateEntryStat(entry: Database.WriteEntry, stat: Stats) {
     entry.updateStat(stat);
     this.#changed = true;
   }

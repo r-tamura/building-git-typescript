@@ -78,7 +78,7 @@ export class ObjectKeyHash<T extends object, S = any> {
 
   *[Symbol.iterator]() {
     for (const [rawKey, value] of this.#hash) {
-      yield [this.des(rawKey), value];
+      yield [this.des(rawKey), value] as const;
     }
   }
 }
