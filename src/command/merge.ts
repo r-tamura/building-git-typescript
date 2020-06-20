@@ -29,6 +29,9 @@ export class Merge extends Base {
     await merge.execute();
 
     await this.repo.index.writeUpdates();
+    if (this.repo.index.conflict()) {
+      this.exit(1);
+    }
   }
 
   async commitMerge() {

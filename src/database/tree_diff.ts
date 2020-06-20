@@ -61,15 +61,11 @@ export class TreeDiff {
       const subFilter = filter.join(name);
 
       // Treeの場合
-      const [tree_a, tree_b] = [entry, other].map((e: Entry | null) =>
-        e?.tree() ? e.oid : null
-      );
+      const [tree_a, tree_b] = [entry, other].map((e: Entry | null) => (e?.tree() ? e.oid : null));
       await this.compareOids(tree_a, tree_b, subFilter);
 
       // Blobの場合
-      const blobs = [entry, other].map((e: Entry | null) =>
-        e?.tree() ? null : e
-      ) as Change;
+      const blobs = [entry, other].map((e: Entry | null) => (e?.tree() ? null : e)) as Change;
       if (blobs.some((e) => e !== null)) {
         this.changes.set(subFilter.pathname, blobs);
       }
@@ -96,8 +92,4 @@ export class TreeDiff {
       }
     }
   }
-}
-
-function entryEquals(e1: ReadEntry | Tree, e2: ReadEntry | Tree) {
-  return e1.mode === e2.mode && e1.oid === e2.oid;
 }
