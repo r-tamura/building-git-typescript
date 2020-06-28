@@ -46,11 +46,11 @@ export class Index {
    */
   addConflictSet(
     pathname: Pathname,
-    items: [Database.Entry | null, Database.Entry | null, Database.Entry | null]
+    items: readonly [Database.Entry | null, Database.Entry | null, Database.Entry | null]
   ) {
     this.removeEntryWithStage(pathname, 0);
 
-    items.map((item, n) => {
+    items.forEach((item, n) => {
       if (!item) {
         return;
       }
@@ -58,6 +58,7 @@ export class Index {
       const indexEntry = Entry.createFromDb(pathname, item, (n + 1) as Stage);
       this.storeEntry(indexEntry);
     });
+    this.#changed = true;
   }
 
   conflict() {
@@ -132,7 +133,6 @@ export class Index {
 
     const header = this.buildHeader();
     await writer.write(header);
-
     for (const entry of this.eachEntry()) {
       const packed = Buffer.from(entry.toString(), "binary");
       await writer.write(packed);
@@ -174,14 +174,12 @@ export class Index {
   }
 
   private async openIndexFile() {
-    return this.#fs
-      .open(this.#pathname, constants.O_RDONLY)
-      .catch((e: NodeJS.ErrnoException) => {
-        if (e.code === "ENOENT") {
-          return null;
-        }
-        throw e;
-      });
+    return this.#fs.open(this.#pathname, constants.O_RDONLY).catch((e: NodeJS.ErrnoException) => {
+      if (e.code === "ENOENT") {
+        return null;
+      }
+      throw e;
+    });
   }
 
   private async readHeader(reader: Checksum) {
@@ -189,22 +187,18 @@ export class Index {
     const [signature, version, count] = this.unpackHeader(data);
 
     if (signature !== Index.SIGNATURE) {
-      throw new Invalid(
-        `Signature: expected '${Index.SIGNATURE}' but found '${signature}'`
-      );
+      throw new Invalid(`Signature: expected '${Index.SIGNATURE}' but found '${signature}'`);
     }
 
     if (version !== Index.VERSION) {
-      throw new Invalid(
-        `Version: expected '${Index.VERSION} but found '${version}'`
-      );
+      throw new Invalid(`Version: expected '${Index.VERSION} but found '${version}'`);
     }
 
     return count;
   }
 
   private async readEntries(reader: Checksum, count: number) {
-    for (const i of times(count)) {
+    for (const _ of times(count)) {
       // ファイルメタ情報の読み込み
       let entry = await reader.read(Entry.MIN_SIZE);
 

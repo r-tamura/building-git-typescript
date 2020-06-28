@@ -16,9 +16,9 @@ type EntryConstructor = (
   oid: OID, flags: number, name: Pathname
 ) => void
 
-// prettier-ignore
-type EntryConstructorParameters = Parameters<EntryConstructor>
+type EntryConstructorParameters = Parameters<EntryConstructor>;
 
+/** Entry中のfile stat系の属性 */
 type EntryStats = Pick<
   Entry,
   | "ctime"
@@ -34,6 +34,13 @@ type EntryStats = Pick<
   | "flags"
 >;
 
+/**
+ * 2バイトのフラグ構成 indexレコード内のOIDとファイル名の間に置かれる
+ * 0            0        11    000000000101
+ * assume-valid extended stage name length
+ * flag         flag
+ */
+export type Flags = number;
 export const STAGES = [0, 1, 2, 3] as const;
 export type Stage = typeof STAGES[number];
 export type Key = readonly [Pathname, Stage];
@@ -47,7 +54,7 @@ export class Entry {
   static readonly META_SIZE = 4;
   static readonly META_COUNT = 10;
   static readonly OID_SIZE = 20;
-  static readonly FILE_LENGTH_SIZE = 2;
+  static readonly FLAGS_SIZE = 2;
 
   readonly type = "index";
   ctime: number;
@@ -60,13 +67,7 @@ export class Entry {
   uid: number;
   gid: number;
   size: number;
-  /**
-   * 2バイト
-   * 0            0        11    000000000101
-   * assume-valid extended stage name length
-   * flag         flag
-   */
-  flags: number;
+  flags: Flags;
   oid: OID;
   name: Pathname;
 
@@ -99,7 +100,7 @@ export class Entry {
 
   static create(pathname: Pathname, oid: OID, stat: Stats) {
     const mode = this.modeForStat(stat);
-    // nameはasciiのみ想定
+    // nameはasciiのみ想定 (コンフリクト時以外はstage-0なので, flagsはファイル名の長さだけになる)
     const flags = Math.min(pathname.length, this.MAX_PATH_SIZE);
     const ctime = this.statTimeToIndexTime(stat.ctimeMs);
     const mtime = this.statTimeToIndexTime(stat.mtimeMs);
@@ -158,9 +159,14 @@ export class Entry {
     return [this.name, this.stage];
   }
 
-  // 2バイトフラグ中の 3 bits
+  // 2バイトフラグ中の 2 bit
   get stage() {
-    return ((this.flags >> 12) & 0b11) as Stage;
+    return extractStage(this.flags);
+  }
+
+  // 2バイトフラグ中の 12 bit
+  get filenameLength() {
+    return extractFilenameLength(this.flags);
   }
 
   statMatch(stat: Stats) {
@@ -206,10 +212,11 @@ export class Entry {
     const oid = data.slice(metaLength, metaLength + Entry.OID_SIZE).toString("hex");
 
     // file name
-    const length = data.readUInt16BE(metaLength + Entry.OID_SIZE);
-    const filenameOffset = metaLength + Entry.OID_SIZE + Entry.FILE_LENGTH_SIZE;
-    const name = data.slice(filenameOffset, filenameOffset + length).toString();
-    return [...meta, oid, length, name] as EntryConstructorParameters;
+    const flags = data.readUInt16BE(metaLength + Entry.OID_SIZE);
+    const filenameOffset = metaLength + Entry.OID_SIZE + Entry.FLAGS_SIZE;
+    const filenameLength = extractFilenameLength(flags);
+    const name = data.slice(filenameOffset, filenameOffset + filenameLength).toString();
+    return [...meta, oid, flags, name] as EntryConstructorParameters;
   }
 
   /**
@@ -218,14 +225,11 @@ export class Entry {
    */
   private pack() {
     const filenameLength = this.name.length;
-
     const metaLength = Entry.META_SIZE * Entry.META_COUNT;
-    const sha1Length = Entry.OID_SIZE;
-    const fileSizeLength = Entry.FILE_LENGTH_SIZE;
     const sha1Offset = metaLength;
-    const fileSizeOffset = sha1Offset + sha1Length;
-    const filenameOffset = fileSizeOffset + fileSizeLength;
-    const bufferSize = metaLength + sha1Length + fileSizeLength + filenameLength;
+    const fileSizeOffset = sha1Offset + Entry.OID_SIZE;
+    const filenameOffset = fileSizeOffset + Entry.FLAGS_SIZE;
+    const bufferSize = metaLength + Entry.OID_SIZE + Entry.FLAGS_SIZE + filenameLength;
     const padCount = Entry.BLOCK_SIZE - (bufferSize % Entry.BLOCK_SIZE);
 
     // File metadata
@@ -250,15 +254,18 @@ export class Entry {
     // OID
     buffer.write(this.oid, sha1Offset, Entry.OID_SIZE, "hex");
 
-    // file name
-    // ファイルサイズ(2byte) + ファイル名
-    buffer.writeUInt16BE(filenameLength, fileSizeOffset);
+    // flags + file name
+    // assume valid flag(1bit) + extended flag(1bit) + stage(2bit) + ファイルサイズ(12bts) + ファイル名
+    buffer.writeUInt16BE(this.flags, fileSizeOffset);
     buffer.write(this.name, filenameOffset, filenameLength);
-
     return buffer;
   }
 }
 
-function serialize(key: [string, number]) {
-  return `${key[0]}.${key[1]}`;
+function extractStage(flags: Flags) {
+  return ((flags >> 12) & 0b11) as Stage;
+}
+
+function extractFilenameLength(flags: Flags) {
+  return flags & 0xfff;
 }

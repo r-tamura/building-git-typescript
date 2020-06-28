@@ -9,6 +9,7 @@ import { makeLogger } from "~/__test__/util";
 import * as Command from "~/command";
 import { asserts } from "~/util";
 import { Revision } from "~/revision";
+import * as FileService from "~/services";
 
 export interface TestUtil {
   suffix: Pathname;
@@ -27,8 +28,7 @@ export class TestUtil {
   _repo: Repository;
 
   constructor(name: string = "") {
-    this.suffix =
-      name + randomChoice("0123456789abcdefghijklmnopqrstuvwxyz", 6);
+    this.suffix = name + randomChoice("0123456789abcdefghijklmnopqrstuvwxyz", 6);
 
     this._env = {
       fs: defaultFs,
@@ -72,18 +72,18 @@ export class TestUtil {
   }
 
   /** Assersion */
-  async assertWorkspace(
-    contents: Contents,
-    repository: Repository = this.repo()
-  ) {
+  async assertWorkspace(contents: Contents, repository: Repository = this.repo()) {
     const files: Contents = [];
     const pathnames = await repository.workspace.listFiles();
-
     for (const pathname of pathnames) {
       files.push([pathname, await repository.workspace.readFile(pathname)]);
     }
 
     assert.deepEqual(files, contents);
+  }
+
+  async assertExecutable(filename: string) {
+    return await FileService.exists(fs, path.join(this.repoPath, filename));
   }
 
   async assertNoent(filename: string) {
@@ -183,17 +183,12 @@ export class TestUtil {
   /** I/O
    * TODO: stdin/stdoutの良いモック方法を考える
    */
-  makeStdin(
-    text: string = "",
-    { isTTY = false }: { isTTY?: boolean } = {}
-  ): typeof process.stdin {
+  makeStdin(text: string = "", { isTTY = false }: { isTTY?: boolean } = {}): typeof process.stdin {
     const readable = Readable.from(text) as any;
     return this.mockStreamAsTTY(readable, { isTTY });
   }
 
-  makeStdout({
-    isTTY = false,
-  }: { isTTY?: boolean } = {}): typeof process.stdout {
+  makeStdout({ isTTY = false }: { isTTY?: boolean } = {}): typeof process.stdout {
     const writable = new Writable() as any;
     return this.mockStreamAsTTY(writable, { isTTY });
   }

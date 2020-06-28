@@ -54,10 +54,7 @@ export class Merge extends Base {
 
     await this.repo.index.loadForUpdate();
 
-    const treeDiff = await this.repo.database.treeDiff(
-      this.#inputs.leftOid,
-      this.#inputs.rightOid
-    );
+    const treeDiff = await this.repo.database.treeDiff(this.#inputs.leftOid, this.#inputs.rightOid);
     await this.repo.migration(treeDiff).applyChanges();
 
     await this.repo.index.writeUpdates();

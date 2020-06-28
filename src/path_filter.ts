@@ -20,9 +20,7 @@ export class PathFilter {
   }
 
   join(name: string) {
-    const nextRoutes = this.routes.matched
-      ? this.routes
-      : this.routes.children[name];
+    const nextRoutes = this.routes.matched ? this.routes : this.routes.children[name];
     return new PathFilter(nextRoutes, path.join(this.pathname, name));
   }
 }

@@ -85,15 +85,17 @@ export class Workspace {
     }
   }
 
-  async readFile(rpath: string) {
-    return this.#fs
-      .readFile(this.join(rpath), "ascii")
-      .catch((e: NodeJS.ErrnoException) => {
-        if (e.code === "EACCES") {
-          throw new NoPermission(`open('${rpath}'): Permission denied`);
-        }
-        throw e;
-      });
+  async readFile(pathname: Pathname) {
+    return this.#fs.readFile(this.join(pathname), "ascii").catch((e: NodeJS.ErrnoException) => {
+      if (e.code === "EACCES") {
+        throw new NoPermission(`open('${pathname}'): Permission denied`);
+      }
+      throw e;
+    });
+  }
+
+  async writeFile(pathname: Pathname, data: string | Buffer) {
+    return this.#fs.writeFile(this.join(pathname), data);
   }
 
   async statFile(rpath: string) {
@@ -140,9 +142,7 @@ export class Workspace {
     } catch (e) {
       switch (e.code) {
         case "ENOENT":
-          throw new MissingFile(
-            `pathspec '${relavtive}' did not match any files`
-          );
+          throw new MissingFile(`pathspec '${relavtive}' did not match any files`);
         default:
           throw e;
       }
@@ -152,18 +152,16 @@ export class Workspace {
   private async removeDirectory(dirname: Pathname) {
     // ディレクトリの存在、空であるかは考えずにrmdirを試み
     // エラーであれば何もしない
-    return this.#fs
-      .rmdir(this.join(dirname))
-      .catch((e: NodeJS.ErrnoException) => {
-        switch (e.code) {
-          case "ENOENT":
-          case "ENOTDIR":
-          case "ENOTEMPTY":
-            return;
-          default:
-            throw e;
-        }
-      });
+    return this.#fs.rmdir(this.join(dirname)).catch((e: NodeJS.ErrnoException) => {
+      switch (e.code) {
+        case "ENOENT":
+        case "ENOTDIR":
+        case "ENOTEMPTY":
+          return;
+        default:
+          throw e;
+      }
+    });
   }
 
   private async makeDirectory(dirname: Pathname) {
@@ -173,11 +171,11 @@ export class Workspace {
     // ファイルからディレクトリへ変更されたエントリは
     // ファイルを削除してからディレクトリを作成する
     if (stat?.isFile()) {
-      this.#fs.unlink(pathname);
+      await this.#fs.unlink(pathname);
     }
 
     if (!stat?.isDirectory()) {
-      this.#fs.mkdir(pathname);
+      await this.#fs.mkdir(pathname);
     }
   }
 }

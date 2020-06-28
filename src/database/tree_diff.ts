@@ -83,7 +83,7 @@ export class TreeDiff {
       const subFilter = filter.join(name);
 
       if (other) {
-        return;
+        continue;
       }
       if (entry.tree()) {
         await this.compareOids(null, entry.oid, subFilter);

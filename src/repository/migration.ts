@@ -19,10 +19,7 @@ export type Changes = {
 export class Conflict extends BaseError {}
 
 type Conflicts = Record<
-  | "stale_file"
-  | "stale_directory"
-  | "untracked_overwritten"
-  | "untracked_removed",
+  "stale_file" | "stale_directory" | "untracked_overwritten" | "untracked_removed",
   Set<string>
 >;
 
@@ -31,10 +28,7 @@ const MESSAGES: Record<keyof Conflicts, [string, string]> = {
     "Your local changes to the following files would be overwritten by checkout:",
     "Please commit your changes or stash them before you switch branches.",
   ],
-  stale_directory: [
-    "Updating the following directories would lose untracked files in them:",
-    "\n",
-  ],
+  stale_directory: ["Updating the following directories would lose untracked files in them:", "\n"],
   untracked_overwritten: [
     "The following untracked working tree files would be overwritten by checkout:",
     "Please move or remove them before you switch branches.",
@@ -102,10 +96,7 @@ export class Migration {
       }
     } else if (stat.isFile()) {
       // indexとの差分がある
-      const changed = await this.#inspector.compareIndexToWorkspace(
-        entry,
-        stat
-      );
+      const changed = await this.#inspector.compareIndexToWorkspace(entry, stat);
       if (changed) {
         this.#conflicts[type].add(pathname);
       }
@@ -161,9 +152,9 @@ export class Migration {
   }
 
   private async planChenges() {
-    for (const [pathname, [o, n]] of this.#diff) {
-      await this.checkForConflict(pathname, o, n);
-      this.recordChange(pathname, o, n);
+    for (const [pathname, [oldItem, newItem]] of this.#diff) {
+      await this.checkForConflict(pathname, oldItem, newItem);
+      this.recordChange(pathname, oldItem, newItem);
     }
     this.collectErrors();
   }

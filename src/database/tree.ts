@@ -63,8 +63,7 @@ export class Tree {
       this.entries[entry.basename] = entry;
     } else {
       const treeName = path.basename(parents[0]);
-      const tree = (this.entries[treeName] =
-        this.entries[treeName] ?? new Tree());
+      const tree = (this.entries[treeName] = this.entries[treeName] ?? new Tree());
       asserts(tree instanceof Tree);
       parents.shift();
       tree.addEntry(parents, entry);
@@ -86,8 +85,8 @@ export class Tree {
   }
 
   /**
-   *  Treeをシリアライズします
-   * それぞれのEntryは MODE + ' ' + Entry#name + '\0' + 20バイトにパックされたOID
+   *  Treeをシリアライズします。TreeにEntryがないときは空文字を返します。
+   * それぞれのEntryは MODE + ' ' + Entry#name + '\0' + 20バイトにpackされたOID です。
    */
   toString() {
     // this.#entries.sort(Tree.ascending)
@@ -99,6 +98,11 @@ export class Tree {
 
       return Buffer.concat([encodedMode, encodedName, encodedOId]);
     });
+
+    if (entries.length === 0) {
+      return "";
+    }
+
     const bytes = entries.reduce((buf, acc) => Buffer.concat([buf, acc]));
     return bytes.toString("binary");
   }

@@ -1,9 +1,11 @@
+import * as path from "path";
 import { Changes, Entry, ModeNumber, Blob } from "../database";
 import { Repository } from "../repository";
 import { Inputs } from "./inputs";
-import { first, asserts } from "../util";
+import { first, asserts, ascend } from "../util";
 import { Pathname, OID } from "../types";
 
+export type Conflict = readonly [Entry | null, Entry | null, Entry | null];
 export class Resolve {
   #repo: Repository;
   #inputs: Inputs;
@@ -11,7 +13,8 @@ export class Resolve {
   #rightDiff!: Changes;
   /** left(HEAD)とマージ結果の差分。Repository#migrationによりworkspace/indexへ適用される。 */
   #cleanDiff!: Changes;
-  #conflicts!: Map<Pathname, [Entry | null, Entry | null, Entry | null]>;
+  #conflicts!: Map<Pathname, Conflict>;
+  #untracked!: Map<Pathname, Entry>;
   constructor(repo: Repository, inputs: Inputs) {
     this.#repo = repo;
     this.#inputs = inputs;
@@ -21,12 +24,14 @@ export class Resolve {
     // コンフリクトの検知とmigrationに必要なdiffの作成
     await this.prepareTreeDiff();
 
-    // const treeDiff = await this.#repo.database.treeDiff(baseOid, this.#inputs.rightOid);
     const migration = this.#repo.migration(this.#cleanDiff);
     await migration.applyChanges();
 
     // migrationによりindexへstage-0のファイルが追加されてしまうので、それらをコンフリクトitemへ置き換える
     this.addConflictsToIndex();
+
+    //　file/directoryコンフリクト時に、file側を「file名~ブランチ名」としてworkspaceへ書き出す
+    await this.wirteUntrackedFiles();
   }
 
   /**
@@ -38,12 +43,20 @@ export class Resolve {
     this.#rightDiff = await this.#repo.database.treeDiff(baseOid, this.#inputs.rightOid);
     this.#cleanDiff = new Map();
     this.#conflicts = new Map();
+    this.#untracked = new Map();
 
-    const promises = [];
     for (const [pathname, [oldItem, newItem]] of this.#rightDiff) {
-      promises.push(this.samePathCOnflict(pathname, oldItem, newItem));
+      await this.samePathCOnflict(pathname, oldItem, newItem);
+      if (newItem) {
+        this.fileDirConflict(pathname, this.#leftDiff, this.#inputs.leftName);
+      }
     }
-    return Promise.all(promises);
+
+    for (const [pathname, [_, newItem]] of this.#leftDiff) {
+      if (newItem) {
+        this.fileDirConflict(pathname, this.#rightDiff, this.#inputs.rightName);
+      }
+    }
   }
 
   /**
@@ -54,13 +67,20 @@ export class Resolve {
    */
   private async samePathCOnflict(pathname: Pathname, base: Entry | null, right: Entry | null) {
     /**
+     * (0) 親ディレクトリでコンフリクトがない(ある場合はfileDirConflictで判定される)
      * (1) left diffがない -> コンフリクトがない/baseとleftに差分がない
-     * (2) left diffがある -> left === right -> 同じ変更をbaseに対して行った -> コンフリクトがない
+     * (2) left diffがある -> left === right -> 同じ変更をbaseに対して行った or 両削除  -> コンフリクトがない
      *
      * (3) oid/modeのマージ
      * (4) ワークスペースへマージ結果を適用するためにdiffをストア
      * (5) マージに問題がある -> コンフリクトリストへストア
      */
+    // (0)
+    // Note: 本文中には記載がない
+    if (this.#conflicts.get(pathname)) {
+      return;
+    }
+
     // (1)
     if (!this.#leftDiff.has(pathname)) {
       this.#cleanDiff.set(pathname, [base, right]);
@@ -69,7 +89,9 @@ export class Resolve {
 
     const left = this.#leftDiff.get(pathname)![1];
     // (2)
-    if (right !== null && left?.euqals(right)) {
+    const areBothDeleted = left === right;
+    const areBothChangedSameWay = right !== null && left?.euqals(right);
+    if (areBothDeleted || areBothChangedSameWay) {
       return;
     }
 
@@ -136,11 +158,11 @@ export class Resolve {
     asserts(leftBlob.type === "blob");
     asserts(rightBlob.type === "blob");
     return [
-      "<<<<<<< #{ @inputs.left_name }\n",
+      `<<<<<<< ${this.#inputs.leftName}\n`,
       leftBlob.data,
       "=======\n",
       rightBlob.data,
-      ">>>>>>> #{ @inputs.right_name }\n",
+      `>>>>>>> ${this.#inputs.rightName}\n`,
     ].join("");
   }
 
@@ -160,6 +182,43 @@ export class Resolve {
   private addConflictsToIndex() {
     for (const [pathname, items] of this.#conflicts) {
       this.#repo.index.addConflictSet(pathname, items);
+    }
+  }
+
+  /**
+   * 指定されたパスに対してfile/directoryコンフリクトであるかを判定します
+   */
+  private fileDirConflict(pathname: Pathname, diff: Changes, branchName: string) {
+    for (const parent of ascend(path.dirname(pathname))) {
+      const [oldItem, newItem] = diff.get(parent) ?? [null, null];
+      if (!newItem) {
+        return;
+      }
+
+      let conflict: Conflict;
+      switch (branchName) {
+        case this.#inputs.leftName:
+          conflict = [oldItem, newItem, null] as const;
+          break;
+        case this.#inputs.rightName:
+          conflict = [oldItem, null, newItem] as const;
+          break;
+        default:
+          throw new Error(`invalid branch name: '${branchName}'`);
+      }
+      this.#conflicts.set(parent, conflict);
+
+      this.#cleanDiff.delete(parent);
+      const rename = `${parent}~${branchName}`;
+      this.#untracked.set(rename, newItem);
+    }
+  }
+
+  private async wirteUntrackedFiles() {
+    for (const [pathname, item] of this.#untracked) {
+      // blobオブジェクトの読み込み
+      const blob = (await this.#repo.database.load(item.oid)) as Blob;
+      await this.#repo.workspace.writeFile(pathname, blob.data);
     }
   }
 }
