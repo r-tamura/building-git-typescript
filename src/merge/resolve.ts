@@ -6,6 +6,7 @@ import { first, asserts, ascend } from "../util";
 import { Pathname, OID } from "../types";
 
 export type Conflict = readonly [Entry | null, Entry | null, Entry | null];
+type OnProgress = (message: string) => void;
 export class Resolve {
   #repo: Repository;
   #inputs: Inputs;
@@ -15,6 +16,7 @@ export class Resolve {
   #cleanDiff!: Changes;
   #conflicts!: Map<Pathname, Conflict>;
   #untracked!: Map<Pathname, Entry>;
+  onprogress: OnProgress | null = null;
   constructor(repo: Repository, inputs: Inputs) {
     this.#repo = repo;
     this.#inputs = inputs;
@@ -95,6 +97,10 @@ export class Resolve {
       return;
     }
 
+    if (left && right) {
+      this.log(`Auto-merging ${pathname}`);
+    }
+
     // (3)
     const [oidOk, oid] = await this.mergeBlobs(base?.oid, left?.oid, right?.oid);
     const [modeOk, mode] = await this.mergeModes(base?.mode, left?.mode, right?.mode);
@@ -103,9 +109,11 @@ export class Resolve {
     this.#cleanDiff.set(pathname, [left, new Entry(oid, mode)]);
 
     // (5)
-    if (!oidOk || !modeOk) {
-      this.#conflicts.set(pathname, [base, left, right]);
+    if (oidOk && modeOk) {
+      return;
     }
+    this.#conflicts.set(pathname, [base, left, right]);
+    this.logConflict(pathname);
   }
 
   private merge3<T extends number | string>(
@@ -211,7 +219,61 @@ export class Resolve {
       this.#cleanDiff.delete(parent);
       const rename = `${parent}~${branchName}`;
       this.#untracked.set(rename, newItem);
+
+      if (!diff.get(pathname)) {
+        this.log(`Adding ${pathname}`);
+      }
+      this.logConflict(parent, rename);
     }
+  }
+
+  private log(message: string) {
+    this.onprogress?.(message);
+  }
+
+  private logConflict(pathname: Pathname, rename?: Pathname) {
+    // コンフリクトが発生したパスのみこの関数が呼び出される
+    asserts(this.#conflicts.get(pathname) !== undefined, `${pathname}上のコンフリクトが存在する`);
+    const [base, left, right] = this.#conflicts.get(pathname)!;
+
+    if (left && right) {
+      this.logLeftRightConflict(pathname);
+    } else if (base && (left || right)) {
+      this.logModifyDeleteConflict(pathname, rename);
+    } else {
+      this.logFileDirectoryConflict(pathname, rename);
+    }
+  }
+
+  private logLeftRightConflict(pathname: Pathname) {
+    const type = this.#conflicts.get(pathname)![0] ? "content" : "add/add";
+    this.log(`CONFLICT (${type}): Merge conflict in ${pathname}`);
+  }
+
+  private logModifyDeleteConflict(pathname: Pathname, rename?: Pathname) {
+    const [deleted, modified] = this.logBranchNames(pathname);
+    rename = rename ? ` at ${rename}` : "";
+
+    this.log(
+      `CONFLICT (modify/delete): ${pathname}` +
+        ` deleted in ${deleted} and modified in ${modified}.` +
+        ` Version ${modified} of ${pathname} left in tree${rename}.`
+    );
+  }
+
+  private logBranchNames(pathname: Pathname) {
+    const [a, b] = [this.#inputs.leftName, this.#inputs.rightName];
+    return this.#conflicts.get(pathname)![1] ? [b, a] : [a, b];
+  }
+
+  private logFileDirectoryConflict(pathname: Pathname, rename?: Pathname) {
+    const type = this.#conflicts.get(pathname)![1] ? "file/directory" : "directory/file";
+    const [branch, _] = this.logBranchNames(pathname);
+    this.log(
+      `CONFLICT (${type}): There is a directory` +
+        ` with name ${pathname} in ${branch}.` +
+        ` Adding ${pathname} as ${rename}`
+    );
   }
 
   private async wirteUntrackedFiles() {

@@ -343,7 +343,7 @@ describe("merge", () => {
       )
     });
 
-    it.skip("prints the merge conflicts", () => {
+    it("prints the merge conflicts", () => {
       t.assertInfo(stripIndent`
         Auto-merging g.txt
         CONFLICT (add/add): Merge conflict in g.txt
@@ -387,7 +387,7 @@ describe("merge", () => {
       )
     });
 
-    it.skip("prints the merge conflicts", () => {
+    it("prints the merge conflicts", () => {
       t.assertInfo(stripIndent`
         Auto-merging g.txt
         CONFLICT (add/add): Merge conflict in g.txt
@@ -421,6 +421,14 @@ describe("merge", () => {
       );
     });
 
+    it("prints the merge conflicts", () => {
+      t.assertInfo(stripIndent`
+        Adding g.txt/three.txt
+        CONFLICT (file/directory): There is a directory with name g.txt in topic. Adding g.txt as g.txt~HEAD
+        Automatic merge failed; fix conflicts and then commit the result.
+      `);
+    });
+
     it("puts a namespaced copy of the conflicted file in the workspace", async () => {
       await t.assertWorkspace([
         ["f.txt", "1"],
@@ -442,6 +450,14 @@ describe("merge", () => {
         { "g.txt/two.txt": "2\n" },
         { "g.txt": "3\n" }
       );
+    });
+
+    it("prints the merge conflicts", () => {
+      t.assertInfo(stripIndent`
+        Adding g.txt/two.txt
+        CONFLICT (directory/file): There is a directory with name g.txt in HEAD. Adding g.txt as g.txt~topic
+        Automatic merge failed; fix conflicts and then commit the result.
+      `);
     });
 
     it("puts a namespaced copy of the conflicted file in the workspace", async () => {
@@ -469,6 +485,14 @@ describe("merge", () => {
         { "f.txt": "2\n" },
         { "f.txt": "3\n" },
       )
+    });
+
+    it("prints the merge conflicts", () => {
+      t.assertInfo(stripIndent`
+        Auto-merging f.txt
+        CONFLICT (content): Merge conflict in f.txt
+        Automatic merge failed; fix conflicts and then commit the result.
+      `);
     });
 
     it.skip("prints the merge conflicts", () => {
@@ -514,6 +538,13 @@ describe("merge", () => {
       )
     });
 
+    it("prints the merge conflicts", () => {
+      t.assertInfo(stripIndent`
+        CONFLICT (modify/delete): f.txt deleted in topic and modified in HEAD. Version HEAD of f.txt left in tree.
+        Automatic merge failed; fix conflicts and then commit the result.
+      `);
+    });
+
     it.skip("prints the merge conflicts", () => {
       t.assertInfo(stripIndent`
         Auto-merging g.txt
@@ -545,10 +576,9 @@ describe("merge", () => {
       )
     });
 
-    it.skip("prints the merge conflicts", () => {
+    it("prints the merge conflicts", () => {
       t.assertInfo(stripIndent`
-        Auto-merging g.txt
-        CONFLICT (add/add): Merge conflict in g.txt
+        CONFLICT (modify/delete): f.txt deleted in HEAD and modified in topic. Version topic of f.txt left in tree.
         Automatic merge failed; fix conflicts and then commit the result.
       `);
     });
@@ -576,11 +606,11 @@ describe("merge", () => {
       )
     });
 
-    it.skip("prints the merge conflicts", () => {
+    it("prints the merge conflicts", () => {
       t.assertInfo(stripIndent`
-        Auto-merging g.txt
-        CONFLICT (add/add): Merge conflict in g.txt
-        Automatic merge failed; fix conflicts and then commit the result.
+      CONFLICT (modify/delete): nest/f.txt deleted in topic and modified in HEAD. Version HEAD of nest/f.txt left in tree.
+      CONFLICT (directory/file): There is a directory with name nest in HEAD. Adding nest as nest~topic
+      Automatic merge failed; fix conflicts and then commit the result.
       `);
     });
 
@@ -610,11 +640,11 @@ describe("merge", () => {
       )
     });
 
-    it.skip("prints the merge conflicts", () => {
+    it("prints the merge conflicts", () => {
       t.assertInfo(stripIndent`
-        Auto-merging g.txt
-        CONFLICT (add/add): Merge conflict in g.txt
-        Automatic merge failed; fix conflicts and then commit the result.
+      Adding nest/f.txt/g.txt
+      CONFLICT (modify/delete): nest/f.txt deleted in topic and modified in HEAD. Version HEAD of nest/f.txt left in tree at nest/f.txt~HEAD.
+      Automatic merge failed; fix conflicts and then commit the result.
       `);
     });
 

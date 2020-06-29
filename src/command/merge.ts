@@ -26,10 +26,12 @@ export class Merge extends Base {
     await this.repo.index.loadForUpdate();
 
     const merge = new Resolve(this.repo, this.#inputs);
+    merge.onprogress = (info) => this.log(info);
     await merge.execute();
 
     await this.repo.index.writeUpdates();
     if (this.repo.index.conflict()) {
+      this.log("Automatic merge failed; fix conflicts and then commit the result.");
       this.exit(1);
     }
   }
