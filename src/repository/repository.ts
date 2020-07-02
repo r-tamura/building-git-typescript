@@ -25,18 +25,16 @@ export class Repository {
   constructor(public gitPath: Pathname, private env: RepositoryEnv) {}
 
   get database() {
-    return (this.#database =
-      this.#database ??
-      new Database(path.join(this.gitPath, "objects"), this.env));
+    return this.#database ??=
+      new Database(path.join(this.gitPath, "objects"), this.env);
   }
 
   get index() {
-    return (this.#index =
-      this.#index ?? new Index(path.join(this.gitPath, "index"), this.env));
+    return this.#index ??= new Index(path.join(this.gitPath, "index"), this.env);
   }
 
   get refs() {
-    return (this.#refs = this.#refs ?? new Refs(this.gitPath, this.env));
+    return this.#refs ??= new Refs(this.gitPath, this.env);
   }
 
   get status() {
@@ -44,8 +42,7 @@ export class Repository {
   }
 
   get workspace() {
-    return (this.#workspace =
-      this.#workspace ?? new Workspace(path.dirname(this.gitPath), this.env));
+    return this.#workspace ??= new Workspace(path.dirname(this.gitPath), this.env);
   }
 
   migration(treeDiff: Changes) {

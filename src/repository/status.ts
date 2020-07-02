@@ -6,6 +6,7 @@ import * as Database from "../database";
 import { asserts } from "../util";
 import * as Index from "../gindex";
 import { Inspector, IndexStatus, WorkspaceStatus } from "./inspector";
+import { Stage } from "../gindex";
 
 export type ChangeType = IndexStatus | WorkspaceStatus;
 
@@ -14,6 +15,7 @@ export class Status {
   indexChanges: Map<Pathname, IndexStatus> = new SortedMap();
   workspaceChanges: Map<Pathname, WorkspaceStatus> = new SortedMap();
   untrackedFiles: Set<Pathname> = new Set();
+  conflicts: Map<Pathname, Stage[]> = new SortedMap();
 
   headTree: { [s: string]: Database.Entry } = {};
   stats: { [s: string]: Stats } = {};
@@ -34,8 +36,19 @@ export class Status {
   }
   async checkIndexEntries() {
     for (const entry of this.repo.index.eachEntry()) {
-      await this.checkIndexAgainstWorkspace(entry);
-      this.checkIndexAgainstHeadTree(entry);
+      if (entry.stage === 0) {
+        // コンフリクトなし
+        await this.checkIndexAgainstWorkspace(entry);
+        this.checkIndexAgainstHeadTree(entry);
+      } else {
+        // コンフリクトあり
+        this.changed.add(entry.name);
+        if (!this.conflicts.has(entry.name)) {
+          this.conflicts.set(entry.name, []);
+        }
+        // パスに対応した要素がない場合は, 上記で初期化されるので値が存在することが保証される
+        this.conflicts.get(entry.name)!.push(entry.stage);
+      }
     }
   }
   collectDeletedHeadFiles() {
