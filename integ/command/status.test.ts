@@ -29,6 +29,7 @@ describe("Command.Status", () => {
     `);
 
     await assertStatus(stripIndent`
+    On branch master
     Untracked files:
 
     \tanother.txt
@@ -109,7 +110,7 @@ describe("Command.Status", () => {
 
     it("prints nothing when no files are changed", async () => {
       await assertStatusPorcelain("");
-      await assertStatus("nothing to commit, working tree clean");
+      await assertStatus("On branch master\nnothing to commit, working tree clean");
     });
 
     it("reports files with modified contents", async () => {
@@ -120,6 +121,7 @@ describe("Command.Status", () => {
       // Act & Assert
       await assertStatusPorcelain([" M 1.txt", " M a/2.txt"].join("\n"));
       await assertStatus(stripIndent`
+      On branch master
       Changes not staged for commit:
 
       \tmodified:   1.txt
@@ -162,6 +164,7 @@ describe("Command.Status", () => {
 
       await assertStatusPorcelain([" D a/2.txt", " D a/b/3.txt"].join("\n"));
       await assertStatus(stripIndent`
+      On branch master
       Changes not staged for commit:
 
       \tdeleted:    a/2.txt
@@ -188,6 +191,7 @@ describe("Command.Status", () => {
 
       await assertStatusPorcelain("A  a/4.txt");
       await assertStatus(stripIndent`
+      On branch master
       Changes to be committed:
 
       \tnew file:   a/4.txt
@@ -243,6 +247,7 @@ describe("Command.Status", () => {
       await t.kitCmd("add", ".");
 
       await assertStatus(stripIndent`
+      On branch master
       Changes to be committed:
 
       \tmodified:   1.txt

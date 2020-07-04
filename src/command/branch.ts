@@ -2,7 +2,8 @@ import * as arg from "arg";
 import { Base } from "./base";
 import { InvalidBranch, SymRef } from "../refs";
 import { InvalidObject, Revision } from "../revision";
-import { asserts, shallowEqual, BaseError } from "../util";
+import { asserts, BaseError } from "../util";
+import { shallowEqual } from "../util/object";
 
 interface Option {
   verbose: boolean;
@@ -98,17 +99,15 @@ export class Branch extends Base<Option> {
       return;
     }
 
-    const oid = await this.repo.refs
-      .deleteBranch(branchName)
-      .catch((e: BaseError) => {
-        switch (e.constructor) {
-          case InvalidBranch:
-            this.logger.error(`error: ${e.message}`);
-            this.exit(1);
-          default:
-            throw e;
-        }
-      });
+    const oid = await this.repo.refs.deleteBranch(branchName).catch((e: BaseError) => {
+      switch (e.constructor) {
+        case InvalidBranch:
+          this.logger.error(`error: ${e.message}`);
+          this.exit(1);
+        default:
+          throw e;
+      }
+    });
     const short = this.repo.database.shortOid(oid);
 
     this.log(`Deleted branch ${branchName} (was ${short})`);

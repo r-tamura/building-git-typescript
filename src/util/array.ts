@@ -26,11 +26,7 @@ export function clone<T>(xs: T[]): T[] {
  * @param xs
  * @param ys
  */
-export function exclude<T>(
-  xs: T[],
-  ys: T[],
-  equal: (x: T, y: T) => boolean = (x, y) => x === y
-) {
+export function exclude<T>(xs: T[], ys: T[], equal: (x: T, y: T) => boolean = (x, y) => x === y) {
   return xs.filter((x) => !ys.find((y) => equal(x, y)));
 }
 
@@ -70,9 +66,7 @@ function jsindex(xs: any[], index: number) {
 export function get<T>(xs: T[], index: number): T {
   if (index < -xs.length || xs.length <= index) {
     throw new RangeError(
-      `index has to be within array's length. ${-xs.length} <= actual:${index} < ${
-        xs.length
-      }`
+      `index has to be within array's length. ${-xs.length} <= actual:${index} < ${xs.length}`
     );
   }
   const actualIndex = jsindex(xs, index);
@@ -131,4 +125,11 @@ export function partition<T>(xs: T[], pred: (x: T) => boolean): [T[], T[]] {
     }
   }
   return [t, f];
+}
+
+export function shallowEqual<T>(xs: T[], ys: T[]) {
+  if (xs.length !== ys.length) {
+    return false;
+  }
+  return xs.every((x, i) => x === ys[i]);
 }

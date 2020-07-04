@@ -6,5 +6,4 @@ export * from "./date";
 export * from "./error";
 export * from "./fs";
 export * from "./iter";
-export * from "./object";
 export * from "./text";

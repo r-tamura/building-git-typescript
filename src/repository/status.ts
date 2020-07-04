@@ -9,13 +9,13 @@ import { Inspector, IndexStatus, WorkspaceStatus } from "./inspector";
 import { Stage } from "../gindex";
 
 export type ChangeType = IndexStatus | WorkspaceStatus;
-
+export type ConflictStatus = Stage[];
 export class Status {
   changed: Set<Pathname> = new Set();
   indexChanges: Map<Pathname, IndexStatus> = new SortedMap();
   workspaceChanges: Map<Pathname, WorkspaceStatus> = new SortedMap();
   untrackedFiles: Set<Pathname> = new Set();
-  conflicts: Map<Pathname, Stage[]> = new SortedMap();
+  conflicts: Map<Pathname, ConflictStatus> = new SortedMap();
 
   headTree: { [s: string]: Database.Entry } = {};
   stats: { [s: string]: Stats } = {};

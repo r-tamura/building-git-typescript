@@ -1,16 +1,12 @@
 import * as os from "os";
 import arg = require("arg");
 import { Base } from "./base";
-import { asserts, includes, shallowEqual, partition } from "../util";
+import { asserts, includes, partition } from "../util";
+import { shallowEqual } from "../util/object";
 import { CompleteCommit, Pathname } from "../types";
 import { SymRef } from "../refs";
 import { Style } from "../color";
-import {
-  definePrintDiffOptions,
-  printDiff,
-  Target,
-  NULL_OID,
-} from "./shared/print_diff";
+import { definePrintDiffOptions, printDiff, Target, NULL_OID } from "./shared/print_diff";
 import { Entry, Change } from "../database";
 import { RevList } from "../rev_list";
 
@@ -110,16 +106,11 @@ export class Log extends Base<Options> {
       return "";
     }
 
-    const [[head], restRefs] = partition(
-      refs,
-      (ref) => ref.head() && !this.#currentRef.head()
-    );
+    const [[head], restRefs] = partition(refs, (ref) => ref.head() && !this.#currentRef.head());
     const names = restRefs.map((ref) => this.decorationName(head, ref));
 
     return (
-      this.fmt("yellow", " (") +
-      names.join(this.fmt("yellow", ", ")) +
-      this.fmt("yellow", ")")
+      this.fmt("yellow", " (") + names.join(this.fmt("yellow", ", ")) + this.fmt("yellow", ")")
     );
   }
 
@@ -163,10 +154,7 @@ export class Log extends Base<Options> {
     const author = commit.author;
 
     this.blankLine();
-    this.log(
-      this.fmt("yellow", `commit ${this.abbrev(commit)}`) +
-        this.decorate(commit)
-    );
+    this.log(this.fmt("yellow", `commit ${this.abbrev(commit)}`) + this.decorate(commit));
     this.log(`Author: ${author.name} <${author.email}>`);
     this.log(`Date:   ${author.readableTime}`);
     this.blankLine();
@@ -205,12 +193,7 @@ export class Log extends Base<Options> {
     if (item) {
       const blob = await this.repo.database.load(item.oid);
       asserts(blob.type === "blob");
-      return Target.of(
-        pathname,
-        item.oid,
-        item.mode.toString(8),
-        blob.data.toString()
-      );
+      return Target.of(pathname, item.oid, item.mode.toString(8), blob.data.toString());
     } else {
       return Target.of(pathname, NULL_OID, null, "");
     }

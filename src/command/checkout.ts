@@ -1,7 +1,8 @@
 import { OID } from "../types";
 import { Base } from "./base";
 import { Revision, InvalidObject } from "../revision";
-import { asserts, shallowEqual } from "../util";
+import { asserts } from "../util";
+import { shallowEqual } from "../util/object";
 import { Migration, Conflict } from "../repository";
 import { SymRef } from "../refs";
 
@@ -46,10 +47,7 @@ export class Checkout extends Base {
 
     await this.repo.index.loadForUpdate();
 
-    const treeDiff = await this.repo.database.treeDiff(
-      this.#currentOid,
-      this.#targetOid
-    );
+    const treeDiff = await this.repo.database.treeDiff(this.#currentOid, this.#targetOid);
     const migration = this.repo.migration(treeDiff);
     try {
       await migration.applyChanges();
@@ -91,10 +89,7 @@ export class Checkout extends Base {
 
   private async printPreviousHead() {
     if (this.#currentRef.head() && this.#currentOid === this.#targetOid) {
-      await this.printHeadPosition(
-        "Previous HEAD position was",
-        this.#currentOid
-      );
+      await this.printHeadPosition("Previous HEAD position was", this.#currentOid);
     }
   }
 
