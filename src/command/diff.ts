@@ -54,24 +54,15 @@ export class Diff extends Base<Option> {
     for (const [pathname, state] of this.#status.indexChanges.entries()) {
       switch (state) {
         case "added": {
-          this.printDiff(
-            this.fromNothing(pathname),
-            await this.fromIndex(pathname)
-          );
+          this.printDiff(this.fromNothing(pathname), await this.fromIndex(pathname));
           break;
         }
         case "modified": {
-          this.printDiff(
-            await this.fromHead(pathname),
-            await this.fromIndex(pathname)
-          );
+          this.printDiff(await this.fromHead(pathname), await this.fromIndex(pathname));
           break;
         }
         case "deleted": {
-          this.printDiff(
-            await this.fromHead(pathname),
-            this.fromNothing(pathname)
-          );
+          this.printDiff(await this.fromHead(pathname), this.fromNothing(pathname));
           break;
         }
       }
@@ -83,22 +74,13 @@ export class Diff extends Base<Option> {
       return;
     }
 
-    for (const [pathname, state] of this.#status.workspaceChanges.entries()) {
-      switch (state) {
-        case "modified": {
-          this.printDiff(
-            await this.fromIndex(pathname),
-            await this.fromFile(pathname)
-          );
-          break;
-        }
-        case "deleted": {
-          this.printDiff(
-            await this.fromIndex(pathname),
-            this.fromNothing(pathname)
-          );
-          break;
-        }
+    const paths = [...this.#status.conflicts.keys(), ...this.#status.workspaceChanges.keys()];
+
+    for (const pathname of paths.sort()) {
+      if (this.#status.conflicts.has(pathname)) {
+        this.printConflictDiff(pathname);
+      } else {
+        await this.printWorkspaceDiff(pathname);
       }
     }
   }
@@ -111,12 +93,7 @@ export class Diff extends Base<Option> {
     const entry = this.#status.headTree[pathname];
     const blob = await this.repo.database.load(entry.oid);
     asserts(blob instanceof Database.Blob);
-    return Target.of(
-      pathname,
-      entry.oid,
-      entry.mode.toString(8),
-      blob.data.toString()
-    );
+    return Target.of(pathname, entry.oid, entry.mode.toString(8), blob.data.toString());
   }
 
   private async fromIndex(pathname: Pathname) {
@@ -124,12 +101,7 @@ export class Diff extends Base<Option> {
     asserts(entry !== null);
     const blob = await this.repo.database.load(entry.oid);
     asserts(blob instanceof Database.Blob);
-    return Target.of(
-      entry.name,
-      entry.oid,
-      entry.mode.toString(8),
-      blob.data.toString()
-    );
+    return Target.of(entry.name, entry.oid, entry.mode.toString(8), blob.data.toString());
   }
 
   private async fromFile(pathname: Pathname) {
@@ -159,6 +131,23 @@ export class Diff extends Base<Option> {
     this.log(`diff --git ${a.name} ${b.name}`);
     this.printMode(a, b);
     this.printDiffContent(a, b);
+  }
+
+  private printConflictDiff(pathname: Pathname) {
+    this.log(`* Unmerged path ${pathname}`);
+  }
+
+  private async printWorkspaceDiff(pathname: Pathname) {
+    switch (this.#status.workspaceChanges.get(pathname)) {
+      case "modified": {
+        this.printDiff(await this.fromIndex(pathname), await this.fromFile(pathname));
+        break;
+      }
+      case "deleted": {
+        this.printDiff(await this.fromIndex(pathname), this.fromNothing(pathname));
+        break;
+      }
+    }
   }
 
   private printMode(a: Target, b: Target) {
