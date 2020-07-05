@@ -80,8 +80,7 @@ export abstract class Base<O extends object = {}> implements Runnable {
   }
 
   get repo() {
-    return (this.#repo =
-      this.#repo ?? new Repository(path.join(this.dir, ".git"), this.env));
+    return  this.#repo ??= new Repository(path.join(this.dir, ".git"), this.env);
   }
 
   log(message: string) {

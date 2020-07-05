@@ -3,15 +3,17 @@ import { Base } from "./base";
 import * as Repository from "../repository";
 import { Pathname, OID } from "../types";
 import * as Database from "../database";
+import * as arg from "arg";
 import * as Index from "../gindex";
 import { asserts } from "../util";
 import { diff, Hunk, TextDocument, Edit } from "../diff";
-import arg = require("arg");
 import { definePrintDiffOptions, Target, NULL_OID } from "./shared/print_diff";
+import { Stage } from "../gindex";
 
 interface Option {
   cached: boolean;
   patch: boolean;
+  stage?: Stage;
 }
 
 export class Diff extends Base<Option> {
@@ -43,6 +45,15 @@ export class Diff extends Base<Option> {
         this.options.cached = true;
       }),
       "--staged": "--cached",
+      "--base": arg.flag(() => {
+        this.options.stage = 1;
+      }),
+      "--ours": arg.flag(() => {
+        this.options.stage = 2;
+      }),
+      "--theirs": arg.flag(() => {
+        this.options.stage = 3;
+      }),
       ...printDiffOptions,
     };
   }
@@ -54,11 +65,15 @@ export class Diff extends Base<Option> {
     for (const [pathname, state] of this.#status.indexChanges.entries()) {
       switch (state) {
         case "added": {
-          this.printDiff(this.fromNothing(pathname), await this.fromIndex(pathname));
+          const targetFromIndex = await this.fromIndex(pathname);
+          asserts(targetFromIndex !== null, `ファイル '${pathname}' は存在する`);
+          this.printDiff(this.fromNothing(pathname), targetFromIndex);
           break;
         }
         case "modified": {
-          this.printDiff(await this.fromHead(pathname), await this.fromIndex(pathname));
+          const targetFromIndex = await this.fromIndex(pathname);
+          asserts(targetFromIndex !== null, `ファイル '${pathname}' は存在する`);
+          this.printDiff(await this.fromHead(pathname), targetFromIndex);
           break;
         }
         case "deleted": {
@@ -78,7 +93,7 @@ export class Diff extends Base<Option> {
 
     for (const pathname of paths.sort()) {
       if (this.#status.conflicts.has(pathname)) {
-        this.printConflictDiff(pathname);
+        await this.printConflictDiff(pathname);
       } else {
         await this.printWorkspaceDiff(pathname);
       }
@@ -96,9 +111,11 @@ export class Diff extends Base<Option> {
     return Target.of(pathname, entry.oid, entry.mode.toString(8), blob.data.toString());
   }
 
-  private async fromIndex(pathname: Pathname) {
-    const entry = this.repo.index.entryForPath(pathname);
-    asserts(entry !== null);
+  private async fromIndex(pathname: Pathname, stage: Stage = 0) {
+    const entry = this.repo.index.entryForPath(pathname, stage);
+    if (!entry) {
+      return null;
+    }
     const blob = await this.repo.database.load(entry.oid);
     asserts(blob instanceof Database.Blob);
     return Target.of(entry.name, entry.oid, entry.mode.toString(8), blob.data.toString());
@@ -127,24 +144,33 @@ export class Diff extends Base<Option> {
 
     a.name = path.join("a", a.name);
     b.name = path.join("b", b.name);
-
     this.log(`diff --git ${a.name} ${b.name}`);
     this.printMode(a, b);
     this.printDiffContent(a, b);
   }
 
-  private printConflictDiff(pathname: Pathname) {
+  private async printConflictDiff(pathname: Pathname) {
     this.log(`* Unmerged path ${pathname}`);
+
+    const target = await this.fromIndex(pathname, this.options["stage"]);
+    if (!target) {
+      return;
+    }
+    this.printDiff(target, await this.fromFile(pathname));
   }
 
   private async printWorkspaceDiff(pathname: Pathname) {
     switch (this.#status.workspaceChanges.get(pathname)) {
       case "modified": {
-        this.printDiff(await this.fromIndex(pathname), await this.fromFile(pathname));
+        const targetFromIndex = await this.fromIndex(pathname);
+        asserts(targetFromIndex !== null, `ファイル '${pathname}' は存在する`);
+        this.printDiff(targetFromIndex, await this.fromFile(pathname));
         break;
       }
       case "deleted": {
-        this.printDiff(await this.fromIndex(pathname), this.fromNothing(pathname));
+        const targetFromIndex = await this.fromIndex(pathname);
+        asserts(targetFromIndex !== null, `ファイル '${pathname}' は存在する`);
+        this.printDiff(targetFromIndex, this.fromNothing(pathname));
         break;
       }
     }
