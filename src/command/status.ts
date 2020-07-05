@@ -3,8 +3,7 @@ import { Base } from "./base";
 import { Pathname } from "../types";
 import { Style } from "../color";
 import * as Repository from "../repository";
-import { asserts, shallowEqual } from "../util";
-import { Stage } from "../gindex";
+import { shallowEqual } from "../util";
 import { ConflictStatus } from "../repository";
 
 const SHORT_STATUS: Record<Exclude<Repository.ChangeType, null> | "nochange", string> = {
@@ -24,6 +23,23 @@ const LONG_STATUS = {
 type LongStatus = keyof typeof LONG_STATUS;
 function getLongStatus(status: LongStatus) {
   return LONG_STATUS[status];
+}
+
+function getConflictShortStatus(conflict: Repository.ConflictStatus) {
+  const conflictEquals = (xs: ConflictStatus) => shallowEqual(conflict, xs);
+  // prettier-ignore
+  const message =
+    conflictEquals([1, 2, 3]) ? "UU" :
+    conflictEquals([1, 2]) ? "UD:" :
+    conflictEquals([1, 3]) ? "DU" :
+    conflictEquals([2, 3]) ? "AA" :
+    conflictEquals([2]) ? "AU" :
+    conflictEquals([3]) ? "UA" :
+    null
+  if (message === null) {
+    throw new TypeError(`サポートされていないコンフリクト状態です。 '${conflict}'`);
+  }
+  return message;
 }
 
 const CONFLICT_LABEL_WIDTH = 17;
@@ -172,10 +188,15 @@ export class Status extends Base<Option> {
   }
 
   private statusFor(pathname: Pathname) {
-    const left = SHORT_STATUS[this.#status.indexChanges.get(pathname) ?? "nochange"];
-    const right = SHORT_STATUS[this.#status.workspaceChanges.get(pathname) ?? "nochange"];
+    if (this.#status.conflicts.has(pathname)) {
+      // コンフリクトが存在することが保証されている
+      return getConflictShortStatus(this.#status.conflicts.get(pathname)!);
+    } else {
+      const left = SHORT_STATUS[this.#status.indexChanges.get(pathname) ?? "nochange"];
+      const right = SHORT_STATUS[this.#status.workspaceChanges.get(pathname) ?? "nochange"];
 
-    return left + right;
+      return left + right;
+    }
   }
 }
 

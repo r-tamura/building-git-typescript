@@ -3,7 +3,7 @@ import { stripIndent } from "~/util";
 
 const t = T.create();
 
-describe("Command.Status", () => {
+describe("status", () => {
   async function assertStatus(expected: string) {
     await t.kitCmd("status");
     t.assertInfo(expected);
@@ -254,6 +254,25 @@ describe("Command.Status", () => {
       \tdeleted:    a/2.txt
       \tnew file:   z.txt
 
+      `);
+    });
+  });
+
+  describe("conflict", () => {
+    beforeEach(async () => {
+      await t.merge3({ "f.txt": "1" }, { "g.txt": "2\n" }, { "g.txt": "3\n" });
+    });
+
+    it("reports all add-add conflict", async () => {
+      await assertStatusPorcelain("AA g.txt");
+
+      await assertStatus(stripIndent`
+      On branch master
+      Unmerged paths:
+
+      \tboth added:      g.txt
+
+      nothing to commit, working tree clean
       `);
     });
   });

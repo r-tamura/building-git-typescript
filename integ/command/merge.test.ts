@@ -1,61 +1,15 @@
 import * as T from "./helper";
 import * as assert from "power-assert";
-import { Dict, Pathname } from "~/types";
+import { Pathname } from "~/types";
 import { stripIndent } from "~/util";
 import { Stage } from "~/gindex";
-import * as fs from "fs";
 
 const t = T.create();
 
 beforeEach(t.beforeHook);
 afterEach(t.afterHook);
 
-const X = "x";
-
 describe("merge", () => {
-  async function commitTree(message: string, files: Dict<string | string[] | null>) {
-    for (const [filepath, contents] of Object.entries(files)) {
-      if (contents !== X) {
-        await t.rm(filepath);
-      }
-      if (contents === X) {
-        await t.makeExecutable(filepath);
-      } else if (typeof contents === "string") {
-        await t.writeFile(filepath, contents);
-      } else if (Array.isArray(contents)) {
-        await t.writeFile(filepath, contents[0]);
-        await t.makeExecutable(filepath);
-      }
-    }
-    await t.rm(".git/index");
-    await t.kitCmd("add", ".");
-    await t.commit(message);
-  }
-
-  /**
-   *   A   B   M
-   *   o---o---o [master]
-   *    \     /
-   *     `---o [topic]
-   *         C
-   */
-  async function merge3(
-    base: Dict<string | string[] | null>,
-    left: Dict<string | string[] | null>,
-    right: Dict<string | string[] | null>
-  ) {
-    await commitTree("A", base);
-    await commitTree("B", left);
-
-    await t.kitCmd("branch", "topic", "master^");
-    await t.kitCmd("checkout", "topic");
-    await commitTree("C", right);
-
-    await t.kitCmd("checkout", "master");
-    t.mockStdio("M");
-    await t.kitCmd("merge", "topic");
-  }
-
   async function assertCleanMerge() {
     await t.kitCmd("status", "--porcelain");
     t.assertInfo("");
@@ -86,9 +40,9 @@ describe("merge", () => {
 
   describe("merging in ancestor", () => {
     beforeEach(async () => {
-      await commitTree("A", { "f.txt": "1" });
-      await commitTree("B", { "f.txt": "2" });
-      await commitTree("C", { "f.txt": "3" });
+      await t.commitTree("A", { "f.txt": "1" });
+      await t.commitTree("B", { "f.txt": "2" });
+      await t.commitTree("C", { "f.txt": "3" });
       t.mockStdio("M");
       await t.kitCmd("merge", "@^");
     });
@@ -105,9 +59,9 @@ describe("merge", () => {
 
   describe("fast-forward merge", () => {
     beforeEach(async () => {
-      await commitTree("A", { "f.txt": "1" });
-      await commitTree("B", { "f.txt": "2" });
-      await commitTree("C", { "f.txt": "3" });
+      await t.commitTree("A", { "f.txt": "1" });
+      await t.commitTree("B", { "f.txt": "2" });
+      await t.commitTree("C", { "f.txt": "3" });
 
       await t.kitCmd("branch", "topic", "@^^");
       await t.kitCmd("checkout", "topic");
@@ -138,7 +92,7 @@ describe("merge", () => {
   describe("unconflicted merge with two files", () => {
     beforeEach(async () => {
       // prettier-ignore
-      await merge3(
+      await t.merge3(
         { "f.txt": "1", "g.txt": "1" },
         { "f.txt": "2",              },
         {               "g.txt": "2" },
@@ -160,7 +114,7 @@ describe("merge", () => {
   describe("unconflicted merge with a deleted file", () => {
     beforeEach(async () => {
       // prettier-ignore
-      await merge3(
+      await t.merge3(
         { "f.txt": "1", "g.txt": "1" },
         { "f.txt": "2",              },
         {               "g.txt": null },
@@ -179,7 +133,7 @@ describe("merge", () => {
   describe("unconflicted merge: same addition on both sides", () => {
     beforeEach(async () => {
       // prettier-ignore
-      await merge3(
+      await t.merge3(
         { "f.txt": "1" },
         { "g.txt": "2" },
         { "g.txt": "2" },
@@ -201,7 +155,7 @@ describe("merge", () => {
   describe("unconflicted merge: same edit on both sides", () => {
     beforeEach(async () => {
       // prettier-ignore
-      await merge3(
+      await t.merge3(
         { "f.txt": "1" },
         { "f.txt": "2" },
         { "f.txt": "2" },
@@ -220,7 +174,7 @@ describe("merge", () => {
   describe.skip("unconflicted merge: in-file merge possible", () => {
     beforeEach(async () => {
       // prettier-ignore
-      await merge3(
+      await t.merge3(
         { "f.txt": "1\n2\n3\n" },
         { "f.txt": "4\n2\n3\n" },
         { "f.txt": "1\n2\n5\n" },
@@ -239,10 +193,10 @@ describe("merge", () => {
   describe("unconflicted merge: edit and mode-change", () => {
     beforeEach(async () => {
       // prettier-ignore
-      await merge3(
+      await t.merge3(
         { "f.txt": "1" },
         { "f.txt": "2" },
-        { "f.txt": X },
+        { "f.txt": T.X },
       )
     });
 
@@ -259,9 +213,9 @@ describe("merge", () => {
   describe("unconflicted merge: mode-change and edit", () => {
     beforeEach(async () => {
       // prettier-ignore
-      await merge3(
+      await t.merge3(
         { "f.txt": "1" },
-        { "f.txt": X },
+        { "f.txt": T.X },
         { "f.txt": "3" },
       )
     });
@@ -279,7 +233,7 @@ describe("merge", () => {
   describe("unconflicted merge: same deletion on both sides", () => {
     beforeEach(async () => {
       // prettier-ignore
-      await merge3(
+      await t.merge3(
         { "f.txt": "1", "g.txt": "1"  },
         {               "g.txt": null },
         {               "g.txt": null },
@@ -298,7 +252,7 @@ describe("merge", () => {
   describe.skip("unconflicted merge: delete-add-parent", () => {
     beforeEach(async () => {
       // prettier-ignore
-      await merge3(
+      await t.merge3(
         { "nest/f.txt": "1", },
         { "nest/f.txt": null },
         { "nest"      : "3" },
@@ -317,7 +271,7 @@ describe("merge", () => {
   describe.skip("unconflicted merge: delete-add-child", () => {
     beforeEach(async () => {
       // prettier-ignore
-      await merge3(
+      await t.merge3(
         { "nest/f.txt": "1", },
         { "nest/f.txt": null },
         { "nest/f.txt": null, "nest/f.txt/g.txt": "3" },
@@ -336,7 +290,7 @@ describe("merge", () => {
   describe("conflicted merge: add-add", () => {
     beforeEach(async () => {
       // prettier-ignore
-      await merge3(
+      await t.merge3(
         { "f.txt": "1",  },
         { "g.txt": "2\n" },
         { "g.txt": "3\n" },
@@ -380,7 +334,7 @@ describe("merge", () => {
   describe("conflicted merge: add-add mode conflict", () => {
     beforeEach(async () => {
       // prettier-ignore
-      await merge3(
+      await t.merge3(
         { "f.txt": "1",  },
         { "g.txt": "2" },
         { "g.txt": ["2"] },
@@ -414,7 +368,7 @@ describe("merge", () => {
   describe("conflicted merge: file/directory addition", () => {
     beforeEach(async () => {
       // prettier-ignore
-      await merge3(
+      await t.merge3(
         { "f.txt": "1" },
         { "g.txt": "2\n" },
         { "g.txt/three.txt": "3\n" },
@@ -445,7 +399,7 @@ describe("merge", () => {
   describe("conflicted merge: directory/file addition", () => {
     beforeEach(async () => {
       // prettier-ignore
-      await merge3(
+      await t.merge3(
         { "f.txt": "1" },
         { "g.txt/two.txt": "2\n" },
         { "g.txt": "3\n" }
@@ -480,7 +434,7 @@ describe("merge", () => {
   describe("conflicted merge: edit-edit", () => {
     beforeEach(async () => {
       // prettier-ignore
-      await merge3(
+      await t.merge3(
         { "f.txt": "1",  },
         { "f.txt": "2\n" },
         { "f.txt": "3\n" },
@@ -531,7 +485,7 @@ describe("merge", () => {
   describe("conflicted merge: edit-delete", () => {
     beforeEach(async () => {
       // prettier-ignore
-      await merge3(
+      await t.merge3(
         { "f.txt": "1" },
         { "f.txt": "2" },
         { "f.txt": null },
@@ -569,7 +523,7 @@ describe("merge", () => {
   describe("conflicted merge: delete-edit", () => {
     beforeEach(async () => {
       // prettier-ignore
-      await merge3(
+      await t.merge3(
         { "f.txt": "1" },
         { "f.txt": null },
         { "f.txt": "2" },
@@ -599,7 +553,7 @@ describe("merge", () => {
   describe("conflicted merge: edit-add-parent", () => {
     beforeEach(async () => {
       // prettier-ignore
-      await merge3(
+      await t.merge3(
         { "nest/f.txt": "1" },
         { "nest/f.txt": "2" },
         { "nest": "3" },
@@ -633,7 +587,7 @@ describe("merge", () => {
   describe("conflicted merge: edit-add-child", () => {
     beforeEach(async () => {
       // prettier-ignore
-      await merge3(
+      await t.merge3(
         { "nest/f.txt": "1" },
         { "nest/f.txt": "2" },
         { "nest/f.txt": null, "nest/f.txt/g.txt": "3" },

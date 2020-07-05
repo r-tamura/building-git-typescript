@@ -1,8 +1,8 @@
 import { promises } from "fs";
 import { Readable, Writable } from "stream";
-import * as path from "path";
 import * as assert from "power-assert";
-import { Environment, Pathname, CompleteCommit } from "~/types";
+import * as path from "path";
+import { Environment, Pathname, CompleteCommit, Dict } from "~/types";
 import { defaultFs, Logger, Process, exists } from "~/services";
 import { Repository } from "~/repository";
 import { makeLogger } from "~/__test__/util";
@@ -22,6 +22,9 @@ export function create() {
 
 const fs = promises;
 export type Contents = [string, string][];
+
+/** ファイルを実行可能形式へ変更する命令 */
+export const X = "x";
 export class TestUtil {
   envvars: Process["env"] = {};
   _env: Environment;
@@ -224,6 +227,49 @@ export class TestUtil {
     return this.resolveRevision(expression).then(
       (oid) => this.repo().database.load(oid) as Promise<CompleteCommit>
     );
+  }
+
+  async commitTree(message: string, files: Dict<string | string[] | null>) {
+    for (const [filepath, contents] of Object.entries(files)) {
+      if (contents !== X) {
+        await this.rm(filepath);
+      }
+      if (contents === X) {
+        await this.makeExecutable(filepath);
+      } else if (typeof contents === "string") {
+        await this.writeFile(filepath, contents);
+      } else if (Array.isArray(contents)) {
+        await this.writeFile(filepath, contents[0]);
+        await this.makeExecutable(filepath);
+      }
+    }
+    await this.rm(".git/index");
+    await this.kitCmd("add", ".");
+    await this.commit(message);
+  }
+
+  /**
+   *   A   B   M
+   *   o---o---o [master]
+   *    \     /
+   *     `---o [topic]
+   *         C
+   */
+  async merge3(
+    base: Dict<string | string[] | null>,
+    left: Dict<string | string[] | null>,
+    right: Dict<string | string[] | null>
+  ) {
+    await this.commitTree("A", base);
+    await this.commitTree("B", left);
+
+    await this.kitCmd("branch", "topic", "master^");
+    await this.kitCmd("checkout", "topic");
+    await this.commitTree("C", right);
+
+    await this.kitCmd("checkout", "master");
+    this.mockStdio("M");
+    await this.kitCmd("merge", "topic");
   }
 }
 

@@ -38,6 +38,6 @@ export function stripIndent(strings: TemplateStringsArray, ...args: any[]) {
     .filter(notIsEmptyFirstLastLine);
   const str = lines.join(EOL);
   const min = minIndent(str);
-  const indent = new RegExp(`[ \\t]{${min}}`, "gm");
+  const indent = new RegExp(`^[ \\t]{${min}}`, "gm");
   return str.replace(indent, "");
 }
