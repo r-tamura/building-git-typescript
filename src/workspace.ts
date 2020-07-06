@@ -6,7 +6,7 @@ import { Stats } from "fs";
 import { Migration, Changes } from "./repository";
 import { O_WRONLY, O_CREAT, O_EXCL } from "constants";
 
-type Environment = {
+export type Environment = {
   fs?: FileService;
 };
 
@@ -23,7 +23,7 @@ export class Workspace {
     this.#fs = env.fs ?? defaultFs;
   }
 
-  async applyMigration(migration: Migration) {
+  async applyMigration(migration: Migration): Promise<void> {
     await this.applyChangeList(migration, "delete");
 
     // サブディレクトリから削除していく

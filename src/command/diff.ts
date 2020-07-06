@@ -16,7 +16,7 @@ interface Option {
 
 export class Diff extends Base<Option> {
   #status!: Repository.Status;
-  async run() {
+  async run(): Promise<void> {
     await this.repo.index.load();
     this.#status = await this.repo.status;
 
@@ -29,7 +29,7 @@ export class Diff extends Base<Option> {
     }
   }
 
-  initOptions() {
+  initOptions(): void {
     this.options = {
       cached: false,
       patch: true,

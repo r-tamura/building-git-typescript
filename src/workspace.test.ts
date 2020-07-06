@@ -1,13 +1,10 @@
 import { join } from "path";
 import * as assert from "power-assert";
-import { Repository } from "./repository";
-import { Workspace, MissingFile, NoPermission } from "./workspace";
+import { Workspace, MissingFile, NoPermission, Environment } from "./workspace";
 import { defaultFs } from "./services";
-import * as Services from "./services";
 import { Stats } from "fs";
 import { ENOENT, mockFsError, assertAsyncError } from "./__test__";
-import { Migration } from "./repository";
-import { Changes, Entry } from "./database";
+import { Pathname } from "./types";
 
 jest.mock("fs");
 jest.mock("./repository/repository");
@@ -56,7 +53,7 @@ const fakeDirectory: FakeDir = {
           name: "dir_b",
           items: [
             { type: "f", name: "hello_b.txt" },
-            { type: "d", name: "dir_b_a", items: [] as any[] },
+            { type: "d", name: "dir_b_a", items: [] as FakeDir[] },
           ],
         },
       ],
@@ -85,7 +82,7 @@ const retrieve = (pathname: string): FakeEntry => {
 };
 
 const fakeReaddir = jest
-  .fn<Promise<any[]>, any>()
+  .fn<Promise<string[]>, [Pathname]>()
   .mockImplementation(async (pathname: string) => {
     const entry = retrieve(pathname);
     if (entry.type === "f") {
@@ -95,25 +92,23 @@ const fakeReaddir = jest
     return names;
   });
 
-const fakeStat = jest
-  .fn<Promise<Stats>, [any]>()
-  .mockImplementation(async (pathname) => {
-    MockedStat.mockImplementation(() => ({
-      isDirectory: jest.fn().mockReturnValue(retrieve(pathname).type === "d"),
-    }));
-    return new Stats();
-  });
+const fakeStat = jest.fn<Promise<Stats>, [string]>().mockImplementation(async (pathname) => {
+  MockedStat.mockImplementation(() => ({
+    isDirectory: jest.fn().mockReturnValue(retrieve(pathname).type === "d"),
+  }));
+  return new Stats();
+});
 
 describe("WorkSpace#listFiles", () => {
   const testPath = "test";
-  const env = {
+  const env = ({
     fs: {
       ...defaultFs,
       readdir: fakeReaddir,
       stat: fakeStat,
       access: jest.fn().mockResolvedValue(undefined),
     },
-  };
+  } as unknown) as Environment;
 
   it("ファイルが指定されたとき、そのファイルのみを要素とするリストを返す", async () => {
     // Arrange
@@ -155,7 +150,7 @@ describe("WorkSpace#listFiles", () => {
 
   it("存在しないファイルが含まれているとき、例外を発生させる", async () => {
     // Arrange
-    const env = {
+    const env = ({
       fs: {
         ...defaultFs,
         readdir: fakeReaddir,
@@ -163,7 +158,7 @@ describe("WorkSpace#listFiles", () => {
           throw ENOENT;
         }),
       },
-    };
+    } as unknown) as Environment;
 
     // Act
     const ws = new Workspace("test/noent.txt", env);
@@ -175,9 +170,9 @@ describe("WorkSpace#listFiles", () => {
 
 describe("Workspace#readFile", () => {
   const testContent = [
-    `Lorem Ipsum is simply dummy text of the printing and typesetting industry. `,
-    `Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, `,
-    `when an unknown printer took a galley of type and scrambled it to make a type specimen book.`,
+    "Lorem Ipsum is simply dummy text of the printing and typesetting industry. ",
+    "Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, ",
+    "when an unknown printer took a galley of type and scrambled it to make a type specimen book.",
   ].join("\n");
   const mockedReadFile = jest.fn().mockResolvedValue(testContent);
   let actual: string | null = null;
@@ -203,9 +198,9 @@ describe("Workspace#readFile", () => {
 describe("Workspace#statFile", () => {
   it("エントリが存在しないとき、nullを返す", async () => {
     // Arrange
-    const env = {
+    const env = ({
       fs: { stat: mockFsError("ENOENT", "async") },
-    } as any;
+    } as unknown) as Environment;
 
     // Act
     const ws = new Workspace("/tmp", env);
@@ -217,9 +212,9 @@ describe("Workspace#statFile", () => {
 
   it("エントリへのアクセス権限がないとき、例外を発生させる", () => {
     // Arrange
-    const env = {
+    const env = ({
       fs: { stat: mockFsError("EACCES", "async") },
-    } as any;
+    } as unknown) as Environment;
     // Act
     const ws = new Workspace("/tmp", env);
     const actual = ws.statFile("path/to/nopermission");
