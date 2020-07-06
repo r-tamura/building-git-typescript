@@ -6,7 +6,7 @@ import * as assert from "assert";
 import { Pathname, OID } from "../types";
 import { Lockfile, LockfileEnvironment } from "../lockfile";
 import { Invalid, times, ObjectKeyHash, ObjectSet, some } from "../util";
-import { Entry, Key, Stage, STAGES } from "./entry";
+import { Entry, Key, Stage, STAGES, LEFT, RIGHT, BASE } from "./entry";
 import { Checksum } from "./checksum";
 import { FileService, defaultFs } from "../services";
 import * as Database from "../database";
@@ -23,7 +23,7 @@ export class Index {
   #keys: ObjectSet<Key> = new ObjectSet(serialize, deserialize);
   #parents: Map<string, Set<string>> = new Map();
   #lockfile: Lockfile;
-  #changed: boolean = false;
+  #changed = false;
   #fs: FileService;
   constructor(pathname: Pathname, env: LockfileEnvironment = {}) {
     this.#pathname = pathname;
@@ -33,6 +33,7 @@ export class Index {
   }
 
   add(pathname: Pathname, oid: OID, stat: Stats) {
+    ([BASE, LEFT, RIGHT] as const).forEach((stage) => this.removeEntryWithStage(pathname, stage));
     const entry = Entry.create(pathname, oid, stat);
     this.discardConflicts(entry);
     this.storeEntry(entry);

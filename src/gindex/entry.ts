@@ -41,7 +41,11 @@ type EntryStats = Pick<
  * flag         flag
  */
 export type Flags = number;
-export const STAGES = [0, 1, 2, 3] as const;
+export const NORMAL = 0;
+export const BASE = 1;
+export const LEFT = 2;
+export const RIGHT = 3;
+export const STAGES = [NORMAL, BASE, LEFT, RIGHT] as const;
 export type Stage = typeof STAGES[number];
 export type Key = readonly [Pathname, Stage];
 
