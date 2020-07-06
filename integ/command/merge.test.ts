@@ -449,14 +449,6 @@ describe("merge", () => {
       `);
     });
 
-    it("prints the merge conflicts", () => {
-      t.assertInfo(stripIndent`
-        Auto-merging g.txt
-        CONFLICT (add/add): Merge conflict in g.txt
-        Automatic merge failed; fix conflicts and then commit the result.
-      `);
-    });
-
     it("puts the conflicted file in the workspace", async () => {
       await t.assertWorkspace([
         [
@@ -495,14 +487,6 @@ describe("merge", () => {
     it("prints the merge conflicts", () => {
       t.assertInfo(stripIndent`
         CONFLICT (modify/delete): f.txt deleted in topic and modified in HEAD. Version HEAD of f.txt left in tree.
-        Automatic merge failed; fix conflicts and then commit the result.
-      `);
-    });
-
-    it("prints the merge conflicts", () => {
-      t.assertInfo(stripIndent`
-        Auto-merging g.txt
-        CONFLICT (add/add): Merge conflict in g.txt
         Automatic merge failed; fix conflicts and then commit the result.
       `);
     });
