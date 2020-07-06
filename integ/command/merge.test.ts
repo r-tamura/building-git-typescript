@@ -31,7 +31,7 @@ describe("merge", () => {
   type TestIndexEntry = readonly [Pathname, Stage];
   async function assertIndex(...entries: TestIndexEntry[]) {
     await t.repo().index.load();
-    let actual: TestIndexEntry[] = [];
+    const actual: TestIndexEntry[] = [];
     for (const entry of t.repo().index.eachEntry()) {
       actual.push([entry.name, entry.stage]);
     }
@@ -72,7 +72,7 @@ describe("merge", () => {
 
     it("prints the fast-forward message", async () => {
       // prettier-ignore
-      const [a, b] = await Promise.all(["master^^", "master"].map((rev) => t.resolveRevision(rev)))
+      const [a, b] = await Promise.all(["master^^", "master"].map((rev) => t.resolveRevision(rev)));
 
       t.assertInfo(stripIndent`
         Updating ${t.repo().database.shortOid(a)}..${t.repo().database.shortOid(b)}
@@ -94,9 +94,9 @@ describe("merge", () => {
       // prettier-ignore
       await t.merge3(
         { "f.txt": "1", "g.txt": "1" },
-        { "f.txt": "2",              },
+        { "f.txt": "2"              },
         {               "g.txt": "2" },
-      )
+      );
     });
 
     it("puts the combined changes in the workspace", async () => {
@@ -116,9 +116,9 @@ describe("merge", () => {
       // prettier-ignore
       await t.merge3(
         { "f.txt": "1", "g.txt": "1" },
-        { "f.txt": "2",              },
+        { "f.txt": "2"              },
         {               "g.txt": null },
-      )
+      );
     });
 
     it("puts the combined changes in the workspace", async () => {
@@ -137,7 +137,7 @@ describe("merge", () => {
         { "f.txt": "1" },
         { "g.txt": "2" },
         { "g.txt": "2" },
-      )
+      );
     });
 
     it("puts the combined changes in the workspace", async () => {
@@ -159,7 +159,7 @@ describe("merge", () => {
         { "f.txt": "1" },
         { "f.txt": "2" },
         { "f.txt": "2" },
-      )
+      );
     });
 
     it("puts the combined changes in the workspace", async () => {
@@ -178,7 +178,7 @@ describe("merge", () => {
         { "f.txt": "1\n2\n3\n" },
         { "f.txt": "4\n2\n3\n" },
         { "f.txt": "1\n2\n5\n" },
-      )
+      );
     });
 
     it("puts the combined changes in the workspace", async () => {
@@ -197,7 +197,7 @@ describe("merge", () => {
         { "f.txt": "1" },
         { "f.txt": "2" },
         { "f.txt": T.X },
-      )
+      );
     });
 
     it("puts the combined changes in the workspace", async () => {
@@ -217,7 +217,7 @@ describe("merge", () => {
         { "f.txt": "1" },
         { "f.txt": T.X },
         { "f.txt": "3" },
-      )
+      );
     });
 
     it("puts the combined changes in the workspace", async () => {
@@ -237,7 +237,7 @@ describe("merge", () => {
         { "f.txt": "1", "g.txt": "1"  },
         {               "g.txt": null },
         {               "g.txt": null },
-      )
+      );
     });
 
     it("puts the combined changes in the workspace", async () => {
@@ -253,10 +253,10 @@ describe("merge", () => {
     beforeEach(async () => {
       // prettier-ignore
       await t.merge3(
-        { "nest/f.txt": "1", },
+        { "nest/f.txt": "1" },
         { "nest/f.txt": null },
         { "nest"      : "3" },
-      )
+      );
     });
 
     it("puts the combined changes in the workspace", async () => {
@@ -272,10 +272,10 @@ describe("merge", () => {
     beforeEach(async () => {
       // prettier-ignore
       await t.merge3(
-        { "nest/f.txt": "1", },
+        { "nest/f.txt": "1" },
         { "nest/f.txt": null },
         { "nest/f.txt": null, "nest/f.txt/g.txt": "3" },
-      )
+      );
     });
 
     it("puts the combined changes in the workspace", async () => {
@@ -291,10 +291,10 @@ describe("merge", () => {
     beforeEach(async () => {
       // prettier-ignore
       await t.merge3(
-        { "f.txt": "1",  },
+        { "f.txt": "1"  },
         { "g.txt": "2\n" },
         { "g.txt": "3\n" },
-      )
+      );
     });
 
     it("prints the merge conflicts", () => {
@@ -335,10 +335,10 @@ describe("merge", () => {
     beforeEach(async () => {
       // prettier-ignore
       await t.merge3(
-        { "f.txt": "1",  },
+        { "f.txt": "1"  },
         { "g.txt": "2" },
         { "g.txt": ["2"] },
-      )
+      );
     });
 
     it("prints the merge conflicts", () => {
@@ -435,10 +435,10 @@ describe("merge", () => {
     beforeEach(async () => {
       // prettier-ignore
       await t.merge3(
-        { "f.txt": "1",  },
+        { "f.txt": "1"  },
         { "f.txt": "2\n" },
         { "f.txt": "3\n" },
-      )
+      );
     });
 
     it("prints the merge conflicts", () => {
@@ -449,7 +449,7 @@ describe("merge", () => {
       `);
     });
 
-    it.skip("prints the merge conflicts", () => {
+    it("prints the merge conflicts", () => {
       t.assertInfo(stripIndent`
         Auto-merging g.txt
         CONFLICT (add/add): Merge conflict in g.txt
@@ -489,7 +489,7 @@ describe("merge", () => {
         { "f.txt": "1" },
         { "f.txt": "2" },
         { "f.txt": null },
-      )
+      );
     });
 
     it("prints the merge conflicts", () => {
@@ -499,7 +499,7 @@ describe("merge", () => {
       `);
     });
 
-    it.skip("prints the merge conflicts", () => {
+    it("prints the merge conflicts", () => {
       t.assertInfo(stripIndent`
         Auto-merging g.txt
         CONFLICT (add/add): Merge conflict in g.txt
@@ -527,7 +527,7 @@ describe("merge", () => {
         { "f.txt": "1" },
         { "f.txt": null },
         { "f.txt": "2" },
-      )
+      );
     });
 
     it("prints the merge conflicts", () => {
@@ -557,7 +557,7 @@ describe("merge", () => {
         { "nest/f.txt": "1" },
         { "nest/f.txt": "2" },
         { "nest": "3" },
-      )
+      );
     });
 
     it("prints the merge conflicts", () => {
@@ -591,7 +591,7 @@ describe("merge", () => {
         { "nest/f.txt": "1" },
         { "nest/f.txt": "2" },
         { "nest/f.txt": null, "nest/f.txt/g.txt": "3" },
-      )
+      );
     });
 
     it("prints the merge conflicts", () => {

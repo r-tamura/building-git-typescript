@@ -8,6 +8,7 @@ import { Process, FileService } from "../services";
 import { Status } from "./status";
 import { Changes } from "../database";
 import { Migration } from "./migration";
+import { PendingCommit } from "./pending_commit";
 
 export type RepositoryEnv = {
   process: Process;
@@ -47,5 +48,9 @@ export class Repository {
 
   migration(treeDiff: Changes) {
     return new Migration(this, treeDiff);
+  }
+
+  pendingCommit() {
+    return new PendingCommit(this.gitPath, this.env);
   }
 }

@@ -1,12 +1,14 @@
 import { Base } from "./base";
-import { writeCommit } from "./shared/write_commit";
+import { writeCommit, pendingCommit } from "./shared/write_commit";
 import { HEAD } from "../revision";
 import { readTextStream } from "../services";
 import { Inputs, Resolve } from "../merge";
+import { PendingCommit } from "~/repository/pending_commit";
 
 export class Merge extends Base {
   #inputs!: Inputs;
 
+  pendingCommit!: PendingCommit;
   async run() {
     this.#inputs = await Inputs.of(this.repo, HEAD, this.args[0]);
 
@@ -17,7 +19,8 @@ export class Merge extends Base {
     if (this.#inputs.fastForward()) {
       await this.handleFastForward();
     }
-
+    const message = await readTextStream(this.env.process.stdin);
+    await pendingCommit(this).start(this.#inputs.rightOid, message);
     await this.resolveMerge();
     await this.commitMerge();
   }
@@ -38,8 +41,10 @@ export class Merge extends Base {
 
   async commitMerge() {
     const parents = [this.#inputs.leftOid, this.#inputs.rightOid];
-    const message = await readTextStream(this.env.process.stdin);
+    const message = await this.pendingCommit.mergeMessage();
     await writeCommit(parents, message, this);
+
+    await this.pendingCommit.clear();
   }
 
   private handleMergedAncestor(): never {
