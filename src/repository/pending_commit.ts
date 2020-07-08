@@ -1,6 +1,6 @@
 import * as path from "path";
 import { Pathname, OID } from "../types";
-import { FileService } from "~/services";
+import { FileService } from "../services";
 import { O_WRONLY, O_EXCL, O_CREAT } from "constants";
 
 export interface Environment {

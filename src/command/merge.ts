@@ -3,7 +3,7 @@ import { writeCommit, pendingCommit } from "./shared/write_commit";
 import { HEAD } from "../revision";
 import { readTextStream } from "../services";
 import { Inputs, Resolve } from "../merge";
-import { PendingCommit } from "~/repository/pending_commit";
+import { PendingCommit } from "../repository/pending_commit";
 
 export class Merge extends Base {
   #inputs!: Inputs;

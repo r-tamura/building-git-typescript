@@ -1,6 +1,6 @@
 import * as assert from "power-assert";
 import * as T from "./helper";
-import { stripIndent } from "~/util";
+import { stripIndent } from "../../src/util";
 const t = T.create();
 
 describe("checkout", () => {
@@ -49,9 +49,7 @@ describe("checkout", () => {
     ];
 
     beforeEach(async () => {
-      await Promise.all(
-        basefiles.map(([name, content]) => t.writeFile(name, content))
-      );
+      await Promise.all(basefiles.map(([name, content]) => t.writeFile(name, content)));
       await t.kitCmd("add", ".");
       await t.commit("first");
     });
@@ -115,9 +113,7 @@ describe("checkout", () => {
       await t.rm("outer");
       await t.kitCmd("checkout", "@^");
 
-      await t.assertWorkspace(
-        basefiles.filter(([n, c]) => n !== "outer/2.txt")
-      );
+      await t.assertWorkspace(basefiles.filter(([n, c]) => n !== "outer/2.txt"));
       await assertStatus(" D outer/2.txt");
     });
 
@@ -428,10 +424,7 @@ describe("checkout", () => {
       });
 
       it("resolves HEAD to the same object as the branch", async () => {
-        assert.equal(
-          await t.repo().refs.readHead(),
-          await t.repo().refs.readRef("topic")
-        );
+        assert.equal(await t.repo().refs.readHead(), await t.repo().refs.readRef("topic"));
       });
 
       it("prints a message when switing to the same branch", async () => {

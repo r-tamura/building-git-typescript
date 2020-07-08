@@ -2,7 +2,7 @@ import { OID, CompleteTree, CompleteCommit } from "../../types";
 import { Base } from "../base";
 import { Author, Commit, Tree } from "../../database";
 import { asserts } from "../../util";
-import { PendingCommit } from "~/repository/pending_commit";
+import { PendingCommit } from "../../repository/pending_commit";
 
 export async function writeCommit(parents: OID[], message: string, cmd: Base) {
   const tree = await writeTree(cmd);

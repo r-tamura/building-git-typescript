@@ -1,7 +1,7 @@
 import * as T from "./helper";
-import { OID } from "~/types";
-import { stripIndent } from "~/util";
-import { CompleteCommit, Dict } from "~/types";
+import { OID } from "../../src/types";
+import { stripIndent } from "../../src/util";
+import { CompleteCommit, Dict } from "../../src/types";
 
 const t = T.create();
 
@@ -203,13 +203,7 @@ describe("log", () => {
     });
 
     it("logs the combined history of multiple branches", async () => {
-      await t.kitCmd(
-        "log",
-        "--pretty=oneline",
-        "--decorate=short",
-        "master",
-        "topic"
-      );
+      await t.kitCmd("log", "--pretty=oneline", "--decorate=short", "master", "topic");
 
       t.assertInfo(stripIndent`
         ${topic[0]} (HEAD -> topic) topic-4
@@ -271,9 +265,7 @@ describe("log", () => {
 
   async function commitTree(message: string, files: Dict<string>, time?: Date) {
     await Promise.all(
-      Object.entries(files).map(([pathname, contents]) =>
-        t.writeFile(pathname, contents)
-      )
+      Object.entries(files).map(([pathname, contents]) => t.writeFile(pathname, contents))
     );
     await t.kitCmd("add", ".");
     await t.commit(message, time);
@@ -296,9 +288,7 @@ describe("log", () => {
       });
 
       commits = await Promise.all(
-        ["@^^", "@^", "@"].map(
-          (rev) => t.loadCommit(rev) as Promise<CompleteCommit>
-        )
+        ["@^^", "@^", "@"].map((rev) => t.loadCommit(rev) as Promise<CompleteCommit>)
       );
     });
 
@@ -422,9 +412,9 @@ describe("log", () => {
       await commitTree("K", { "f.txt": "K" }, addSeconds(time, 3));
 
       // prettier-ignore
-      master = await Promise.all([0, 1, 2, 3, 4, 5].map(n => t.resolveRevision(`master~${n}`)))
+      master = await Promise.all([0, 1, 2, 3, 4, 5].map(n => t.resolveRevision(`master~${n}`)));
       // prettier-ignore
-      topic = await Promise.all([0, 1, 2, 3].map(n => t.resolveRevision(`topic~${n}`)))
+      topic = await Promise.all([0, 1, 2, 3].map(n => t.resolveRevision(`topic~${n}`)));
     });
 
     it("logs concurrent branches leading to a merge", async () => {

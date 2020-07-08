@@ -2,7 +2,7 @@ import * as fsCb from "fs";
 import * as path from "path";
 import * as T from "./helper";
 import * as assert from "power-assert";
-import { stripIndent } from "~/util";
+import { stripIndent } from "../../src/util";
 const fs = fsCb.promises;
 
 const t = T.create();
@@ -40,10 +40,7 @@ describe("branch", () => {
     it("creates a branch pointing at HEAD", async () => {
       await t.kitCmd("branch", "topic");
 
-      assert.equal(
-        await t.repo().refs.readHead(),
-        await t.repo().refs.readRef("topic")
-      );
+      assert.equal(await t.repo().refs.readHead(), await t.repo().refs.readRef("topic"));
     });
 
     it("fails for invalid branch names", async () => {
@@ -182,12 +179,8 @@ describe("branch", () => {
       await t.kitCmd("branch", "-d", "-f", "fix/delete-branches");
 
       const branches = await t.repo().refs.listBranchs();
-      assert(
-        !branches.map((b) => b.shortName()).includes("fix/delete-branches")
-      );
-      const heads = await fs.readdir(
-        path.join(t.repoPath, ".git", "refs", "heads")
-      );
+      assert(!branches.map((b) => b.shortName()).includes("fix/delete-branches"));
+      const heads = await fs.readdir(path.join(t.repoPath, ".git", "refs", "heads"));
       assert(!heads.includes("fix"));
     });
   });

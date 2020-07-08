@@ -1,6 +1,6 @@
 import * as T from "./helper";
-import { stripIndent } from "~/util";
-import { Repository } from "~/repository";
+import { stripIndent } from "../../src/util";
+import { Repository } from "../../src/repository";
 
 const t = T.create();
 

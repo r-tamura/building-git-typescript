@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-const main = require("../src/main")
+const main = require("../dist/main");
 if (require.main == module) {
   main.createMain()(process.argv.slice(2));
 }

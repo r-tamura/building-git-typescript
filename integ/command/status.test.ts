@@ -1,5 +1,5 @@
 import * as T from "./helper";
-import { stripIndent } from "~/util";
+import { stripIndent } from "../../src/util";
 
 const t = T.create();
 

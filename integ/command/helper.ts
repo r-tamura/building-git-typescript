@@ -2,14 +2,14 @@ import { promises } from "fs";
 import { Readable, Writable } from "stream";
 import * as assert from "power-assert";
 import * as path from "path";
-import { Environment, Pathname, CompleteCommit, Dict } from "~/types";
-import { defaultFs, Logger, Process, exists } from "~/services";
-import { Repository } from "~/repository";
-import { makeLogger } from "~/__test__/util";
-import * as Command from "~/command";
-import { asserts } from "~/util";
-import { Revision } from "~/revision";
-import * as FileService from "~/services";
+import { Environment, Pathname, CompleteCommit, Dict } from "../../src/types";
+import { defaultFs, Logger, Process, exists } from "../../src/services";
+import { Repository } from "../../src/repository";
+import { makeLogger } from "../../src/__test__/util";
+import * as Command from "../../src/command";
+import { asserts } from "../../src/util";
+import { Revision } from "../../src/revision";
+import * as FileService from "../../src/services";
 
 export interface TestUtil {
   suffix: Pathname;
@@ -30,7 +30,7 @@ export class TestUtil {
   _env: Environment;
   _repo: Repository;
 
-  constructor(name: string = "") {
+  constructor(name = "") {
     this.suffix = name + randomChoice("0123456789abcdefghijklmnopqrstuvwxyz", 6);
 
     this._env = {
@@ -186,7 +186,7 @@ export class TestUtil {
   /** I/O
    * TODO: stdin/stdoutの良いモック方法を考える
    */
-  makeStdin(text: string = "", { isTTY = false }: { isTTY?: boolean } = {}): typeof process.stdin {
+  makeStdin(text = "", { isTTY = false }: { isTTY?: boolean } = {}): typeof process.stdin {
     const readable = Readable.from(text) as any;
     return this.mockStreamAsTTY(readable, { isTTY });
   }
@@ -277,7 +277,7 @@ export class TestUtil {
  * 指定された文字列からランダムに length文字抽出した文字列を生成する。
  * 引数は ascii のみ
  * */
-const randomChoice = (s: string, count: number = 1) => {
+const randomChoice = (s: string, count = 1) => {
   const max = s.length;
   let res = "";
   for (let i = 0; i < count; i++) {

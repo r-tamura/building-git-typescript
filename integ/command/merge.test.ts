@@ -1,8 +1,8 @@
 import * as T from "./helper";
 import * as assert from "power-assert";
-import { Pathname } from "~/types";
-import { stripIndent } from "~/util";
-import { Stage } from "~/gindex";
+import { Pathname } from "../../src/types";
+import { stripIndent } from "../../src/util";
+import { Stage } from "../../src/gindex";
 
 const t = T.create();
 
