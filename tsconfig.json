@@ -4,8 +4,7 @@
     "module": "CommonJS",
     "sourceMap": true,
     "strict": true,
-    "lib": ["es2019"],
-    "outDir": "./dist"
+    "lib": ["es2019"]
   },
   "include": ["src/**/*.ts"]
 }

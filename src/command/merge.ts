@@ -1,15 +1,28 @@
+import * as arg from "arg";
 import { Base } from "./base";
-import { writeCommit, pendingCommit } from "./shared/write_commit";
 import { HEAD } from "../revision";
 import { readTextStream } from "../services";
 import { Inputs, Resolve } from "../merge";
-import { PendingCommit } from "../repository/pending_commit";
+import { writeCommit, pendingCommit, resumeMerge, CONFLICT_MESSAGE } from "./shared/write_commit";
+import { PendingCommit, Error as NotInProgressError } from "../repository/pending_commit";
 
-export class Merge extends Base {
+interface Options {
+  mode: "run" | "continue";
+}
+
+export class Merge extends Base<Options> {
   #inputs!: Inputs;
 
   pendingCommit!: PendingCommit;
   async run() {
+    if (this.options["mode"] === "continue") {
+      await this.handleContinue();
+      return;
+    }
+    if (await pendingCommit(this).inProgress()) {
+      this.handleInProgressMerge();
+    }
+
     this.#inputs = await Inputs.of(this.repo, HEAD, this.args[0]);
 
     if (this.#inputs.alreadyMerged()) {
@@ -23,6 +36,20 @@ export class Merge extends Base {
     await pendingCommit(this).start(this.#inputs.rightOid, message);
     await this.resolveMerge();
     await this.commitMerge();
+  }
+
+  protected defineSpec() {
+    return {
+      "--continue": arg.flag(() => {
+        this.options["mode"] = "continue";
+      }),
+    };
+  }
+
+  initOptions() {
+    this.options = {
+      mode: "run",
+    };
   }
 
   async resolveMerge() {
@@ -68,5 +95,26 @@ export class Merge extends Base {
 
     await this.repo.refs.updateHead(this.#inputs.rightOid);
     this.exit(0);
+  }
+
+  private async handleContinue() {
+    try {
+      await this.repo.index.load();
+      await resumeMerge(this);
+    } catch (e) {
+      switch (e.constructor) {
+        case NotInProgressError:
+          this.exit(128);
+        default:
+          throw e;
+      }
+    }
+  }
+
+  private handleInProgressMerge() {
+    const message = "Merging is not possible because you have unmerged files.";
+    this.logger.error(`error: ${message}`);
+    this.logger.error(CONFLICT_MESSAGE);
+    return this.exit(128);
   }
 }

@@ -10,19 +10,21 @@ import { Pager } from "../pager";
 /** process.exit 代替え */
 export class Exit {}
 
-export type BaseConstructor<O extends arg.Spec = {}> = {
+export type BaseConstructor<O extends arg.Spec> = {
   new (args: string[], env: Environment): Base<O>;
 };
 
-export abstract class Base<O extends object = {}> implements Runnable {
+type NoOptions = {}
+
+export abstract class Base<O extends NoOptions = {}> implements Runnable {
   /** 作業ディレクトリ */
   protected dir: string;
   /** 環境変数 */
   envvars: EnvVars;
-  /** ロガー */
-  protected logger: Logger;
   /** ページャ-  */
   private pager: Pager | null = null;
+  /** ロガー */
+  public logger: Logger;
   /** プロセスの出力がTTYか */
   private isatty: boolean;
   /** this.env.process.stdoutへのショートカット */
@@ -34,7 +36,7 @@ export abstract class Base<O extends object = {}> implements Runnable {
   options!: O;
 
   /** 終了ステータス */
-  status: number = 0;
+  status = 0;
 
   #repo!: Repository;
   constructor(protected args: string[], public env: Environment) {

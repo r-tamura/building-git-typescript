@@ -22,6 +22,7 @@ export class Hash<T, S> extends Map<T, S> {
     if (!super.has(key)) {
       init(this, key);
     }
+    // 直前で初期化を行うのでかならず値がを持つ
     return super.get(key)!;
   }
 }

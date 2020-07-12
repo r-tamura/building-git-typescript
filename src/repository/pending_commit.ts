@@ -1,12 +1,15 @@
 import * as path from "path";
-import { Pathname, OID } from "../types";
-import { FileService } from "../services";
 import { O_WRONLY, O_EXCL, O_CREAT } from "constants";
+import { Pathname, OID } from "../types";
+import { FileService, exists } from "../services";
+import { BaseError } from "../util";
 
 export interface Environment {
   fs: FileService;
 }
 
+/** マージがペンディングされていない状態でコンフリクト解決を実行した際のエラー  */
+export class Error extends BaseError {}
 export class PendingCommit {
   #headPath: Pathname;
   #messagePath: Pathname;
@@ -32,7 +35,26 @@ export class PendingCommit {
     return this.#fs.readFile(this.#messagePath, "utf8");
   }
 
+  /**
+   * コンフリクト発生時に指定されていたマージ元(right)のコミットOIDを取得します。
+   */
+  async mergeOid() {
+    return this.#fs.readFile(this.#headPath, "ascii").catch((e: NodeJS.ErrnoException) => {
+      switch (e.code) {
+        case "ENOENT":
+          const name = path.basename(this.#headPath);
+          throw new Error(`There is no merge in progress (${name} missing).`);
+        default:
+          throw e;
+      }
+    });
+  }
+
   async clear() {
     return Promise.all([this.#fs.unlink(this.#headPath), this.#fs.unlink(this.#messagePath)]);
+  }
+
+  async inProgress() {
+    return exists(this.#fs, this.#headPath);
   }
 }

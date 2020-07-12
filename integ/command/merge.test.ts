@@ -601,4 +601,115 @@ describe("merge", () => {
       await assertNoMerge();
     });
   });
+
+  describe("conflict resolution", () => {
+    beforeEach(async () => {
+      await t.merge3({ "f.txt": "1\n" }, { "f.txt": "2\n" }, { "f.txt": "3\n" });
+    });
+
+    it("prevents commits with unmerged entries", async () => {
+      t.mockStdio("B");
+      await t.kitCmd("commit");
+
+      t.assertError(stripIndent`
+        error: Committing is not possible because you have unmerged files.
+        hint: Fix them up in the work tree, and then use 'kit add/rm <file>'
+        hint: as appropriate to mark resolution and make a commit.
+        fatal: Exiting because of an unresolved conflict.
+
+      `);
+      t.assertStatus(128);
+
+      assert.equal((await t.loadCommit("@")).message, "B");
+    });
+
+    it("prevents merge --continue with unmerged entries", async () => {
+      t.mockStdio("B");
+      await t.kitCmd("merge", "--continue");
+
+      t.assertError(stripIndent`
+        error: Committing is not possible because you have unmerged files.
+        hint: Fix them up in the work tree, and then use 'kit add/rm <file>'
+        hint: as appropriate to mark resolution and make a commit.
+        fatal: Exiting because of an unresolved conflict.
+
+      `);
+      t.assertStatus(128);
+
+      assert.equal((await t.loadCommit("@")).message, "B");
+    });
+
+    it("commits a merge after resolving conflicts", async () => {
+      await t.kitCmd("add", "f.txt");
+      await t.kitCmd("commit");
+
+      t.assertStatus(0);
+
+      const commit = await t.loadCommit("@");
+      assert.equal(commit.message, "M");
+
+      const parents = [];
+      for await (const parent of commit.parents.map((oid) => t.loadCommit(oid))) {
+        parents.push(parent);
+      }
+      assert.deepEqual(
+        parents.map((p) => p.message),
+        ["B", "C"]
+      );
+    });
+
+    it("allows merge --continue after resolving conflicts", async () => {
+      await t.kitCmd("add", "f.txt");
+      await t.kitCmd("merge", "--continue");
+
+      t.assertStatus(0);
+
+      const commit = await t.loadCommit("@");
+      assert.equal(commit.message, "M");
+
+      const parents = [];
+      for await (const parent of commit.parents.map((oid) => t.loadCommit(oid))) {
+        parents.push(parent);
+      }
+      assert.deepEqual(
+        parents.map((p) => p.message),
+        ["B", "C"]
+      );
+    });
+
+    it.skip("prevents merge --continue when non is in progress", async () => {
+      await t.kitCmd("add", "f.txt");
+      await t.kitCmd("merge", "--continue");
+      await t.kitCmd("merge", "--continue");
+
+      t.assertError("fatal: There is no merge in progress (MERGE_HEAD missing).\n");
+      t.assertStatus(128);
+    });
+
+    it.skip("aborts the merge", async () => {
+      await t.kitCmd("merge", "--abort");
+      await t.kitCmd("status", "--porcelain");
+      t.assertInfo("");
+    });
+
+    it.skip("prevents aborting a merge when none is in progress", async () => {
+      await t.kitCmd("merge", "--abort");
+      await t.kitCmd("merge", "--abort");
+
+      t.assertError("fatal: There is no merge in progress (MERGE_HEAD missing).\n");
+      t.assertStatus(128);
+    });
+
+    it("prevents starting a new merge while one is in progress", async () => {
+      await t.kitCmd("merge");
+      t.assertError(stripIndent`
+        error: Merging is not possible because you have unmerged files.
+        hint: Fix them up in the work tree, and then use 'kit add/rm <file>'
+        hint: as appropriate to mark resolution and make a commit.
+        fatal: Exiting because of an unresolved conflict.
+
+      `);
+      t.assertStatus(128);
+    });
+  });
 });

@@ -12,8 +12,7 @@ import { Commit } from "./commit";
 import { TreeDiff } from "./tree_diff";
 import { PathFilter } from "../path_filter";
 
-const TEMP_CHARS =
-  "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+const TEMP_CHARS = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
 
 type Rand = {
   sample: (str: string) => string;
@@ -65,8 +64,7 @@ export class Database {
   }
 
   async load(oid: OID) {
-    return (this.#objects[oid] =
-      this.#objects[oid] ?? (await this.readObject(oid)));
+    return (this.#objects[oid] = this.#objects[oid] ?? (await this.readObject(oid)));
   }
 
   async prefixMatch(oidPrefix: OID) {
@@ -94,7 +92,6 @@ export class Database {
     const objPath = this.objectPath(oid);
     const compressed = await this.#fs.readFile(objPath);
     const data = await this.#zlib.inflate(compressed);
-
     const object = parseObject(data);
     object.oid = oid;
     return object as CompleteGitObject;

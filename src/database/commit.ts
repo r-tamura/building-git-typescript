@@ -10,22 +10,14 @@ export class Commit {
   parents: OID[];
   message: string;
 
-  constructor(
-    parents: OID[],
-    tree: OID,
-    public author: Author,
-    message: string
-  ) {
+  constructor(parents: OID[], tree: OID, public author: Author, message: string) {
     this.parents = parents;
     this.tree = tree;
     this.message = message;
   }
 
   static parse(buf: Buffer) {
-    const headers = new Hash<string, string[]>((hash, key) =>
-      hash.set(key, [])
-    );
-
+    const headers = new Hash<string, string[]>((hash, key) => hash.set(key, []));
     let offset = 0;
     while (true) {
       const [linebytes, position] = scanUntil("\n", buf, offset);
