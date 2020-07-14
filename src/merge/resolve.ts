@@ -4,6 +4,8 @@ import { Repository } from "../repository";
 import { Inputs } from "./inputs";
 import { first, asserts, ascend } from "../util";
 import { Pathname, OID } from "../types";
+import { Diff } from "../command/diff";
+import { Diff3 } from "./diff3";
 
 export type Conflict = readonly [Entry | null, Entry | null, Entry | null];
 type OnProgress = (message: string) => void;
@@ -151,27 +153,23 @@ export class Resolve {
       return result;
     }
 
+    const oids = [base, left, right] as const;
+    const blobs = await Promise.all(
+      oids.map(async (oid) =>
+        oid ? ((await this.#repo.database.load(oid)) as Blob).data.toString("utf8") : ""
+      )
+    );
+
+    const merge = Diff3.merge(blobs[0], blobs[1], blobs[2]);
+
     // merge3で判定できないとき、leftとrightは両方とも存在する
-    const conflictData = await this.mergedData(left!, right!);
-    const blob = new Blob(conflictData);
+
+    // const conflictData = await this.mergedData(left!, right!);
+    const data = merge.toString(this.#inputs.leftName, this.#inputs.rightName);
+    const blob = new Blob(data);
     await this.#repo.database.store(blob);
     // datbase.storeによりoidがセットされる
-    return [false, blob.oid!] as const;
-  }
-
-  private async mergedData(leftOid: OID, rightOid: OID) {
-    const leftBlob = await this.#repo.database.load(leftOid);
-    const rightBlob = await this.#repo.database.load(rightOid);
-
-    asserts(leftBlob.type === "blob");
-    asserts(rightBlob.type === "blob");
-    return [
-      `<<<<<<< ${this.#inputs.leftName}\n`,
-      leftBlob.data,
-      "=======\n",
-      rightBlob.data,
-      `>>>>>>> ${this.#inputs.rightName}\n`,
-    ].join("");
+    return [merge.clean(), blob.oid!] as const;
   }
 
   /**

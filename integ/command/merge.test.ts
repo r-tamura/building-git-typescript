@@ -171,7 +171,7 @@ describe("merge", () => {
     });
   });
 
-  describe.skip("unconflicted merge: in-file merge possible", () => {
+  describe("unconflicted merge: in-file merge possible", () => {
     beforeEach(async () => {
       // prettier-ignore
       await t.merge3(
