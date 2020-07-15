@@ -133,3 +133,11 @@ export function shallowEqual<T>(xs: T[], ys: T[]) {
   }
   return xs.every((x, i) => x === ys[i]);
 }
+
+export function zip<T, S>(xs: T[], ys: S[]) {
+  const result = [];
+  for (let i = 0; i < xs.length; i++) {
+    result.push([xs[i], ys[i]] as const);
+  }
+  return result;
+}
