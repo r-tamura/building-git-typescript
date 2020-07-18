@@ -1,5 +1,5 @@
 import * as path from "path";
-import { Hunk, Edit, diffHunks } from "../../diff";
+import { Hunk, Edit, diffHunks, HunkEdit } from "../../diff";
 import { OID, Pathname } from "../../types";
 import { Base } from "../base";
 import arg = require("arg");
@@ -81,7 +81,7 @@ export function printDiffContent(a: Target, b: Target, cmd: Base) {
   }
 }
 
-export function printDiffEdit(edit: Edit, cmd: Base) {
+export function printDiffEdit(edit: HunkEdit, cmd: Base) {
   const text = edit.toString();
   switch (edit.type) {
     case "eql":

@@ -47,7 +47,7 @@ export function includes<X extends Primitive, XS extends readonly X[]>(
   return xs.includes(x);
 }
 
-function jsindex(xs: any[], index: number) {
+function jsindex(xs: unknown[], index: number) {
   // asserts(xs.length <= Math.abs(index), "list index out of range");
   return index >= 0 ? index : xs.length + index;
 }
@@ -140,4 +140,29 @@ export function zip<T, S>(xs: T[], ys: S[]) {
     result.push([xs[i], ys[i]] as const);
   }
   return result;
+}
+
+/**
+ * 配列を行列と見立てて、行列の転置を行います
+ * Ruby Array#tanspose相当だがIndexErrorは発生しない
+ * https://docs.ruby-lang.org/ja/latest/method/Array/i/transpose.html
+ */
+export function transpose<T>(xs: T[][]): T[][] {
+  if (!Array.isArray(xs[0])) {
+    throw new TypeError("転置は二次元配列に対して実行されます");
+  }
+
+  const rowLength = xs[0].length;
+  const colLength = xs.length;
+
+  const transposed: T[][] = [];
+  for (let i = 0; i < rowLength; i++) {
+    for (let j = 0; j < colLength; j++) {
+      if (j === 0) {
+        transposed[i] = [];
+      }
+      transposed[i].push(xs[j][i]);
+    }
+  }
+  return transposed;
 }

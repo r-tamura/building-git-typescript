@@ -1,4 +1,6 @@
-import { range, get, set, clone, enumerate, asserts } from "../util";
+import { get, set, clone, enumerate } from "../util/array";
+import { range } from "../util/iter";
+import { asserts } from "../util/assert";
 import { Line } from "./diff";
 
 export class Myers {
@@ -104,6 +106,10 @@ export class Edit {
     const line = this.a_line ?? this.b_line;
     asserts(line !== null);
     return SYMBOLS[this.type] + line.text;
+  }
+
+  get a_lines() {
+    return [this.a_line];
   }
 
   private throwOnInvalid() {

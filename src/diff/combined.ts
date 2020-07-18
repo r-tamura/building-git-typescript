@@ -1,4 +1,6 @@
 import { enumerate, zip } from "../util/array";
+import { notNull } from "../util/logic";
+import { prop } from "../util/object";
 import { Edit, SYMBOLS } from "./myers";
 
 /** 1ファイル分の行差分(Edit)の配列 */
@@ -74,5 +76,18 @@ export class Row {
     const del = this.edits.find((edit) => edit?.type === "del");
     const line = del ? del.a_line : this.edits[0]?.b_line;
     return symbols.join("") + line?.text;
+  }
+
+  get type() {
+    const types = this.edits.filter(notNull).map(prop("type"));
+    return types.includes("ins") ? "ins" : types[0];
+  }
+
+  get b_line() {
+    return this.edits[0]?.b_line ?? null;
+  }
+
+  get a_lines() {
+    return this.edits.map((edits) => edits?.a_line ?? null);
   }
 }

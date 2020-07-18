@@ -28,11 +28,15 @@ export function diff(a: TextDocument, b: TextDocument) {
 }
 
 /**
- *
- * @param as
+ * 同じ比較対象テキスト(b)に対する2つテキスト(as)のdiffに対してcombined diffを生成します
+ * @param as 2つのdiffの比較元[a, a]
  * @param b
  */
 export function combined(as: [TextDocument, TextDocument], b: TextDocument) {
   const diffs = as.map((a) => diff(a, b)) as [Edit[], Edit[]];
   return new Combined(diffs).toArray();
+}
+
+export function combinedHunk(as: [TextDocument, TextDocument], b: TextDocument) {
+  return Hunk.filter(combined(as, b));
 }

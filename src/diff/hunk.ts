@@ -1,20 +1,26 @@
 import { Edit } from "./myers";
-import { get, asserts } from "../util";
+import { get, transpose } from "../util/array";
+import { prop } from "../util/object";
+import { Line } from "./diff";
+import { notNull } from "../util/logic";
 
 const HUNK_CONTEXT = 3;
 
+// EditとRowの共通項
+export type HunkEdit = Pick<Edit, "a_lines" | "b_line" | "type">;
+
 export class Hunk {
   constructor(
-    public a_start: number,
-    public b_start: number,
-    public edits: Edit[]
+    public a_starts: (number | null)[],
+    public b_start: number | null,
+    public edits: HunkEdit[]
   ) {}
 
-  static of(a_start: number, b_start: number, edits: Edit[]) {
-    return new this(a_start, b_start, edits);
+  static of(a_starts: (number | null)[], b_start: number | null, edits: HunkEdit[]) {
+    return new this(a_starts, b_start, edits);
   }
 
-  static filter(edits: Edit[]): Hunk[] {
+  static filter(edits: HunkEdit[]): Hunk[] {
     const hunks: Hunk[] = [];
     let offset = 0;
 
@@ -27,17 +33,16 @@ export class Hunk {
       }
       offset += progress - (HUNK_CONTEXT + 1);
 
-      const a_start = offset < 0 ? 0 : edits[offset].a_line?.number;
-      const b_start = offset < 0 ? 0 : edits[offset].b_line?.number;
-      asserts(typeof a_start === "number", "a" + a_start);
-      asserts(typeof b_start === "number", "b" + b_start);
-      hunks.push(Hunk.of(a_start, b_start, []));
+      // TODO: .map(prop("number"))とすると、a_linesにnullが含まれるのでコンパイルエラー
+      const a_starts = offset < 0 ? [] : edits[offset].a_lines.map(getLineNumber);
+      const b_start = offset < 0 ? null : edits[offset].b_line?.number ?? null;
+      hunks.push(Hunk.of(a_starts, b_start, []));
       offset = Hunk.build(get(hunks, -1), edits, offset);
     }
     return hunks;
   }
 
-  static build(hunk: Hunk, edits: Edit[], start: number) {
+  static build(hunk: Hunk, edits: HunkEdit[], start: number) {
     let counter = -1;
 
     let offset = start;
@@ -62,36 +67,41 @@ export class Hunk {
     return offset;
   }
 
+  /**
+   * Hunkヘッダの生成
+   * @@ -75,4 +77,17 @@(通常diff)や'@@@ -1,3 -1,3 +1,4 @@@'(combined diff)など
+   */
   header() {
-    const a_offset = this.offsetFor("a_line", this.a_start).join(",");
-    const b_offset = this.offsetFor("b_line", this.b_start).join(",");
+    const a_lines = transpose(this.edits.map(prop("a_lines")));
+    const offsets = a_lines.map((lines, i) => this.format("-", lines, this.a_starts[i]));
 
-    return `@@ -${a_offset} +${b_offset} @@`;
+    offsets.push(this.format("+", this.edits.map(prop("b_line")), this.b_start));
+    const sep = "@".repeat(offsets.length);
+
+    return [sep, ...offsets, sep].join(" ");
   }
 
-  private offsetFor(
-    lineType: "a_line" | "b_line",
-    defaultStart: number
-  ): [number, number] {
-    const notNull = (v: any) => v !== null;
-    const lines = this.edits.map((edit) => edit[lineType]).filter(notNull);
-    const start = lines[0]?.number ?? defaultStart;
-    return [start, lines.length];
+  private format(sign: "+" | "-", lines: (Line | null)[], start: number | null) {
+    const nonNullLines = lines.filter(notNull);
+    const start_ = nonNullLines[0]?.number ?? start ?? 0;
+    return `${sign}${start_}${lines.length}`;
   }
 }
 
-function progressUntilChange(
-  edits: Edit[],
-  start: number
-): [number, "done" | null] {
+function progressUntilChange(edits: HunkEdit[], start: number): [progress: number, done: boolean] {
   let offset = start;
   while (edits[offset]?.type == "eql" && offset < edits.length) {
     offset += 1;
   }
   const progress = offset - start;
   if (offset >= edits.length) {
-    return [progress, "done"];
+    return [progress, true];
   }
 
-  return [progress, null];
+  return [progress, false];
+}
+
+function getLineNumber(l: Line | null) {
+  // 読みやすい記法にできないかを調べる
+  return l === null ? null : prop<Line, "number">("number")(l);
 }
