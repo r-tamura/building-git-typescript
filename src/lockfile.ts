@@ -53,9 +53,7 @@ export class Lockfile implements IOHandle {
       switch (nodeErr.code) {
         case "EEXIST":
           // すでにロックされている場合
-          throw new LockDenied(
-            `Unable to create ${this.#lockPath}: File exists.`
-          );
+          throw new LockDenied(`Unable to create ${this.#lockPath}: File exists.`);
         case "ENOENT":
           throw new MissingParent(nodeErr.message);
         case "EACCES":
@@ -67,7 +65,7 @@ export class Lockfile implements IOHandle {
   async rollback() {
     this.throwOnStaleLock(this.#lock);
 
-    this.#lock.close();
+    await this.#lock.close();
     await this.#fs.unlink(this.#lockPath);
     this.#lock = null;
   }
@@ -89,7 +87,7 @@ export class Lockfile implements IOHandle {
 
   async commit() {
     this.throwOnStaleLock(this.#lock);
-    this.#lock.close();
+    await this.#lock.close();
     await this.#fs.rename(this.#lockPath, this.#filePath);
     this.#lock = null;
   }

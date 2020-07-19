@@ -67,7 +67,7 @@ export class Checkout extends Base {
 
     await this.printPreviousHead();
     this.printDetachmentNotice();
-    this.printNewHead();
+    await this.printNewHead();
   }
 
   private handleInvalidObject(revision: Revision, error: InvalidObject) {
@@ -110,9 +110,9 @@ export class Checkout extends Base {
     }
   }
 
-  private printNewHead() {
+  private async printNewHead() {
     if (this.#newRef.head()) {
-      this.printHeadPosition("HEAD is now at", this.#targetOid);
+      await this.printHeadPosition("HEAD is now at", this.#targetOid);
     } else if (shallowEqual(this.#newRef, this.#currentRef)) {
       this.logger.error(`Already on '${this.#target}'`);
     } else {

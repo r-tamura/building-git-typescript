@@ -76,14 +76,14 @@ describe("Index#add", () => {
 });
 
 describe("Index#remove", () => {
-  it("インデックスから削除される", () => {
+  it("インデックスから削除される", async () => {
     // Arrange
     const index = new Index(".git");
     index.add("path/to/some/a.txt", "abcdef1", makeTestStats());
     assert.equal(index.tracked("path/to/some/a.txt"), true);
 
     // Act
-    index.remove("path/to/some/a.txt");
+    await index.remove("path/to/some/a.txt");
 
     // Assert
     assert.equal(index.tracked("path/to/some/a.txt"), false);

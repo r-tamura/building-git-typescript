@@ -249,7 +249,7 @@ describe("merge", () => {
     });
   });
 
-  describe.skip("unconflicted merge: delete-add-parent", () => {
+  describe("unconflicted merge: delete-add-parent", () => {
     beforeEach(async () => {
       // prettier-ignore
       await t.merge3(
@@ -268,7 +268,7 @@ describe("merge", () => {
     });
   });
 
-  describe.skip("unconflicted merge: delete-add-child", () => {
+  describe("unconflicted merge: delete-add-child", () => {
     beforeEach(async () => {
       // prettier-ignore
       await t.merge3(
@@ -279,7 +279,7 @@ describe("merge", () => {
     });
 
     it("puts the combined changes in the workspace", async () => {
-      await t.assertWorkspace([["nest", "3"]]);
+      await t.assertWorkspace([["nest/f.txt/g.txt", "3"]]);
     });
 
     it("creates a clean merge", async () => {

@@ -12,8 +12,8 @@ export function createMain() {
     },
   };
 
-  return (argv: string[]) => {
-    main(argv, env);
+  return async (argv: string[]) => {
+    await main(argv, env);
   };
 }
 

@@ -150,7 +150,7 @@ export class Database {
       level: Z_BEST_SPEED,
     });
     await this.#fs.writeFile(fileHandle, compressed);
-    this.#fs.rename(tempPath, objPathname);
+    await this.#fs.rename(tempPath, objPathname);
     if (fileHandle) {
       await fileHandle.close();
     }

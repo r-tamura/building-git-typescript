@@ -96,7 +96,7 @@ export class Index {
       await this.readEntries(reader, count);
       await reader.verifyChecksum();
     } finally {
-      file.close();
+      await file.close();
     }
   }
 

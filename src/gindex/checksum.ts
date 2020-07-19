@@ -30,7 +30,7 @@ export class Checksum {
   }
 
   async writeChecksum() {
-    this.#file.write(this.#digest.copy().digest());
+    return this.#file.write(this.#digest.copy().digest());
   }
 
   async verifyChecksum() {
@@ -41,16 +41,8 @@ export class Checksum {
     }
   }
 
-  private async _read(
-    file: IOHandle,
-    size: number
-  ): Promise<[Buffer, number, boolean]> {
-    const { bytesRead, buffer } = await file.read(
-      Buffer.alloc(size),
-      null,
-      size,
-      null
-    );
+  private async _read(file: IOHandle, size: number): Promise<[Buffer, number, boolean]> {
+    const { bytesRead, buffer } = await file.read(Buffer.alloc(size), null, size, null);
     const isEOL = bytesRead === 0;
     return [buffer, bytesRead, isEOL];
   }

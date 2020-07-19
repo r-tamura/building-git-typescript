@@ -180,7 +180,7 @@ export class Migration {
 
   private async updateIndex() {
     for (const [pathname] of this.changes["delete"]) {
-      this.#repo.index.remove(pathname);
+      await this.#repo.index.remove(pathname);
     }
 
     for (const action of ["create", "update"] as const) {
