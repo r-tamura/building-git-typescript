@@ -83,7 +83,7 @@ export class Checkout extends Base {
     migration.errors.forEach((message) => {
       this.logger.error(`error: ${message}`);
     });
-    this.logger.error(`Aborting.`);
+    this.logger.error("Aborting.");
     this.exit(1);
   }
 

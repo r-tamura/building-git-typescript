@@ -326,6 +326,65 @@ describe("merge", () => {
       await assertIndex(["f.txt", 0], ["g.txt", 2], ["g.txt", 3]);
     });
 
+    it("reports the conflict in the status", async () => {
+      await t.kitCmd("status", "--porcelain");
+
+      t.assertInfo("AA g.txt");
+    });
+
+    it("shows the combined diff against stages 2 and 3", async () => {
+      await t.kitCmd("diff");
+
+      t.assertInfo(stripIndent`
+        diff --cc g.txt
+        index 0cfbf08,00750ed..2603ab2
+        --- a/g.txt
+        +++ b/g.txt
+        @@@ -1,1 -1,1 +1,5 @@@
+        ++<<<<<<< HEAD
+         +2
+        ++=======
+        + 3
+        ++>>>>>>> topic
+      `);
+    });
+
+    it("shows the diff against our version", async () => {
+      await t.kitCmd("diff", "--ours");
+
+      t.assertInfo(stripIndent`
+        * Unmerged path g.txt
+        diff --git a/g.txt b/g.txt
+        index 0cfbf08..2603ab2 100644
+        --- a/g.txt
+        +++ b/g.txt
+        @@ -1,1 +1,5 @@
+        +<<<<<<< HEAD
+         2
+        +=======
+        +3
+        +>>>>>>> topic
+      `);
+    });
+
+    it("shows the diff against their version", async () => {
+      await t.kitCmd("diff", "--theirs");
+
+      t.assertInfo(stripIndent`
+        * Unmerged path g.txt
+        diff --git a/g.txt b/g.txt
+        index 00750ed..2603ab2 100644
+        --- a/g.txt
+        +++ b/g.txt
+        @@ -1,1 +1,5 @@
+        +<<<<<<< HEAD
+        +2
+        +=======
+         3
+        +>>>>>>> topic
+      `);
+    });
+
     it("does not write a merge commit", async () => {
       await assertNoMerge();
     });
@@ -362,6 +421,37 @@ describe("merge", () => {
 
     it("does not write a merge commit", async () => {
       await assertNoMerge();
+    });
+
+    it("reports the conflict in the status", async () => {
+      await t.kitCmd("status", "--porcelain");
+
+      t.assertInfo("AA g.txt");
+    });
+
+    it("shows the combined diff against stages 2 and 3", async () => {
+      await t.kitCmd("diff");
+
+      t.assertInfo(stripIndent`
+        diff --cc g.txt
+        index d8263ee,d8263ee..d8263ee
+        mode 100644,100755..100644
+        --- a/g.txt
+        +++ b/g.txt
+      `);
+    });
+
+    it("reports the mode change in the appropriate diff", async () => {
+      await t.kitCmd("diff", "-2");
+      t.assertInfo("* Unmerged path g.txt");
+
+      await t.kitCmd("diff", "-3");
+      t.assertInfo(stripIndent`
+        * Unmerged path g.txt
+        diff --git a/g.txt b/g.txt
+        old mode 100755
+        new mode 100644
+      `);
     });
   });
 
@@ -429,6 +519,21 @@ describe("merge", () => {
     it("records the conflict in the index", async () => {
       await assertIndex(["f.txt", 0], ["g.txt", 3], ["g.txt/two.txt", 0]);
     });
+
+    it("reports the conflict in the status", async () => {
+      await t.kitCmd("status", "--porcelain");
+
+      t.assertInfo(stripIndent`
+        UA g.txt
+        ?? g.txt~topic
+      `);
+    });
+
+    it("lists the file as unmerged in the diff", async () => {
+      await t.kitCmd("diff");
+
+      t.assertInfo("* Unmerged path g.txt");
+    });
   });
 
   describe("conflicted merge: edit-edit", () => {
@@ -472,6 +577,23 @@ describe("merge", () => {
     it("does not write a merge commit", async () => {
       await assertNoMerge();
     });
+
+    it("shows the combined diff against stage 2 and 3", async () => {
+      await t.kitCmd("diff");
+
+      t.assertInfo(stripIndent`
+        diff --cc f.txt
+        index 0cfbf08,00750ed..2603ab2
+        --- a/f.txt
+        +++ b/f.txt
+        @@@ -1,1 -1,1 +1,5 @@@
+        ++<<<<<<< HEAD
+         +2
+        ++=======
+        + 3
+        ++>>>>>>> topic
+      `);
+    });
   });
 
   describe("conflicted merge: edit-delete", () => {
@@ -502,6 +624,15 @@ describe("merge", () => {
     it("does not write a merge commit", async () => {
       await assertNoMerge();
     });
+
+    it("reports the conflict in the status", async () => {
+      await t.kitCmd("status", "--porcelain");
+      t.assertInfo("UD f.txt");
+    });
+    it("lists the file as unmerged in the diff", async () => {
+      await t.kitCmd("diff");
+      t.assertInfo("* Unmerged path f.txt");
+    });
   });
 
   describe("conflicted merge: delete-edit", () => {
@@ -531,6 +662,15 @@ describe("merge", () => {
 
     it("does not write a merge commit", async () => {
       await assertNoMerge();
+    });
+
+    it("reports the conflict in the status", async () => {
+      await t.kitCmd("status", "--porcelain");
+      t.assertInfo("DU f.txt");
+    });
+    it("lists the file as unmerged in the diff", async () => {
+      await t.kitCmd("diff");
+      t.assertInfo("* Unmerged path f.txt");
     });
   });
 
@@ -566,6 +706,22 @@ describe("merge", () => {
     it("does not write a merge commit", async () => {
       await assertNoMerge();
     });
+
+    it("reports the conflict in the status", async () => {
+      await t.kitCmd("status", "--porcelain");
+      t.assertInfo(stripIndent`
+        UA nest
+        UD nest/f.txt
+        ?? nest~topic
+      `);
+    });
+    it("lists the file as unmerged in the diff", async () => {
+      await t.kitCmd("diff");
+      t.assertInfo(stripIndent`
+        * Unmerged path nest
+        * Unmerged path nest/f.txt
+      `);
+    });
   });
 
   describe("conflicted merge: edit-add-child", () => {
@@ -599,6 +755,19 @@ describe("merge", () => {
 
     it("does not write a merge commit", async () => {
       await assertNoMerge();
+    });
+
+    it("reports the conflict in the status", async () => {
+      await t.kitCmd("status", "--porcelain");
+      t.assertInfo(stripIndent`
+      UD nest/f.txt
+      A  nest/f.txt/g.txt
+      ?? nest/f.txt~HEAD
+    `);
+    });
+    it("lists the file as unmerged in the diff", async () => {
+      await t.kitCmd("diff");
+      t.assertInfo("* Unmerged path nest/f.txt");
     });
   });
 

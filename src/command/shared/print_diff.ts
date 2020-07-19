@@ -1,8 +1,9 @@
 import * as path from "path";
-import { Hunk, Edit, diffHunks, HunkEdit } from "../../diff";
+import { Hunk, diffHunks, HunkEdit, combinedHunk, TextDocument } from "../../diff";
 import { OID, Pathname } from "../../types";
 import { Base } from "../base";
 import arg = require("arg");
+import { prop } from "../../util/object";
 
 export const NULL_OID = "0".repeat(40);
 export const NULL_PATH = "/dev/null";
@@ -96,6 +97,26 @@ export function printDiffEdit(edit: HunkEdit, cmd: Base) {
     default:
       throw TypeError(`diff: invalid type '${edit.type}'`);
   }
+}
+
+export function printCombinedDiff(as: [Target, Target], b: Target, cmd: Base) {
+  header(`diff --cc ${b.name}`, cmd);
+
+  const a_oids = as.map((a) => short(a.oid, cmd));
+  const oidRange = `index ${a_oids.join(",")}..${short(b.oid, cmd)}`;
+  header(oidRange, cmd);
+
+  if (!as.every((a) => a.mode === b.mode)) {
+    header(`mode ${as.map(prop("mode")).join(",")}..${b.mode}`, cmd);
+  }
+
+  header(`--- a/${b.deffPath}`, cmd);
+  header(`+++ b/${b.deffPath}`, cmd);
+
+  const hunks = combinedHunk(as.map(prop("data")) as [TextDocument, TextDocument], b.data);
+  hunks.forEach((hunk) => {
+    printDiffHunk(hunk, cmd);
+  });
 }
 
 export function printDiffHunk(hunk: Hunk, cmd: Base) {

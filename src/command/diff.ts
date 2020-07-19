@@ -5,8 +5,14 @@ import * as Database from "../database";
 import * as arg from "arg";
 import * as Index from "../gindex";
 import { asserts } from "../util";
-import { definePrintDiffOptions, Target, printDiff, NULL_OID } from "./shared/print_diff";
-import { Stage } from "../gindex";
+import {
+  definePrintDiffOptions,
+  Target,
+  printDiff,
+  NULL_OID,
+  printCombinedDiff,
+} from "./shared/print_diff";
+import { Stage, STAGES } from "../gindex";
 
 interface Option {
   cached: boolean;
@@ -46,12 +52,15 @@ export class Diff extends Base<Option> {
       "--base": arg.flag(() => {
         this.options.stage = 1;
       }),
+      "-1": "--base",
       "--ours": arg.flag(() => {
         this.options.stage = 2;
       }),
+      "-2": "--ours",
       "--theirs": arg.flag(() => {
         this.options.stage = 3;
       }),
+      "-3": "--theirs",
       ...printDiffOptions,
     };
   }
@@ -128,13 +137,26 @@ export class Diff extends Base<Option> {
   }
 
   private async printConflictDiff(pathname: Pathname) {
-    this.log(`* Unmerged path ${pathname}`);
-
-    const target = await this.fromIndex(pathname, this.options["stage"]);
-    if (!target) {
-      return;
+    const targets = [];
+    for await (const target of STAGES.map((stage) => this.fromIndex(pathname, stage))) {
+      targets.push(target);
     }
-    printDiff(target, await this.fromFile(pathname), this);
+    const left = targets[2];
+    const right = targets[3];
+
+    if (this.options["stage"]) {
+      this.log(`* Unmerged path ${pathname}`);
+      const index = targets[this.options["stage"]];
+      // TODO: indexはnullでないとは保証されていない(?) jitコマンドの挙動を調べる
+      asserts(index !== null);
+      const file = await this.fromFile(pathname);
+      printDiff(index, file, this);
+    } else if (left && right) {
+      const file = await this.fromFile(pathname);
+      printCombinedDiff([left, right], file, this);
+    } else {
+      this.log(`* Unmerged path ${pathname}`);
+    }
   }
 
   private async printWorkspaceDiff(pathname: Pathname) {

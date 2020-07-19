@@ -30,12 +30,12 @@ function getConflictShortStatus(conflict: Repository.ConflictStatus) {
   // prettier-ignore
   const message =
     conflictEquals([1, 2, 3]) ? "UU" :
-    conflictEquals([1, 2]) ? "UD:" :
+    conflictEquals([1, 2]) ? "UD" :
     conflictEquals([1, 3]) ? "DU" :
     conflictEquals([2, 3]) ? "AA" :
     conflictEquals([2]) ? "AU" :
     conflictEquals([3]) ? "UA" :
-    null
+    null;
   if (message === null) {
     throw new TypeError(`サポートされていないコンフリクト状態です。 '${conflict}'`);
   }
@@ -53,7 +53,7 @@ function getConflictLongStatus(conflict: Repository.ConflictStatus) {
     conflictEquals([2, 3]) ? "both added:" :
     conflictEquals([2]) ? "added by us:" :
     conflictEquals([3]) ? "added by them:" :
-    null
+    null;
   if (message === null) {
     throw new TypeError(`サポートされていないコンフリクト状態です。 '${conflict}'`);
   }

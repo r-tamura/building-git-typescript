@@ -84,7 +84,7 @@ export class Hunk {
   private format(sign: "+" | "-", lines: (Line | null)[], start: number | null) {
     const nonNullLines = lines.filter(notNull);
     const start_ = nonNullLines[0]?.number ?? start ?? 0;
-    return `${sign}${start_}${lines.length}`;
+    return `${sign}${start_},${nonNullLines.length}`;
   }
 }
 
