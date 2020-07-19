@@ -20,7 +20,6 @@ export class TreeDiff {
     if (a === b) {
       return;
     }
-
     const a_tree = a ? (await this.oidToTree(a)).entries : {};
     const b_tree = b ? (await this.oidToTree(b)).entries : {};
 

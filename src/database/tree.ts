@@ -40,12 +40,12 @@ export class Tree {
 
   static parse(buf: Buffer) {
     const entries: EntryMap = {};
-    let p: number = 0;
+    let p = 0;
     while (p < buf.length) {
       const [modeStr, offsetName] = scanUntil(" ", buf, p);
       const [name, offsetHash] = scanUntil("\0", buf, offsetName);
       const oid = unpackHex(buf.slice(offsetHash, offsetHash + 20));
-      p += offsetHash + 20;
+      p = offsetHash + 20;
       const mode = Number.parseInt(modeStr, 8);
       asserts(
         mode === 0o0100644 || mode === 0o0100755 || mode === 0o040000,

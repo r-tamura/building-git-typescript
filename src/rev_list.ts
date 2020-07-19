@@ -16,7 +16,7 @@ export class RevList {
   #flags: Map<OID, Set<Flag>> = new Map();
   #queue: CompleteCommit[] = [];
   #output: CompleteCommit[] = [];
-  #limited: boolean = false;
+  #limited = false;
   #prune: Pathname[] = [];
   #filter!: PathFilter;
   #diffs: Map<OidPair, Changes> = new Map();
@@ -37,17 +37,13 @@ export class RevList {
   }
 
   async treediff(oldOid: OID | null, newOid: OID | null) {
-    // TODO: JSのMapのキーは参照一致の場合に同地とみなされるので、キャッシュがヒットしない
+    // TODO: JSのMapのキーは参照一致の場合に同値とみなされるので、キャッシュがヒットしない
     const key: OidPair = [oldOid, newOid];
     const diff = this.#diffs.get(key);
     if (diff) {
       return diff;
     }
-    const changes = await this.#repo.database.treeDiff(
-      oldOid,
-      newOid,
-      this.#filter
-    );
+    const changes = await this.#repo.database.treeDiff(oldOid, newOid, this.#filter);
     this.#diffs.set(key, changes);
     return changes;
   }
@@ -84,11 +80,7 @@ export class RevList {
 
     const index = this.#queue.findIndex((c) => c.date < commit.date);
 
-    this.#queue = insert(
-      this.#queue,
-      found(index) ? index : this.#queue.length,
-      commit
-    );
+    this.#queue = insert(this.#queue, found(index) ? index : this.#queue.length, commit);
   }
 
   private async handleRevision(rev: string) {
@@ -192,9 +184,7 @@ export class RevList {
     if (oldest_out && oldest_out.date <= newest_in.date) {
       return true;
     }
-    if (
-      this.#queue.some((commit) => !this.marked(commit.oid, "uninteresting"))
-    ) {
+    if (this.#queue.some((commit) => !this.marked(commit.oid, "uninteresting"))) {
       return true;
     }
     return false;

@@ -56,6 +56,10 @@ export class Commit {
     return this.parents[0] ?? null;
   }
 
+  get merge() {
+    return this.parents.length > 1;
+  }
+
   titleLine() {
     return splitByLine(this.message)[0];
   }

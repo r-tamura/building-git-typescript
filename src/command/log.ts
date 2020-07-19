@@ -6,9 +6,16 @@ import { shallowEqual } from "../util/object";
 import { CompleteCommit, Pathname } from "../types";
 import { SymRef } from "../refs";
 import { Style } from "../color";
-import { definePrintDiffOptions, printDiff, Target, NULL_OID } from "./shared/print_diff";
+import {
+  definePrintDiffOptions,
+  printDiff,
+  Target,
+  NULL_OID,
+  printCombinedDiff,
+} from "./shared/print_diff";
 import { Entry, Change } from "../database";
 import { RevList } from "../rev_list";
+import { diff } from "../diff";
 
 const FORMAT = ["medium", "oneline"] as const;
 const DECORATE = ["auto", "short", "full", "no"] as const;
@@ -16,11 +23,14 @@ interface Options {
   abbrev: "auto" | boolean;
   format: typeof FORMAT[number];
   decorate: typeof DECORATE[number];
+  /** ファイルdiffを表示するか */
   patch: boolean;
+  /** マージ用のdiffを表示するか */
+  combined: boolean;
 }
 
 export class Log extends Base<Options> {
-  #blankLine: boolean = false;
+  #blankLine = false;
   #reverseRefs!: Map<string, SymRef[]>;
   #currentRef!: SymRef;
   #revList!: RevList;
@@ -66,6 +76,10 @@ export class Log extends Base<Options> {
         }
         this.options.decorate = decorate;
       },
+      "--cc": arg.flag(() => {
+        this.options["combined"] = true;
+        this.options["patch"] = true;
+      }),
       "--no-decorate": arg.flag(() => {
         this.options.decorate = "no";
       }),
@@ -79,6 +93,7 @@ export class Log extends Base<Options> {
       format: "medium",
       decorate: "auto",
       patch: false,
+      combined: false,
     };
   }
 
@@ -115,7 +130,7 @@ export class Log extends Base<Options> {
   }
 
   private decorationName(head: SymRef, ref: SymRef) {
-    let name: string = "";
+    let name = "";
     switch (this.options.decorate) {
       case "short":
       case "auto":
@@ -155,6 +170,12 @@ export class Log extends Base<Options> {
 
     this.blankLine();
     this.log(this.fmt("yellow", `commit ${this.abbrev(commit)}`) + this.decorate(commit));
+
+    if (commit.merge) {
+      const oids = commit.parents.map((oid) => this.repo.database.shortOid(oid));
+      this.log(`Merge: ${oids.join(" ")}`);
+    }
+
     this.log(`Author: ${author.name} <${author.email}>`);
     this.log(`Date:   ${author.readableTime}`);
     this.blankLine();
@@ -169,11 +190,14 @@ export class Log extends Base<Options> {
   }
 
   private async showPatch(commit: CompleteCommit) {
-    // TODO: 複数親コミット対応: 一時的にpatch表示を無効に
-    if (!(this.options.patch && commit.parents.length <= 1)) {
+    if (!this.options["patch"]) {
       return;
     }
 
+    if (commit.merge) {
+      await this.showMergePatch(commit);
+      return;
+    }
     const diff = await this.#revList.treediff(commit.parent, commit.oid);
     const paths = Array.from(diff.keys()).sort();
 
@@ -186,6 +210,38 @@ export class Log extends Base<Options> {
       const a = await this.fromDiffItem(pathname, oldItem);
       const b = await this.fromDiffItem(pathname, newItem);
       printDiff(a, b, this);
+    }
+  }
+
+  private async showMergePatch(commit: CompleteCommit) {
+    if (!this.options["combined"]) {
+      return;
+    }
+
+    const diffs = [];
+    for (const oid of commit.parents) {
+      const diff = await this.#revList.treediff(oid, commit.oid);
+      diffs.push(diff);
+    }
+
+    const paths = [];
+    for (const pathname of diffs[0].keys()) {
+      if (diffs.slice(1).every((diff) => diff.has(pathname))) {
+        paths.push(pathname);
+      }
+    }
+
+    this.blankLine();
+
+    for (const pathname of paths) {
+      const parents = [];
+      for (const diff of diffs) {
+        // diff内に存在するpathであることは diffs[0].keys() より保証されている
+        const parent = await this.fromDiffItem(pathname, diff.get(pathname)![0]);
+        parents.push(parent);
+      }
+      const child = await this.fromDiffItem(pathname, diffs[0].get(pathname)![1]);
+      printCombinedDiff(parents as [Target, Target], child, this);
     }
   }
 

@@ -21,9 +21,9 @@ export function unpackHex(packed: Buffer | string) {
 export function scanUntil(
   char: string,
   buf: Buffer,
-  offset: number = 0,
+  offset = 0,
   encoding: BufferEncoding = "binary"
-) {
+): [result: string, potision: number] {
   if (typeof char === "string" && char.length !== 1) {
     throw TypeError("scan character has to be 1 character");
   }
@@ -33,5 +33,5 @@ export function scanUntil(
     p++;
   }
 
-  return [buf.slice(offset, p).toString(encoding), p + 1] as [string, number];
+  return [buf.slice(offset, p).toString(encoding), p + 1];
 }

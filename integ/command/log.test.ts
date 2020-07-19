@@ -345,7 +345,7 @@ describe("log", () => {
     });
   });
 
-  describe.skip("with a graph of commits", () => {
+  describe("with a graph of commits", () => {
     // A   B   C   D   J   K
     // o---o---o---o---o---o [master]
     //      \         /
@@ -358,6 +358,7 @@ describe("log", () => {
       const time = new Date();
 
       await commitTree("A", { "f.txt": "0", "g.txt": "0" }, time);
+
       await commitTree(
         "B",
         {
@@ -366,6 +367,7 @@ describe("log", () => {
         one
         two
         three
+
       `,
         },
         time
@@ -380,6 +382,7 @@ describe("log", () => {
           ${n}
           two
           three
+
         `,
           },
           addSeconds(time, 1)
@@ -393,11 +396,12 @@ describe("log", () => {
         await commitTree(
           n,
           {
-            "f.txt": n,
+            "g.txt": n,
             "h.txt": stripIndent`
           one
           two
           ${n}
+
         `,
           },
           addSeconds(time, 2)
@@ -410,7 +414,6 @@ describe("log", () => {
       await t.kitCmd("merge", "topic^");
 
       await commitTree("K", { "f.txt": "K" }, addSeconds(time, 3));
-
       // prettier-ignore
       master = await Promise.all([0, 1, 2, 3, 4, 5].map(n => t.resolveRevision(`master~${n}`)));
       // prettier-ignore
@@ -462,6 +465,120 @@ describe("log", () => {
       t.assertInfo(stripIndent`
         ${topic[0]} H
       `);
+    });
+
+    it("does not show patches for merge commits", async () => {
+      await t.kitCmd("log", "--pretty=oneline", "--patch", "topic..master", "^master^^^");
+
+      t.assertInfo(stripIndent`
+        ${master[0]} K
+        diff --git a/f.txt b/f.txt
+        index 02358d2..449e49e 100644
+        --- a/f.txt
+        +++ b/f.txt
+        @@ -1,1 +1,1 @@
+        -D
+        +K
+        ${master[1]} J
+        ${master[2]} D
+        diff --git a/f.txt b/f.txt
+        index 96d80cd..02358d2 100644
+        --- a/f.txt
+        +++ b/f.txt
+        @@ -1,1 +1,1 @@
+        -C
+        +D
+        diff --git a/h.txt b/h.txt
+        index 4e5ce14..4139691 100644
+        --- a/h.txt
+        +++ b/h.txt
+        @@ -1,3 +1,3 @@
+        -C
+        +D
+         two
+         three
+      `);
+    });
+
+    it("shows combined patches for merges", async () => {
+      await t.kitCmd("log", "--pretty=oneline", "--cc", "topic..master", "^master^^^");
+
+      t.assertInfo(stripIndent`
+        ${master[0]} K
+        diff --git a/f.txt b/f.txt
+        index 02358d2..449e49e 100644
+        --- a/f.txt
+        +++ b/f.txt
+        @@ -1,1 +1,1 @@
+        -D
+        +K
+        ${master[1]} J
+        diff --cc h.txt
+        index 4139691,f3e97ee..4e78f4f
+        --- a/h.txt
+        +++ b/h.txt
+        @@@ -1,3 -1,3 +1,3 @@@
+         -one
+         +D
+          two
+        - three
+        + G
+        ${master[2]} D
+        diff --git a/f.txt b/f.txt
+        index 96d80cd..02358d2 100644
+        --- a/f.txt
+        +++ b/f.txt
+        @@ -1,1 +1,1 @@
+        -C
+        +D
+        diff --git a/h.txt b/h.txt
+        index 4e5ce14..4139691 100644
+        --- a/h.txt
+        +++ b/h.txt
+        @@ -1,3 +1,3 @@
+        -C
+        +D
+         two
+         three
+      `);
+    });
+
+    it("does not list merges with treesame parents for prune paths", async () => {
+      await t.kitCmd("log", "--pretty=oneline", "g.txt");
+
+      t.assertInfo(stripIndent`
+        ${topic[1]} G
+        ${topic[2]} F
+        ${topic[3]} E
+        ${master[5]} A
+      `);
+    });
+
+    describe("with changes that are undone on a branch leading to a merge", () => {
+      beforeEach(async () => {
+        const time = new Date();
+        await t.kitCmd("branch", "aba", "master~4"); // B
+        await t.kitCmd("checkout", "aba");
+
+        for (const n of ["C", "0"]) {
+          await commitTree(n, { "g.txt": n }, addSeconds(time, 1));
+        }
+        t.mockStdio("J");
+        await t.kitCmd("merge", "topic^");
+
+        await commitTree("K", { "f.txt": "K" }, addSeconds(time, 3));
+      });
+
+      it("does not list commits on the filtered branch", async () => {
+        await t.kitCmd("log", "--pretty=oneline", "g.txt");
+
+        t.assertInfo(stripIndent`
+          ${topic[1]} G
+          ${topic[2]} F
+          ${topic[3]} E
+          ${master[5]} A
+        `);
+      });
     });
   });
 });
