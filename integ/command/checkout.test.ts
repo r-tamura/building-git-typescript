@@ -404,8 +404,8 @@ describe("checkout", () => {
         await t.kitCmd("add", ".");
         await t.commit(message);
       }
-      t.kitCmd("branch", "topic");
-      t.kitCmd("branch", "second", "@^");
+      await t.kitCmd("branch", "topic");
+      await t.kitCmd("branch", "second", "@^");
     });
 
     describe("checking out a branch", () => {

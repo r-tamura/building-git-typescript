@@ -98,7 +98,7 @@ export class Workspace {
     return this.#fs.writeFile(this.join(pathname), data);
   }
 
-  async statFile(rpath: string) {
+  async statFile(rpath: Pathname) {
     const handleError = (e: NodeJS.ErrnoException) => {
       switch (e.code) {
         case "ENOENT":
@@ -112,6 +112,22 @@ export class Workspace {
     };
 
     return this.#fs.stat(this.join(rpath)).catch(handleError);
+  }
+
+  /**
+   * ワークスペースないのファイルを削除します。指定されたファイルが存在しない場合は、何もしません。
+   * @param pathname 削除対象ファイルのワークスペースパスからの相対 パス
+   */
+  async remove(pathname: Pathname) {
+    try {
+      await this.#fs.unlink(path.join(this.#pathname, pathname));
+    } catch (e) {
+      const nodeErr = e as NodeJS.ErrnoException;
+      if (nodeErr.code === "ENOENT") {
+        return;
+      }
+      throw e;
+    }
   }
 
   private async applyChangeList(migration: Migration, action: keyof Changes) {

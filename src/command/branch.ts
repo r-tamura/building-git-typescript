@@ -5,13 +5,13 @@ import { InvalidObject, Revision } from "../revision";
 import { asserts, BaseError } from "../util";
 import { shallowEqual } from "../util/object";
 
-interface Option {
+interface Options {
   verbose: boolean;
   delete: boolean;
   force: boolean;
 }
 
-export class Branch extends Base<Option> {
+export class Branch extends Base<Options> {
   async run() {
     if (this.options.delete) {
       await this.deleteBranches();

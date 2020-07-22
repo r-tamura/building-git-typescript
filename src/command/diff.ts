@@ -14,13 +14,13 @@ import {
 } from "./shared/print_diff";
 import { Stage, STAGES } from "../gindex";
 
-interface Option {
+interface Options {
   cached: boolean;
   patch: boolean;
   stage?: Stage;
 }
 
-export class Diff extends Base<Option> {
+export class Diff extends Base<Options> {
   #status!: Repository.Status;
   async run(): Promise<void> {
     await this.repo.index.load();

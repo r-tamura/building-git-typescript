@@ -10,13 +10,15 @@ import { Pager } from "../pager";
 /** process.exit 代替え */
 export class Exit {}
 
-export type BaseConstructor<O extends arg.Spec> = {
+export type BaseConstructor<O extends Options> = {
   new (args: string[], env: Environment): Base<O>;
 };
 
-type NoOptions = {}
+// TODO: 型定義見直し
+export type Options = object
+export type NoOptions = any
 
-export abstract class Base<O extends NoOptions = {}> implements Runnable {
+export abstract class Base<O extends Options = NoOptions> implements Runnable {
   /** 作業ディレクトリ */
   protected dir: string;
   /** 環境変数 */

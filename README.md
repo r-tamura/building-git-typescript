@@ -14,6 +14,7 @@ kit branch
 kit checkout
 kit log
 kit merge
+kit rm (implementing)
 ```
 
 ## Development

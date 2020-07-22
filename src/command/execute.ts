@@ -1,5 +1,5 @@
 import { BaseError, asserts } from "../util";
-import { BaseConstructor } from "./base";
+import { BaseConstructor, NoOptions, Options } from "./base";
 import { Add } from "./add";
 import { Commit } from "./commit";
 import { Branch } from "./branch";
@@ -10,10 +10,11 @@ import { Log } from "./log";
 import { Merge } from "./merge";
 import { Status } from "./status";
 import { Environment } from "../types";
+import { Rm } from "./rm";
 
 export class Unknown extends BaseError {}
 
-type CommandMap = { [s: string]: BaseConstructor<any> };
+type CommandMap<O extends Options = NoOptions> = { [s: string]: BaseConstructor<O> };
 
 const COMMANDS: CommandMap = {
   init: Init,
@@ -24,6 +25,7 @@ const COMMANDS: CommandMap = {
   diff: Diff,
   log: Log,
   merge: Merge,
+  rm: Rm,
   status: Status,
 } as const;
 
