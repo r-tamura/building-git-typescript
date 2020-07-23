@@ -3,7 +3,7 @@ import { OID, Pathname } from "../types";
 import { BaseError, Runtime } from "../util/error";
 import { isempty } from "../util/array";
 import { asserts } from "../util/assert";
-import { Base } from "./base";
+import { Base, Exit } from "./base";
 
 export class Rm extends Base {
   #headOid!: OID;
@@ -33,12 +33,12 @@ export class Rm extends Base {
       }
       await this.repo.index.writeUpdates();
     } catch (e) {
-      const appErr = e as BaseError;
-      if (appErr.name === "Runtime") {
-        await this.repo.index.releaseLock();
-        this.logger.error(`fatal: ${appErr.message}`);
-        this.exit(128);
+      if (e.constructor === Exit) {
+        throw e;
       }
+      await this.repo.index.releaseLock();
+      this.logger.error(`fatal: ${e.message}`);
+      this.exit(128);
     }
   }
 
