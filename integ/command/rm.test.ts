@@ -83,57 +83,57 @@ describe("rm", () => {
       await t.assertWorkspace([["f.txt", "2"]]);
     });
 
-    it.skip("forces removal of unstaged changed", async () => {
+    it("forces removal of unstaged changed", async () => {
       await T.delay(1000);
       await t.writeFile("f.txt", "2");
       await t.kitCmd("rm", "-f", "f.txt");
 
       await t.repo().index.load();
-      assert.equal(t.repo().index.trackedFile("f.txt"), true);
+      assert.equal(t.repo().index.trackedFile("f.txt"), false);
       await t.assertWorkspace([]);
     });
 
-    it.skip("forces removal of uncommitted changed", async () => {
+    it("forces removal of uncommitted changed", async () => {
       await T.delay(1000);
       await t.writeFile("f.txt", "2");
       await t.kitCmd("add", "f.txt");
       await t.kitCmd("rm", "-f", "f.txt");
 
       await t.repo().index.load();
-      assert.equal(t.repo().index.trackedFile("f.txt"), true);
+      assert.equal(t.repo().index.trackedFile("f.txt"), false);
       await t.assertWorkspace([]);
     });
 
-    it.skip("removes a file only from the index", async () => {
+    it("removes a file only from the index", async () => {
       await t.kitCmd("rm", "--cached", "f.txt");
 
       await t.repo().index.load();
-      assert.equal(t.repo().index.trackedFile("f.txt"), true);
+      assert.equal(t.repo().index.trackedFile("f.txt"), false);
       await t.assertWorkspace([["f.txt", "1"]]);
     });
 
-    it.skip("removes a file from the index if it has unstaged changes", async () => {
+    it("removes a file from the index if it has unstaged changes", async () => {
       await T.delay(1000);
       await t.writeFile("f.txt", "2");
       await t.kitCmd("rm", "--cached", "f.txt");
 
       await t.repo().index.load();
-      assert.equal(t.repo().index.trackedFile("f.txt"), true);
+      assert.equal(t.repo().index.trackedFile("f.txt"), false);
       await t.assertWorkspace([["f.txt", "2"]]);
     });
 
-    it.skip("removes a file from the index if it has uncommitted changes", async () => {
+    it("removes a file from the index if it has uncommitted changes", async () => {
       await T.delay(1000);
       await t.writeFile("f.txt", "2");
       await t.kitCmd("add", "f.txt");
       await t.kitCmd("rm", "--cached", "f.txt");
 
       await t.repo().index.load();
-      assert.equal(t.repo().index.trackedFile("f.txt"), true);
+      assert.equal(t.repo().index.trackedFile("f.txt"), false);
       await t.assertWorkspace([["f.txt", "2"]]);
     });
 
-    it.skip("does not remove a file with both uncommitted and unstaged changes", async () => {
+    it("does not remove a file with both uncommitted and unstaged changes", async () => {
       await T.delay(1000);
       await t.writeFile("f.txt", "2");
       await t.kitCmd("add", "f.txt");
@@ -151,6 +151,111 @@ describe("rm", () => {
       await t.repo().index.load();
       assert.equal(t.repo().index.trackedFile("f.txt"), true);
       await t.assertWorkspace([["f.txt", "3"]]);
+    });
+  });
+
+  describe("with a tree", () => {
+    beforeEach(async () => {
+      await t.writeFile("f.txt", "1");
+      await t.writeFile("outer/g.txt", "2");
+      await t.writeFile("outer/inner/h.txt", "3");
+
+      await t.kitCmd("add", ".");
+      await t.commit("first");
+    });
+
+    it("removes multiple files", async () => {
+      await t.kitCmd("rm", "f.txt", "outer/inner/h.txt");
+
+      await t.repo().index.load();
+      assert.deepEqual(
+        t
+          .repo()
+          .index.eachEntry()
+          .map((e) => e.name),
+        ["outer/g.txt"]
+      );
+      await t.assertWorkspace([["outer/g.txt", "2"]]);
+    });
+
+    it("refuses to remove a directory", async () => {
+      await t.kitCmd("rm", "f.txt", "outer");
+
+      t.assertError("fatal: not removing 'outer' recursively without -r");
+      t.assertStatus(128);
+
+      await t.repo().index.load();
+      assert.deepEqual(
+        t
+          .repo()
+          .index.eachEntry()
+          .map((e) => e.name),
+        ["f.txt", "outer/g.txt", "outer/inner/h.txt"]
+      );
+
+      await t.assertWorkspace([
+        ["f.txt", "1"],
+        ["outer/g.txt", "2"],
+        ["outer/inner/h.txt", "3"],
+      ]);
+    });
+
+    it("does not remove a file replaced with a directory", async () => {
+      await t.rm("f.txt");
+      await t.writeFile("f.txt/nested", "keep me");
+      await t.kitCmd("rm", "f.txt");
+
+      t.assertError("fatal: kit rm: 'f.txt': Operation not permitted");
+      t.assertStatus(128);
+
+      await t.repo().index.load();
+      assert.deepEqual(
+        t
+          .repo()
+          .index.eachEntry()
+          .map((e) => e.name),
+        ["f.txt", "outer/g.txt", "outer/inner/h.txt"]
+      );
+
+      await t.assertWorkspace([
+        ["f.txt/nested", "keep me"],
+        ["outer/g.txt", "2"],
+        ["outer/inner/h.txt", "3"],
+      ]);
+    });
+
+    it("removes a directory with -r", async () => {
+      await t.kitCmd("rm", "-r", "outer");
+
+      await t.repo().index.load();
+      assert.deepEqual(
+        t
+          .repo()
+          .index.eachEntry()
+          .map((e) => e.name),
+        ["f.txt"]
+      );
+
+      await t.assertWorkspace([["f.txt", "1"]]);
+    });
+
+    it("does not remove untracked files", async () => {
+      await t.writeFile("outer/inner/j.txt", "4");
+      await t.kitCmd("rm", "-r", "outer");
+
+      await t.repo().index.load();
+      assert.deepEqual(
+        t
+          .repo()
+          .index.eachEntry()
+          .map((e) => e.name),
+        ["f.txt"]
+      );
+
+      await t.assertWorkspace([
+        ["f.txt", "1"],
+        ["outer/inner/j.txt", "4"],
+      ]);
     });
   });
 });

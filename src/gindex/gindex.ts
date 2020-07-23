@@ -72,6 +72,15 @@ export class Index {
     return entries;
   }
 
+  /**
+   * 指定されたディレクトリパスの子要素を配列で返します
+   * @param pathname 親ディレクトリパス
+   */
+  childPaths(pathname: Pathname) {
+    const childs = this.#parents.get(pathname);
+    return childs ? Array.from(childs) : [];
+  }
+
   entryForPath(pathname: Pathname, stage: Stage = 0): Entry | null {
     return this.#entries.get([pathname, stage]) ?? null;
   }
@@ -117,6 +126,10 @@ export class Index {
 
   trackedFile(pathname: Pathname) {
     return STAGES.some((stage) => this.#entries.has([pathname, stage]));
+  }
+
+  trackedDirectory(pathname: Pathname) {
+    return this.#parents.has(pathname);
   }
 
   updateEntryStat(entry: Database.WriteEntry, stat: Stats) {
