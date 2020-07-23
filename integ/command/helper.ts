@@ -16,8 +16,8 @@ export interface TestUtil {
   cmd: Command.Base;
 }
 
-export function create() {
-  return new TestUtil();
+export function create(name?: string) {
+  return new TestUtil(name);
 }
 
 const fs = promises;

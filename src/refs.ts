@@ -187,11 +187,7 @@ export class Refs {
     return this.updateSymRef(this.headPath, oid);
   }
 
-  private async updateRefFile(
-    pathname: Pathname,
-    oid: OID,
-    retry: number | null = null
-  ) {
+  private async updateRefFile(pathname: Pathname, oid: OID, retry: number | null = null) {
     try {
       const lockfile = new Lockfile(pathname, { fs: this.#fs });
       await lockfile.holdForUpdate();
@@ -219,9 +215,7 @@ export class Refs {
         break;
       }
 
-      const e = await this.#fs
-        .rmdir(dirname)
-        .catch((e: NodeJS.ErrnoException) => e);
+      const e = await this.#fs.rmdir(dirname).catch((e: NodeJS.ErrnoException) => e);
 
       if (e && e.code === "ENOTEMPTY") {
         break;

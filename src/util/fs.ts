@@ -50,6 +50,10 @@ export function ascend(pathname: Pathname) {
 
 /**
  * ファイルパスの各コンポーネントをリストとして取得します
+ *
+ * @example
+ * > eachFile("/usr/bin/ruby")
+ * ["usr", "bin", "ruby"]
  */
 export function eachFile(pathname: Pathname) {
   return pathname.split(path.sep);

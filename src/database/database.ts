@@ -3,14 +3,16 @@ import { constants } from "fs";
 import { Z_BEST_SPEED } from "zlib";
 import path = require("path");
 import { FileService, defaultFs, Zlib, defaultZlib } from "../services";
-import { GitObject, GitObjectParser, OID, CompleteGitObject } from "../types";
+import { GitObject, GitObjectParser, OID, CompleteGitObject, Pathname, CompleteTree, Dict } from "../types";
 import * as assert from "assert";
 import { Blob } from "./blob";
 import { asserts, scanUntil } from "../util";
+import { eachFile } from "../util/fs";
 import { Tree } from "./tree";
 import { Commit } from "./commit";
 import { TreeDiff } from "./tree_diff";
 import { PathFilter } from "../path_filter";
+import { Entry } from "./entry";
 
 const TEMP_CHARS = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
 
@@ -64,7 +66,34 @@ export class Database {
   }
 
   async load(oid: OID) {
-    return (this.#objects[oid] = this.#objects[oid] ?? (await this.readObject(oid)));
+    return this.#objects[oid] ??= await this.readObject(oid);
+  }
+
+  /**
+   * あるコミット内の指定されたファイルパスのエントリを取得します。
+   * ファイルパスが指定されない場合はコミットのTreeエントリを返します。
+   * コミット内にファイルパスが存在しない場合は、nullを返します
+   *
+   * @param oid - コミットID
+   * @param pathname - ファイルパス
+   */
+  async loadTreeEntry(oid: OID, pathname?: Pathname) {
+    const commit = await this.load(oid);
+    asserts(commit.type === "commit", "commitのOIDである必要があります");
+    const root = new Entry(commit.tree, Tree.TREE_MODE);
+
+    if (!pathname) {
+      return root;
+    }
+
+    let item: Entry | null = root;
+    for (const name of eachFile(pathname)) {
+      // データベースからロードされたオブジェクトはOIDを持つことが保証されている
+      // データベースからロードされたTreeのentriesはDict<Database.Entry>。Tree#parse参照
+      item = item ? ((await this.load(item.oid) as CompleteTree).entries as Dict<Entry>)[name] : null;
+    }
+
+    return item;
   }
 
   async prefixMatch(oidPrefix: OID) {

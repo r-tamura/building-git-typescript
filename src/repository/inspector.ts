@@ -33,9 +33,7 @@ export class Inspector {
     const entries = await this.#repo.workspace.listDir(pathname);
 
     const files = Object.entries(entries).filter(([p, stat]) => stat.isFile());
-    const dirs = Object.entries(entries).filter(([p, stat]) =>
-      stat.isDirectory()
-    );
+    const dirs = Object.entries(entries).filter(([p, stat]) => stat.isDirectory());
 
     for (const map of [files, dirs]) {
       for (const [p, s] of map) {
@@ -79,10 +77,7 @@ export class Inspector {
     return null;
   }
 
-  compareTreeToIndex(
-    dbEntry: Database.Entry | null,
-    entry: Index.Entry | null
-  ): IndexStatus {
+  compareTreeToIndex(dbEntry: Database.Entry | null, entry: Index.Entry | null): IndexStatus {
     if (dbEntry === null && entry === null) {
       return null;
     }
