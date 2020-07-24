@@ -11,6 +11,7 @@ import { Merge } from "./merge";
 import { Status } from "./status";
 import { Environment } from "../types";
 import { Rm } from "./rm";
+import { Reset } from "./reset";
 
 export class Unknown extends BaseError {}
 
@@ -26,6 +27,7 @@ const COMMANDS: CommandMap = {
   log: Log,
   merge: Merge,
   rm: Rm,
+  reset: Reset,
   status: Status,
 } as const;
 

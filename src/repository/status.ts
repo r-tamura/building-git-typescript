@@ -1,9 +1,8 @@
 import { Stats } from "fs";
 import * as path from "path";
-import { Pathname, OID } from "../types";
+import { Pathname } from "../types";
 import { Repository } from "./repository";
 import * as Database from "../database";
-import { asserts } from "../util";
 import * as Index from "../gindex";
 import { Inspector, IndexStatus, WorkspaceStatus } from "./inspector";
 import { Stage } from "../gindex";
@@ -27,12 +26,16 @@ export class Status {
   }
 
   static async of(repo: Repository) {
-    const status = new this(repo);
-    await status.scanWorkspace();
-    await status.loadHeadTree();
-    await status.checkIndexEntries();
-    status.collectDeletedHeadFiles();
-    return status;
+    const self = new this(repo);
+
+    const headOid = await self.repo.refs.readHead();
+    self.headTree = await self.repo.database.loadTreeList(headOid ?? undefined);
+
+    await self.scanWorkspace();
+    // await self.loadHeadTree();
+    await self.checkIndexEntries();
+    self.collectDeletedHeadFiles();
+    return self;
   }
   async checkIndexEntries() {
     for (const entry of this.repo.index.eachEntry()) {
@@ -57,17 +60,6 @@ export class Status {
         this.recordChange(name, this.indexChanges, "deleted");
       }
     });
-  }
-
-  private async loadHeadTree() {
-    const headOid = await this.repo.refs.readHead();
-    if (!headOid) {
-      return;
-    }
-
-    const commit = await this.repo.database.load(headOid);
-    asserts(commit.type === "commit");
-    await this.readTree(commit.tree);
   }
 
   async scanWorkspace(prefix?: string) {
@@ -106,22 +98,6 @@ export class Status {
     } else {
       // コンテンツ内容に変更がないとき、index上のstat情報をworkspace上のファイルと同期する
       this.repo.index.updateEntryStat(entry, stat);
-    }
-  }
-
-  private async readTree(treeOid: OID, pathname: Pathname = "") {
-    const tree = await this.repo.database.load(treeOid);
-    asserts(tree instanceof Database.Tree);
-
-    for (const [name, entry] of Object.entries(tree.entries)) {
-      const nextPath = path.join(pathname, name);
-      const readEntry = entry as Database.Entry;
-      if (readEntry.tree()) {
-        asserts(entry.oid !== null);
-        await this.readTree(entry.oid, nextPath);
-      } else {
-        this.headTree[nextPath] = readEntry;
-      }
     }
   }
 

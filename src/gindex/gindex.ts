@@ -40,6 +40,11 @@ export class Index {
     this.#changed = true;
   }
 
+  addFromDb(pathname: Pathname, item: Database.Entry) {
+    this.storeEntry(Entry.createFromDb(pathname, item, 0));
+    this.#changed = true;
+  }
+
   /**
    * 指定されたパスのステージ0(非コンフリクト時)のエントリを削除し、コンフリクト時のエントリ(ステージ1/2/3)を追加します。
    * @param pathname オブジェクトのファイルパス

@@ -96,6 +96,43 @@ export class Database {
     return item;
   }
 
+  /**
+   * コミットIDに含まれる全てのエントリを { ファイルパス => エントリ } としたDict形式で取得します。
+   * ファイルの場合はそのファイルの1エントリのみのDict、ディレクトリの場合はディレクトリ下の全てのファイルのDictを返します。
+   * パスが指定された場合、そのパス配下のファイルのみを取得します。
+   * OIDが指定されない場合は空のDictを返します
+   * @param oid
+   * @param pathname
+   */
+  async loadTreeList(oid?: OID, pathname?: Pathname) {
+    if (!oid) {
+      return {};
+    }
+    const entry = await this.loadTreeEntry(oid, pathname);
+    const list: Dict<Entry> = {};
+    await this.buildList(list, entry, pathname ?? "");
+    return list;
+  }
+
+  private async buildList(list: Dict<Entry>, entry: Entry | null, prefix: Pathname) {
+    if (!entry) {
+      return;
+    }
+    // エントリがBlob(ファイル)の場合
+    if (!entry.tree()) {
+      list[prefix] = entry;
+      return;
+    }
+
+    // エントリがTree(ディレクトリの場合
+    const tree = ((await this.load(entry.oid)) as CompleteTree);
+    for (const [name, item] of Object.entries(tree.entries)) {
+      // loadされたTreeはDict<Entry>
+      const childEntry = item as Entry;
+      await this.buildList(list, childEntry, path.join(prefix, name));
+    }
+  }
+
   async prefixMatch(oidPrefix: OID) {
     const dirname = path.dirname(this.objectPath(oidPrefix));
 
