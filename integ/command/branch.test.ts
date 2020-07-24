@@ -40,7 +40,7 @@ describe("branch", () => {
     it("creates a branch pointing at HEAD", async () => {
       await t.kitCmd("branch", "topic");
 
-      assert.equal(await t.repo().refs.readHead(), await t.repo().refs.readRef("topic"));
+      assert.equal(await t.repo.refs.readHead(), await t.repo.refs.readRef("topic"));
     });
 
     it("fails for invalid branch names", async () => {
@@ -62,9 +62,9 @@ describe("branch", () => {
 
     it("creats a branch from a short commit ID", async () => {
       const id = await t.resolveRevision("@~2");
-      await t.kitCmd("branch", "topic", t.repo().database.shortOid(id));
+      await t.kitCmd("branch", "topic", t.repo.database.shortOid(id));
 
-      assert.equal(await t.repo().refs.readRef("topic"), id);
+      assert.equal(await t.repo.refs.readRef("topic"), id);
     });
 
     it("fails for invalid revisions", async () => {
@@ -100,11 +100,11 @@ describe("branch", () => {
     });
 
     it("fails for parents of revisions that are not commit", async () => {
-      const head = await t.repo().refs.readHead();
+      const head = await t.repo.refs.readHead();
       if (head === null) {
         assert.fail();
       }
-      const o = await t.repo().database.load(head);
+      const o = await t.repo.database.load(head);
       if (o.type !== "commit") {
         assert.fail();
       }
@@ -133,8 +133,8 @@ describe("branch", () => {
       await t.kitCmd("branch", "new-feature", "@^");
       await t.kitCmd("branch", "--verbose");
 
-      const a_short = t.repo().database.shortOid(a.oid);
-      const b_short = t.repo().database.shortOid(b.oid);
+      const a_short = t.repo.database.shortOid(a.oid);
+      const b_short = t.repo.database.shortOid(b.oid);
       t.assertInfo(stripIndent`
         * master      ${b_short} third
           new-feature ${a_short} second
@@ -152,7 +152,7 @@ describe("branch", () => {
     });
 
     it("deletes a branch", async () => {
-      const head = await t.repo().refs.readHead();
+      const head = await t.repo.refs.readHead();
       if (head === null) {
         assert.fail();
       }
@@ -160,10 +160,10 @@ describe("branch", () => {
       await t.kitCmd("branch", "bug-fix");
       await t.kitCmd("branch", "--force", "--delete", "bug-fix");
 
-      const short = await t.repo().database.shortOid(head);
+      const short = await t.repo.database.shortOid(head);
       t.assertInfo(`Deleted branch bug-fix (was ${short})`);
 
-      const branches = await t.repo().refs.listBranchs();
+      const branches = await t.repo.refs.listBranchs();
       assert(!branches.map((b) => b.shortName()).includes("buf-fix"));
     });
 
@@ -178,7 +178,7 @@ describe("branch", () => {
       await t.kitCmd("branch", "fix/delete-branches");
       await t.kitCmd("branch", "-d", "-f", "fix/delete-branches");
 
-      const branches = await t.repo().refs.listBranchs();
+      const branches = await t.repo.refs.listBranchs();
       assert(!branches.map((b) => b.shortName()).includes("fix/delete-branches"));
       const heads = await fs.readdir(path.join(t.repoPath, ".git", "refs", "heads"));
       assert(!heads.includes("fix"));

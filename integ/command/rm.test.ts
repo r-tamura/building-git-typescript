@@ -23,8 +23,8 @@ describe("rm", () => {
     it("removes a file from the index", async () => {
       await t.kitCmd("rm", "f.txt");
 
-      await t.repo().index.load();
-      assert.equal(t.repo().index.trackedFile("f.txt"), false);
+      await t.repo.index.load();
+      assert.equal(t.repo.index.trackedFile("f.txt"), false);
     });
 
     it("removes a file from the workspace", async () => {
@@ -38,8 +38,8 @@ describe("rm", () => {
 
       t.assertStatus(0);
 
-      await t.repo().index.load();
-      assert.equal(t.repo().index.trackedFile("f.txt"), false);
+      await t.repo.index.load();
+      assert.equal(t.repo.index.trackedFile("f.txt"), false);
     });
 
     it("fails if the file is not in the index", async () => {
@@ -60,8 +60,8 @@ describe("rm", () => {
 
       t.assertStatus(1);
 
-      await t.repo().index.load();
-      assert.equal(t.repo().index.trackedFile("f.txt"), true);
+      await t.repo.index.load();
+      assert.equal(t.repo.index.trackedFile("f.txt"), true);
       await t.assertWorkspace([["f.txt", "2"]]);
     });
 
@@ -78,8 +78,8 @@ describe("rm", () => {
 
       t.assertStatus(1);
 
-      await t.repo().index.load();
-      assert.equal(t.repo().index.trackedFile("f.txt"), true);
+      await t.repo.index.load();
+      assert.equal(t.repo.index.trackedFile("f.txt"), true);
       await t.assertWorkspace([["f.txt", "2"]]);
     });
 
@@ -88,8 +88,8 @@ describe("rm", () => {
       await t.writeFile("f.txt", "2");
       await t.kitCmd("rm", "-f", "f.txt");
 
-      await t.repo().index.load();
-      assert.equal(t.repo().index.trackedFile("f.txt"), false);
+      await t.repo.index.load();
+      assert.equal(t.repo.index.trackedFile("f.txt"), false);
       await t.assertWorkspace([]);
     });
 
@@ -99,16 +99,16 @@ describe("rm", () => {
       await t.kitCmd("add", "f.txt");
       await t.kitCmd("rm", "-f", "f.txt");
 
-      await t.repo().index.load();
-      assert.equal(t.repo().index.trackedFile("f.txt"), false);
+      await t.repo.index.load();
+      assert.equal(t.repo.index.trackedFile("f.txt"), false);
       await t.assertWorkspace([]);
     });
 
     it("removes a file only from the index", async () => {
       await t.kitCmd("rm", "--cached", "f.txt");
 
-      await t.repo().index.load();
-      assert.equal(t.repo().index.trackedFile("f.txt"), false);
+      await t.repo.index.load();
+      assert.equal(t.repo.index.trackedFile("f.txt"), false);
       await t.assertWorkspace([["f.txt", "1"]]);
     });
 
@@ -117,8 +117,8 @@ describe("rm", () => {
       await t.writeFile("f.txt", "2");
       await t.kitCmd("rm", "--cached", "f.txt");
 
-      await t.repo().index.load();
-      assert.equal(t.repo().index.trackedFile("f.txt"), false);
+      await t.repo.index.load();
+      assert.equal(t.repo.index.trackedFile("f.txt"), false);
       await t.assertWorkspace([["f.txt", "2"]]);
     });
 
@@ -128,8 +128,8 @@ describe("rm", () => {
       await t.kitCmd("add", "f.txt");
       await t.kitCmd("rm", "--cached", "f.txt");
 
-      await t.repo().index.load();
-      assert.equal(t.repo().index.trackedFile("f.txt"), false);
+      await t.repo.index.load();
+      assert.equal(t.repo.index.trackedFile("f.txt"), false);
       await t.assertWorkspace([["f.txt", "2"]]);
     });
 
@@ -148,8 +148,8 @@ describe("rm", () => {
 
       t.assertStatus(1);
 
-      await t.repo().index.load();
-      assert.equal(t.repo().index.trackedFile("f.txt"), true);
+      await t.repo.index.load();
+      assert.equal(t.repo.index.trackedFile("f.txt"), true);
       await t.assertWorkspace([["f.txt", "3"]]);
     });
   });
@@ -167,12 +167,9 @@ describe("rm", () => {
     it("removes multiple files", async () => {
       await t.kitCmd("rm", "f.txt", "outer/inner/h.txt");
 
-      await t.repo().index.load();
+      await t.repo.index.load();
       assert.deepEqual(
-        t
-          .repo()
-          .index.eachEntry()
-          .map((e) => e.name),
+        t.repo.index.eachEntry().map((e) => e.name),
         ["outer/g.txt"]
       );
       await t.assertWorkspace([["outer/g.txt", "2"]]);
@@ -184,12 +181,9 @@ describe("rm", () => {
       t.assertError("fatal: not removing 'outer' recursively without -r");
       t.assertStatus(128);
 
-      await t.repo().index.load();
+      await t.repo.index.load();
       assert.deepEqual(
-        t
-          .repo()
-          .index.eachEntry()
-          .map((e) => e.name),
+        t.repo.index.eachEntry().map((e) => e.name),
         ["f.txt", "outer/g.txt", "outer/inner/h.txt"]
       );
 
@@ -208,12 +202,9 @@ describe("rm", () => {
       t.assertError("fatal: kit rm: 'f.txt': Operation not permitted");
       t.assertStatus(128);
 
-      await t.repo().index.load();
+      await t.repo.index.load();
       assert.deepEqual(
-        t
-          .repo()
-          .index.eachEntry()
-          .map((e) => e.name),
+        t.repo.index.eachEntry().map((e) => e.name),
         ["f.txt", "outer/g.txt", "outer/inner/h.txt"]
       );
 
@@ -227,12 +218,9 @@ describe("rm", () => {
     it("removes a directory with -r", async () => {
       await t.kitCmd("rm", "-r", "outer");
 
-      await t.repo().index.load();
+      await t.repo.index.load();
       assert.deepEqual(
-        t
-          .repo()
-          .index.eachEntry()
-          .map((e) => e.name),
+        t.repo.index.eachEntry().map((e) => e.name),
         ["f.txt"]
       );
 
@@ -243,12 +231,9 @@ describe("rm", () => {
       await t.writeFile("outer/inner/j.txt", "4");
       await t.kitCmd("rm", "-r", "outer");
 
-      await t.repo().index.load();
+      await t.repo.index.load();
       assert.deepEqual(
-        t
-          .repo()
-          .index.eachEntry()
-          .map((e) => e.name),
+        t.repo.index.eachEntry().map((e) => e.name),
         ["f.txt"]
       );
 

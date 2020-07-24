@@ -2,7 +2,7 @@ import { promises } from "fs";
 import { Readable, Writable } from "stream";
 import * as assert from "power-assert";
 import * as path from "path";
-import { Environment, Pathname, CompleteCommit, Dict } from "../../src/types";
+import { Environment, Pathname, CompleteCommit, Dict, OID } from "../../src/types";
 import { defaultFs, Logger, Process, exists } from "../../src/services";
 import { Repository } from "../../src/repository";
 import { makeLogger } from "../../src/__test__/util";
@@ -10,6 +10,7 @@ import * as Command from "../../src/command";
 import { asserts } from "../../src/util";
 import { Revision } from "../../src/revision";
 import * as FileService from "../../src/services";
+import { Blob, Entry } from "../../src/database";
 
 export interface TestUtil {
   suffix: Pathname;
@@ -75,7 +76,7 @@ export class TestUtil {
   }
 
   /** Assersion */
-  async assertWorkspace(contents: Contents, repository: Repository = this.repo()) {
+  async assertWorkspace(contents: Contents, repository: Repository = this.repo) {
     const files: Contents = [];
     const pathnames = await repository.workspace.listFiles();
     for (const pathname of pathnames) {
@@ -83,6 +84,16 @@ export class TestUtil {
     }
 
     assert.deepEqual(files, contents);
+  }
+
+  async assertIndex(expected: Contents) {
+    const actual: Contents = [];
+    await this.repo.index.load();
+    for (const entry of this.repo.index.eachEntry()) {
+      const bytes = await this.repo.database.load(entry.oid).then((blob) => (blob as Blob).data);
+      actual.push([entry.name, bytes.toString("utf8")]);
+    }
+    assert.deepEqual(actual, expected);
   }
 
   async assertExecutable(filename: string) {
@@ -134,7 +145,7 @@ export class TestUtil {
     return path.resolve(__dirname, "..", `test-${this.suffix}`);
   }
 
-  repo(): Repository {
+  get repo(): Repository {
     return this._repo;
   }
 
@@ -220,12 +231,12 @@ export class TestUtil {
   }
 
   async resolveRevision(expression: string) {
-    return new Revision(this.repo(), expression).resolve();
+    return new Revision(this.repo, expression).resolve();
   }
 
   async loadCommit(expression: string) {
     return this.resolveRevision(expression).then(
-      (oid) => this.repo().database.load(oid) as Promise<CompleteCommit>
+      (oid) => this.repo.database.load(oid) as Promise<CompleteCommit>
     );
   }
 

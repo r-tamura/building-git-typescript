@@ -6,7 +6,7 @@ const t = T.create();
 
 describe("add", () => {
   async function assertIndex(expected: [number, string][]) {
-    const repo = t.repo();
+    const repo = t.repo;
     await repo.index.load();
     const actual: [number, string][] = repo.index.eachEntry().map((e) => [e.mode, e.name]);
     assert.deepEqual(actual, expected);

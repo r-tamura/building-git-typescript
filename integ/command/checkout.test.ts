@@ -414,17 +414,11 @@ describe("checkout", () => {
       });
 
       it("links HEAD to the branch", async () => {
-        assert.equal(
-          await t
-            .repo()
-            .refs.currentRef()
-            .then((res) => res.path),
-          "refs/heads/topic"
-        );
+        assert.equal(await t.repo.refs.currentRef().then((res) => res.path), "refs/heads/topic");
       });
 
       it("resolves HEAD to the same object as the branch", async () => {
-        assert.equal(await t.repo().refs.readHead(), await t.repo().refs.readRef("topic"));
+        assert.equal(await t.repo.refs.readHead(), await t.repo.refs.readRef("topic"));
       });
 
       it("prints a message when switing to the same branch", async () => {
@@ -440,9 +434,7 @@ describe("checkout", () => {
       });
 
       it("prints a warning message when detaching HEAD", async () => {
-        const shortOid = await t
-          .resolveRevision("@")
-          .then((rev) => t.repo().database.shortOid(rev));
+        const shortOid = await t.resolveRevision("@").then((rev) => t.repo.database.shortOid(rev));
 
         await t.kitCmd("checkout", "@");
 

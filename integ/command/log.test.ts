@@ -65,19 +65,19 @@ describe("log", () => {
       await t.kitCmd("log", "--abbrev-commit");
 
       t.assertInfo(stripIndent`
-        commit ${t.repo().database.shortOid(commits[0].oid)}
+        commit ${t.repo.database.shortOid(commits[0].oid)}
         Author: A. U. Thor <author@example.com>
         Date:   ${commits[0].author.readableTime}
 
             C
 
-        commit ${t.repo().database.shortOid(commits[1].oid)}
+        commit ${t.repo.database.shortOid(commits[1].oid)}
         Author: A. U. Thor <author@example.com>
         Date:   ${commits[1].author.readableTime}
 
             B
 
-        commit ${t.repo().database.shortOid(commits[2].oid)}
+        commit ${t.repo.database.shortOid(commits[2].oid)}
         Author: A. U. Thor <author@example.com>
         Date:   ${commits[2].author.readableTime}
 
@@ -89,9 +89,9 @@ describe("log", () => {
       await t.kitCmd("log", "--oneline");
 
       t.assertInfo(stripIndent`
-        ${t.repo().database.shortOid(commits[0].oid)} C
-        ${t.repo().database.shortOid(commits[1].oid)} B
-        ${t.repo().database.shortOid(commits[2].oid)} A
+        ${t.repo.database.shortOid(commits[0].oid)} C
+        ${t.repo.database.shortOid(commits[1].oid)} B
+        ${t.repo.database.shortOid(commits[2].oid)} A
       `);
     });
 

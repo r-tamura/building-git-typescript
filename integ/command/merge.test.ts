@@ -30,9 +30,9 @@ describe("merge", () => {
 
   type TestIndexEntry = readonly [Pathname, Stage];
   async function assertIndex(...entries: TestIndexEntry[]) {
-    await t.repo().index.load();
+    await t.repo.index.load();
     const actual: TestIndexEntry[] = [];
-    for (const entry of t.repo().index.eachEntry()) {
+    for (const entry of t.repo.index.eachEntry()) {
       actual.push([entry.name, entry.stage]);
     }
     assert.deepEqual(actual, entries);
@@ -75,7 +75,7 @@ describe("merge", () => {
       const [a, b] = await Promise.all(["master^^", "master"].map((rev) => t.resolveRevision(rev)));
 
       t.assertInfo(stripIndent`
-        Updating ${t.repo().database.shortOid(a)}..${t.repo().database.shortOid(b)}
+        Updating ${t.repo.database.shortOid(a)}..${t.repo.database.shortOid(b)}
         Fast-Forward
       `);
     });
