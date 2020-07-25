@@ -77,6 +77,11 @@ export class Index {
     return entries;
   }
 
+  clearForReset() {
+    this.clear();
+    this.#changed = true;
+  }
+
   /**
    * 指定されたディレクトリパスの子要素を配列で返します
    * @param pathname 親ディレクトリパス

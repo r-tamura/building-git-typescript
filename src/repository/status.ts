@@ -1,11 +1,12 @@
 import { Stats } from "fs";
 import * as path from "path";
-import { Pathname } from "../types";
+import { Dict, Nullable, OID, Pathname } from "../types";
 import { Repository } from "./repository";
 import * as Database from "../database";
 import * as Index from "../gindex";
 import { Inspector, IndexStatus, WorkspaceStatus } from "./inspector";
 import { Stage } from "../gindex";
+import { asserts } from "../util";
 
 export type ChangeType = IndexStatus | WorkspaceStatus;
 export type ConflictStatus = Stage[];
@@ -16,23 +17,22 @@ export class Status {
   untrackedFiles: Set<Pathname> = new Set();
   conflicts: Map<Pathname, ConflictStatus> = new SortedMap();
 
-  headTree: { [s: string]: Database.Entry } = {};
-  stats: { [s: string]: Stats } = {};
+  headTree:  Dict<Database.Entry> = {};
+  stats: Dict<Stats> = {};
 
   #inspector: Inspector;
 
-  constructor(public repo: Repository) {
+  private constructor(public repo: Repository) {
     this.#inspector = new Inspector(repo);
   }
 
-  static async of(repo: Repository) {
+  static async of(repo: Repository, commitOid: Nullable<OID> = null) {
     const self = new this(repo);
 
-    const headOid = await self.repo.refs.readHead();
-    self.headTree = await self.repo.database.loadTreeList(headOid ?? undefined);
+    commitOid ??= await self.repo.refs.readHead();
+    self.headTree = await self.repo.database.loadTreeList(commitOid);
 
     await self.scanWorkspace();
-    // await self.loadHeadTree();
     await self.checkIndexEntries();
     self.collectDeletedHeadFiles();
     return self;

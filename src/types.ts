@@ -50,3 +50,4 @@ export type EnvVars = { [s: string]: EnvVar };
 
 // Util
 export type Dict<T> = { [s: string]: T };
+export type Nullable<T> = T | null;

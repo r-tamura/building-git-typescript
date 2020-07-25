@@ -3,7 +3,7 @@ import { constants } from "fs";
 import { Z_BEST_SPEED } from "zlib";
 import path = require("path");
 import { FileService, defaultFs, Zlib, defaultZlib } from "../services";
-import { GitObject, GitObjectParser, OID, CompleteGitObject, Pathname, CompleteTree, Dict } from "../types";
+import { GitObject, GitObjectParser, OID, CompleteGitObject, Pathname, CompleteTree, Dict, Nullable } from "../types";
 import * as assert from "assert";
 import { Blob } from "./blob";
 import { asserts, scanUntil } from "../util";
@@ -77,7 +77,7 @@ export class Database {
    * @param oid - コミットID
    * @param pathname - ファイルパス
    */
-  async loadTreeEntry(oid: OID, pathname?: Pathname) {
+  async loadTreeEntry(oid: OID, pathname: Nullable<Pathname> = null) {
     const commit = await this.load(oid);
     asserts(commit.type === "commit", "commitのOIDである必要があります");
     const root = new Entry(commit.tree, Tree.TREE_MODE);
@@ -104,7 +104,7 @@ export class Database {
    * @param oid
    * @param pathname
    */
-  async loadTreeList(oid?: OID, pathname?: Pathname) {
+  async loadTreeList(oid: Nullable<OID> = null, pathname: Nullable<Pathname> = null) {
     if (!oid) {
       return {};
     }
@@ -114,7 +114,7 @@ export class Database {
     return list;
   }
 
-  private async buildList(list: Dict<Entry>, entry: Entry | null, prefix: Pathname) {
+  private async buildList(list: Dict<Entry>, entry: Nullable<Entry>, prefix: Pathname) {
     if (!entry) {
       return;
     }

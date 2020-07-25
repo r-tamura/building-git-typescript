@@ -1,21 +1,12 @@
 import * as path from "path";
 import * as Database from "../database";
-import { IEntry, Entry } from "../entry";
+import { Entry } from "../entry";
 import { asserts, packHex, scanUntil, unpackHex } from "../util";
 import { OID, Pathname, Dict } from "../types";
 import { Entry as IndexEntry } from "../gindex";
 
 export type TraverseCallbackFn = (t: Tree) => Promise<void>;
 
-type ValueOf<T> = T[keyof T];
-
-export const MODE = {
-  readable: 0o0100644,
-  executable: 0o0100755,
-  directory: 0o040000,
-} as const;
-export type ModeNumber = ValueOf<typeof MODE>;
-export type ModeStr = "100644" | "100755";
 type CommitEntry = Entry | Tree;
 export type WriteEntry = Entry | IndexEntry;
 export type ReadEntry = Database.Entry;

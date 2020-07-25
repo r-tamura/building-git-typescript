@@ -3,12 +3,13 @@ import { Database } from "../database";
 import { Index } from "../gindex/index";
 import { Workspace } from "../workspace";
 import { Refs } from "../refs";
-import { Pathname } from "../types";
+import { Nullable, OID, Pathname } from "../types";
 import { Process, FileService } from "../services";
 import { Status } from "./status";
 import { Changes } from "../database";
 import { Migration } from "./migration";
 import { PendingCommit } from "./pending_commit";
+import { HardReset } from "./hard_reset";
 
 export type RepositoryEnv = {
   process: Process;
@@ -38,8 +39,8 @@ export class Repository {
     return this.#refs ??= new Refs(this.gitPath, this.env);
   }
 
-  get status() {
-    return Status.of(this);
+  status(commitOid: Nullable<OID> = null) {
+    return Status.of(this, commitOid);
   }
 
   get workspace() {
@@ -48,6 +49,10 @@ export class Repository {
 
   migration(treeDiff: Changes) {
     return new Migration(this, treeDiff);
+  }
+
+  async hardReset(oid: OID) {
+    return new HardReset(this, oid).execute();
   }
 
   pendingCommit() {

@@ -117,11 +117,11 @@ describe("reset", () => {
       await assertUnchangedWorkspace();
     });
 
-    it.skip("resets the whole index", async () => {
+    it("resets the whole index", async () => {
       await t.kitCmd("reset");
       await t.assertIndex([
-        ["outer/a.txt", "1"],
-        ["outer/d.txt", "4"],
+        ["a.txt", "1"],
+        ["outer/b.txt", "4"],
         ["outer/inner/c.txt", "3"],
       ]);
 
@@ -132,8 +132,8 @@ describe("reset", () => {
     it.skip("resets the whole index and moves HEAD", async () => {
       await t.kitCmd("reset", "@^");
       await t.assertIndex([
-        ["outer/a.txt", "1"],
-        ["outer/d.txt", "2"],
+        ["a.txt", "1"],
+        ["outer/b.txt", "2"],
         ["outer/inner/c.txt", "3"],
       ]);
 
@@ -143,6 +143,59 @@ describe("reset", () => {
       );
 
       await assertUnchangedWorkspace();
+    });
+
+    it.skip("moves HEAD and leaves the index unchanged", async () => {
+      await t.kitCmd("reset", "--soft", "@^");
+
+      await t.assertIndex([
+        ["outer/b.txt", "4"],
+        ["outer/d.txt", "5"],
+        ["outer/inner/c.txt", "6"],
+      ]);
+
+      assert.equal(
+        ((await t.repo.database.load(headOid)) as CompleteCommit).parent,
+        await t.repo.refs.readHead()
+      );
+
+      await assertUnchangedWorkspace();
+    });
+
+    it("rests the index and workspace", async () => {
+      await t.writeFile("a.txt/nested", "remove me");
+      await t.writeFile("outer/b.txt", "10");
+      await t.rm("outer/inner");
+
+      await t.kitCmd("reset", "--hard");
+
+      await assertUnchangedHead();
+
+      await t.assertIndex([
+        ["a.txt", "1"],
+        ["outer/b.txt", "4"],
+        ["outer/inner/c.txt", "3"],
+      ]);
+
+      await t.kitCmd("status", "--porcelain");
+      t.assertInfo("?? outer/e.txt");
+    });
+
+    it.skip("lets you return to the previous stat using ORIG_HEAD", async () => {
+      await t.kitCmd("reset", "--hard", "@^");
+
+      await t.assertIndex([
+        ["a.txt", "1"],
+        ["outer/b.txt", "2"],
+        ["outer/inner/c.txt", "3"],
+      ]);
+
+      await t.kitCmd("reset", "--hard", "ORIG_HEAD");
+      await t.assertIndex([
+        ["a.txt", "1"],
+        ["b.txt", "4"],
+        ["outer/inner/c.txt", "3"],
+      ]);
     });
   });
 });

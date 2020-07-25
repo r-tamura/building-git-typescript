@@ -72,7 +72,7 @@ export class Status extends Base<Option> {
 
   async run() {
     await this.repo.index.loadForUpdate();
-    this.#status = await this.repo.status;
+    this.#status = await this.repo.status();
     await this.repo.index.writeUpdates();
 
     await this.printResults();

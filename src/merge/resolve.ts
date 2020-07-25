@@ -1,10 +1,10 @@
 import * as path from "path";
-import { Changes, Entry, ModeNumber, Blob } from "../database";
+import { Changes, Entry, Blob } from "../database";
+import { ModeNumber } from "../entry";
 import { Repository } from "../repository";
 import { Inputs } from "./inputs";
 import { first, asserts, ascend } from "../util";
 import { Pathname, OID } from "../types";
-import { Diff } from "../command/diff";
 import { Diff3 } from "./diff3";
 
 export type Conflict = readonly [Entry | null, Entry | null, Entry | null];

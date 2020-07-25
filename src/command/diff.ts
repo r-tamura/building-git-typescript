@@ -24,7 +24,7 @@ export class Diff extends Base<Options> {
   #status!: Repository.Status;
   async run(): Promise<void> {
     await this.repo.index.load();
-    this.#status = await this.repo.status;
+    this.#status = await this.repo.status();
 
     this.setupPager();
 

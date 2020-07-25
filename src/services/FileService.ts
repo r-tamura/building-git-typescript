@@ -39,7 +39,7 @@ export async function directory(fs: FileService, pathname: Pathname) {
 }
 
 export async function rmrf(fs: FileService, pathname: Pathname) {
-  // rimraf.jsのようにファイルであると仮定してunlink -> EISDIRエラーならrmdirする
+  // rimraf.jsのようにファイルであると仮定してunlink -> EPERM/EISDIRエラーならrmdirする
   // https://github.com/isaacs/rimraf/blob/master/rimraf.js
   try {
     await fs.unlink(pathname);
@@ -47,14 +47,19 @@ export async function rmrf(fs: FileService, pathname: Pathname) {
     const nodeErr = e as NodeJS.ErrnoException;
     switch (nodeErr.code) {
       case "EISDIR":
+      case "EPERM":
         await fs.rmdir(pathname, { recursive: true });
-        break;
+        return;
       case "ENOENT":
         return;
       default:
         throw e;
     }
   }
+}
+
+export async function mkdirp(fs: FileService, pathname: Pathname) {
+  return fs.mkdir(pathname, { recursive: true });
 }
 
 /** zlib */

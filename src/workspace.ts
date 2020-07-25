@@ -1,16 +1,23 @@
 import { Stats } from "fs";
 import * as path from "path";
 import { O_WRONLY, O_CREAT, O_EXCL } from "constants";
-import { FileService, defaultFs, rmrf } from "./services";
+import { FileService, defaultFs, rmrf, mkdirp } from "./services";
 import { Pathname } from "./types";
 import { asserts } from "./util/assert";
 import { BaseError } from "./util/error";
 import { ascend } from "./util/fs";
 import { Migration, Changes } from "./repository";
+import { ModeNumber } from "./entry";
 
 export type Environment = {
   fs?: FileService;
 };
+
+interface WriteFileOption {
+  /** ファイルモード */
+  mode?: ModeNumber;
+  mkdir?: boolean;
+}
 
 export class MissingFile extends BaseError {}
 export class NoPermission extends BaseError {}
@@ -96,8 +103,17 @@ export class Workspace {
     });
   }
 
-  async writeFile(pathname: Pathname, data: string | Buffer) {
-    return this.#fs.writeFile(this.join(pathname), data);
+  async writeFile(
+    pathname: Pathname,
+    data: string | Buffer,
+    { mode, mkdir = false }: WriteFileOption = {}
+  ) {
+    const fullPath = this.join(pathname);
+    if (mkdir) {
+      await mkdirp(this.#fs, path.dirname(fullPath));
+    }
+    // 100644, 100755をファイルシステムのモード0o644, 0o755へ落とし込む
+    return this.#fs.writeFile(fullPath, data, { mode: mode ? mode : mode });
   }
 
   async statFile(rpath: Pathname) {
@@ -117,13 +133,14 @@ export class Workspace {
   }
 
   /**
-   * ワークスペースないのファイルを削除します。指定されたファイルが存在しない場合は、何もしません。
-   * ファイルを削除したことにより、ディレクトリが空になった場合はそのディレクトリも削除します。
+   * ワークスペース内のファイル/ディレクトリを削除します。指定されたファイルが存在しない場合は、何もしません。
+   * ディレクトリの場合はディレクトリ内のコンテンツも再帰的に全て削除します。
+   * ファイルを削除したことにより、親ディレクトリが空になった場合はそのディレクトリも削除します。
    * @param pathname 削除対象ファイルのワークスペースパスからの相対 パス
    */
   async remove(pathname: Pathname) {
     try {
-      await this.#fs.unlink(path.join(this.#pathname, pathname));
+      await rmrf(this.#fs, this.join(pathname));
       for (const dirpath of ascend(path.dirname(pathname))) {
         await this.removeDirectory(dirpath);
       }
