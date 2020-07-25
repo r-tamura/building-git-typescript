@@ -5,9 +5,10 @@ import { readTextStream } from "../services";
 import { Inputs, Resolve } from "../merge";
 import { writeCommit, pendingCommit, resumeMerge, CONFLICT_MESSAGE } from "./shared/write_commit";
 import { PendingCommit, Error as NotInProgressError } from "../repository/pending_commit";
+import { asserts } from "../util";
 
 interface Options {
-  mode: "run" | "continue";
+  mode: "run" | "continue" | "abort";
 }
 
 export class Merge extends Base<Options> {
@@ -15,6 +16,11 @@ export class Merge extends Base<Options> {
 
   pendingCommit!: PendingCommit;
   async run() {
+    if (this.options["mode"] === "abort") {
+      await this.handleAbort();
+      return;
+    }
+
     if (this.options["mode"] === "continue") {
       await this.handleContinue();
       return;
@@ -42,6 +48,9 @@ export class Merge extends Base<Options> {
     return {
       "--continue": arg.flag(() => {
         this.options["mode"] = "continue";
+      }),
+      "--abort": arg.flag(() => {
+        this.options["mode"] = "abort";
       }),
     };
   }
@@ -104,6 +113,7 @@ export class Merge extends Base<Options> {
     } catch (e) {
       switch (e.constructor) {
         case NotInProgressError:
+          this.logger.error(`fatal: ${e.message}`);
           this.exit(128);
         default:
           throw e;
@@ -116,5 +126,24 @@ export class Merge extends Base<Options> {
     this.logger.error(`error: ${message}`);
     this.logger.error(CONFLICT_MESSAGE);
     return this.exit(128);
+  }
+
+  private async handleAbort() {
+    try {
+      await pendingCommit(this).clear();
+      await this.repo.index.loadForUpdate();
+      const headOid = await this.repo.refs.readHead();
+      asserts(headOid !== null, "HEADが存在する必要があります。");
+      await this.repo.hardReset(headOid);
+      await this.repo.index.writeUpdates();
+    } catch (e) {
+      switch (e.constructor) {
+        case NotInProgressError:
+          this.logger.error(`fatal: ${e.message}`);
+          this.exit(128);
+        default:
+          throw e;
+      }
+    }
   }
 }

@@ -51,7 +51,14 @@ export class PendingCommit {
   }
 
   async clear() {
-    return Promise.all([this.#fs.unlink(this.#headPath), this.#fs.unlink(this.#messagePath)]);
+    const promises = [this.#fs.unlink(this.#headPath), this.#fs.unlink(this.#messagePath)];
+    return Promise.all(promises).catch((e: NodeJS.ErrnoException) => {
+      if (e.code === "ENOENT") {
+        const name = path.basename(this.#headPath);
+        throw new Error(`There is no merge to abort (${name} missing).`);
+      }
+      throw e;
+    });
   }
 
   async inProgress() {

@@ -846,26 +846,26 @@ describe("merge", () => {
       );
     });
 
-    it.skip("prevents merge --continue when non is in progress", async () => {
+    it("prevents merge --continue when none is in progress", async () => {
       await t.kitCmd("add", "f.txt");
       await t.kitCmd("merge", "--continue");
       await t.kitCmd("merge", "--continue");
 
-      t.assertError("fatal: There is no merge in progress (MERGE_HEAD missing).\n");
+      t.assertError("fatal: There is no merge in progress (MERGE_HEAD missing).");
       t.assertStatus(128);
     });
 
-    it.skip("aborts the merge", async () => {
+    it("aborts the merge", async () => {
       await t.kitCmd("merge", "--abort");
       await t.kitCmd("status", "--porcelain");
       t.assertInfo("");
     });
 
-    it.skip("prevents aborting a merge when none is in progress", async () => {
+    it("prevents aborting a merge when none is in progress", async () => {
       await t.kitCmd("merge", "--abort");
       await t.kitCmd("merge", "--abort");
 
-      t.assertError("fatal: There is no merge in progress (MERGE_HEAD missing).\n");
+      t.assertError("fatal: There is no merge to abort (MERGE_HEAD missing).");
       t.assertStatus(128);
     });
 
