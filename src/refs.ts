@@ -4,7 +4,7 @@ import { FileService, defaultFs, exists, directory } from "./services";
 import { OID } from "./types";
 import { BaseError, find, ascend, asserts } from "./util";
 import { Lockfile, MissingParent } from "./lockfile";
-import { Pathname } from "./types";
+import { Pathname, Nullable } from "./types";
 
 export type Environment = {
   fs?: FileService;
@@ -21,6 +21,7 @@ const INVALID_BRANCH_NAME = [
 ];
 
 const HEAD = "HEAD";
+export const ORIG_HEAD = "ORIG_HEAD";
 
 export const symref = (refs: Refs, p: Pathname): SymRef => SymRef.of(refs, p);
 export interface SymRef {
@@ -187,12 +188,34 @@ export class Refs {
     return this.updateSymRef(this.headPath, oid);
   }
 
-  private async updateRefFile(pathname: Pathname, oid: OID, retry: number | null = null) {
+  /**
+   * 指定された名前でRefをファイルに書き込みます
+   * @param name ref名
+   * @param oid
+   */
+  async updateRef(name: string, oid: Nullable<OID>) {
+    return this.updateRefFile(path.join(this.#pathname, name), oid);
+  }
+
+  private async updateRefFile(
+    pathname: Pathname,
+    oid: Nullable<OID>,
+    retry: Nullable<number> = null
+  ) {
     try {
       const lockfile = new Lockfile(pathname, { fs: this.#fs });
       await lockfile.holdForUpdate();
-
-      await this.writeLockfile(lockfile, oid);
+      if (oid) {
+        await this.writeLockfile(lockfile, oid);
+      } else {
+        await this.#fs.unlink(pathname).catch((e: NodeJS.ErrnoException) => {
+          if (e.code === "ENOENT") {
+            return;
+          }
+          throw e;
+        });
+        await lockfile.rollback();
+      }
     } catch (e) {
       switch (e.constructor) {
         case MissingParent:
@@ -223,16 +246,18 @@ export class Refs {
     }
   }
 
-  private async updateSymRef(pathname: Pathname, oid: OID) {
+  private async updateSymRef(pathname: Pathname, oid: OID): Promise<Nullable<string>> {
     const lockfile = new Lockfile(pathname);
     await lockfile.holdForUpdate();
     const ref = await this.readOidOrSymRef(pathname);
+
     if (ref === null || ref.type !== "symref") {
-      return this.writeLockfile(lockfile, oid);
+      await this.writeLockfile(lockfile, oid);
+      return ref?.oid ?? null;
     }
 
     try {
-      await this.updateSymRef(path.join(this.#pathname, ref.path), oid);
+      return this.updateSymRef(path.join(this.#pathname, ref.path), oid);
     } finally {
       await lockfile.rollback();
     }

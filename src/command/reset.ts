@@ -1,5 +1,6 @@
 import * as arg from "arg";
 import { HEAD, InvalidObject, Revision } from "../revision";
+import { ORIG_HEAD } from "../refs";
 import { OID, Pathname } from "../types";
 import { asserts } from "../util/assert";
 import { isempty } from "../util/array";
@@ -21,6 +22,11 @@ export class Reset extends Base<Options> {
     await this.repo.index.loadForUpdate();
     await this.resetFiles();
     await this.repo.index.writeUpdates();
+
+    if (isempty(this.args)) {
+      const headOid = await this.repo.refs.updateHead(this.#commitOid);
+      await this.repo.refs.updateRef(ORIG_HEAD, headOid);
+    }
   }
 
   defineSpec() {
@@ -65,7 +71,6 @@ export class Reset extends Base<Options> {
 
   private async resetPath(pathname?: Pathname) {
     const listing = await this.repo.database.loadTreeList(this.#commitOid, pathname);
-
     if (pathname) {
       await this.repo.index.remove(pathname);
     }
@@ -88,5 +93,7 @@ export class Reset extends Base<Options> {
       }
       throw e;
     }
+
+    this.args.shift();
   }
 }

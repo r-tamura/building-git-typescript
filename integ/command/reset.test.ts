@@ -129,7 +129,7 @@ describe("reset", () => {
       await assertUnchangedWorkspace();
     });
 
-    it.skip("resets the whole index and moves HEAD", async () => {
+    it("resets the whole index and moves HEAD", async () => {
       await t.kitCmd("reset", "@^");
       await t.assertIndex([
         ["a.txt", "1"],
@@ -145,7 +145,7 @@ describe("reset", () => {
       await assertUnchangedWorkspace();
     });
 
-    it.skip("moves HEAD and leaves the index unchanged", async () => {
+    it("moves HEAD and leaves the index unchanged", async () => {
       await t.kitCmd("reset", "--soft", "@^");
 
       await t.assertIndex([
@@ -181,7 +181,7 @@ describe("reset", () => {
       t.assertInfo("?? outer/e.txt");
     });
 
-    it.skip("lets you return to the previous stat using ORIG_HEAD", async () => {
+    it("lets you return to the previous stat using ORIG_HEAD", async () => {
       await t.kitCmd("reset", "--hard", "@^");
 
       await t.assertIndex([
@@ -193,7 +193,7 @@ describe("reset", () => {
       await t.kitCmd("reset", "--hard", "ORIG_HEAD");
       await t.assertIndex([
         ["a.txt", "1"],
-        ["b.txt", "4"],
+        ["outer/b.txt", "4"],
         ["outer/inner/c.txt", "3"],
       ]);
     });
