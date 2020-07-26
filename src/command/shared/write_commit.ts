@@ -1,4 +1,5 @@
-import { OID, CompleteTree, CompleteCommit } from "../../types";
+import * as arg from "arg";
+import { OID, CompleteTree, CompleteCommit, Pathname } from "../../types";
 import { Base } from "../base";
 import { Author, Commit, Tree } from "../../database";
 import { asserts } from "../../util";
@@ -9,12 +10,44 @@ hint: as appropriate to mark resolution and make a commit.
 fatal: Exiting because of an unresolved conflict.
 `;
 
+export interface CommitOptions {
+  message?: string;
+  file?: Pathname;
+}
 
-  /**
-   * コンフリクト解決後に再度マージを実行します。
-   * マージコミットメッセージはコンフリクト発生時のマージで指定されたメッセージが利用されます。
-   * コンフリクトが解決されていない場合はプロセスを終了します。
-   */
+export interface CommitArgSpec extends arg.Spec {
+  "--message": arg.Handler;
+  "-m": "--message";
+  "--file": arg.Handler;
+  "-F": "--file";
+}
+
+export function defineWriteCommitOptions<O extends CommitOptions>(cmd: Base<O>): CommitArgSpec {
+  return {
+    "--message": (message: string) => {
+      cmd.options["message"] = message;
+    },
+    "-m": "--message",
+    "--file": (pathname: Pathname) => {
+      cmd.options["file"] = pathname;
+    },
+    "-F": "--file",
+  };
+}
+
+export async function readMessage<O extends CommitOptions>(cmd: Base<O>) {
+  if (cmd.options["message"]) {
+    return `${cmd.options["message"]}`;
+  } else if (cmd.options["file"]) {
+    return cmd.repo.env.fs.readFile(cmd.options["file"], "utf-8");
+  }
+}
+
+/**
+ * コンフリクト解決後に再度マージを実行します。
+ * マージコミットメッセージはコンフリクト発生時のマージで指定されたメッセージが利用されます。
+ * コンフリクトが解決されていない場合はプロセスを終了します。
+ */
 export async function resumeMerge(cmd: Base & CommitPendable) {
   handleConflictedIndex(cmd);
   const [left, right] = await Promise.all([
@@ -65,6 +98,18 @@ export function handleConflictedIndex(cmd: Base) {
   cmd.logger.error(`error: ${message}`);
   cmd.logger.error(CONFLICT_MESSAGE);
   cmd.exit(128);
+}
+
+export async function printCommit(commit: CompleteCommit, cmd: Base) {
+  const ref = await cmd.repo.refs.currentRef();
+  const oid = cmd.repo.database.shortOid(commit.oid);
+
+  let info = ref.head() ? "detached HEAD" : ref.shortName();
+  if (!commit.parent) {
+    info += " (root-commit)";
+  }
+  info += ` ${oid}`;
+  cmd.log(`[${info}] ${commit.titleLine()}`);
 }
 
 type CommitPendable = { pendingCommit: PendingCommit | null }

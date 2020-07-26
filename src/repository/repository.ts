@@ -24,7 +24,7 @@ export class Repository {
   #index!: Index;
   #workspace!: Workspace;
   #refs!: Refs;
-  constructor(public gitPath: Pathname, private env: RepositoryEnv) {}
+  constructor(public gitPath: Pathname, public env: RepositoryEnv) {}
 
   get database() {
     return this.#database ??=

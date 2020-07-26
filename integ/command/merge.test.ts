@@ -777,8 +777,7 @@ describe("merge", () => {
     });
 
     it("prevents commits with unmerged entries", async () => {
-      t.mockStdio("B");
-      await t.kitCmd("commit");
+      await t.commit("B");
 
       t.assertError(stripIndent`
         error: Committing is not possible because you have unmerged files.
