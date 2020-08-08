@@ -36,6 +36,7 @@
     "typescript": "^4.0.0-beta"
   },
   "dependencies": {
-    "arg": "^4.1.3"
+    "arg": "^4.1.3",
+    "shlex": "^2.0.2"
   }
 }

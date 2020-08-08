@@ -6,6 +6,7 @@ import { Repository } from "../repository";
 import { Logger, createLogger } from "../services";
 import * as Color from "../color";
 import { Pager } from "../pager";
+import { EditCallback, Editor } from "../editor";
 
 /** process.exit 代替え */
 export class Exit {}
@@ -54,6 +55,16 @@ export abstract class Base<O extends Options = NoOptions> implements Runnable {
 
   expeandedPathname(pathname: Pathname) {
     return path.resolve(this.dir, pathname);
+  }
+
+  async editFile(pathname: Pathname, callback: EditCallback) {
+    const message = await Editor.edit(pathname, async (editor) => {
+      await callback(editor);
+      if (!this.isatty) {
+        editor.close();
+      }
+    }, this.editorCommand(), { fs: this.env.fs, stdout: this.stdout, stderr: this.stderr });
+    return message;
   }
 
   exit(status: 0 | 1 | 128): never {
@@ -121,6 +132,10 @@ export abstract class Base<O extends Options = NoOptions> implements Runnable {
     this.pager = Pager.of(this.envvars, this.stdout, this.stderr);
     this.stdout = this.pager.input;
     this.logger = createLogger(this.stdout);
+  }
+
+  private editorCommand() {
+    return this.envvars["GIT_EDITOR"] ?? this.envvars["VISUAL"] ?? this.envvars["EDITOR"];
   }
 
   protected defineSpec(): arg.Spec {

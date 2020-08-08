@@ -1,5 +1,5 @@
 import { Base } from "./base";
-import { Environment } from "../types";
+import { Environment, Nullable } from "../types";
 import {
   writeCommit,
   pendingCommit,
@@ -9,9 +9,13 @@ import {
   CommitArgSpec,
   readMessage,
   printCommit,
+  commitMessagePath,
 } from "./shared/write_commit";
 import { PendingCommit } from "../repository/pending_commit";
-import { asserts } from "../util";
+
+export const COMMIT_NOTES = `Please Enter the commit message for your changes. Lines starting
+with '#' will be ignored, and an empty message aborts the commit.
+`;
 
 export class Commit extends Base<CommitOptions> {
   pendingCommit: PendingCommit | null = null;
@@ -26,8 +30,7 @@ export class Commit extends Base<CommitOptions> {
     }
 
     const parent = await this.repo.refs.readHead();
-    const message = await readMessage(this);
-    asserts(message !== undefined, "コミットメッセージが必要");
+    const message = await readMessage(this).then((msg) => this.composeMessage(msg));
     const commit = await writeCommit(parent ? [parent] : [], message, this);
     await printCommit(commit, this);
   }
@@ -39,5 +42,17 @@ export class Commit extends Base<CommitOptions> {
 
   initOptions() {
     this.options = {};
+  }
+
+  async composeMessage(message: Nullable<string>) {
+    return this.editFile(commitMessagePath(this), async (editor) => {
+      await editor.puts(message ?? "");
+      await editor.puts("");
+      await editor.note(COMMIT_NOTES);
+
+      if (!this.options["edit"]) {
+        editor.close();
+      }
+    });
   }
 }

@@ -1,18 +1,28 @@
+import * as path from "path";
 import * as arg from "arg";
-import { OID, CompleteTree, CompleteCommit, Pathname } from "../../types";
+import { OID, CompleteTree, CompleteCommit, Pathname, Nullable } from "../../types";
 import { Base } from "../base";
 import { Author, Commit, Tree } from "../../database";
 import { asserts } from "../../util";
 import { PendingCommit } from "../../repository/pending_commit";
+import { COMMIT_NOTES } from "../commit";
 
 export const CONFLICT_MESSAGE = `hint: Fix them up in the work tree, and then use 'kit add/rm <file>'
 hint: as appropriate to mark resolution and make a commit.
 fatal: Exiting because of an unresolved conflict.
 `;
+const MERGE_NOTES = `
+  It looks like you may be committing a merge.
+  If this is not correct, please remove the file
+  \t.git/MERGE_HEAD
+  and try again.
+`;
 
+type CommitPendable = { pendingCommit: PendingCommit | null }
 export interface CommitOptions {
   message?: string;
   file?: Pathname;
+  edit?: "auto" | boolean;
 }
 
 export interface CommitArgSpec extends arg.Spec {
@@ -26,12 +36,25 @@ export function defineWriteCommitOptions<O extends CommitOptions>(cmd: Base<O>):
   return {
     "--message": (message: string) => {
       cmd.options["message"] = message;
+      if (cmd.options["edit"] === "auto") {
+        cmd.options["edit"] = false;
+      }
     },
     "-m": "--message",
     "--file": (pathname: Pathname) => {
       cmd.options["file"] = pathname;
+      if (cmd.options["edit"] === "auto") {
+        cmd.options["edit"] = false;
+      }
     },
     "-F": "--file",
+    "--edit": arg.flag(() => {
+      cmd.options["edit"] = true;
+    }),
+    "-e": "--edit",
+    "--no-edit": arg.flag(() => {
+      cmd.options["edit"] = false;
+    })
   };
 }
 
@@ -39,8 +62,9 @@ export async function readMessage<O extends CommitOptions>(cmd: Base<O>) {
   if (cmd.options["message"]) {
     return `${cmd.options["message"]}`;
   } else if (cmd.options["file"]) {
-    return cmd.repo.env.fs.readFile(cmd.options["file"], "utf-8");
+    return cmd.repo.env.fs.readFile(cmd.options["file"], "utf-8") as Promise<string>;
   }
+  return null;
 }
 
 /**
@@ -56,14 +80,22 @@ export async function resumeMerge(cmd: Base & CommitPendable) {
   ]);
   asserts(left !== null, "マージを実行した時点でHEADは存在する");
   const parents = [left, right];
-  await writeCommit(parents, await pendingCommit(cmd).mergeMessage(), cmd);
+
+  const message = await composeMergeMessage(MERGE_NOTES, cmd);
+  await writeCommit(parents, message, cmd);
 
   await pendingCommit(cmd).clear();
 
   return cmd.exit(0);
 }
 
-export async function writeCommit(parents: OID[], message: string, cmd: Base) {
+export async function writeCommit(parents: OID[], message: Nullable<string>, cmd: Base) {
+
+  if (!message) {
+    cmd.logger.error("Aborting commit due to empty commit message.");
+    cmd.exit(1);
+  }
+
   const tree = await writeTree(cmd);
   const name = cmd.envvars["GIT_AUTHOR_NAME"];
   const email = cmd.envvars["GIT_AUTHOR_EMAIL"];
@@ -112,7 +144,22 @@ export async function printCommit(commit: CompleteCommit, cmd: Base) {
   cmd.log(`[${info}] ${commit.titleLine()}`);
 }
 
-type CommitPendable = { pendingCommit: PendingCommit | null }
+export function composeMergeMessage(notes: Nullable<string> = null, cmd: Base & CommitPendable) {
+  return cmd.editFile(commitMessagePath(cmd), async (editor) => {
+    await editor.puts(await pendingCommit(cmd).mergeMessage());
+    if (notes) {
+      await editor.note(notes);
+    }
+    await editor.puts("");
+    await editor.note(COMMIT_NOTES);
+  });
+}
+
+export function commitMessagePath(cmd: Base) {
+  return path.join(cmd.repo.gitPath, "COMMIT_EDITMSG");
+}
+
+
 export function pendingCommit(cmd: Base & CommitPendable) {
   return cmd.pendingCommit ??= cmd.repo.pendingCommit();
 }

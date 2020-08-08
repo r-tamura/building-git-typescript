@@ -3,14 +3,28 @@ import { Base } from "./base";
 import { HEAD } from "../revision";
 import { readTextStream } from "../services";
 import { Inputs, Resolve } from "../merge";
-import { writeCommit, pendingCommit, resumeMerge, CONFLICT_MESSAGE } from "./shared/write_commit";
+import {
+  writeCommit,
+  pendingCommit,
+  resumeMerge,
+  CONFLICT_MESSAGE,
+  readMessage,
+  CommitOptions,
+} from "./shared/write_commit";
 import { PendingCommit, Error as NotInProgressError } from "../repository/pending_commit";
 import { asserts } from "../util";
 
-interface Options {
+interface Options extends CommitOptions {
   mode: "run" | "continue" | "abort";
 }
 
+const COMMIT_NOTES = `
+  Please enter a commit message to explain why this merge is necessary,
+  especially if it merges an updated upstream into a topic branch.
+
+  Lines starting with '#' will be ignored, and an empty message aborts
+  the commit.
+`;
 export class Merge extends Base<Options> {
   #inputs!: Inputs;
 
@@ -38,8 +52,7 @@ export class Merge extends Base<Options> {
     if (this.#inputs.fastForward()) {
       await this.handleFastForward();
     }
-    const message = await readTextStream(this.env.process.stdin);
-    await pendingCommit(this).start(this.#inputs.rightOid, message);
+    await pendingCommit(this).start(this.#inputs.rightOid);
     await this.resolveMerge();
     await this.commitMerge();
   }
@@ -70,17 +83,27 @@ export class Merge extends Base<Options> {
 
     await this.repo.index.writeUpdates();
     if (this.repo.index.conflict()) {
-      this.log("Automatic merge failed; fix conflicts and then commit the result.");
-      this.exit(1);
+      await this.failOnConflict();
     }
   }
 
   async commitMerge() {
     const parents = [this.#inputs.leftOid, this.#inputs.rightOid];
-    const message = await this.pendingCommit.mergeMessage();
+    const message = await this.composeMerge();
     await writeCommit(parents, message, this);
 
     await this.pendingCommit.clear();
+  }
+
+  private async composeMerge() {
+    return this.editFile(this.pendingCommit.messagePath, async (editor) => {
+      await editor.puts((await readMessage(this)) ?? this.defaultCommitMessage());
+      await editor.puts("");
+      await editor.note(COMMIT_NOTES);
+      if (this.options["edit"]) {
+        editor.close();
+      }
+    });
   }
 
   private handleMergedAncestor(): never {
@@ -145,5 +168,23 @@ export class Merge extends Base<Options> {
           throw e;
       }
     }
+  }
+
+  private async failOnConflict() {
+    await this.editFile(this.pendingCommit.messagePath, async (editor) => {
+      await editor.puts((await readMessage(this)) ?? this.defaultCommitMessage());
+      await editor.puts("");
+      await editor.note("Conflicts:");
+      for (const name of this.repo.index.conflictPaths()) {
+        await editor.note(`\t${name}`);
+      }
+      editor.close();
+    });
+    this.log("Automatic merge failed; fix conflicts and then commit the result.");
+    this.exit(1);
+  }
+
+  private defaultCommitMessage() {
+    return `Merge commit '${this.#inputs.rightName}'`;
   }
 }

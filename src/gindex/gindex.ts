@@ -166,6 +166,16 @@ export class Index {
     return true;
   }
 
+  conflictPaths() {
+    const paths = new Set();
+    this.eachEntry().forEach((entry) => {
+      if (entry.stage !== STAGES[0]) {
+        paths.add(entry.name);
+      }
+    });
+    return paths;
+  }
+
   private buildHeader() {
     const signature = Index.SIGNATURE;
     const version = Index.VERSION;
