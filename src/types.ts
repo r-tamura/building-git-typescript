@@ -5,7 +5,7 @@ import * as Database from "./database";
 /**
  * Type utility
  */
-type NonNullProps<T> = {
+export type NonNullProps<T> = {
   [k in keyof T]: NonNullable<T[k]>;
 };
 

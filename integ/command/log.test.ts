@@ -8,10 +8,6 @@ const t = T.create();
 beforeEach(t.beforeHook);
 afterEach(t.afterHook);
 
-function addSeconds(time: Date, n: number) {
-  return new Date(time.getTime() + n * 1000);
-}
-
 describe("log", () => {
   async function commitFile(message: string, time?: Date) {
     await t.writeFile("file.txt", message);
@@ -385,7 +381,7 @@ describe("log", () => {
 
         `,
           },
-          addSeconds(time, 1)
+          T.addSeconds(time, 1)
         );
       }
 
@@ -404,7 +400,7 @@ describe("log", () => {
 
         `,
           },
-          addSeconds(time, 2)
+          T.addSeconds(time, 2)
         );
       }
 
@@ -412,7 +408,7 @@ describe("log", () => {
       // TODO: -m オプション
       await t.kitCmd("merge", "topic^", "-m", "J");
 
-      await commitTree("K", { "f.txt": "K" }, addSeconds(time, 3));
+      await commitTree("K", { "f.txt": "K" }, T.addSeconds(time, 3));
       // prettier-ignore
       master = await Promise.all([0, 1, 2, 3, 4, 5].map(n => t.resolveRevision(`master~${n}`)));
       // prettier-ignore
@@ -560,12 +556,12 @@ describe("log", () => {
         await t.kitCmd("checkout", "aba");
 
         for (const n of ["C", "0"]) {
-          await commitTree(n, { "g.txt": n }, addSeconds(time, 1));
+          await commitTree(n, { "g.txt": n }, T.addSeconds(time, 1));
         }
         t.mockStdio("J");
         await t.kitCmd("merge", "topic^");
 
-        await commitTree("K", { "f.txt": "K" }, addSeconds(time, 3));
+        await commitTree("K", { "f.txt": "K" }, T.addSeconds(time, 3));
       });
 
       it("does not list commits on the filtered branch", async () => {

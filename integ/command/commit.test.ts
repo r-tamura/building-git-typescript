@@ -9,14 +9,6 @@ const t = T.create("commit");
 beforeEach(t.beforeHook);
 afterEach(t.afterHook);
 
-async function getRevListMessages(revs: RevList) {
-  const messages = [] as string[];
-  for await (const commit of revs.each()) {
-    messages.push(commit.message);
-  }
-  return messages;
-}
-
 describe("commit", () => {
   it("親コミットが存在しないとき、rootコミットであるメッセージを出力する", async () => {
     await t.commit("first");
@@ -109,7 +101,7 @@ describe("commit", () => {
       await t.kitCmd("add", ".");
       await t.kitCmd("commit", "-C", "@");
       const revs = await RevList.fromRevs(t.repo, ["HEAD"]);
-      const messages = await getRevListMessages(revs);
+      const messages = await T.getRevListMessages(revs);
       assert.deepEqual(messages, ["first", "first"]);
     });
   });
@@ -128,7 +120,7 @@ describe("commit", () => {
       const editorSpy = jest.spyOn(Editor, "edit").mockResolvedValue("third [amended]");
       await t.kitCmd("commit", "--amend");
       const revs = await RevList.fromRevs(t.repo, ["HEAD"]);
-      const messages = await getRevListMessages(revs);
+      const messages = await T.getRevListMessages(revs);
       assert.deepEqual(messages, ["third [amended]", "second", "first"]);
 
       editorSpy.mockRestore();

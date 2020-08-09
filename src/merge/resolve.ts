@@ -2,16 +2,21 @@ import * as path from "path";
 import { Changes, Entry, Blob } from "../database";
 import { ModeNumber } from "../entry";
 import { Repository } from "../repository";
-import { Inputs } from "./inputs";
+import { CherryPick, Inputs } from "./inputs";
 import { first, asserts, ascend } from "../util";
 import { Pathname, OID } from "../types";
 import { Diff3 } from "./diff3";
 
 export type Conflict = readonly [Entry | null, Entry | null, Entry | null];
 type OnProgress = (message: string) => void;
+
+/**
+ * Resolveクラスで解決可能なインタフェースを持つ入力データ
+ */
+export type Resolvable = Inputs | CherryPick;
 export class Resolve {
   #repo: Repository;
-  #inputs: Inputs;
+  #inputs: Resolvable;
   #leftDiff!: Changes;
   #rightDiff!: Changes;
   /** left(HEAD)とマージ結果の差分。Repository#migrationによりworkspace/indexへ適用される。 */
@@ -19,7 +24,7 @@ export class Resolve {
   #conflicts!: Map<Pathname, Conflict>;
   #untracked!: Map<Pathname, Entry>;
   onprogress: OnProgress | null = null;
-  constructor(repo: Repository, inputs: Inputs) {
+  constructor(repo: Repository, inputs: Resolvable) {
     this.#repo = repo;
     this.#inputs = inputs;
   }

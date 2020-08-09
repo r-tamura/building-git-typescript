@@ -12,6 +12,7 @@ import { Status } from "./status";
 import { Environment } from "../types";
 import { Rm } from "./rm";
 import { Reset } from "./reset";
+import { CherryPick } from "./cherry_pick";
 
 export class Unknown extends BaseError {}
 
@@ -28,6 +29,7 @@ const COMMANDS: CommandMap = {
   merge: Merge,
   rm: Rm,
   reset: Reset,
+  "cherry-pick": CherryPick,
   status: Status,
 } as const;
 

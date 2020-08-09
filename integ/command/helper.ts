@@ -2,7 +2,7 @@ import { promises } from "fs";
 import { Readable, Writable } from "stream";
 import * as assert from "power-assert";
 import * as path from "path";
-import { Environment, Pathname, CompleteCommit, Dict, OID } from "../../src/types";
+import { Environment, Pathname, CompleteCommit, Dict } from "../../src/types";
 import { defaultFs, Logger, Process, exists } from "../../src/services";
 import { Repository } from "../../src/repository";
 import { makeLogger } from "../../src/__test__/util";
@@ -10,7 +10,8 @@ import * as Command from "../../src/command";
 import { asserts } from "../../src/util";
 import { Revision } from "../../src/revision";
 import * as FileService from "../../src/services";
-import { Blob, Entry } from "../../src/database";
+import { Blob } from "../../src/database";
+import { RevList } from "../../src/rev_list";
 
 export interface TestUtil {
   suffix: Pathname;
@@ -304,4 +305,16 @@ const randomChoice = (s: string, count = 1) => {
 /** other utils */
 export async function delay(ms: number) {
   return new Promise((resolve, _) => setTimeout(resolve, ms));
+}
+
+export function addSeconds(time: Date, n: number) {
+  return new Date(time.getTime() + n * 1000);
+}
+
+export async function getRevListMessages(revs: RevList) {
+  const messages = [] as string[];
+  for await (const commit of revs.each()) {
+    messages.push(commit.message);
+  }
+  return messages;
 }
