@@ -222,9 +222,14 @@ export class TestUtil {
     return;
   }
 
-  async commit(message: string, time: Date = new Date()) {
-    this.mockEnvvar("GIT_AUTHOR_NAME", "A. U. Thor");
-    this.mockEnvvar("GIT_AUTHOR_EMAIL", "author@example.com");
+  async commit(
+    message: string,
+    { time = new Date(), author = true }: { time?: Date; author?: boolean } = {}
+  ) {
+    if (author) {
+      this.mockEnvvar("GIT_AUTHOR_NAME", "A. U. Thor");
+      this.mockEnvvar("GIT_AUTHOR_EMAIL", "author@example.com");
+    }
     this.setTime(time);
     await this.kitCmd("commit", "-m", message);
   }
@@ -278,8 +283,7 @@ export class TestUtil {
     await this.commitTree("C", right);
 
     await this.kitCmd("checkout", "master");
-    this.mockStdio("M");
-    await this.kitCmd("merge", "topic");
+    await this.kitCmd("merge", "topic", "-m", "M");
   }
 }
 

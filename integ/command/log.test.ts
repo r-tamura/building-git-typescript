@@ -16,7 +16,7 @@ describe("log", () => {
   async function commitFile(message: string, time?: Date) {
     await t.writeFile("file.txt", message);
     await t.kitCmd("add", ".");
-    await t.commit(message, time);
+    await t.commit(message, { time });
   }
 
   describe("with a chain of commits", () => {
@@ -268,7 +268,7 @@ describe("log", () => {
       Object.entries(files).map(([pathname, contents]) => t.writeFile(pathname, contents))
     );
     await t.kitCmd("add", ".");
-    await t.commit(message, time);
+    await t.commit(message, { time });
   }
   describe("with commits changing differenct files", () => {
     let commits: CompleteCommit[];
@@ -410,8 +410,7 @@ describe("log", () => {
 
       await t.kitCmd("checkout", "master");
       // TODO: -m オプション
-      t.mockStdio("J");
-      await t.kitCmd("merge", "topic^");
+      await t.kitCmd("merge", "topic^", "-m", "J");
 
       await commitTree("K", { "f.txt": "K" }, addSeconds(time, 3));
       // prettier-ignore

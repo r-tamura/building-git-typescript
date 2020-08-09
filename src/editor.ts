@@ -5,7 +5,7 @@ import { promises } from "fs";
 import * as shlex from "shlex";
 import { FileService, Process } from "./services";
 import { Nullable, Pathname } from "./types";
-import { splitByLine } from "./util";
+import { splitByLine, strip } from "./util/text";
 import { Error } from "./repository/pending_commit";
 const fs = fsCallback.promises;
 
@@ -85,7 +85,7 @@ export class Editor {
     this.#closed = true;
   }
 
-  private async file() {
+  async file() {
     const flags = O_WRONLY | O_CREAT | O_TRUNC;
     return this.#file ??= await this.#fs.open(this.#pathname, flags);
   }
@@ -96,7 +96,7 @@ export class Editor {
     if (lines.every((line) => /^\s*$/.test(line))) {
       return null;
     } else {
-      return lines.join("").trim() + "\n";
+      return strip(lines.join(""));
     }
   }
 }

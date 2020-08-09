@@ -1,4 +1,14 @@
 import { EOL } from "os";
+
+/**
+ * 文字列の最初と最後にある空白文字を取り除いた文字列を返します
+ * https://docs.ruby-lang.org/ja/latest/method/String/i/strip.html
+ * @param str
+ */
+export function strip(str: string) {
+  return str.replace(/^\s+/, "").replace(/\s+$/, "");
+}
+
 /**
  * 改行コード付きで行ごとに分割します
  * Rubyの string#lines 相当の関数

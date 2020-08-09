@@ -1,7 +1,6 @@
 import * as arg from "arg";
 import { Base } from "./base";
 import { HEAD } from "../revision";
-import { readTextStream } from "../services";
 import { Inputs, Resolve } from "../merge";
 import {
   writeCommit,
@@ -10,6 +9,7 @@ import {
   CONFLICT_MESSAGE,
   readMessage,
   CommitOptions,
+  defineWriteCommitOptions,
 } from "./shared/write_commit";
 import { PendingCommit, Error as NotInProgressError } from "../repository/pending_commit";
 import { asserts } from "../util";
@@ -57,7 +57,7 @@ export class Merge extends Base<Options> {
     await this.commitMerge();
   }
 
-  protected defineSpec() {
+  protected defineSpec(): arg.Spec {
     return {
       "--continue": arg.flag(() => {
         this.options["mode"] = "continue";
@@ -65,6 +65,7 @@ export class Merge extends Base<Options> {
       "--abort": arg.flag(() => {
         this.options["mode"] = "abort";
       }),
+      ...defineWriteCommitOptions(this),
     };
   }
 
@@ -100,7 +101,7 @@ export class Merge extends Base<Options> {
       await editor.puts((await readMessage(this)) ?? this.defaultCommitMessage());
       await editor.puts("");
       await editor.note(COMMIT_NOTES);
-      if (this.options["edit"]) {
+      if (!this.options["edit"]) {
         editor.close();
       }
     });
