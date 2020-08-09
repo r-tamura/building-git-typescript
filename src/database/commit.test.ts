@@ -6,14 +6,10 @@ describe("Commit#toString", () => {
   it("parentが存在しないとき、tree,author,commiter,messageが指定されたフォーマットで返される", () => {
     // Arrange
     const treeOId = "123456789abcdeffedcba98765abcdef12345678";
-    const author = new Author(
-      "JohnDoe",
-      "johndoe@test.local",
-      new Date(2020, 3, 1)
-    );
+    const author = new Author("JohnDoe", "johndoe@test.local", new Date(2020, 3, 1));
 
     // Act
-    const commit = new Commit([], treeOId, author, "test commit");
+    const commit = new Commit([], treeOId, author, author, "test commit");
     const actual = commit.toString();
 
     // Assert
@@ -31,14 +27,10 @@ test commit`
     // Arrange
     const parentOId = "abcdef987654321fedcba98765abcdef12345678";
     const treeOId = "123456789abcdeffedcba98765abcdef12345678";
-    const author = new Author(
-      "JohnDoe",
-      "johndoe@test.local",
-      new Date(2020, 3, 1)
-    );
+    const author = new Author("JohnDoe", "johndoe@test.local", new Date(2020, 3, 1));
 
     // Act
-    const commit = new Commit([parentOId], treeOId, author, "test commit");
+    const commit = new Commit([parentOId], treeOId, author, author, "test commit");
     const actual = commit.toString();
 
     // Assert
@@ -57,11 +49,13 @@ test commit`
 describe("Commit.parse", () => {
   it("rootコミットのとき、parentなしのコミットオブジェクトとしてパースする", () => {
     // Arrange
+    const author = new Author("JohnDoe", "johndoe@test.local", new Date(2020, 3, 1));
     const rawCommit = Buffer.from(
       new Commit(
         [],
         "123456789abcdeffedcba98765abcdef12345678",
-        new Author("JohnDoe", "johndoe@test.local", new Date(2020, 3, 1)),
+        author,
+        author,
         "test commit"
       ).toString(),
       "binary"
@@ -76,11 +70,13 @@ describe("Commit.parse", () => {
 
   it("rootコミット以外のとき、parentありのコミットオブジェクトとしてパースする", () => {
     // Arrange
+    const author = new Author("JohnDoe", "johndoe@test.local", new Date(2020, 3, 1));
     const rawCommit = Buffer.from(
       new Commit(
         ["d8fd39d0bbdd2dcf322d8b11390a4c5825b11495"],
         "123456789abcdeffedcba98765abcdef12345678",
-        new Author("JohnDoe", "johndoe@test.local", new Date(2020, 3, 1)),
+        author,
+        author,
         "test commit"
       ).toString(),
       "binary"

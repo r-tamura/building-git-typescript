@@ -99,13 +99,11 @@ export async function writeCommit(parents: OID[], message: Nullable<string>, cmd
   const tree = await writeTree(cmd);
   const name = cmd.envvars["GIT_AUTHOR_NAME"];
   const email = cmd.envvars["GIT_AUTHOR_EMAIL"];
-  // prettier-ignore
-  asserts(typeof name === "string", "Environment variable 'GIT_AUTHOR_NAME' is not set.");
-  // prettier-ignore
-  asserts(typeof email === "string", "Environment variable 'GIT_AUTHOR_EMAIL' is not set.");
+  asserts(name !== undefined, "Environment variable 'GIT_AUTHOR_NAME' is not set.");
+  asserts(email !== undefined, "Environment variable 'GIT_AUTHOR_EMAIL' is not set.");
   const author = new Author(name, email, cmd.env.date.now());
 
-  const commit = new Commit(parents, tree.oid, author, message);
+  const commit = new Commit(parents, tree.oid, author, author, message);
   await cmd.repo.database.store(commit);
   asserts(commit.oid !== null, "Database#storeによりはoidが設定される");
 
@@ -114,6 +112,10 @@ export async function writeCommit(parents: OID[], message: Nullable<string>, cmd
   return commit as CompleteCommit;
 }
 
+/**
+ * index内のオブジェクトをobjectsへ保存する
+ * @param cmd
+ */
 export async function writeTree(cmd: Base) {
   const root = Tree.build(cmd.repo.index.eachEntry());
   await root.traverse((tree) => cmd.repo.database.store(tree));
@@ -159,7 +161,14 @@ export function commitMessagePath(cmd: Base) {
   return path.join(cmd.repo.gitPath, "COMMIT_EDITMSG");
 }
 
-
 export function pendingCommit(cmd: Base & CommitPendable) {
   return cmd.pendingCommit ??= cmd.repo.pendingCommit();
+}
+
+export function currentAuthor(cmd: Base) {
+  const name = cmd.envvars["GIT_AUTHOR_NAME"];
+  const email = cmd.envvars["GIT_AUTHOR_EMAIL"];
+  asserts(name !== undefined, "GIT_AUTHOR_NAMEにauthorがセットされている必要がある");
+  asserts(email !== undefined, "GIT_AUTHOR_EMAILにemailがセットされている必要がある");
+  return new Author(name, email, new Date);
 }

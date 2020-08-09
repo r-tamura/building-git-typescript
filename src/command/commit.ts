@@ -11,6 +11,7 @@ import {
   printCommit,
   commitMessagePath,
   writeTree,
+  currentAuthor,
 } from "./shared/write_commit";
 import { Error, PendingCommit } from "../repository/pending_commit";
 import { Revision } from "../revision";
@@ -115,7 +116,15 @@ export class Commit extends Base<Options> {
     if (message === null) {
       throw new Error("");
     }
-    const newCommit = new Database.Commit(oldCommit.parents, tree.oid, oldCommit.author, message);
+
+    const commiter = currentAuthor(this);
+    const newCommit = new Database.Commit(
+      oldCommit.parents,
+      tree.oid,
+      oldCommit.author,
+      commiter,
+      message
+    );
 
     await this.repo.database.store(newCommit);
     asserts(newCommit.oid !== null, "objectsへ保存されたコミットはOIDを持つ");

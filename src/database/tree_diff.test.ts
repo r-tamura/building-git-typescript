@@ -14,7 +14,7 @@ function mockDatabase(objects: { [s: string]: GitObject }) {
   } as any;
 }
 
-const commit = (treeOid: string) => new Commit([], treeOid, {} as any, "");
+const commit = (treeOid: string) => new Commit([], treeOid, {} as any, {} as any, "");
 
 describe("TreeDiff#compareOids", () => {
   afterEach(() => {

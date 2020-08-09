@@ -1,12 +1,4 @@
-import {
-  Ref,
-  Parent,
-  Ancestor,
-  Revision,
-  Rev,
-  InvalidObject,
-  HintedError,
-} from "./revision";
+import { Ref, Parent, Ancestor, Revision, Rev, InvalidObject, HintedError } from "./revision";
 import * as assert from "power-assert";
 import { Database, Commit, Author, Blob } from "./database";
 import { Refs } from "./refs";
@@ -17,6 +9,7 @@ const mockCommit = (oid: string) => {
   const commit = new Commit(
     [],
     "testtree123456",
+    new Author("", "", new Date(2020, 3, 1)),
     new Author("", "", new Date(2020, 3, 1)),
     [`message is ${oid}`].join("\n")
   );
@@ -80,11 +73,7 @@ describe("Revision#readRef", () => {
     const actual = await rev.readRef("3a3c4ec");
 
     // Assert
-    assert.equal(
-      spyPrefixMatch.mock.calls[0][0],
-      "3a3c4ec",
-      "オブジェクトIDのprefixによる検索"
-    );
+    assert.equal(spyPrefixMatch.mock.calls[0][0], "3a3c4ec", "オブジェクトIDのprefixによる検索");
     assert.equal(actual, "3a3c4ec0ae9589c881029c161dd129bcc318dc08", "返り値");
   });
 
@@ -105,9 +94,7 @@ describe("Revision#readRef", () => {
     const testPrefix = "3a3c4ec";
     const spys = [
       jest.spyOn(Refs.prototype, "readRef").mockResolvedValue(null),
-      jest
-        .spyOn(Database.prototype, "prefixMatch")
-        .mockResolvedValue(Object.keys(testObjects)),
+      jest.spyOn(Database.prototype, "prefixMatch").mockResolvedValue(Object.keys(testObjects)),
       jest
         .spyOn(Database.prototype, "load")
         .mockImplementation((oid: string) =>
@@ -125,9 +112,9 @@ describe("Revision#readRef", () => {
       rev.errors[0].hint,
       [
         "The candidates are:",
-        `  3a3c4ec commit 2020-04-01 - message is 3a3c4ec0ae9589c881029c161dd129bcc318dc08`,
-        `  3a3c4ec commit 2020-04-01 - message is 3a3c4ec0ae9589c881029c161dd129bcc318dzzz`,
-        `  3a3c4ec blob`,
+        "  3a3c4ec commit 2020-04-01 - message is 3a3c4ec0ae9589c881029c161dd129bcc318dc08",
+        "  3a3c4ec commit 2020-04-01 - message is 3a3c4ec0ae9589c881029c161dd129bcc318dzzz",
+        "  3a3c4ec blob",
       ],
       "エラーメッセージ"
     );

@@ -6,15 +6,14 @@ import { scanUntil, splitByLine, Hash } from "../util";
 export class Commit {
   readonly type = "commit";
   oid: OID | null = null;
-  tree: OID;
-  parents: OID[];
-  message: string;
 
-  constructor(parents: OID[], tree: OID, public author: Author, message: string) {
-    this.parents = parents;
-    this.tree = tree;
-    this.message = message;
-  }
+  constructor(
+    public parents: OID[],
+    public tree: OID,
+    public author: Author,
+    public commiter: Author,
+    public message: string
+  ) {}
 
   static parse(buf: Buffer) {
     const headers = new Hash<string, string[]>((hash, key) => hash.set(key, []));
@@ -44,12 +43,13 @@ export class Commit {
       headers.get("parent"), // parentがない場合はnull
       headers.get("tree")[0],
       Author.parse(headers.get("author")[0]),
+      Author.parse(headers.get("committer")[0]),
       comment
     );
   }
 
   get date() {
-    return this.author.time;
+    return this.commiter.time;
   }
 
   get parent(): OID | null {
@@ -69,7 +69,7 @@ export class Commit {
     lines.push(`tree ${this.tree}`);
     lines.push(...this.parents.map((oid) => `parent ${oid}`));
     lines.push(`author ${this.author}`);
-    lines.push(`committer ${this.author}`);
+    lines.push(`committer ${this.commiter}`);
     lines.push("");
     lines.push(this.message);
 
