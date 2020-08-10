@@ -41,8 +41,9 @@ export class Commit extends Base<Options> {
       await this.handleAmend();
     }
 
-    if (await pendingCommit(this).inProgress()) {
-      await resumeMerge(this);
+    const mergeType = await pendingCommit(this).mergeType();
+    if (mergeType) {
+      await resumeMerge(mergeType, this);
     }
 
     const parent = await this.repo.refs.readHead();

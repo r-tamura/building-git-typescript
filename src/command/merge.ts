@@ -133,7 +133,7 @@ export class Merge extends Base<Options> {
   private async handleContinue() {
     try {
       await this.repo.index.load();
-      await resumeMerge(this);
+      await resumeMerge("merge", this);
     } catch (e) {
       switch (e.constructor) {
         case NotInProgressError:

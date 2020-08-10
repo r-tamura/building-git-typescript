@@ -4,7 +4,7 @@ import { OID, CompleteTree, CompleteCommit, Pathname, Nullable } from "../../typ
 import { Base } from "../base";
 import { Author, Commit, Tree } from "../../database";
 import { asserts } from "../../util";
-import { PendingCommit } from "../../repository/pending_commit";
+import { MergeType, PendingCommit } from "../../repository/pending_commit";
 import { COMMIT_NOTES } from "../commit";
 
 export const CONFLICT_MESSAGE = `hint: Fix them up in the work tree, and then use 'kit add/rm <file>'
@@ -72,7 +72,19 @@ export async function readMessage<O extends CommitOptions>(cmd: Base<O>) {
  * マージコミットメッセージはコンフリクト発生時のマージで指定されたメッセージが利用されます。
  * コンフリクトが解決されていない場合はプロセスを終了します。
  */
-export async function resumeMerge(cmd: Base & CommitPendable) {
+export async function resumeMerge(type: MergeType, cmd: Base & CommitPendable) {
+
+  switch(type) {
+    case "merge":
+      await writeMergeCommit(cmd);
+      break;
+  }
+
+  return cmd.exit(0);
+}
+
+
+export async function writeMergeCommit(cmd: Base & CommitPendable) {
   handleConflictedIndex(cmd);
   const [left, right] = await Promise.all([
     cmd.repo.refs.readHead(),
@@ -84,9 +96,7 @@ export async function resumeMerge(cmd: Base & CommitPendable) {
   const message = await composeMergeMessage(MERGE_NOTES, cmd);
   await writeCommit(parents, message, cmd);
 
-  await pendingCommit(cmd).clear();
-
-  return cmd.exit(0);
+  await pendingCommit(cmd).clear("merge");
 }
 
 export async function writeCommit(parents: OID[], message: Nullable<string>, cmd: Base) {
