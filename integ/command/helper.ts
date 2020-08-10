@@ -264,6 +264,15 @@ export class TestUtil {
     await this.commit(message);
   }
 
+  async history(...revisions: string[]) {
+    const revlist = await RevList.fromRevs(this.repo, revisions);
+    const commits = [] as CompleteCommit[];
+    for await (const commit of revlist.each()) {
+      commits.push(commit);
+    }
+    return commits;
+  }
+
   /**
    *   A   B   M
    *   o---o---o [master]

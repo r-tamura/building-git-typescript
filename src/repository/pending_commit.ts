@@ -10,7 +10,7 @@ export interface Environment {
 
 const HeadFiles = {
   merge: "MERGE_HEAD",
-  cheery_pick: "CHERRY_PICK_HEAD",
+  cherry_pick: "CHERRY_PICK_HEAD",
 } as const;
 
 export type MergeType = keyof typeof HeadFiles;

@@ -1,6 +1,6 @@
 import * as assert from "power-assert";
 import { RevList } from "../../src/rev_list";
-import { Dict } from "../../src/types";
+import { CompleteCommit, Dict } from "../../src/types";
 import { stripIndent } from "../../src/util";
 import * as T from "./helper";
 
@@ -8,6 +8,8 @@ const t = T.create("cherry_pick");
 
 beforeEach(t.beforeHook);
 afterEach(t.afterHook);
+
+const getMessage = (commit: CompleteCommit) => commit.message;
 
 describe("cherry pick", () => {
   let time: Date;
@@ -35,10 +37,10 @@ describe("cherry pick", () => {
       await t.kitCmd("branch", "topic", "@~2");
       await t.kitCmd("checkout", "topic");
 
-      await commitTree("five", { "g.txt":  "five"});
-      await commitTree("six", { "g.txt":  "six"});
-      await commitTree("seven", { "g.txt":  "seven"});
-      await commitTree("eight", { "g.txt":  "eight"});
+      await commitTree("five", { "g.txt": "five" });
+      await commitTree("six", { "f.txt": "six" });
+      await commitTree("seven", { "g.txt": "seven" });
+      await commitTree("eight", { "g.txt": "eight" });
 
       await t.kitCmd("checkout", "master");
     });
@@ -62,7 +64,7 @@ describe("cherry pick", () => {
     });
 
 
-    it.skip("fails to apply a content conflict", async () => {
+    it("fails to apply a content conflict", async () => {
       await t.kitCmd("cherry-pick", "topic^^");
       t.assertStatus(1);
 
@@ -73,12 +75,81 @@ describe("cherry pick", () => {
         <<<<<<< HEAD
         four=======
         six>>>>>>> ${ short }... six
+
         `]
       ]);
 
       await t.kitCmd("status", "--porcelain");
 
       t.assertInfo("UU f.txt");
+    });
+
+    it("fails to apply a modify/delete conflict", async () => {
+      await t.kitCmd("cherry-pick", "topic");
+      t.assertStatus(1);
+
+
+      await t.assertWorkspace([
+        ["f.txt", "four"],
+        ["g.txt", "eight"]
+      ]);
+
+      await t.kitCmd("status", "--porcelain");
+
+      t.assertInfo("DU g.txt");
+    });
+
+    it("continues a conflicted cherry-pick", async () => {
+      await t.kitCmd("cherry-pick", "topic");
+      await t.kitCmd("add", "g.txt");
+
+      await t.kitCmd("cherry-pick", "--continue");
+      t.assertStatus(0);
+
+      const commits = await t.history("@~3..");
+      assert.deepEqual(commits[0].parents, [commits[1].oid]);
+
+      assert.deepEqual(commits.map(commits => commits.message), ["eight", "four", "three"]);
+      await t.assertIndex([
+        ["f.txt", "four"],
+        ["g.txt", "eight"]
+      ]);
+
+      await t.assertWorkspace([
+        ["f.txt", "four"],
+        ["g.txt", "eight"]
+      ]);
+    });
+
+    it("commits after a conflicted cherry-pick", async () => {
+      await t.kitCmd("cherry-pick", "topic");
+      await t.kitCmd("add", "g.txt");
+
+      await t.kitCmd("commit");
+
+      t.assertStatus(0);
+      const commits = await t.history("@~3..");
+      assert.deepEqual(commits[0].parents, [commits[1].oid]);
+
+      assert.deepEqual(commits.map(getMessage), ["eight", "four", "three"]);
+    });
+
+    it.skip("applies multiple non-conflicting commits", async () => {
+      await t.kitCmd("cherry-pick", "topic~3", "topic", "topic");
+      t.assertStatus(0);
+
+      const commits = await t.history("@~4..");
+      assert.deepEqual(commits.map(getMessage), ["eight", "seven", "five", "four"]);
+
+      await t.assertIndex([
+        ["f.txt", "four"],
+        ["g.txt", "eight"]
+      ]);
+
+      await t.assertWorkspace([
+        ["f.txt", "four"],
+        ["g.txt", "eight"]
+      ]);
     });
   });
 });

@@ -3,8 +3,8 @@ import * as arg from "arg";
 import { OID, CompleteTree, CompleteCommit, Pathname, Nullable } from "../../types";
 import { Base } from "../base";
 import { Author, Commit, Tree } from "../../database";
-import { asserts } from "../../util";
-import { MergeType, PendingCommit } from "../../repository/pending_commit";
+import { asserts, assertsComplete } from "../../util";
+import { Error, MergeType, PendingCommit } from "../../repository/pending_commit";
 import { COMMIT_NOTES } from "../commit";
 
 export const CONFLICT_MESSAGE = `hint: Fix them up in the work tree, and then use 'kit add/rm <file>'
@@ -17,7 +17,12 @@ const MERGE_NOTES = `
   \t.git/MERGE_HEAD
   and try again.
 `;
-
+const CHERRY_PICK_NOTES = `
+  It looks like you may be committing a cherry-pick.
+  If this is not correct, please remove the file
+  \t.git/CHERRY_PICK_HEAD
+  and try again.
+`;
 type CommitPendable = { pendingCommit: PendingCommit | null }
 export interface CommitOptions {
   message?: string;
@@ -78,6 +83,9 @@ export async function resumeMerge(type: MergeType, cmd: Base & CommitPendable) {
     case "merge":
       await writeMergeCommit(cmd);
       break;
+    case "cherry_pick":
+      await writeCherryPickCommit(cmd);
+      break;
   }
 
   return cmd.exit(0);
@@ -97,6 +105,27 @@ export async function writeMergeCommit(cmd: Base & CommitPendable) {
   await writeCommit(parents, message, cmd);
 
   await pendingCommit(cmd).clear("merge");
+}
+
+export async function writeCherryPickCommit(cmd: Base & CommitPendable) {
+  handleConflictedIndex(cmd);
+  const head = await cmd.repo.refs.readHead();
+  asserts(head !== null, "cherry-pick時点でHEADは存在する");
+  const parents = [head];
+  const message = await composeMergeMessage(CHERRY_PICK_NOTES, cmd);
+  if (message === null) {
+    throw new Error("コミットメッセージが存在しません");
+  }
+  const pickOid = await pendingCommit(cmd).mergeOid("cherry_pick");
+  const commit = await cmd.repo.database.load(pickOid);
+  asserts(commit.type === "commit", "cherry-pick対象のオブジェクトIDはコミットID");
+  const tree = await writeTree(cmd);
+  const picked = new Commit(parents, tree.oid, commit.author, currentAuthor(cmd), message);
+
+  await cmd.repo.database.store(picked);
+  assertsComplete(picked);
+  await cmd.repo.refs.updateHead(picked.oid);
+  await pendingCommit(cmd).clear("cherry_pick");
 }
 
 export async function writeCommit(parents: OID[], message: Nullable<string>, cmd: Base) {
