@@ -1,7 +1,7 @@
 import * as arg from "arg";
 import { Base } from ".";
 import { Resolvable, Resolve } from "../merge";
-import { HEAD, Revision } from "../revision";
+import { HEAD } from "../revision";
 import { CompleteCommit, Nullable } from "../types";
 import {
   currentAuthor,
@@ -11,9 +11,11 @@ import {
   writeTree,
 } from "./shared/write_commit";
 import * as Merge from "../merge";
-import { asserts, assertsComplete } from "../util";
 import { Commit } from "../database";
+import { RevList } from "../rev_list";
 import { PendingCommit, Error as PendingCommitError } from "../repository/pending_commit";
+import { asserts, assertsComplete } from "../util/assert";
+import { reverse } from "../util/asynciter";
 
 interface Options {
   mode: Nullable<"continue">;
@@ -32,10 +34,15 @@ export class CherryPick extends Base<Options> {
       await this.handleContinue();
     }
 
-    const revision = new Revision(this.repo, this.args[0]);
-    // リビジョンから解決されたOIDはコミットであるため
-    const commit = (await this.repo.database.load(await revision.resolve())) as CompleteCommit;
-    await this.pick(commit);
+    // const revision = new Revision(this.repo, this.args[0]);
+    // // リビジョンから解決されたOIDはコミットであるため
+    // const commit = (await this.repo.database.load(await revision.resolve())) as CompleteCommit;
+    // await this.pick(commit);
+
+    const commits = await RevList.fromRevs(this.repo, this.args.reverse(), { walk: false });
+    for await (const commit of reverse(commits)) {
+      await this.pick(commit);
+    }
   }
 
   defineSpec() {

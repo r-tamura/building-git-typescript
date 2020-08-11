@@ -27,3 +27,9 @@ export function* times(count: number) {
     yield i;
   }
 }
+
+export function* reverse<T>(iter: Iterable<T>) {
+  for (const x of Array.from(iter).reverse()) {
+    yield x;
+  }
+}

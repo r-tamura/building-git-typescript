@@ -134,8 +134,8 @@ describe("cherry pick", () => {
       assert.deepEqual(commits.map(getMessage), ["eight", "four", "three"]);
     });
 
-    it.skip("applies multiple non-conflicting commits", async () => {
-      await t.kitCmd("cherry-pick", "topic~3", "topic", "topic");
+    it("applies multiple non-conflicting commits", async () => {
+      await t.kitCmd("cherry-pick", "topic~3", "topic^", "topic");
       t.assertStatus(0);
 
       const commits = await t.history("@~4..");
@@ -149,6 +149,74 @@ describe("cherry pick", () => {
       await t.assertWorkspace([
         ["f.txt", "four"],
         ["g.txt", "eight"]
+      ]);
+    });
+
+    it("stops when a list of commits includes a conflict", async () => {
+      await t.kitCmd("cherry-pick", "topic^", "topic~3");
+      t.assertStatus(1);
+
+      await t.kitCmd("status", "--porcelain");
+      t.assertInfo("DU g.txt");
+    });
+
+    it("stops when a range of commits includes a conflict", async () => {
+      await t.kitCmd("cherry-pick", "..topic");
+      t.assertStatus(1);
+
+      await t.kitCmd("status", "--porcelain");
+      t.assertInfo("UU f.txt");
+    });
+
+    it("refuses to commit in a conflicted state", async () => {
+      await t.kitCmd("cherry-pick", "topic^", "topic~3");
+      await t.kitCmd("commit");
+      t.assertStatus(128);
+
+      t.assertError(stripIndent`
+        error: Committing is not possible because you have unmerged files.
+        hint: Fix them up in the work tree, and then use 'kit add/rm <file>'
+        hint: as appropriate to mark resolution and make a commit.
+        fatal: Exiting because of an unresolved conflict.
+
+      `);
+    });
+
+    it("refuses to commit in a conflicted state", async () => {
+      await t.kitCmd("cherry-pick", "topic^", "topic~3");
+      await t.kitCmd("cherry-pick", "--continue");
+      t.assertStatus(128);
+
+      t.assertError(stripIndent`
+        error: Committing is not possible because you have unmerged files.
+        hint: Fix them up in the work tree, and then use 'kit add/rm <file>'
+        hint: as appropriate to mark resolution and make a commit.
+        fatal: Exiting because of an unresolved conflict.
+
+      `);
+    });
+
+    it.skip("can continue after resolving the conflicts", async () => {
+      await t.kitCmd("cherry-pick", "..topic");
+
+      await t.writeFile("f.txt", "six");
+      await t.kitCmd("add", "f.txt");
+
+      await t.kitCmd("cherry-pick", "--continue");
+      t.assertStatus(0);
+
+      const commits = await t.history("@~5..");
+
+      assert.deepEqual(commits.map(getMessage), ["eight", "seven", "six", "five", "four"]);
+
+      await t.assertIndex([
+        ["f.txt", "six"],
+        ["g.txt", "eight"],
+      ]);
+
+      await t.assertWorkspace([
+        ["f.txt", "six"],
+        ["g.txt", "eight"],
       ]);
     });
   });

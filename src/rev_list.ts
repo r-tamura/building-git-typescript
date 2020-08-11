@@ -10,6 +10,10 @@ const RANGE = /^(.*)\.\.(.*)$/;
 const EXCLUDE = /^\^(.+)$/;
 
 type OidPair = [OID | null, OID | null];
+
+interface Options {
+  walk?: boolean;
+}
 export class RevList {
   #repo: Repository;
   #commits: Map<OID, CompleteCommit> = new Map();
@@ -20,12 +24,14 @@ export class RevList {
   #prune: Pathname[] = [];
   #filter!: PathFilter;
   #diffs: Map<OidPair, Changes> = new Map();
-  private constructor(repo: Repository) {
+  #walk: boolean;
+  private constructor(repo: Repository, { walk = true }: Options = {}) {
     this.#repo = repo;
+    this.#walk = walk;
   }
 
-  static async fromRevs(repo: Repository, revs: string[]): Promise<RevList> {
-    const list = new this(repo);
+  static async fromRevs(repo: Repository, revs: string[], opts: Options = {}): Promise<RevList> {
+    const list = new this(repo, opts);
     for (const rev of revs) {
       await list.handleRevision(rev);
     }
@@ -56,7 +62,7 @@ export class RevList {
   }
 
   private async addParents(commit: CompleteCommit) {
-    if (!this.mark(commit.oid, "added")) {
+    if (!this.#walk || !this.mark(commit.oid, "added")) {
       return;
     }
 
@@ -78,9 +84,12 @@ export class RevList {
       return;
     }
 
-    const index = this.#queue.findIndex((c) => c.date < commit.date);
-
-    this.#queue = insert(this.#queue, found(index) ? index : this.#queue.length, commit);
+    if (this.#walk) {
+      const index = this.#queue.findIndex((c) => c.date < commit.date);
+      this.#queue = insert(this.#queue, found(index) ? index : this.#queue.length, commit);
+    } else {
+      this.#queue.push(commit);
+    }
   }
 
   private async handleRevision(rev: string) {
@@ -93,8 +102,10 @@ export class RevList {
       const [_, rev1, rev2] = match;
       await this.setStartpoint(rev1, false);
       await this.setStartpoint(rev2, true);
+      this.#walk = true;
     } else if ((match = EXCLUDE.exec(rev))) {
       await this.setStartpoint(match[1], false);
+      this.#walk = true;
     } else {
       await this.setStartpoint(rev, true);
     }
@@ -231,5 +242,9 @@ export class RevList {
 
       yield commit;
     }
+  }
+
+  [Symbol.asyncIterator]() {
+    return this.each();
   }
 }

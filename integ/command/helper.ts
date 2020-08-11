@@ -267,7 +267,7 @@ export class TestUtil {
   async history(...revisions: string[]) {
     const revlist = await RevList.fromRevs(this.repo, revisions);
     const commits = [] as CompleteCommit[];
-    for await (const commit of revlist.each()) {
+    for await (const commit of revlist) {
       commits.push(commit);
     }
     return commits;
