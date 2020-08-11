@@ -196,7 +196,7 @@ describe("cherry pick", () => {
       `);
     });
 
-    it.skip("can continue after resolving the conflicts", async () => {
+    it("can continue after resolving the conflicts", async () => {
       await t.kitCmd("cherry-pick", "..topic");
 
       await t.writeFile("f.txt", "six");
@@ -214,6 +214,29 @@ describe("cherry pick", () => {
         ["g.txt", "eight"],
       ]);
 
+      await t.assertWorkspace([
+        ["f.txt", "six"],
+        ["g.txt", "eight"],
+      ]);
+    });
+
+    it("can continue after commiting resolved tree", async () => {
+      await t.kitCmd("cherry-pick", "..topic");
+
+      await t.writeFile("f.txt", "six");
+      await t.kitCmd("add", "f.txt");
+      await t.kitCmd("commit");
+
+      await t.kitCmd("cherry-pick", "--continue");
+      t.assertStatus(0);
+
+      const commits = await t.history("@~5..");
+
+      assert.deepEqual(commits.map(getMessage), ["eight", "seven", "six", "five", "four"]);
+      await t.assertIndex([
+        ["f.txt", "six"],
+        ["g.txt", "eight"],
+      ]);
       await t.assertWorkspace([
         ["f.txt", "six"],
         ["g.txt", "eight"],

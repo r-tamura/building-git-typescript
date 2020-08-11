@@ -16,6 +16,7 @@ import { RevList } from "../rev_list";
 import { PendingCommit, Error as PendingCommitError } from "../repository/pending_commit";
 import { asserts, assertsComplete } from "../util/assert";
 import { reverse } from "../util/asynciter";
+import { Sequencer } from "../repository/sequencer";
 
 interface Options {
   mode: Nullable<"continue">;
@@ -29,20 +30,15 @@ const CONFLICT_NOTES = `
 
 export class CherryPick extends Base<Options> {
   pendingCommit!: PendingCommit;
+  #sequencer!: Sequencer;
   async run() {
     if (this.options["mode"] === "continue") {
       await this.handleContinue();
     }
 
-    // const revision = new Revision(this.repo, this.args[0]);
-    // // リビジョンから解決されたOIDはコミットであるため
-    // const commit = (await this.repo.database.load(await revision.resolve())) as CompleteCommit;
-    // await this.pick(commit);
-
-    const commits = await RevList.fromRevs(this.repo, this.args.reverse(), { walk: false });
-    for await (const commit of reverse(commits)) {
-      await this.pick(commit);
-    }
+    await this.sequencer.start();
+    await this.storeCommitSequence();
+    await this.resumeSequencer();
   }
 
   defineSpec() {
@@ -57,6 +53,23 @@ export class CherryPick extends Base<Options> {
     this.options = {
       mode: null,
     };
+  }
+
+  private async storeCommitSequence() {
+    const commits = await RevList.fromRevs(this.repo, this.args.reverse(), { walk: false });
+    for await (const commit of reverse(commits)) {
+      this.sequencer.pick(commit);
+    }
+  }
+
+  private async resumeSequencer() {
+    let commit: CompleteCommit;
+    while((commit = this.sequencer.nextCommand())) {
+      await this.pick(commit);
+      this.sequencer.dropCommand();
+    }
+    await this.sequencer.quit();
+    this.exit(0);
   }
 
   private async pick(commit: CompleteCommit) {
@@ -106,7 +119,8 @@ export class CherryPick extends Base<Options> {
   }
 
   private async failOnConflict(inputs: Resolvable, message: string) {
-    await pendingCommit(this).start(inputs.rightOid, this.mergeType());
+    await this.sequencer.dump();
+    await pendingCommit(this).start(inputs.rightOid, this.mergeType);
 
     await this.editFile(pendingCommit(this).messagePath, async (editor) => {
       await editor.puts(message);
@@ -126,7 +140,14 @@ export class CherryPick extends Base<Options> {
   private async handleContinue() {
     try {
       await this.repo.index.load();
-      await writeCherryPickCommit(this);
+      if (await pendingCommit(this).inProgress()) {
+        await writeCherryPickCommit(this);
+      }
+
+      await this.sequencer.load();
+      this.sequencer.dropCommand();
+      await this.resumeSequencer();
+
       this.exit(0);
     } catch (e) {
       switch (e.constructor) {
@@ -139,7 +160,11 @@ export class CherryPick extends Base<Options> {
     }
   }
 
-  private mergeType(): "cherry_pick" {
+  private get mergeType(): "cherry_pick" {
     return "cherry_pick";
+  }
+
+  private get sequencer() {
+    return this.#sequencer ??= new Sequencer(this.repo, { fs: this.repo.env.fs });
   }
 }
