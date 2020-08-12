@@ -12,6 +12,7 @@ import { Revision } from "../../src/revision";
 import * as FileService from "../../src/services";
 import { Blob } from "../../src/database";
 import { RevList } from "../../src/rev_list";
+import { Editor } from "../../src/editor";
 
 export interface TestUtil {
   suffix: Pathname;
@@ -326,4 +327,11 @@ export async function getRevListMessages(revs: RevList) {
     messages.push(commit.message);
   }
   return messages;
+}
+
+export function spyEditor(content: string) {
+  const spy = jest.spyOn(Editor, "edit").mockResolvedValue(content);
+  return {
+    restore: () => spy.mockRestore(),
+  };
 }

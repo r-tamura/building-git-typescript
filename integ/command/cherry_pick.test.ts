@@ -242,5 +242,59 @@ describe("cherry pick", () => {
         ["g.txt", "eight"],
       ]);
     });
+
+      describe("aborting in conflicted state", () => {
+        beforeEach(async () => {
+          await t.kitCmd("cherry-pick", "..topic");
+          await t.kitCmd("cherry-pick", "--abort");
+        });
+
+        it("exits successfully", async () => {
+          t.assertStatus(0);
+          t.assertError("");
+        });
+
+        it("resets to the old HEAD", async () => {
+          assert.equal(await t.loadCommit("HEAD").then(getMessage), "four");
+
+          await t.kitCmd("status", "--porcelain");
+          t.assertInfo("");
+        });
+
+        it("removes the merge state", async () => {
+          assert.equal(await t.repo.pendingCommit().inProgress(), false);
+        });
+      });
+
+      describe("aborting in commited state", () => {
+        beforeEach(async () => {
+          await t.kitCmd("cherry-pick", "..topic");
+          await t.kitCmd("add", ".");
+          const spy = T.spyEditor("picked");
+          await t.kitCmd("commit", "--amend");
+          spy.restore();
+
+          await t.kitCmd("cherry-pick", "--abort");
+        });
+
+        it("exits with a warning", async () => {
+          t.assertStatus(0);
+          t.assertWarn("warning: You seem to have moved HEAD. Not rewinding, check your HEAD!");
+        });
+
+        it("does not reset", async () => {
+          assert.equal(await t.loadCommit("HEAD").then(getMessage), "picked");
+
+          await t.kitCmd("status", "--porcelain");
+          t.assertInfo("");
+        });
+
+        it("removes the merge state", async () => {
+          assert.equal(await t.repo.pendingCommit().inProgress(), false);
+        });
+      });
+
   });
+
+
 });

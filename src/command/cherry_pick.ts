@@ -19,7 +19,7 @@ import { reverse } from "../util/asynciter";
 import { Sequencer } from "../repository/sequencer";
 
 interface Options {
-  mode: Nullable<"continue">;
+  mode: Nullable<"continue" | "abort" | "quit">;
 }
 
 const CONFLICT_NOTES = `
@@ -32,8 +32,13 @@ export class CherryPick extends Base<Options> {
   pendingCommit!: PendingCommit;
   #sequencer!: Sequencer;
   async run() {
-    if (this.options["mode"] === "continue") {
-      await this.handleContinue();
+    switch(this.options["mode"]) {
+      case "continue":
+        await this.handleContinue();
+      case "quit":
+        await this.handleQuit();
+      case "abort":
+        await this.handleAbort();
     }
 
     await this.sequencer.start();
@@ -46,6 +51,12 @@ export class CherryPick extends Base<Options> {
       "--continue": arg.flag(() => {
         this.options["mode"] = "continue";
       }),
+      "--quit": arg.flag(() => {
+        this.options["mode"] = "quit";
+      }),
+      "--abort": arg.flag(() => {
+        this.options["mode"] = "abort";
+      })
     };
   }
 
@@ -63,13 +74,13 @@ export class CherryPick extends Base<Options> {
   }
 
   private async resumeSequencer() {
-    let commit: CompleteCommit;
+    let commit: Nullable<CompleteCommit>;
     while((commit = this.sequencer.nextCommand())) {
       await this.pick(commit);
-      this.sequencer.dropCommand();
+      await this.sequencer.dropCommand();
     }
     await this.sequencer.quit();
-    this.exit(0);
+    return this.exit(0);
   }
 
   private async pick(commit: CompleteCommit) {
@@ -145,10 +156,8 @@ export class CherryPick extends Base<Options> {
       }
 
       await this.sequencer.load();
-      this.sequencer.dropCommand();
+      await this.sequencer.dropCommand();
       await this.resumeSequencer();
-
-      this.exit(0);
     } catch (e) {
       switch (e.constructor) {
         case PendingCommitError:
@@ -158,6 +167,37 @@ export class CherryPick extends Base<Options> {
           throw e;
       }
     }
+
+    return this.exit(0);
+  }
+
+  /**
+   * 現在のHEADを維持したままコンフリクトを中断する
+   */
+  private async handleQuit() {
+    if (await pendingCommit(this).inProgress()) {
+      await pendingCommit(this).clear(this.mergeType);
+    }
+    await this.sequencer.quit();
+    return this.exit(0);
+  }
+
+  /**
+   * cherry-pickを実行する直前の状態へ復帰して、コンフリクトを中断する
+   */
+  private async handleAbort() {
+    if (await pendingCommit(this).inProgress()) {
+      await pendingCommit(this).clear(this.mergeType);
+    }
+    await this.repo.index.loadForUpdate();
+
+    try {
+      await this.sequencer.abort();
+    } catch (e) {
+      this.logger.warn(`warning: ${e.message}`);
+    }
+    await this.repo.index.writeUpdates();
+    return this.exit(0);
   }
 
   private get mergeType(): "cherry_pick" {
