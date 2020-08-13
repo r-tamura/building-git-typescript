@@ -8,9 +8,12 @@ import { asserts, BaseError, splitByLine, strip } from "../util";
 import { Repository } from "./repository";
 const fs = fsCallback.promises;
 
-interface Environment {
+export interface Environment {
   fs?: FileService;
 }
+
+export type Action = "pick" | "revert";
+export type Command = [Action, CompleteCommit];
 
 const UNSAFE_MESSAGE = "You seem to have moved HEAD. Not rewinding, check your HEAD!";
 
@@ -22,7 +25,7 @@ export class Sequencer {
   #headPath: Pathname;
   #todoFile: Nullable<Lockfile> = null;
   /** 未反映のコミットリスト */
-  #commands: CompleteCommit[] = [];
+  #commands: Command[] = [];
   #fs: FileService;
   constructor(repo: Repository, env: Environment = {}) {
     this.#repo = repo;
@@ -44,10 +47,14 @@ export class Sequencer {
   }
 
   pick(commit: CompleteCommit) {
-    this.#commands.push(commit);
+    this.#commands.push(["pick", commit]);
   }
 
-  nextCommand(): Nullable<CompleteCommit> {
+  revert(commit: CompleteCommit) {
+    this.#commands.push(["revert", commit]);
+  }
+
+  nextCommand(): Nullable<Command> {
     return this.#commands[0] ?? null;
   }
 
@@ -71,9 +78,9 @@ export class Sequencer {
     if (this.#todoFile === null) {
       return;
     }
-    for (const commit of this.#commands) {
+    for (const [action, commit] of this.#commands) {
       const short = this.#repo.database.shortOid(commit.oid);
-      await this.#todoFile.write(`pick ${short} ${commit.titleLine()}\n`);
+      await this.#todoFile.write(`${action} ${short} ${commit.titleLine()}\n`);
     }
     await this.#todoFile.commit();
   }
@@ -87,13 +94,16 @@ export class Sequencer {
     const content = await this.#fs.readFile(this.#todoPath, "utf8");
     this.#commands = [];
     for (const line of splitByLine(content)) {
-      const match = /^pick (\S+) (.*)$/s.exec(line);
+      // 's'(dotAll)フラグをつけることで改行も'.'のマッチ範囲に含まれる
+      // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RegExp/dotAll
+      const match = /^(\S+) (\S+) (.*)$/s.exec(line);
       asserts(match !== null, "todoファイルはsequencerでパース可能なファイル");
-      const [_, oid, _title] = match;
+      const [_, action, oid, _title] = match;
+      asserts(action === "pick" || action === "revert", "Action名");
       const oids = await this.#repo.database.prefixMatch(oid);
       // todoファイルに書き込まれるのはコミットIDのみ
       const commit = (await this.#repo.database.load(oids[0])) as CompleteCommit;
-      this.#commands.push(commit);
+      this.#commands.push([action, commit]);
     }
   }
 

@@ -23,7 +23,7 @@ const CHERRY_PICK_NOTES = `
   \t.git/CHERRY_PICK_HEAD
   and try again.
 `;
-type CommitPendable = { pendingCommit: PendingCommit | null }
+export type CommitPendable = { pendingCommit: PendingCommit | null }
 export interface CommitOptions {
   message?: string;
   file?: Pathname;

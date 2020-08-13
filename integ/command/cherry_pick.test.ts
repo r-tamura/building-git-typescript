@@ -48,9 +48,8 @@ describe("cherry pick", () => {
     it("applies a commit on top of the current HEAD", async () => {
       await t.kitCmd("cherry-pick", "topic~3");
       t.assertStatus(0);
-
-      const revs = await RevList.fromRevs(t.repo, ["@~3.."]);
-      assert.deepEqual(await T.getRevListMessages(revs), ["five", "four", "three"]);
+      const commits = await t.history("@~3..");
+      assert.deepEqual(commits.map(getMessage), ["five", "four", "three"]);
 
       await t.assertIndex([
         ["f.txt", "four"],
