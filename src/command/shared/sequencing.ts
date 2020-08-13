@@ -22,7 +22,8 @@ export interface Sequence {
   sequencer: Sequencer;
   mergeType: MergeType;
   storeCommitSequence: () => Promise<void>;
-  pick: (commit: CompleteCommit) => Promise<void>;
+  pick?: (commit: CompleteCommit) => Promise<void>;
+  revert?: (commit: CompleteCommit) => Promise<void>;
 }
 
 export type SequenceCmmand = Base<Options> & Sequence;
@@ -70,9 +71,12 @@ export async function resumeSequencer(cmd: SequenceCmmand) {
 
     switch (action) {
       case "pick":
-        await cmd.pick(commit);
+        // コマンドがpick機能を持っている
+        await cmd.pick?.(commit);
         break;
       case "revert":
+        // コマンドがrevert機能を持っている
+        await cmd.revert?.(commit);
         break;
     }
     await cmd.sequencer.dropCommand();
@@ -120,8 +124,15 @@ export async function failOnConflict(
 export async function handleContinue(cmd: SequenceCmmand & WriteCommit.CommitPendable) {
   try {
     await cmd.repo.index.load();
-    if (await WriteCommit.pendingCommit(cmd).inProgress()) {
-      await WriteCommit.writeCherryPickCommit(cmd);
+
+    const mergeType = await WriteCommit.pendingCommit(cmd).mergeType();
+    switch (mergeType) {
+      case "cherry_pick":
+        await WriteCommit.writeCherryPickCommit(cmd);
+        break;
+      case "revert":
+        await WriteCommit.writeRevertCommit(cmd);
+        break;
     }
 
     await cmd.sequencer.load();

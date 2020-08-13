@@ -86,6 +86,9 @@ export async function resumeMerge(type: MergeType, cmd: Base & CommitPendable) {
     case "cherry_pick":
       await writeCherryPickCommit(cmd);
       break;
+    case "revert":
+      await writeRevertCommit(cmd);
+      break;
   }
 
   return cmd.exit(0);
@@ -126,6 +129,18 @@ export async function writeCherryPickCommit(cmd: Base & CommitPendable) {
   assertsComplete(picked);
   await cmd.repo.refs.updateHead(picked.oid);
   await pendingCommit(cmd).clear("cherry_pick");
+}
+
+export async function writeRevertCommit(cmd: Base & CommitPendable) {
+  handleConflictedIndex(cmd);
+
+  const head = await cmd.repo.refs.readHead();
+  asserts(head !== null, "revert時点でHEADは存在する");
+  const parents = [head];
+  const message = await composeMergeMessage(null, cmd);
+  await writeCommit(parents, message, cmd);
+
+  await pendingCommit(cmd).clear("revert");
 }
 
 export async function writeCommit(parents: OID[], message: Nullable<string>, cmd: Base) {

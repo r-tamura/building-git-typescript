@@ -11,6 +11,7 @@ export interface Environment {
 const HeadFiles = {
   merge: "MERGE_HEAD",
   cherry_pick: "CHERRY_PICK_HEAD",
+  revert: "REVERT_HEAD",
 } as const;
 
 export type MergeType = keyof typeof HeadFiles;
