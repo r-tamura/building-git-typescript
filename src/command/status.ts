@@ -5,6 +5,7 @@ import { Style } from "../color";
 import * as Repository from "../repository";
 import { shallowEqual } from "../util";
 import { ConflictStatus } from "../repository";
+import { MergeType } from "../repository/pending_commit";
 
 const SHORT_STATUS: Record<Exclude<Repository.ChangeType, null> | "nochange", string> = {
   deleted: "D",
@@ -170,6 +171,7 @@ export class Status extends Base<Option> {
 
   private async printLongFormat() {
     await this.printBranchStatus();
+    await this.printPendingCommitStatus();
 
     this.printChanges("Changes to be committed", this.#status.indexChanges, "green");
     this.printChanges("Unmerged paths", this.#status.conflicts, "red", "conflict");
@@ -185,6 +187,48 @@ export class Status extends Base<Option> {
       return `${status} ${p}`;
     });
     this.print(this.#status.untrackedFiles, (p) => `${SHORT_STATUS.untracked} ${p}`);
+  }
+
+  private async printPendingCommitStatus() {
+    switch (await this.repo.pendingCommit().mergeType()) {
+      case "merge":
+        if (this.#status.conflicts.size === 0) {
+          this.log("All conflicts fixed but you are still merging.");
+          this.hint("use 'jit commit' to conclude merge");
+        } else {
+          this.log("You have unmerged paths.");
+          this.hint("fix conflicts and run 'kit commit'");
+          this.hint("use 'kit merge --abort' to abort the merge");
+        }
+        this.log("");
+        break;
+      case "cherry_pick":
+        await this.printPendingType("cherry_pick");
+        break;
+      case "revert":
+        await this.printPendingType("revert");
+        break;
+    }
+  }
+
+  private async printPendingType(mergeType: MergeType) {
+    const oid = await this.repo.pendingCommit().mergeOid(mergeType);
+    const short = this.repo.database.shortOid(oid);
+    const op = mergeType.replace("_", "-");
+
+    this.log(`You are currently ${op}ing commit ${short}`);
+
+    if (this.#status.conflicts.size === 0) {
+      this.hint(`all conflicts fixed: run 'kit ${op} --continue'`);
+    } else {
+      this.hint(`fix conflicts and run 'kit ${op} --continue'`);
+    }
+    this.hint(`use 'kit ${op} --abort' to cancel the ${op} operation`);
+    this.log("");
+  }
+
+  private hint(message: string) {
+    this.log(`  (${message})`);
   }
 
   private statusFor(pathname: Pathname) {

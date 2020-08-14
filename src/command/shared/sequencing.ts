@@ -8,11 +8,9 @@ import { assertsComplete } from "../../util/assert";
 import { Base } from "../base";
 import * as WriteCommit from "./write_commit";
 
-const CONFLICT_NOTES = `
-  after resolving the conflicts, mark the corrected paths
+const CONFLICT_NOTES = `  after resolving the conflicts, mark the corrected paths
   with 'kit add <paths>' or 'kit rm <paths>'
-  and commit the result with 'kit commit'
-`;
+  and commit the result with 'kit commit'`;
 
 export interface Options {
   mode: Nullable<"continue" | "abort" | "quit">;
@@ -104,6 +102,7 @@ export async function failOnConflict(
   cmd: SequenceCmmand & WriteCommit.CommitPendable
 ) {
   await cmd.sequencer.dump();
+  console.assert(inputs.rightOid !== null, `${inputs.rightOid} is null!`);
   await WriteCommit.pendingCommit(cmd).start(inputs.rightOid, cmd.mergeType);
 
   await cmd.editFile(WriteCommit.pendingCommit(cmd).messagePath, async (editor) => {
@@ -116,9 +115,9 @@ export async function failOnConflict(
     editor.close();
   });
 
-  cmd.logger.error(`error: could not apply ${inputs.rightOid}`);
+  cmd.logger.error(`error: could not apply ${inputs.rightName}`);
   CONFLICT_NOTES.split("\n").forEach((line) => cmd.logger.error(`hint: ${line}`));
-  cmd.exit(1);
+  return cmd.exit(1);
 }
 
 export async function handleContinue(cmd: SequenceCmmand & WriteCommit.CommitPendable) {

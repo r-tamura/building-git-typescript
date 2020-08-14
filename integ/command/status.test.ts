@@ -268,6 +268,10 @@ describe("status", () => {
 
       await assertStatus(stripIndent`
       On branch master
+      You have unmerged paths.
+        (fix conflicts and run 'kit commit')
+        (use 'kit merge --abort' to abort the merge)
+
       Unmerged paths:
 
       \tboth added:      g.txt

@@ -293,6 +293,30 @@ describe("cherry pick", () => {
         });
       });
 
+    // 追加テスト
+    describe("print conflicting messages", () => {
+      beforeEach(async () => {
+        await t.kitCmd("cherry-pick", "..topic");
+      });
+
+      it("shows conflicting messages", async () => {
+        await t.kitCmd("status");
+        const oid = await t.repo.pendingCommit().mergeOid("cherry_pick");
+        const short = t.repo.database.shortOid(oid);
+        t.assertInfo(stripIndent`
+          On branch master
+          You are currently cherry-picking commit ${short}
+            (fix conflicts and run 'kit cherry-pick --continue')
+            (use 'kit cherry-pick --abort' to cancel the cherry-pick operation)
+
+          Unmerged paths:
+
+          \tboth modified:   f.txt
+
+          nothing to commit, working tree clean
+        `);
+      });
+    });
   });
 
 

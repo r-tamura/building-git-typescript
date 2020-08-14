@@ -285,5 +285,30 @@ describe("revert", () => {
         assert.equal(await t.repo.pendingCommit().inProgress(), false);
       });
     });
+
+    // 追加テスト
+    describe("print conflicting messages", () => {
+      beforeEach(async () => {
+        await t.kitCmd("revert", "@~5..@^");
+      });
+
+      it("shows conflicting messages", async () => {
+        await t.kitCmd("status");
+        const oid = await t.repo.pendingCommit().mergeOid("revert");
+        const short = t.repo.database.shortOid(oid);
+        t.assertInfo(TextUtil.stripIndent`
+          On branch master
+          You are currently reverting commit ${short}
+            (fix conflicts and run 'kit revert --continue')
+            (use 'kit revert --abort' to cancel the revert operation)
+
+          Unmerged paths:
+
+          \tboth modified:   g.txt
+
+          nothing to commit, working tree clean
+        `);
+      });
+    });
   });
 });
