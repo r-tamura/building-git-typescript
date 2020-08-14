@@ -14,6 +14,7 @@ import { Rm } from "./rm";
 import { Reset } from "./reset";
 import { CherryPick } from "./cherry_pick";
 import { Revert } from "./revert";
+import { Config } from "./config";
 
 export class Unknown extends BaseError {}
 
@@ -33,6 +34,7 @@ const COMMANDS: CommandMap = {
   "cherry-pick": CherryPick,
   revert: Revert,
   status: Status,
+  config: Config,
 } as const;
 
 export async function execute(args: string[], env: Environment) {
