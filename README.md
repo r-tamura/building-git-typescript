@@ -15,7 +15,10 @@ kit checkout
 kit log
 kit merge
 kit rm
-kit reset (implementing)
+kit reset
+kit cherry-pick
+kit revert
+kit config (implementing)
 ```
 
 ## Development

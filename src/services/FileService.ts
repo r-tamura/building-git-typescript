@@ -1,5 +1,6 @@
 import * as CallbackFs from "fs";
 import * as zlib from "zlib";
+import * as readline from "readline";
 import { promisify } from "util";
 import { Readable } from "stream";
 import { Pathname } from "../types";
@@ -92,4 +93,14 @@ export function readTextStream(stream: Readable, encoding = "utf8") {
     stream.on("end", () => resolve(data));
     stream.on("error", (err) => reject(err));
   });
+}
+
+/**
+ * テキストファイルを１行ごとに取得するAsyncIterableなブジェクトを返します
+ */
+export function readByLine(pathname: Pathname, encoding = "utf8") {
+  const lines = readline.createInterface({
+    input: CallbackFs.createReadStream(pathname, { encoding }),
+  });
+  return lines;
 }

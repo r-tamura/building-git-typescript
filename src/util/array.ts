@@ -30,7 +30,7 @@ export function exclude<T>(xs: T[], ys: T[], equal: (x: T, y: T) => boolean = (x
   return xs.filter((x) => !ys.find((y) => equal(x, y)));
 }
 
-export function isempty<T>(xs: T[]) {
+export function isempty<T>(xs: T[]): xs is [] {
   return xs.length === 0;
 }
 
