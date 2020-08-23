@@ -12,6 +12,8 @@ export const CONFIG_NAMES = ["local", "global", "system"] as const;
 export type ConfigName = typeof CONFIG_NAMES[number];
 export type Configs = Record<ConfigName, Config>;
 
+type Values = ReturnType<Config["getAll"]> extends Promise<infer R> ? R : never;
+
 export class Stack {
   #configs: Configs;
   constructor(gitPath: Pathname) {
@@ -26,16 +28,16 @@ export class Stack {
     await Promise.all(Object.values(this.#configs).map((config) => config.open()));
   }
 
-  get(key: SectionName) {
-    return last(this.getAll(key));
+  async get(key: SectionName) {
+    return this.getAll(key).then(last);
   }
 
-  getAll(key: SectionName) {
+  async getAll(key: SectionName) {
     const names: ConfigName[] = ["system", "global", "local"];
-    const result: ReturnType<Config["getAll"]> = [];
+    const result: Values = [];
     for (const name of names) {
-      // await this.#configs[name].open();
-      result.push(...this.#configs[name].getAll(key));
+      await this.#configs[name].open();
+      result.push(...(await this.#configs[name].getAll(key)));
     }
     return result;
   }

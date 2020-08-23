@@ -131,14 +131,14 @@ export class Config {
     return value.replace(/\\\n/, "");
   }
 
-  getAll(key: SectionName) {
+  async getAll(key: SectionName) {
     const [name, varname] = this.splitKey(key);
     const [_, lines] = this.findLines(name, varname);
     return lines.map((l: Line) => l.variable?.value);
   }
 
-  get(key: SectionName) {
-    return last(this.getAll(key));
+  async get(key: SectionName) {
+    return this.getAll(key).then(last);
   }
 
   private splitKey(key: SectionName): [name: SectionName, varname: Name] {

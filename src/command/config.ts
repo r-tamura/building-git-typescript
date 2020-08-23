@@ -43,7 +43,7 @@ export class Config extends Base<Options> {
       if (value) {
         await this.editConfig((config) => config.set(key, value));
       } else {
-        await this.readConfig((config) => compact([config.get(key)]));
+        await this.readConfig((config) => config.get(key).then((value) => compact([value])));
       }
     } catch (e) {
       if (e instanceof ConfigLib.ParseError) {
@@ -123,7 +123,7 @@ export class Config extends Base<Options> {
   }
 
   private async readConfig(
-    callback: (config: ConfigLib.Stack | ConfigLib.Config) => ReturnType<ConfigLib.Config["get"]>[]
+    callback: (config: ConfigLib.Stack | ConfigLib.Config) => ReturnType<ConfigLib.Config["getAll"]>
   ) {
     let config: ConfigLib.Stack | ConfigLib.Config = this.repo.config;
     if (this.options["file"]) {
@@ -131,7 +131,7 @@ export class Config extends Base<Options> {
     }
 
     await config.open();
-    const values = callback(config);
+    const values = await callback(config);
     if (isempty(values)) {
       this.exit(1);
     }
