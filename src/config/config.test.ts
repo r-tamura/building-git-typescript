@@ -1,11 +1,11 @@
-import { open, promises as fs } from "fs";
+import { promises as fs } from "fs";
 import * as path from "path";
 import * as assert from "power-assert";
 import { Config, SectionName } from "./config";
-import { Conflict, ParseError } from "./config";
-import { rmrf } from "./services";
-import { Pathname } from "./types";
-import { stripIndent } from "./util";
+import { Conflict } from "./config";
+import { rmrf } from "../services";
+import { Pathname } from "../types";
+import { stripIndent } from "../util";
 
 const testDir = "./test-config";
 beforeEach(async () => {

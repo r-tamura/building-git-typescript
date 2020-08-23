@@ -18,7 +18,7 @@ kit rm
 kit reset
 kit cherry-pick
 kit revert
-kit config (implementing)
+kit config
 ```
 
 ## Development

@@ -1,17 +1,12 @@
-import { promises as fs } from "fs";
-import { Lockfile } from "./lockfile";
-import { FileService, readByLine } from "./services";
-import { Nullable, Pathname } from "./types";
-import { ObjectKeyHash } from "./util/collection";
-import { clone, first, isempty, last } from "./util/array";
-import { asserts, BaseError } from "./util";
+import { Lockfile } from "../lockfile";
+import { readByLine } from "../services";
+import { Nullable, Pathname } from "../types";
+import { ObjectKeyHash } from "../util/collection";
+import { clone, first, isempty, last } from "../util/array";
+import { asserts, BaseError } from "../util";
 
 export type Name = string;
 export type Value = string | number | boolean;
-
-interface Environment {
-  fs?: FileService;
-}
 
 export class ParseError extends BaseError {}
 export class Conflict extends BaseError {}
@@ -21,21 +16,33 @@ const VARIABLE_LINE = /^\s*([a-z][a-z0-9-]*)\s*=\s*(.*?)\s*($|#|;)/im;
 const BLANK_LINE = /\s*(¥|#|;)/;
 // const INTEGER = /-?[1-9][0-9]*¥/;
 
+const VALID_SECTION  = /^[a-z0-9-]+$/i;
+const VALID_VARIABLE = /^[a-z][a-z0-9-]*$/i;
+
+export function validKey(key: SectionName) {
+  return VALID_SECTION.test(first(key)) && VALID_VARIABLE.test(last(key));
+}
+
 export class Config {
   #pathname: Pathname;
   #lockfile: Lockfile;
   #lines: Nullable<ObjectKeyHash<NormalizedSection, Line[]>> = null;
-  #fs: FileService;
-  constructor(pathname: Pathname, env: Environment = {}) {
+
+  constructor(pathname: Pathname) {
     this.#pathname = pathname;
     this.#lockfile = new Lockfile(pathname);
-    this.#fs = env.fs ?? fs;
   }
 
   async open() {
     if (this.#lines === null) {
       await this.readConfigFile();
     }
+  }
+
+  // ロールバック処理をしてファイルを閉じます
+  // Note: ファイルを閉じないとGCが警告を表示するため、独自で追加
+  async rollback() {
+    await this.#lockfile.rollback();
   }
 
   async openForUpdate() {
@@ -46,9 +53,8 @@ export class Config {
   async readConfigFile() {
     this.#lines = new ObjectKeyHash(Section.serialize, Section.deserialize);
     let section = Section.of([]);
-
     try {
-      const rawlines = readByLine(this.#pathname);
+      const rawlines = await readByLine(this.#pathname);
       for await (const raw of this.readLine(rawlines)) {
         const line = this.parseLine(section, raw);
         section = line.section;

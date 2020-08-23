@@ -67,7 +67,7 @@ export abstract class Base<O extends Options = NoOptions> implements Runnable {
     return message;
   }
 
-  exit(status: 0 | 1 | 128): never {
+  exit(status: 0 | 1 | 2 | 3 | 5 | 128): never {
     this.status = status;
     throw new Exit();
   }

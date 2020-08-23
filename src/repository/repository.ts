@@ -10,6 +10,7 @@ import { Changes } from "../database";
 import { Migration } from "./migration";
 import { PendingCommit } from "./pending_commit";
 import { HardReset } from "./hard_reset";
+import { Stack } from "../config";
 
 export type RepositoryEnv = {
   process: Process;
@@ -24,6 +25,7 @@ export class Repository {
   #index!: Index;
   #workspace!: Workspace;
   #refs!: Refs;
+  #config!: Stack;
   constructor(public gitPath: Pathname, public env: RepositoryEnv) {}
 
   get database() {
@@ -57,5 +59,9 @@ export class Repository {
 
   pendingCommit() {
     return new PendingCommit(this.gitPath, this.env);
+  }
+
+  get config() {
+    return this.#config ??= new Stack(this.gitPath);
   }
 }

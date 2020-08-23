@@ -168,3 +168,7 @@ export function transpose<T>(xs: T[][]): T[][] {
   }
   return transposed;
 }
+
+export function compact<T>(xs: T[]) {
+  return xs.filter((x) => x !== null && x !== undefined);
+}

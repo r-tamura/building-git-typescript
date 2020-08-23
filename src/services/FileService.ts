@@ -95,12 +95,32 @@ export function readTextStream(stream: Readable, encoding = "utf8") {
   });
 }
 
+// Note: readlineモジュールがエラー時にキャッチできない問題。NodeJS側の問題っぽい?
+// Fileストリームが正しくオープンできたことを保証してからストリームを返す
+// https://stackoverflow.com/questions/59216364/how-to-handle-error-from-fs-readline-interface-async-iterator
+// https://github.com/nodejs/node/issues/30831
+async function createReadStreamSafe(
+  filename: Pathname,
+  encoding = "utf8"
+): Promise<CallbackFs.ReadStream> {
+  return new Promise((resolve, reject) => {
+    const fileStream = CallbackFs.createReadStream(filename, { encoding })
+      .on("error", reject)
+      .on("open", () => {
+        resolve(fileStream);
+      });
+  });
+}
+
 /**
  * テキストファイルを１行ごとに取得するAsyncIterableなブジェクトを返します
  */
-export function readByLine(pathname: Pathname, encoding = "utf8") {
-  const lines = readline.createInterface({
-    input: CallbackFs.createReadStream(pathname, { encoding }),
+export async function readByLine(
+  pathname: Pathname,
+  encoding = "utf8"
+): Promise<readline.Interface> {
+  const fileStream = await createReadStreamSafe(pathname, encoding);
+  return readline.createInterface({
+    input: fileStream,
   });
-  return lines;
 }
