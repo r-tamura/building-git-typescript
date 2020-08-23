@@ -17,7 +17,9 @@ export async function asyncForEach<T>(fn: ForEachCallback<T>, xs: T[]) {
   return;
 }
 
-export function clone<T>(xs: T[]): T[] {
+export function clone<XS extends unknown[] | []>(xs: XS): XS {
+  // 配列のジェネリクス型指定について
+  // https://stackoverflow.com/questions/51674820/generics-for-arrays-in-typescript-3-0
   return [...xs];
 }
 

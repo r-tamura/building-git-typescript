@@ -68,7 +68,7 @@ export class ObjectKeyHash<T extends object, S = any> {
   }
 
   delete(key: T) {
-    this.#hash.delete(this.ser(key));
+    return this.#hash.delete(this.ser(key));
   }
 
   *keys() {
