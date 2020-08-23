@@ -209,7 +209,7 @@ export class Log extends Base<Options> {
       const [oldItem, newItem] = change;
       const a = await this.fromDiffItem(pathname, oldItem);
       const b = await this.fromDiffItem(pathname, newItem);
-      printDiff(a, b, this);
+      await printDiff(a, b, this);
     }
   }
 
@@ -241,7 +241,7 @@ export class Log extends Base<Options> {
         parents.push(parent);
       }
       const child = await this.fromDiffItem(pathname, diffs[0].get(pathname)![1]);
-      printCombinedDiff(parents as [Target, Target], child, this);
+      await printCombinedDiff(parents as [Target, Target], child, this);
     }
   }
 

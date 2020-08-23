@@ -44,7 +44,7 @@ export class Revert extends Base<Sequencing.Options> {
       await Sequencing.failOnConflict(inputs, message, this);
     }
 
-    const author = currentAuthor(this);
+    const author = await currentAuthor(this);
     message = await this.editRevertMessage(message);
     asserts(message !== null);
     const tree = await writeTree(this);

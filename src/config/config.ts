@@ -131,7 +131,7 @@ export class Config {
     return value.replace(/\\\n/, "");
   }
 
-  async getAll(key: SectionName) {
+  async getAll(key: SectionName): Promise<(Value | undefined)[]> {
     const [name, varname] = this.splitKey(key);
     const [_, lines] = this.findLines(name, varname);
     return lines.map((l: Line) => l.variable?.value);
@@ -388,3 +388,15 @@ export class Line {
   }
 }
 
+
+export function assertsString(value: Value | undefined): asserts value is string | undefined {
+  asserts(value === undefined || typeof value === "string");
+}
+
+export function assertsBoolean(value: Value | undefined): asserts value is boolean | undefined {
+  asserts(value === undefined || typeof value === "boolean");
+}
+
+export function assertsNumber(value: Value | undefined): asserts value is number | undefined {
+  asserts(value === undefined || typeof value === "number");
+}

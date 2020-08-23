@@ -118,7 +118,7 @@ export class Commit extends Base<Options> {
       throw new Error("");
     }
 
-    const commiter = currentAuthor(this);
+    const commiter = await currentAuthor(this);
     const newCommit = new Database.Commit(
       oldCommit.parents,
       tree.oid,

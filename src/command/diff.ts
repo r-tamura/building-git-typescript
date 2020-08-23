@@ -74,17 +74,17 @@ export class Diff extends Base<Options> {
         case "added": {
           const targetFromIndex = await this.fromIndex(pathname);
           asserts(targetFromIndex !== null, `ファイル '${pathname}' は存在する`);
-          printDiff(this.fromNothing(pathname), targetFromIndex, this);
+          await printDiff(this.fromNothing(pathname), targetFromIndex, this);
           break;
         }
         case "modified": {
           const targetFromIndex = await this.fromIndex(pathname);
           asserts(targetFromIndex !== null, `ファイル '${pathname}' は存在する`);
-          printDiff(await this.fromHead(pathname), targetFromIndex, this);
+          await printDiff(await this.fromHead(pathname), targetFromIndex, this);
           break;
         }
         case "deleted": {
-          printDiff(await this.fromHead(pathname), this.fromNothing(pathname), this);
+          await printDiff(await this.fromHead(pathname), this.fromNothing(pathname), this);
           break;
         }
       }
@@ -150,10 +150,10 @@ export class Diff extends Base<Options> {
       // TODO: indexはnullでないとは保証されていない(?) jitコマンドの挙動を調べる
       asserts(index !== null);
       const file = await this.fromFile(pathname);
-      printDiff(index, file, this);
+      await printDiff(index, file, this);
     } else if (left && right) {
       const file = await this.fromFile(pathname);
-      printCombinedDiff([left, right], file, this);
+      await printCombinedDiff([left, right], file, this);
     } else {
       this.log(`* Unmerged path ${pathname}`);
     }
@@ -164,13 +164,13 @@ export class Diff extends Base<Options> {
       case "modified": {
         const targetFromIndex = await this.fromIndex(pathname);
         asserts(targetFromIndex !== null, `ファイル '${pathname}' は存在する`);
-        printDiff(targetFromIndex, await this.fromFile(pathname), this);
+        await printDiff(targetFromIndex, await this.fromFile(pathname), this);
         break;
       }
       case "deleted": {
         const targetFromIndex = await this.fromIndex(pathname);
         asserts(targetFromIndex !== null, `ファイル '${pathname}' は存在する`);
-        printDiff(targetFromIndex, this.fromNothing(pathname), this);
+        await printDiff(targetFromIndex, this.fromNothing(pathname), this);
         break;
       }
     }

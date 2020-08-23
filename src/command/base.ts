@@ -7,6 +7,7 @@ import { Logger, createLogger } from "../services";
 import * as Color from "../color";
 import { Pager } from "../pager";
 import { EditCallback, Editor } from "../editor";
+import { asserts } from "../util";
 
 /** process.exit 代替え */
 export class Exit {}
@@ -63,7 +64,7 @@ export abstract class Base<O extends Options = NoOptions> implements Runnable {
       if (!this.isatty) {
         editor.close();
       }
-    }, this.editorCommand(), { fs: this.env.fs, stdout: this.stdout, stderr: this.stderr });
+    }, await this.editorCommand(), { fs: this.env.fs, stdout: this.stdout, stderr: this.stderr });
     return message;
   }
 
@@ -134,8 +135,10 @@ export abstract class Base<O extends Options = NoOptions> implements Runnable {
     this.logger = createLogger(this.stdout);
   }
 
-  private editorCommand() {
-    return this.envvars["GIT_EDITOR"] ?? this.envvars["VISUAL"] ?? this.envvars["EDITOR"];
+  private async editorCommand() {
+    const coreEditor = await this.repo.config.get(["core", "editor"]);
+    asserts(typeof coreEditor === "string" || coreEditor === undefined);
+    return this.envvars["GIT_EDITOR"] ?? coreEditor ?? this.envvars["VISUAL"] ?? this.envvars["EDITOR"];
   }
 
   protected defineSpec(): arg.Spec {

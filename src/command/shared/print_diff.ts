@@ -4,6 +4,8 @@ import { OID, Pathname } from "../../types";
 import { Base } from "../base";
 import arg = require("arg");
 import { prop } from "../../util/object";
+import { assertsString, SectionName } from "../../config";
+import { assertsStyle } from "../../color";
 
 export const NULL_OID = "0".repeat(40);
 export const NULL_PATH = "/dev/null";
@@ -19,6 +21,15 @@ interface DefinedPrintDiffOptionReponse {
   "--no-patch": arg.Handler;
   "-s": "--no-patch";
 }
+
+const DIFF_FORMATS = {
+  context: "normal",
+  meta: "bold",
+  frag: "cyan",
+  old: "red",
+  new: "green",
+} as const;
+
 export function definePrintDiffOptions<T extends PrintDiffOption>(
   cmd: Base<T>
 ): DefinedPrintDiffOptionReponse {
@@ -35,11 +46,11 @@ export function definePrintDiffOptions<T extends PrintDiffOption>(
   };
 }
 
-export function header(text: string, cmd: Base) {
-  cmd.log(cmd.fmt("bold", text));
+export async function header(text: string, cmd: Base) {
+  cmd.log(await diffFmt("meta", text, cmd));
 }
 
-export function printDiff(a: Target, b: Target, cmd: Base) {
+export async function printDiff(a: Target, b: Target, cmd: Base) {
   if (a.equals(b)) {
     return;
   }
@@ -48,22 +59,22 @@ export function printDiff(a: Target, b: Target, cmd: Base) {
   b.name = path.join("b", b.name);
 
   cmd.log(`diff --git ${a.name} ${b.name}`);
-  printMode(a, b, cmd);
-  printDiffContent(a, b, cmd);
+  await printMode(a, b, cmd);
+  await printDiffContent(a, b, cmd);
 }
 
-export function printMode(a: Target, b: Target, cmd: Base) {
+export async function printMode(a: Target, b: Target, cmd: Base) {
   if (a.mode === null) {
-    header(`new file mode ${b.mode}`, cmd);
+    await header(`new file mode ${b.mode}`, cmd);
   } else if (b.mode === null) {
-    header(`deleted file mode ${a.mode}`, cmd);
+    await header(`deleted file mode ${a.mode}`, cmd);
   } else if (a.mode !== b.mode) {
-    header(`old mode ${a.mode}`, cmd);
-    header(`new mode ${b.mode}`, cmd);
+    await header(`old mode ${a.mode}`, cmd);
+    await header(`new mode ${b.mode}`, cmd);
   }
 }
 
-export function printDiffContent(a: Target, b: Target, cmd: Base) {
+export async function printDiffContent(a: Target, b: Target, cmd: Base) {
   if (a.equalsContent(b)) {
     return;
   }
@@ -78,56 +89,65 @@ export function printDiffContent(a: Target, b: Target, cmd: Base) {
 
   const hunks = diffHunks(a.data, b.data);
   for (const hunk of hunks) {
-    printDiffHunk(hunk, cmd);
+    await printDiffHunk(hunk, cmd);
   }
 }
 
-export function printDiffEdit(edit: HunkEdit, cmd: Base) {
+export async function printDiffEdit(edit: HunkEdit, cmd: Base) {
   const text = edit.toString();
   switch (edit.type) {
     case "eql":
-      cmd.log(text);
+      cmd.log(await diffFmt("context", text, cmd));
       break;
     case "ins":
-      cmd.log(cmd.fmt("green", text));
+      cmd.log(await diffFmt("new", text, cmd));
       break;
     case "del":
-      cmd.log(cmd.fmt("red", text));
+      cmd.log(await diffFmt("old", text, cmd));
       break;
     default:
       throw TypeError(`diff: invalid type '${edit.type}'`);
   }
 }
 
-export function printCombinedDiff(as: [Target, Target], b: Target, cmd: Base) {
-  header(`diff --cc ${b.name}`, cmd);
+export async function printCombinedDiff(as: [Target, Target], b: Target, cmd: Base) {
+  await header(`diff --cc ${b.name}`, cmd);
 
   const a_oids = as.map((a) => short(a.oid, cmd));
   const oidRange = `index ${a_oids.join(",")}..${short(b.oid, cmd)}`;
-  header(oidRange, cmd);
+  await header(oidRange, cmd);
 
   if (!as.every((a) => a.mode === b.mode)) {
-    header(`mode ${as.map(prop("mode")).join(",")}..${b.mode}`, cmd);
+    await header(`mode ${as.map(prop("mode")).join(",")}..${b.mode}`, cmd);
   }
 
-  header(`--- a/${b.deffPath}`, cmd);
-  header(`+++ b/${b.deffPath}`, cmd);
+  await header(`--- a/${b.deffPath}`, cmd);
+  await header(`+++ b/${b.deffPath}`, cmd);
 
   const hunks = combinedHunk(as.map(prop("data")) as [TextDocument, TextDocument], b.data);
-  hunks.forEach((hunk) => {
-    printDiffHunk(hunk, cmd);
-  });
+  for (const hunk of hunks) {
+    await printDiffHunk(hunk, cmd);
+  }
 }
 
-export function printDiffHunk(hunk: Hunk, cmd: Base) {
-  cmd.log(cmd.fmt("cyan", hunk.header()));
-  hunk.edits.forEach((e) => {
-    printDiffEdit(e, cmd);
-  });
+export async function printDiffHunk(hunk: Hunk, cmd: Base) {
+  cmd.log(await diffFmt("frag", hunk.header(), cmd));
+  for (const edit of hunk.edits) {
+    await printDiffEdit(edit, cmd);
+  }
 }
 
 export function short(oid: OID, cmd: Base) {
   return cmd.repo.database.shortOid(oid);
+}
+
+export async function diffFmt(name: keyof typeof DIFF_FORMATS, text: string, cmd: Base) {
+  const key = ["color", "diff", name] as SectionName;
+  const value = await cmd.repo.config.get(key);
+  assertsString(value);
+  const style = value?.split(/ +/) ?? [DIFF_FORMATS[name]];
+  assertsStyle(style);
+  return cmd.fmt(style, text);
 }
 
 export class Target {

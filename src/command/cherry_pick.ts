@@ -65,7 +65,7 @@ export class CherryPick extends Base<Options> {
       [inputs.leftOid],
       tree.oid,
       commit.author,
-      currentAuthor(this),
+      await currentAuthor(this),
       commit.message
     );
 

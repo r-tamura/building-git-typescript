@@ -3,7 +3,7 @@ import * as arg from "arg";
 import { OID, CompleteTree, CompleteCommit, Pathname, Nullable } from "../../types";
 import { Base } from "../base";
 import { Author, Commit, Tree } from "../../database";
-import { asserts, assertsComplete } from "../../util";
+import { asserts, assertsComplete, BaseError } from "../../util";
 import { Error, MergeType, PendingCommit } from "../../repository/pending_commit";
 import { COMMIT_NOTES } from "../commit";
 
@@ -123,7 +123,7 @@ export async function writeCherryPickCommit(cmd: Base & CommitPendable) {
   const commit = await cmd.repo.database.load(pickOid);
   asserts(commit.type === "commit", "cherry-pick対象のオブジェクトIDはコミットID");
   const tree = await writeTree(cmd);
-  const picked = new Commit(parents, tree.oid, commit.author, currentAuthor(cmd), message);
+  const picked = new Commit(parents, tree.oid, commit.author, await currentAuthor(cmd), message);
 
   await cmd.repo.database.store(picked);
   assertsComplete(picked);
@@ -219,10 +219,20 @@ export function pendingCommit(cmd: Base & CommitPendable) {
   return cmd.pendingCommit ??= cmd.repo.pendingCommit();
 }
 
-export function currentAuthor(cmd: Base) {
-  const name = cmd.envvars["GIT_AUTHOR_NAME"];
-  const email = cmd.envvars["GIT_AUTHOR_EMAIL"];
-  asserts(name !== undefined, "GIT_AUTHOR_NAMEにauthorがセットされている必要がある");
-  asserts(email !== undefined, "GIT_AUTHOR_EMAILにemailがセットされている必要がある");
+export async function currentAuthor(cmd: Base) {
+  const configName = await cmd.repo.config.get(["user", "name"]);
+  const configEmail = await cmd.repo.config.get(["user", "email"]);
+  asserts(configName === undefined || typeof configName === "string");
+  asserts(configEmail === undefined || typeof configEmail === "string");
+
+  const name = cmd.envvars["GIT_AUTHOR_NAME"] ?? configName;
+  const email = cmd.envvars["GIT_AUTHOR_EMAIL"] ?? configEmail;
+
+  if (name === undefined) {
+    throw new BaseError("GIT_AUTHOR_NAMEもしくはコンフィグファイルにauthorがセットされている必要がある");
+  }
+  if (email === undefined) {
+    throw new BaseError("GIT_AUTHOR_EMAILもしくはコンフィグファイルにemailがセットされている必要がある");
+  }
   return new Author(name, email, new Date);
 }
