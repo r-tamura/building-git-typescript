@@ -1,5 +1,7 @@
 import * as fsCallback from "fs";
 import * as path from "path";
+import { Options } from "../command/shared/sequencing";
+import { Config, SectionName, Value } from "../config";
 import { Lockfile } from "../lockfile";
 import { ORIG_HEAD } from "../refs";
 import { FileService, rmrf } from "../services";
@@ -26,6 +28,7 @@ export class Sequencer {
   #todoFile: Nullable<Lockfile> = null;
   /** 未反映のコミットリスト */
   #commands: Command[] = [];
+  #config: Config;
   #fs: FileService;
   constructor(repo: Repository, env: Environment = {}) {
     this.#repo = repo;
@@ -33,15 +36,22 @@ export class Sequencer {
     this.#abortPath = path.join(this.#pathname, "abort-safety");
     this.#headPath = path.join(this.#pathname, "head");
     this.#todoPath = path.join(this.#pathname, "todo");
+    this.#config = new Config(path.join(this.#pathname, "opts"));
     this.#fs = env.fs ?? fs;
   }
 
-  async start() {
+  async start(options: Options) {
     await this.#fs.mkdir(this.#pathname);
     const headOid = await this.#repo.refs.readHead();
     asserts(headOid !== null, "HEADが存在する");
     await this.writeFile(this.#headPath, headOid);
     await this.writeFile(this.#abortPath, headOid);
+
+    await this.#config.openForUpdate();
+    Object.entries(options).forEach(([key, value]) => {
+      this.#config.set(["config", key], value);
+    });
+    await this.#config.save();
 
     await this.openTodoFile();
   }
@@ -124,6 +134,11 @@ export class Sequencer {
     await this.#repo.hardReset(headOid);
     const origHead = await this.#repo.refs.updateHead(headOid);
     await this.#repo.refs.updateRef(ORIG_HEAD, origHead);
+  }
+
+  async getOption(varname: string) {
+    await this.#config.open();
+    return this.#config.get(["options", varname]);
   }
 
   private async writeFile(pathname: Pathname, content: string) {

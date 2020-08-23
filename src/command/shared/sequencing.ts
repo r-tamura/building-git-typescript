@@ -1,4 +1,5 @@
 import * as arg from "arg";
+import { assertsNumber, Value } from "../../config";
 import { Commit } from "../../database";
 import { Resolvable, Resolve } from "../../merge";
 import { MergeType } from "../../repository/pending_commit";
@@ -14,6 +15,7 @@ const CONFLICT_NOTES = `  after resolving the conflicts, mark the corrected path
 
 export interface Options {
   mode: Nullable<"continue" | "abort" | "quit">;
+  mainline: number;
 }
 
 export interface Sequence {
@@ -36,7 +38,7 @@ export async function run(cmd: SequenceCmmand & WriteCommit.CommitPendable) {
       await handleAbort(cmd);
   }
 
-  await cmd.sequencer.start();
+  await cmd.sequencer.start(cmd.options);
   await cmd.storeCommitSequence();
   await resumeSequencer(cmd);
 }
@@ -52,12 +54,17 @@ export function defineSpec(cmd: SequenceCmmand): arg.Spec {
     "--abort": arg.flag(() => {
       cmd.options["mode"] = "abort";
     }),
+    "--mainline": (value: string) => {
+      cmd.options["mainline"] = Number.parseInt(value);
+    },
+    "-m": "--mainline",
   };
 }
 
 export function initOptions() {
   return {
     mode: null,
+    mainline: 1,
   };
 }
 
@@ -118,6 +125,27 @@ export async function failOnConflict(
   cmd.logger.error(`error: could not apply ${inputs.rightName}`);
   CONFLICT_NOTES.split("\n").forEach((line) => cmd.logger.error(`hint: ${line}`));
   return cmd.exit(1);
+}
+
+export async function selectParent(commit: CompleteCommit, cmd: SequenceCmmand) {
+  const mainline = await cmd.sequencer.getOption("mainline");
+  assertsNumber(mainline);
+
+  if (commit.merge) {
+    if (mainline) {
+      return commit.parents[mainline - 1];
+    }
+
+    cmd.logger.error(`error: commit ${commit.oid} is a merge but no -m option was given`);
+    cmd.exit(1);
+  } else {
+    if (!mainline) {
+      return commit.parent;
+    }
+
+    cmd.logger.error(`error: mainline was specified but commit ${commit.oid} is not a merge`);
+    cmd.exit(1);
+  }
 }
 
 export async function handleContinue(cmd: SequenceCmmand & WriteCommit.CommitPendable) {

@@ -66,7 +66,7 @@ export class Revert extends Base<Sequencing.Options> {
     const leftOid = await this.repo.refs.readHead();
     asserts(leftOid !== null, "HEADが存在する必要がある");
     const rightName = `parent of ${short}... ${commit.titleLine()}`;
-    const rightOid = commit.parent;
+    const rightOid = await Sequencing.selectParent(commit, this);
 
     return new CherryPick(leftName, rightName, leftOid, rightOid, [commit.oid]);
   }

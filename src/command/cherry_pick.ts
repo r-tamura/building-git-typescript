@@ -1,7 +1,7 @@
 import * as arg from "arg";
 import { Base } from ".";
 import { HEAD } from "../revision";
-import { CompleteCommit, Nullable } from "../types";
+import { CompleteCommit } from "../types";
 import {
   currentAuthor,
   writeTree,
@@ -15,11 +15,7 @@ import { reverse } from "../util/asynciter";
 import { Sequencer } from "../repository/sequencer";
 import * as Sequencing from "./shared/sequencing";
 
-interface Options {
-  mode: Nullable<"continue" | "abort" | "quit">;
-}
-
-export class CherryPick extends Base<Options> {
+export class CherryPick extends Base<Sequencing.Options> {
   pendingCommit!: PendingCommit;
   #sequencer!: Sequencer;
   async run() {
@@ -74,6 +70,7 @@ export class CherryPick extends Base<Options> {
 
   private async pickMergeInputs(commit: CompleteCommit) {
     const short = this.repo.database.shortOid(commit.oid);
+    const parent = await Sequencing.selectParent(commit, this);
     const leftName = HEAD;
     const leftOid = await this.repo.refs.readHead();
     asserts(leftOid !== null, "HEADが存在する必要がある");
@@ -81,6 +78,6 @@ export class CherryPick extends Base<Options> {
     const rightName = `${short}... ${commit.titleLine()}`;
     const rightOid = commit.oid;
 
-    return new Merge.CherryPick(leftName, rightName, leftOid, rightOid, [commit.parent]);
+    return new Merge.CherryPick(leftName, rightName, leftOid, rightOid, [parent]);
   }
 }
