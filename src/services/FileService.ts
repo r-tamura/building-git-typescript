@@ -85,7 +85,7 @@ export const defaultZlib = {
  * @param stream 'end'イベントまでstreamを読む
  * @param encoding
  */
-export function readTextStream(stream: Readable, encoding = "utf8") {
+export function readTextStream(stream: Readable, encoding: BufferEncoding = "utf8") {
   stream.setEncoding(encoding);
   return new Promise<string>((resolve, reject) => {
     let data = "";
@@ -101,7 +101,7 @@ export function readTextStream(stream: Readable, encoding = "utf8") {
 // https://github.com/nodejs/node/issues/30831
 async function createReadStreamSafe(
   filename: Pathname,
-  encoding = "utf8"
+  encoding: BufferEncoding = "utf8"
 ): Promise<CallbackFs.ReadStream> {
   return new Promise((resolve, reject) => {
     const fileStream = CallbackFs.createReadStream(filename, { encoding })
@@ -117,7 +117,7 @@ async function createReadStreamSafe(
  */
 export async function readByLine(
   pathname: Pathname,
-  encoding = "utf8"
+  encoding: BufferEncoding = "utf8"
 ): Promise<readline.Interface> {
   const fileStream = await createReadStreamSafe(pathname, encoding);
   return readline.createInterface({

@@ -42,7 +42,7 @@ export class TestUtil {
       process: {
         stdin: this.makeStdin(),
         stdout: this.makeStdout(),
-        stderr: this.makeStdout(),
+        stderr: this.makeStderr(),
         env: this.envvars,
         cwd: jest.fn().mockReturnValue(this.repoPath),
       },
@@ -205,6 +205,11 @@ export class TestUtil {
   }
 
   makeStdout({ isTTY = false }: { isTTY?: boolean } = {}): typeof process.stdout {
+    const writable = new Writable() as any;
+    return this.mockStreamAsTTY(writable, { isTTY });
+  }
+
+  makeStderr({ isTTY = false }: { isTTY?: boolean } = {}): typeof process.stderr {
     const writable = new Writable() as any;
     return this.mockStreamAsTTY(writable, { isTTY });
   }

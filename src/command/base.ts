@@ -32,9 +32,9 @@ export abstract class Base<O extends Options = NoOptions> implements Runnable {
   /** プロセスの出力がTTYか */
   private isatty: boolean;
   /** this.env.process.stdoutへのショートカット */
-  protected stdout: NodeJS.WriteStream;
+  protected stdout: NodeJS.Process["stdout"];
   /** this.env.process.stderrへのショートカット */
-  protected stderr: NodeJS.WriteStream;
+  protected stderr: NodeJS.Process["stderr"];
 
   /** options */
   options!: O;
