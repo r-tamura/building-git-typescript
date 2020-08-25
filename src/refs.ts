@@ -82,17 +82,23 @@ export class Ref {
 
 const SYMREF = /^ref: (.+)$/;
 
+const REFS_DIR = "refs";
+const HEADS_DIR = path.join(REFS_DIR, "heads");
+const REMOTES_DIR = path.join(REFS_DIR, "remotes");
+
 export class LockDenied extends BaseError {}
 export class InvalidBranch extends BaseError {}
 export class Refs {
   #pathname: Pathname;
   #refspath: Pathname;
   #headspath: Pathname;
+  #remotesPath: Pathname;
   #fs: FileService;
   constructor(pathname: string, env: Environment = {}) {
     this.#pathname = pathname;
-    this.#refspath = path.join(pathname, "refs");
-    this.#headspath = path.join(this.#refspath, "heads");
+    this.#refspath = path.join(pathname, REFS_DIR);
+    this.#headspath = path.join(pathname, HEADS_DIR);
+    this.#remotesPath = path.join(pathname, REMOTES_DIR);
     this.#fs = env.fs ?? defaultFs;
   }
 
@@ -317,7 +323,7 @@ export class Refs {
 
   shortName(pathname: Pathname) {
     const fullpath = path.join(this.#pathname, pathname);
-    const prefix = find([this.#headspath, this.#pathname], (dir) => {
+    const prefix = find([this.#remotesPath, this.#headspath, this.#pathname], (dir) => {
       return ascend(path.dirname(fullpath)).some((parent) => parent === dir);
     });
     asserts(prefix !== null);
@@ -371,7 +377,7 @@ export class Refs {
   }
 
   private async pathForName(name: string) {
-    const prefixies = [this.#pathname, this.#refspath, this.#headspath];
+    const prefixies = [this.#pathname, this.#refspath, this.#headspath, this.#remotesPath];
     let prefix = null;
     for (const candidatePrefix of prefixies) {
       const candidate = path.join(candidatePrefix, name);
