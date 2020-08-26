@@ -82,9 +82,9 @@ export class Ref {
 
 const SYMREF = /^ref: (.+)$/;
 
-const REFS_DIR = "refs";
-const HEADS_DIR = path.join(REFS_DIR, "heads");
-const REMOTES_DIR = path.join(REFS_DIR, "remotes");
+export const REFS_DIR = "refs";
+export const HEADS_DIR = path.join(REFS_DIR, "heads");
+export const REMOTES_DIR = path.join(REFS_DIR, "remotes");
 
 export class LockDenied extends BaseError {}
 export class InvalidBranch extends BaseError {}

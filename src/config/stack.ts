@@ -42,13 +42,15 @@ export class Stack {
     return result;
   }
 
-  file(nameOrFilePath: string) {
-    if (includes(nameOrFilePath, CONFIG_NAMES)) {
+  file(configPath: Pathname): Config;
+  file(name: ConfigName): Config;
+  file(nameOrPath: string) {
+    if (includes(nameOrPath, CONFIG_NAMES)) {
       // config name
-      return this.#configs[nameOrFilePath];
+      return this.#configs[nameOrPath];
     } else {
       // file path
-      return new Config(nameOrFilePath);
+      return new Config(nameOrPath);
     }
   }
 }

@@ -11,6 +11,7 @@ import { Migration } from "./migration";
 import { PendingCommit } from "./pending_commit";
 import { HardReset } from "./hard_reset";
 import { Stack } from "../config";
+import { Remotes } from "../remotes";
 
 export type RepositoryEnv = {
   process: Process;
@@ -26,19 +27,19 @@ export class Repository {
   #workspace!: Workspace;
   #refs!: Refs;
   #config!: Stack;
+  #remotes!: Remotes;
   constructor(public gitPath: Pathname, public env: RepositoryEnv) {}
 
   get database() {
-    return this.#database ??=
-      new Database(path.join(this.gitPath, "objects"), this.env);
+    return (this.#database ??= new Database(path.join(this.gitPath, "objects"), this.env));
   }
 
   get index() {
-    return this.#index ??= new Index(path.join(this.gitPath, "index"), this.env);
+    return (this.#index ??= new Index(path.join(this.gitPath, "index"), this.env));
   }
 
   get refs() {
-    return this.#refs ??= new Refs(this.gitPath, this.env);
+    return (this.#refs ??= new Refs(this.gitPath, this.env));
   }
 
   status(commitOid: Nullable<OID> = null) {
@@ -46,7 +47,7 @@ export class Repository {
   }
 
   get workspace() {
-    return this.#workspace ??= new Workspace(path.dirname(this.gitPath), this.env);
+    return (this.#workspace ??= new Workspace(path.dirname(this.gitPath), this.env));
   }
 
   migration(treeDiff: Changes) {
@@ -62,6 +63,10 @@ export class Repository {
   }
 
   get config() {
-    return this.#config ??= new Stack(this.gitPath);
+    return (this.#config ??= new Stack(this.gitPath));
+  }
+
+  get remotes() {
+    return (this.#remotes ??= new Remotes(this.config.file("local")));
   }
 }
