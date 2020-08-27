@@ -1,5 +1,5 @@
 import arg = require("arg");
-import { InvalidRemote } from "../remotes";
+import { InvalidRemote, RemoteName } from "../remotes";
 import { asserts } from "../util";
 import { Base } from "./base";
 
@@ -11,7 +11,6 @@ interface Options {
 export class Remote extends Base<Options> {
   async run() {
     const subcommand = this.args.shift();
-    asserts(subcommand !== undefined);
 
     switch (subcommand) {
       case "add":
@@ -21,7 +20,7 @@ export class Remote extends Base<Options> {
         await this.remoteRemote();
         break;
       default:
-        break;
+        await this.listRemotes();
     }
   }
 
@@ -44,7 +43,26 @@ export class Remote extends Base<Options> {
     };
   }
 
-  async addRemote() {
+  private async listRemotes() {
+    const names = await this.repo.remotes.listRemotes();
+    for (const name of names) {
+      await this.listRemote(name);
+    }
+  }
+
+  private async listRemote(name: RemoteName) {
+    if (!this.options["verbose"]) {
+      this.log(name);
+      return;
+    }
+
+    const remote = await this.repo.remotes.get(name);
+    asserts(remote !== null, "存在するリモートの中から選ばれる");
+    this.log(`${name}\t${await remote.fetchUrl()} (fetch)`);
+    this.log(`${name}\t${await remote.pushUrl()} (push)`);
+  }
+
+  private async addRemote() {
     const [name, url] = this.args;
     try {
       await this.repo.remotes.add(name, url, this.options["tracked"]);
@@ -58,7 +76,7 @@ export class Remote extends Base<Options> {
     }
   }
 
-  async remoteRemote() {
+  private async remoteRemote() {
     try {
       await this.repo.remotes.remove(this.args[0]);
       this.exit(0);

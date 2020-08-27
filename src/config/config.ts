@@ -16,7 +16,7 @@ const VARIABLE_LINE = /^\s*([a-z][a-z0-9-]*)\s*=\s*(.*?)\s*($|#|;)/im;
 const BLANK_LINE = /\s*(¥|#|;)/;
 // const INTEGER = /-?[1-9][0-9]*¥/;
 
-const VALID_SECTION  = /^[a-z0-9-]+$/i;
+const VALID_SECTION = /^[a-z0-9-]+$/i;
 const VALID_VARIABLE = /^[a-z][a-z0-9-]*$/i;
 
 export function validKey(key: SectionName) {
@@ -112,8 +112,7 @@ export class Config {
   }
 
   private parseValue(value: string) {
-
-    switch(value) {
+    switch (value) {
       case "yes":
       case "on":
       case "true":
@@ -179,8 +178,8 @@ export class Config {
     const [section, lines] = this.findLines(name, varname);
 
     if (isempty(lines)) {
-      this.addVariable(section , name, varname, value);
-    } else if(lines.length === 1) {
+      this.addVariable(section, name, varname, value);
+    } else if (lines.length === 1) {
       this.updateVariable(first(lines), varname, value);
     } else {
       throw new Conflict("connot overwrite multiple values with a single value");
@@ -207,7 +206,10 @@ export class Config {
     lines.forEach((line) => {
       const linesFromConfig = this.linesFor(section);
       const name = Section.nomalize(section.name);
-      this.#lines?.set(name, linesFromConfig.filter(lineFromConfig => !Line.equals(line, lineFromConfig)));
+      this.#lines?.set(
+        name,
+        linesFromConfig.filter((lineFromConfig) => !Line.equals(line, lineFromConfig))
+      );
     });
   }
 
@@ -242,7 +244,7 @@ export class Config {
     const sections = [];
 
     for (const [main, sub] of this.#lines.keys()) {
-      if (main === name && sub !== "") {
+      if (main === name && sub !== undefined && sub !== "") {
         sections.push(sub);
       }
     }
@@ -317,10 +319,9 @@ export class Variable {
 
 /** [] or [section name, (subsection name, ...)] */
 export type SectionName = [section: string, ...subsection: string[]] | [];
-export type NormalizedSection = [section: string, subsection: string] | []
+export type NormalizedSection = [section: string, subsection: string] | [];
 
 export class Section {
-
   static of(name: SectionName) {
     return new this(name);
   }
@@ -372,9 +373,10 @@ export class Section {
 }
 
 export class Line {
-
   static equals(l1: Line, l2: Line) {
-    return l1.section === l2.section && l1.text === l2.text && Section.equals(l1.section, l2.section);
+    return (
+      l1.section === l2.section && l1.text === l2.text && Section.equals(l1.section, l2.section)
+    );
   }
 
   static of(text: string, section: Section, variable?: Variable) {
@@ -387,7 +389,6 @@ export class Line {
     return Variable.normalize(this.variable?.name);
   }
 }
-
 
 export function assertsString(value: Value | undefined): asserts value is string | undefined {
   asserts(value === undefined || typeof value === "string");

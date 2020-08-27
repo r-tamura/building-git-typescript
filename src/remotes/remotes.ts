@@ -1,4 +1,5 @@
 import * as path from "path";
+import { Remote } from "./remote";
 import { Config } from "../config";
 import * as Refs from "../refs";
 import { BaseError, isempty } from "../util";
@@ -14,6 +15,19 @@ export class Remotes {
   #config: Config;
   constructor(config: Config) {
     this.#config = config;
+  }
+
+  async listRemotes() {
+    await this.#config.open();
+    return this.#config.subsections("remote");
+  }
+
+  async get(name: RemoteName) {
+    await this.#config.open();
+    if (!this.#config.section(["remote", name])) {
+      return null;
+    }
+    return Remote.of(this.#config, name);
   }
 
   async add(name: RemoteName, url: string, branches: string[] = []) {
@@ -32,7 +46,7 @@ export class Remotes {
 
     for (const branch of branches) {
       const source = path.join(Refs.HEADS_DIR, branch);
-      const target = path.join(Refs.REMOTES_DIR, branch);
+      const target = path.join(Refs.REMOTES_DIR, name, branch);
       const refspec = new Refspec(source, target, true);
       this.#config.add(["remote", name, "fetch"], refspec.toString());
     }
