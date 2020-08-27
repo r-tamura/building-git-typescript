@@ -39,4 +39,14 @@ export class Remotes {
 
     await this.#config.save();
   }
+
+  async remove(name: RemoteName) {
+    await this.#config.openForUpdate();
+
+    const success = this.#config.removeSection(["remote", name]);
+    await this.#config.save();
+    if (!success) {
+      throw new InvalidRemote(`No such remote: ${name}`);
+    }
+  }
 }

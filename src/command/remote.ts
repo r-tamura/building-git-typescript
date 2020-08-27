@@ -18,6 +18,7 @@ export class Remote extends Base<Options> {
         await this.addRemote();
         break;
       case "remove":
+        await this.remoteRemote();
         break;
       default:
         break;
@@ -47,6 +48,19 @@ export class Remote extends Base<Options> {
     const [name, url] = this.args;
     try {
       await this.repo.remotes.add(name, url, this.options["tracked"]);
+      this.exit(0);
+    } catch (e: unknown) {
+      if (e instanceof InvalidRemote) {
+        this.logger.error(`fatal: ${e.message}`);
+        this.exit(128);
+      }
+      throw e;
+    }
+  }
+
+  async remoteRemote() {
+    try {
+      await this.repo.remotes.remove(this.args[0]);
       this.exit(0);
     } catch (e: unknown) {
       if (e instanceof InvalidRemote) {
