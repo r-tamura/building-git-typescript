@@ -23,4 +23,12 @@ export class Remote {
   async pushUrl() {
     return (await this.#config.get(["remote", this.#name, "pushurl"])) ?? (await this.fetchUrl());
   }
+
+  async fetchSpecs() {
+    return this.#config.getAll(["remote", this.#name, "fetch"]);
+  }
+
+  async uploader() {
+    return this.#config.getAll(["remote", this.#name, "uploadpack"]);
+  }
 }
