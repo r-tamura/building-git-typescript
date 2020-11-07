@@ -2,7 +2,7 @@ import { asserts } from "../util";
 
 type TargetRef = string;
 type SourceRef = string;
-type Mappings = Record<TargetRef, [SourceRef, boolean]>;
+type Mappings = Record<TargetRef, [source: SourceRef, forced: boolean]>;
 
 const REFSPEC_FORMAT = /^(\+?)([^:]+):([^:]+)$/;
 export class Refspec {
@@ -21,7 +21,11 @@ export class Refspec {
     }, {});
   }
 
-  constructor(public source: SourceRef, public target: TargetRef, public forced: boolean) {}
+  constructor(
+    public source: SourceRef,
+    public target: TargetRef,
+    public forced: boolean
+  ) {}
 
   matchRefs(refs: string[]): Mappings {
     if (!this.source.includes("*")) {
@@ -30,8 +34,8 @@ export class Refspec {
     const pattern = new RegExp(`^${this.source.replace("*", "(.*)")}$`);
 
     return refs.reduce((mappings, ref) => {
-      let match;
-      if ((match = pattern.exec(ref)) === null) {
+      const match = pattern.exec(ref);
+      if (match === null) {
         return mappings;
       }
       const dst = match[1] ? this.target.replace("*", match[1]) : this.target;

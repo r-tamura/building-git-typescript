@@ -4,22 +4,23 @@
  */
 module.exports = {
   env: {
-    browser: true,
-    es2020: true,
+    node: true,
   },
-  extends: ["prettier", "plugin:@typescript-eslint/recommended"],
+  extends: [
+    "eslint:recommended",
+    "plugin:@typescript-eslint/recommended",
+    "prettier",
+    "prettier/@typescript-eslint",
+  ],
   parser: "@typescript-eslint/parser",
   parserOptions: {
     // Note: ?
-    ecmaVersion: 11,
     sourceType: "module",
+    // @typescript-eslint/no-floating-promises が型情報を必要とするため指定
     project: "./tsconfig.json",
   },
   plugins: ["@typescript-eslint"],
   rules: {
-    quotes: [2, "double"],
-    semi: [2, "always"],
-    "comma-dangle": ["error", "only-multiline"],
     "@typescript-eslint/no-floating-promises": 2,
     "@typescript-eslint/explicit-module-boundary-types": 0,
   },

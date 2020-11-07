@@ -3,7 +3,16 @@ import { constants } from "fs";
 import { Z_BEST_SPEED } from "zlib";
 import path = require("path");
 import { FileService, defaultFs, Zlib, defaultZlib } from "../services";
-import { GitObject, GitObjectParser, OID, CompleteGitObject, Pathname, CompleteTree, Dict, Nullable } from "../types";
+import {
+  GitObject,
+  GitObjectParser,
+  OID,
+  CompleteGitObject,
+  Pathname,
+  CompleteTree,
+  Dict,
+  Nullable,
+} from "../types";
 import * as assert from "assert";
 import { Blob } from "./blob";
 import { asserts, scanUntil } from "../util";
@@ -14,7 +23,8 @@ import { TreeDiff } from "./tree_diff";
 import { PathFilter } from "../path_filter";
 import { Entry } from "./entry";
 
-const TEMP_CHARS = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+const TEMP_CHARS =
+  "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
 
 type Rand = {
   sample: (str: string) => string;
@@ -66,7 +76,7 @@ export class Database {
   }
 
   async load(oid: OID) {
-    return this.#objects[oid] ??= await this.readObject(oid);
+    return (this.#objects[oid] ??= await this.readObject(oid));
   }
 
   /**
@@ -90,7 +100,11 @@ export class Database {
     for (const name of eachFile(pathname)) {
       // データベースからロードされたオブジェクトはOIDを持つことが保証されている
       // データベースからロードされたTreeのentriesはDict<Database.Entry>。Tree#parse参照
-      item = item ? ((await this.load(item.oid) as CompleteTree).entries as Dict<Entry>)[name] : null;
+      item = item
+        ? (((await this.load(item.oid)) as CompleteTree).entries as Dict<
+            Entry
+          >)[name]
+        : null;
     }
 
     return item;
@@ -104,7 +118,10 @@ export class Database {
    * @param oid
    * @param pathname
    */
-  async loadTreeList(oid: Nullable<OID> = null, pathname: Nullable<Pathname> = null) {
+  async loadTreeList(
+    oid: Nullable<OID> = null,
+    pathname: Nullable<Pathname> = null
+  ) {
     if (!oid) {
       return {};
     }
@@ -114,7 +131,11 @@ export class Database {
     return list;
   }
 
-  private async buildList(list: Dict<Entry>, entry: Nullable<Entry>, prefix: Pathname) {
+  private async buildList(
+    list: Dict<Entry>,
+    entry: Nullable<Entry>,
+    prefix: Pathname
+  ) {
     if (!entry) {
       return;
     }
@@ -125,7 +146,7 @@ export class Database {
     }
 
     // エントリがTree(ディレクトリの場合
-    const tree = ((await this.load(entry.oid)) as CompleteTree);
+    const tree = (await this.load(entry.oid)) as CompleteTree;
     for (const [name, item] of Object.entries(tree.entries)) {
       // loadされたTreeはDict<Entry>
       const childEntry = item as Entry;
@@ -178,6 +199,10 @@ export class Database {
     const diff = new TreeDiff(this);
     await diff.compareOids(a, b, filter);
     return diff.changes;
+  }
+
+  treeEntry(oid: OID) {
+    return new Entry(oid, Tree.TREE_MODE);
   }
 
   private genTempName() {

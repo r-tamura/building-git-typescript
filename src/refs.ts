@@ -244,7 +244,9 @@ export class Refs {
         break;
       }
 
-      const e = await this.#fs.rmdir(dirname).catch((e: NodeJS.ErrnoException) => e);
+      const e = await this.#fs
+        .rmdir(dirname)
+        .catch((e: NodeJS.ErrnoException) => e);
 
       if (e && e.code === "ENOTEMPTY") {
         break;
@@ -252,7 +254,10 @@ export class Refs {
     }
   }
 
-  private async updateSymRef(pathname: Pathname, oid: OID): Promise<Nullable<string>> {
+  private async updateSymRef(
+    pathname: Pathname,
+    oid: OID
+  ): Promise<Nullable<string>> {
     const lockfile = new Lockfile(pathname);
     await lockfile.holdForUpdate();
     const ref = await this.readOidOrSymRef(pathname);
@@ -323,11 +328,21 @@ export class Refs {
 
   shortName(pathname: Pathname) {
     const fullpath = path.join(this.#pathname, pathname);
-    const prefix = find([this.#remotesPath, this.#headspath, this.#pathname], (dir) => {
-      return ascend(path.dirname(fullpath)).some((parent) => parent === dir);
-    });
+    const prefix = find(
+      [this.#remotesPath, this.#headspath, this.#pathname],
+      (dir) => {
+        return ascend(path.dirname(fullpath)).some((parent) => parent === dir);
+      }
+    );
     asserts(prefix !== null);
     return path.relative(prefix, fullpath);
+  }
+
+  /**
+   * HEADを含めた全てのrefのリストを取得します
+   */
+  async listAllRefs() {
+    return [symref(this, HEAD), ...(await this.listRefs(this.#refspath))];
   }
 
   private get headPath() {
@@ -369,15 +384,13 @@ export class Refs {
     return symrefs.flat();
   }
 
-  /**
-   * HEADを含めた全てのrefのリストを取得します
-   */
-  private async listAllRefs() {
-    return [symref(this, HEAD), ...(await this.listRefs(this.#refspath))];
-  }
-
   private async pathForName(name: string) {
-    const prefixies = [this.#pathname, this.#refspath, this.#headspath, this.#remotesPath];
+    const prefixies = [
+      this.#pathname,
+      this.#refspath,
+      this.#headspath,
+      this.#remotesPath,
+    ];
     let prefix = null;
     for (const candidatePrefix of prefixies) {
       const candidate = path.join(candidatePrefix, name);

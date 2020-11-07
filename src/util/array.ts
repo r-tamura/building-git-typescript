@@ -28,7 +28,11 @@ export function clone<XS extends unknown[] | []>(xs: XS): XS {
  * @param xs
  * @param ys
  */
-export function exclude<T>(xs: T[], ys: T[], equal: (x: T, y: T) => boolean = (x, y) => x === y) {
+export function exclude<T>(
+  xs: T[],
+  ys: T[],
+  equal: (x: T, y: T) => boolean = (x, y) => x === y
+) {
   return xs.filter((x) => !ys.find((y) => equal(x, y)));
 }
 
@@ -68,7 +72,9 @@ function jsindex(xs: unknown[], index: number) {
 export function get<T>(xs: T[], index: number): T {
   if (index < -xs.length || xs.length <= index) {
     throw new RangeError(
-      `index has to be within array's length. ${-xs.length} <= actual:${index} < ${xs.length}`
+      `index has to be within array's length. ${-xs.length} <= actual:${index} < ${
+        xs.length
+      }`
     );
   }
   const actualIndex = jsindex(xs, index);
@@ -169,6 +175,7 @@ export function transpose<T>(xs: T[][]): T[][] {
   return transposed;
 }
 
-export function compact<T>(xs: T[]) {
-  return xs.filter((x) => x !== null && x !== undefined);
+export function compact<T>(xs: T[]): NonNullable<T>[] {
+  const notEmpty = (x: T): x is NonNullable<T> => x !== null && x !== undefined;
+  return xs.filter(notEmpty);
 }

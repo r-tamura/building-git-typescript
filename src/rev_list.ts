@@ -1,9 +1,19 @@
 import { Repository } from "./repository";
-import { Revision, HEAD, COMMIT } from "./revision";
-import { asserts, found, insert, isempty, first, last, clone } from "./util";
+import { Revision, HEAD, COMMIT, InvalidObject } from "./revision";
+import {
+  asserts,
+  found,
+  insert,
+  isempty,
+  first,
+  last,
+  clone,
+  compact,
+} from "./util";
 import { OID, CompleteCommit, Pathname } from "./types";
 import { PathFilter } from "./path_filter";
-import { Changes } from "./database";
+import * as Database from "./database";
+import { SymRef } from "./refs";
 
 type Flag = "seen" | "added" | "uninteresting" | "treesame";
 const RANGE = /^(.*)\.\.(.*)$/;
@@ -12,7 +22,13 @@ const EXCLUDE = /^\^(.+)$/;
 type OidPair = [OID | null, OID | null];
 
 interface Options {
-  walk?: boolean;
+  walk: boolean;
+  /** コミットのみでなく、全てのオブジェクトも探索対象に含めるか */
+  objects: boolean;
+  /** 全てのコミットを含めるか */
+  all: boolean;
+  /** 存在しないrevisionが指定された場合にエラーを無視する */
+  missing: boolean;
 }
 export class RevList {
   #repo: Repository;
@@ -23,15 +39,34 @@ export class RevList {
   #limited = false;
   #prune: Pathname[] = [];
   #filter!: PathFilter;
-  #diffs: Map<OidPair, Changes> = new Map();
+  #diffs: Map<OidPair, Database.Changes> = new Map();
   #walk: boolean;
-  private constructor(repo: Repository, { walk = true }: Options = {}) {
+  #objects: boolean;
+  #missing: boolean;
+  #pending: Database.Entry[] = [];
+  private constructor(repo: Repository, { walk, objects, missing }: Options) {
     this.#repo = repo;
     this.#walk = walk;
+    this.#objects = objects;
+    this.#missing = missing;
   }
 
-  static async fromRevs(repo: Repository, revs: string[], opts: Options = {}): Promise<RevList> {
-    const list = new this(repo, opts);
+  static async fromRevs(
+    repo: Repository,
+    revs: string[],
+    {
+      walk = true,
+      objects = false,
+      all = false,
+      missing = false,
+    }: Partial<Options> = {}
+  ): Promise<RevList> {
+    const list = new this(repo, { walk, objects, all, missing });
+
+    if (all) {
+      await list.includeRefs(await list.#repo.refs.listAllRefs());
+    }
+
     for (const rev of revs) {
       await list.handleRevision(rev);
     }
@@ -49,16 +84,32 @@ export class RevList {
     if (diff) {
       return diff;
     }
-    const changes = await this.#repo.database.treeDiff(oldOid, newOid, this.#filter);
+    const changes = await this.#repo.database.treeDiff(
+      oldOid,
+      newOid,
+      this.#filter
+    );
     this.#diffs.set(key, changes);
     return changes;
   }
 
-  async *each(): AsyncGenerator<CompleteCommit> {
+  async *each() {
     if (this.#limited) {
       await this.limitList();
     }
+    if (this.#objects) {
+      await this.markEdgesUninteresting();
+    }
     yield* this.traverseCommits();
+  }
+
+  /**
+   * コミット・オブジェクトを出力します
+   * コンストラクタのobjectsがfalseの場合はeachと同等で
+   */
+  async *eachWithObjects() {
+    yield* this;
+    yield* this.traversePending();
   }
 
   private async addParents(commit: CompleteCommit) {
@@ -86,7 +137,11 @@ export class RevList {
 
     if (this.#walk) {
       const index = this.#queue.findIndex((c) => c.date < commit.date);
-      this.#queue = insert(this.#queue, found(index) ? index : this.#queue.length, commit);
+      this.#queue = insert(
+        this.#queue,
+        found(index) ? index : this.#queue.length,
+        commit
+      );
     } else {
       this.#queue.push(commit);
     }
@@ -143,7 +198,7 @@ export class RevList {
     const queue = clone(commit.parents);
     while (!isempty(queue)) {
       // コミットキューが空でないことが保証されている
-      const oid = queue.shift()!;
+      const oid = queue.shift() as OID;
       if (!this.mark(oid, "uninteresting")) {
         continue;
       }
@@ -154,20 +209,58 @@ export class RevList {
     }
   }
 
+  private async markEdgesUninteresting() {
+    for (const commit of this.#queue) {
+      if (this.marked(commit.oid, "uninteresting")) {
+        await this.markTreeUninteresting(commit.tree);
+      }
+
+      for (const oid of commit.parents) {
+        if (!this.marked(oid, "uninteresting")) {
+          continue;
+        }
+
+        const parent = await this.loadCommit(oid);
+        await this.markTreeUninteresting(parent.tree);
+      }
+    }
+  }
+
+  private async markTreeUninteresting(treeOid: OID) {
+    const entry = await this.#repo.database.loadTreeEntry(treeOid);
+    asserts(entry !== null);
+    const traverser = this.traverseTree(entry);
+    let result = await traverser.next();
+    while (!result.done) {
+      result = await traverser.next(
+        this.mark(result.value.oid, "uninteresting")
+      );
+    }
+  }
+
   private async setStartpoint(rev: string, interesting: boolean) {
     if (rev === "") {
       rev = HEAD;
     }
-    const oid = await new Revision(this.#repo, rev).resolve(COMMIT);
+    try {
+      const oid = await new Revision(this.#repo, rev).resolve(COMMIT);
 
-    const commit = await this.loadCommit(oid);
-    asserts(commit !== null, "valid commit");
+      const commit = await this.loadCommit(oid);
+      asserts(commit !== null, "valid commit");
 
-    this.enqueueCommit(commit);
-    if (!interesting) {
-      this.#limited = true;
-      this.mark(oid, "uninteresting");
-      this.markParentsUninteresting(commit);
+      this.enqueueCommit(commit);
+      if (!interesting) {
+        this.#limited = true;
+        this.mark(oid, "uninteresting");
+        this.markParentsUninteresting(commit);
+      }
+    } catch (e: unknown) {
+      if (e instanceof InvalidObject) {
+        if (this.#missing) {
+          return;
+        }
+        throw e;
+      }
     }
   }
 
@@ -195,7 +288,9 @@ export class RevList {
     if (oldest_out && oldest_out.date <= newest_in.date) {
       return true;
     }
-    if (this.#queue.some((commit) => !this.marked(commit.oid, "uninteresting"))) {
+    if (
+      this.#queue.some((commit) => !this.marked(commit.oid, "uninteresting"))
+    ) {
       return true;
     }
     return false;
@@ -240,8 +335,60 @@ export class RevList {
         continue;
       }
 
+      this.#pending.push(this.#repo.database.treeEntry(commit.tree));
       yield commit;
     }
+  }
+
+  private async *traverseTree(
+    entry: Database.Entry
+  ): AsyncGenerator<Database.Entry, void, boolean> {
+    const marked = yield entry;
+    if (marked) {
+      return;
+    }
+
+    if (!entry.tree) {
+      return;
+    }
+
+    const tree = await this.#repo.database.load(entry.oid);
+    asserts(tree.type === "tree");
+
+    for (const item of Object.values(tree.entries)) {
+      // databaseから読み込まれたtreeオブジェクトのエントリ
+      asserts(item.type === "database");
+      yield* this.traverseTree(item);
+    }
+  }
+
+  private async *traversePending() {
+    if (!this.#objects) {
+      return;
+    }
+
+    for (const entry of this.#pending) {
+      const traverser = this.traverseTree(entry);
+      let result = await traverser.next();
+      while (!result.done) {
+        const object = result.value;
+        if (this.marked(object.oid, "uninteresting")) {
+          continue;
+        }
+
+        if (!this.mark(object.oid, "seen")) {
+          continue;
+        }
+
+        yield object;
+        result = await traverser.next(true);
+      }
+    }
+  }
+
+  private async includeRefs(refs: SymRef[]) {
+    const oids = compact(await Promise.all(refs.map((ref) => ref.readOid())));
+    return await Promise.all(oids.map((oid) => this.handleRevision(oid)));
   }
 
   [Symbol.asyncIterator]() {
