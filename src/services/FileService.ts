@@ -1,8 +1,8 @@
 import * as CallbackFs from "fs";
-import * as zlib from "zlib";
 import * as readline from "readline";
-import { promisify } from "util";
 import { Readable } from "stream";
+import { promisify } from "util";
+import * as zlib from "zlib";
 import { Pathname } from "../types";
 const fs = CallbackFs.promises;
 
@@ -85,7 +85,10 @@ export const defaultZlib = {
  * @param stream 'end'イベントまでstreamを読む
  * @param encoding
  */
-export function readTextStream(stream: Readable, encoding: BufferEncoding = "utf8") {
+export function readTextStream(
+  stream: Readable,
+  encoding: BufferEncoding = "utf8"
+) {
   stream.setEncoding(encoding);
   return new Promise<string>((resolve, reject) => {
     let data = "";
@@ -123,4 +126,41 @@ export async function readByLine(
   return readline.createInterface({
     input: fileStream,
   });
+}
+
+/**
+ * ReadStreamから指定されたバイト数分のデータを読み込みます
+ * @param stream
+ * @param size 読み込みバイト数
+ */
+export async function readChunk(stream: NodeJS.ReadStream, size: number) {
+  const readable = async (stream: NodeJS.ReadStream) => {
+    return new Promise((resolve, reject) => {
+      const removeListeners = () => {
+        stream.removeListener("readable", readableListener);
+        stream.removeListener("error", errorListener);
+      };
+
+      const readableListener = () => {
+        removeListeners();
+        resolve(true);
+      };
+
+      const errorListener = (err: Error) => {
+        removeListeners();
+        reject(err);
+      };
+      stream.once("readable", readableListener).on("error", errorListener);
+    });
+  };
+
+  let raw = Buffer.alloc(0);
+  while (raw.length < size) {
+    await readable(stream);
+    const chunk = stream.read(size - raw.length) as Buffer | null;
+    if (chunk !== null) {
+      raw = Buffer.concat([raw, chunk]);
+    }
+  }
+  return raw;
 }

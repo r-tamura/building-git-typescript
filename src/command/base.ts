@@ -1,13 +1,13 @@
-import * as path from "path";
 import * as arg from "arg";
-import { Runnable } from "./types";
-import { Environment, Pathname, EnvVars } from "../types";
-import { Repository } from "../repository";
-import { Logger, createLogger } from "../services";
+import * as path from "path";
 import * as Color from "../color";
-import { Pager } from "../pager";
 import { EditCallback, Editor } from "../editor";
+import { Pager } from "../pager";
+import { Repository } from "../repository";
+import { createLogger, Logger } from "../services";
+import { Environment, EnvVars, Pathname } from "../types";
 import { asserts } from "../util";
+import { Runnable } from "./types";
 
 /** process.exit 代替え */
 export class Exit {}
@@ -17,8 +17,8 @@ export type BaseConstructor<O extends Options> = {
 };
 
 // TODO: 型定義見直し
-export type Options = object
-export type NoOptions = any
+export type Options = object;
+export type NoOptions = any;
 
 export abstract class Base<O extends Options = NoOptions> implements Runnable {
   /** 作業ディレクトリ */
@@ -59,12 +59,17 @@ export abstract class Base<O extends Options = NoOptions> implements Runnable {
   }
 
   async editFile(pathname: Pathname, callback: EditCallback) {
-    const message = await Editor.edit(pathname, async (editor) => {
-      await callback(editor);
-      if (!this.isatty) {
-        editor.close();
-      }
-    }, await this.editorCommand(), { fs: this.env.fs, stdout: this.stdout, stderr: this.stderr });
+    const message = await Editor.edit(
+      pathname,
+      async (editor) => {
+        await callback(editor);
+        if (!this.isatty) {
+          editor.close();
+        }
+      },
+      await this.editorCommand(),
+      { fs: this.env.fs, stdout: this.stdout, stderr: this.stderr }
+    );
     return message;
   }
 
@@ -96,7 +101,10 @@ export abstract class Base<O extends Options = NoOptions> implements Runnable {
   }
 
   get repo() {
-    return this.#repo ??= new Repository(path.join(this.dir, ".git"), this.env);
+    return (this.#repo ??= new Repository(
+      path.join(this.dir, ".git"),
+      this.env
+    ));
   }
 
   log(message: string) {
@@ -115,6 +123,8 @@ export abstract class Base<O extends Options = NoOptions> implements Runnable {
       switch (nodeErr.code) {
         case "EPIPE":
           this.exit(0);
+        // exitの返り値がneverのため, breakは必要ない
+        // eslint-disable-next-line no-fallthrough
         default:
           throw e;
       }
@@ -138,14 +148,21 @@ export abstract class Base<O extends Options = NoOptions> implements Runnable {
   private async editorCommand() {
     const coreEditor = await this.repo.config.get(["core", "editor"]);
     asserts(typeof coreEditor === "string" || coreEditor === undefined);
-    return this.envvars["GIT_EDITOR"] ?? coreEditor ?? this.envvars["VISUAL"] ?? this.envvars["EDITOR"];
+    return (
+      this.envvars["GIT_EDITOR"] ??
+      coreEditor ??
+      this.envvars["VISUAL"] ??
+      this.envvars["EDITOR"]
+    );
   }
 
   protected defineSpec(): arg.Spec {
     return {};
   }
 
-  protected initOptions() {}
+  protected initOptions() {
+    return;
+  }
 
   private parseOptions() {
     this.initOptions();
