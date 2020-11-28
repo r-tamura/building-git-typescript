@@ -1,27 +1,27 @@
+import * as assert from "assert";
 import { createHash } from "crypto";
 import { constants } from "fs";
-import { Z_BEST_SPEED } from "zlib";
-import path = require("path");
-import { FileService, defaultFs, Zlib, defaultZlib } from "../services";
+import { constants as zlibConstants } from "zlib";
+import { PathFilter } from "../path_filter";
+import { defaultFs, defaultZlib, FileService, Zlib } from "../services";
 import {
-  GitObject,
-  GitObjectParser,
-  OID,
   CompleteGitObject,
-  Pathname,
   CompleteTree,
   Dict,
+  GitObject,
+  GitObjectParser,
   Nullable,
+  OID,
+  Pathname,
 } from "../types";
-import * as assert from "assert";
-import { Blob } from "./blob";
 import { asserts, scanUntil } from "../util";
 import { eachFile } from "../util/fs";
-import { Tree } from "./tree";
+import { Blob } from "./blob";
 import { Commit } from "./commit";
-import { TreeDiff } from "./tree_diff";
-import { PathFilter } from "../path_filter";
 import { Entry } from "./entry";
+import { Tree } from "./tree";
+import { TreeDiff } from "./tree_diff";
+import path = require("path");
 
 const TEMP_CHARS =
   "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
@@ -48,14 +48,14 @@ export type Environment = {
   zlib?: Zlib;
 };
 
-type Parsers = Record<"blob" | "tree" | "commit", GitObjectParser>;
+type GitObjectType = "blob" | "tree" | "commit";
+type Parsers = Record<GitObjectType, GitObjectParser>;
 
 const TYPES: Parsers = {
   blob: Blob,
   tree: Tree,
   commit: Commit,
 } as const;
-
 export class Database {
   #pathname: string;
   #objects: { [s: string]: CompleteGitObject } = {};
@@ -77,6 +77,11 @@ export class Database {
 
   async load(oid: OID) {
     return (this.#objects[oid] ??= await this.readObject(oid));
+  }
+
+  async loadRaw(oid: OID) {
+    const { type, size, body } = await this.readObjectHeader(oid);
+    return new Raw(type, size, body);
   }
 
   /**
@@ -101,9 +106,8 @@ export class Database {
       // データベースからロードされたオブジェクトはOIDを持つことが保証されている
       // データベースからロードされたTreeのentriesはDict<Database.Entry>。Tree#parse参照
       item = item
-        ? (((await this.load(item.oid)) as CompleteTree).entries as Dict<
-            Entry
-          >)[name]
+        ? (((await this.load(item.oid)) as CompleteTree)
+            .entries as Dict<Entry>)[name]
         : null;
     }
 
@@ -175,13 +179,31 @@ export class Database {
       .filter((oid) => oid.startsWith(oidPrefix));
   }
 
-  async readObject(oid: OID) {
+  async readObject(oid: OID): Promise<CompleteGitObject> {
+    // const objPath = this.objectPath(oid);
+    // const compressed = await this.#fs.readFile(objPath);
+    // const data = await this.#zlib.inflate(compressed);
+
+    const { type, body } = await this.readObjectHeader(oid);
+    const object = TYPES[type].parse(body);
+    object.oid = oid;
+    return object as CompleteGitObject;
+  }
+
+  private async readObjectHeader(oid: OID) {
     const objPath = this.objectPath(oid);
     const compressed = await this.#fs.readFile(objPath);
     const data = await this.#zlib.inflate(compressed);
-    const object = parseObject(data);
-    object.oid = oid;
-    return object as CompleteGitObject;
+
+    const [type, typeRead] = scanUntil(" ", data);
+    const [size, sizeRead] = scanUntil("\0", data, typeRead);
+    assertGitObjectType(type);
+
+    return {
+      type,
+      size: Number.parseInt(size, 10),
+      body: data.slice(sizeRead),
+    };
   }
 
   shortOid(oid: OID) {
@@ -238,7 +260,7 @@ export class Database {
       }
     }
     const compressed = await this.#zlib.deflate(content, {
-      level: Z_BEST_SPEED,
+      level: zlibConstants.Z_BEST_SPEED,
     });
     await this.#fs.writeFile(fileHandle, compressed);
     await this.#fs.rename(tempPath, objPathname);
@@ -276,11 +298,17 @@ export class Database {
   }
 }
 
-function parseObject(obj: Buffer) {
-  const [type, next] = scanUntil(" ", obj);
-  const [size, endHeader] = scanUntil("\0", obj, next);
-  asserts(type === "blob" || type === "tree" || type === "commit");
+class Raw {
+  constructor(
+    public type: GitObjectType,
+    public size: number,
+    public data: Buffer
+  ) {}
+}
 
-  const object = TYPES[type].parse(obj.slice(endHeader));
-  return object;
+function assertGitObjectType(type: string): asserts type is GitObjectType {
+  asserts(
+    type === "blob" || type === "tree" || type === "commit",
+    `'${type}'はGitオブジェクトでサポートされているタイプです`
+  );
 }
