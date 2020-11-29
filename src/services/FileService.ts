@@ -132,8 +132,13 @@ export async function readByLine(
  * ReadStreamから指定されたバイト数分のデータを読み込みます
  * @param stream
  * @param size 読み込みバイト数
+ * @param timeout タイムアウト(ms)
  */
-export async function readChunk(stream: NodeJS.ReadStream, size: number) {
+export async function readChunk(
+  stream: NodeJS.ReadStream,
+  size: number,
+  timeout = 1000
+) {
   const readable = async (stream: NodeJS.ReadStream) => {
     return new Promise((resolve, reject) => {
       const removeListeners = () => {
@@ -150,17 +155,21 @@ export async function readChunk(stream: NodeJS.ReadStream, size: number) {
         removeListeners();
         reject(err);
       };
-      stream.once("readable", readableListener).on("error", errorListener);
+      stream.once("readable", readableListener).once("error", errorListener);
     });
   };
 
   let raw = Buffer.alloc(0);
-  while (raw.length < size) {
-    await readable(stream);
-    const chunk = stream.read(size - raw.length) as Buffer | null;
-    if (chunk !== null) {
-      raw = Buffer.concat([raw, chunk]);
-    }
+  const deadline = Date.now() + timeout;
+  await readable(stream);
+  while (Date.now() < deadline && raw.length < size) {
+    // https://nodejs.org/api/stream.html#stream_readable_read_size
+    // Readable.readは指定したサイズのデータが取得できない場合はnullを返す
+    // readのサイズが指定されない場合はバッファ内に存在する全てのデータを返す
+    const chunk = (stream.read(size - raw.length) ??
+      stream.read()) as Buffer | null;
+    if (chunk === null) break;
+    raw = Buffer.concat([raw, chunk]);
   }
   return raw;
 }
