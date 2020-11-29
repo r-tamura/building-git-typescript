@@ -24,3 +24,11 @@ export class BaseError extends Error {
 export class Runtime extends BaseError {}
 
 export class Invalid extends BaseError {}
+
+export function isNodeError(e: any): e is NodeJS.ErrnoException {
+  // TODO: 厳格な型判定
+  if (e.code) {
+    return true;
+  }
+  return false;
+}
