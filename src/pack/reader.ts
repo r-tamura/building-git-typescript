@@ -1,40 +1,40 @@
 import { TextDecoder } from "util";
-import { defaultZlib, readChunk, Zlib } from "../services";
-import { asserts, BaseError, includes, isNodeError } from "../util";
+import { defaultZlib, Zlib } from "../services";
+import { asserts, includes, isNodeError } from "../util";
 import * as numbers from "./numbers";
 import * as pack from "./pack";
-import { HEADER_SIZE, SIGNATURE, VERSION } from "./pack";
-
-class InvalidPack extends BaseError {}
+import { HEADER_SIZE, InvalidPack, SIGNATURE, VERSION } from "./pack";
+import { Stream } from "./stream";
 
 interface Environment {
   zlib?: Zlib;
 }
 
 export class Reader {
-  #input: NodeJS.ReadStream;
+  #input: Stream;
   /** Pack内のオブジェクト数 */
   #count = 0;
   #zlib: Zlib;
-  constructor(input: NodeJS.ReadStream, env: Environment = {}) {
+  constructor(input: Stream, env: Environment = {}) {
     this.#input = input;
     this.#zlib = env.zlib ?? defaultZlib;
   }
 
-  readHeader() {
+  async readHeader() {
     /*
      *   4 Bytes                4 Bytes              4 Bytes
      *   +---------------------+--------------------+--------------------+
      *   |  Signature          | Version            | Object counts      |
      *   +---------------------+--------------------+--------------------+
      */
-    const data: Uint32Array = this.#input.read(HEADER_SIZE);
+    const buf = await this.#input.read(HEADER_SIZE);
+    const bytes32 = new Uint32Array(buf);
 
     // ruby: data.unpack(HEADER_FORMAT)
     const decorder = new TextDecoder();
-    const signature = decorder.decode(data.slice(0, 1));
-    const version = data[1];
-    this.#count = data[2];
+    const signature = decorder.decode(bytes32.slice(0, 1));
+    const version = bytes32[1];
+    this.#count = bytes32[2];
 
     if (signature !== SIGNATURE) {
       throw new InvalidPack(`bad pack signature: ${signature}`);
@@ -67,11 +67,11 @@ export class Reader {
 
   private async readZlibStream() {
     let finished = false;
-    let body = null;
+    let body: Buffer | null = null;
     let bodyDeflated = Buffer.alloc(0);
     let total = 0;
     while (!finished) {
-      const chunk = await readChunk(this.#input, 256);
+      const chunk = await this.#input.readNonblock(256);
       total += chunk.byteLength;
 
       bodyDeflated = Buffer.concat([bodyDeflated, chunk]);
@@ -86,8 +86,14 @@ export class Reader {
         throw e;
       }
     }
-    // TODO: seek
+    if (body === null) {
+      throw new TypeError("couldn't find deflated data");
+    }
 
-    return body ?? Buffer.alloc(0);
+    // zlib#inflateによって処理されたバイト数
+    const totalIn = bodyDeflated.byteLength;
+    this.#input.seek(totalIn - total);
+
+    return body;
   }
 }

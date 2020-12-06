@@ -1,3 +1,5 @@
+import { BaseError } from "../util/error";
+
 export const HEADER_SIZE = 12;
 export const SIGNATURE = "PACK";
 export const VERSION = 2;
@@ -6,6 +8,8 @@ export const VERSION = 2;
 export const COMMIT = 1;
 export const TREE = 2;
 export const BLOB = 3;
+
+export class InvalidPack extends BaseError {}
 
 export type GitObjectType = typeof COMMIT | typeof TREE | typeof BLOB;
 

@@ -14,22 +14,25 @@
  * 残りは7bitずつ (0001011, 1101010)
  */
 
-import { readChunk } from "../services";
+import { asserts } from "../util";
+import { Stream } from "./stream";
 
 export const MASK_FOR_FIRST = 0xf;
 export const SHIFT_FOR_FIRST = 4;
 export const MASK = 0x7f;
 export const SHIFT = 7;
 export class VarIntLE {
-  static async read(input: NodeJS.ReadStream): Promise<[number, number]> {
+  static async read(input: Stream): Promise<[number, number]> {
     // 最初の1バイト
-    const first: number = (await readChunk(input, 1))[0];
+    const first = await input.readByte();
+    asserts(first !== null);
     let value = first & MASK_FOR_FIRST;
 
     let shift = SHIFT_FOR_FIRST;
-    let byte = first;
+    let byte: number | null = first;
     while (byte >= 0x80) {
-      byte = (await readChunk(input, 1))[0];
+      byte = await input.readByte();
+      asserts(byte !== null);
       value |= (byte & MASK) << shift;
       shift += SHIFT;
     }
