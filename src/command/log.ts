@@ -1,21 +1,20 @@
 import * as os from "os";
-import arg = require("arg");
-import { Base } from "./base";
+import { Style } from "../color";
+import { Change, Entry } from "../database";
+import { SymRef } from "../refs";
+import { RevList } from "../rev_list";
+import { CompleteCommit, Pathname } from "../types";
 import { asserts, includes, partition } from "../util";
 import { shallowEqual } from "../util/object";
-import { CompleteCommit, Pathname } from "../types";
-import { SymRef } from "../refs";
-import { Style } from "../color";
+import { Base } from "./base";
 import {
   definePrintDiffOptions,
-  printDiff,
-  Target,
   NULL_OID,
   printCombinedDiff,
+  printDiff,
+  Target,
 } from "./shared/print_diff";
-import { Entry, Change } from "../database";
-import { RevList } from "../rev_list";
-import { diff } from "../diff";
+import arg = require("arg");
 
 const FORMAT = ["medium", "oneline"] as const;
 const DECORATE = ["auto", "short", "full", "no"] as const;
@@ -121,11 +120,16 @@ export class Log extends Base<Options> {
       return "";
     }
 
-    const [[head], restRefs] = partition(refs, (ref) => ref.head() && !this.#currentRef.head());
+    const [[head], restRefs] = partition(
+      refs,
+      (ref) => ref.head() && !this.#currentRef.head()
+    );
     const names = restRefs.map((ref) => this.decorationName(head, ref));
 
     return (
-      this.fmt("yellow", " (") + names.join(this.fmt("yellow", ", ")) + this.fmt("yellow", ")")
+      this.fmt("yellow", " (") +
+      names.join(this.fmt("yellow", ", ")) +
+      this.fmt("yellow", ")")
     );
   }
 
@@ -169,10 +173,15 @@ export class Log extends Base<Options> {
     const author = commit.author;
 
     this.blankLine();
-    this.log(this.fmt("yellow", `commit ${this.abbrev(commit)}`) + this.decorate(commit));
+    this.log(
+      this.fmt("yellow", `commit ${this.abbrev(commit)}`) +
+        this.decorate(commit)
+    );
 
     if (commit.merge) {
-      const oids = commit.parents.map((oid) => this.repo.database.shortOid(oid));
+      const oids = commit.parents.map((oid) =>
+        this.repo.database.shortOid(oid)
+      );
       this.log(`Merge: ${oids.join(" ")}`);
     }
 
@@ -237,10 +246,16 @@ export class Log extends Base<Options> {
       const parents = [];
       for (const diff of diffs) {
         // diff内に存在するpathであることは diffs[0].keys() より保証されている
-        const parent = await this.fromDiffItem(pathname, diff.get(pathname)![0]);
+        const parent = await this.fromDiffItem(
+          pathname,
+          diff.get(pathname)![0]
+        );
         parents.push(parent);
       }
-      const child = await this.fromDiffItem(pathname, diffs[0].get(pathname)![1]);
+      const child = await this.fromDiffItem(
+        pathname,
+        diffs[0].get(pathname)![1]
+      );
       await printCombinedDiff(parents as [Target, Target], child, this);
     }
   }
@@ -249,7 +264,12 @@ export class Log extends Base<Options> {
     if (item) {
       const blob = await this.repo.database.load(item.oid);
       asserts(blob.type === "blob");
-      return Target.of(pathname, item.oid, item.mode.toString(8), blob.data.toString());
+      return Target.of(
+        pathname,
+        item.oid,
+        item.mode.toString(8),
+        blob.data.toString()
+      );
     } else {
       return Target.of(pathname, NULL_OID, null, "");
     }

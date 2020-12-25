@@ -3,8 +3,8 @@ import { merge } from "../util/collection";
 
 /** fluch packet */
 const FLUSH_PACKET = "0000";
-
-const HEAD_SIZE = 4; // メッセージサイズ値のバイト数
+/** メッセージサイズ値のバイト数 */
+const HEAD_SIZE = 4;
 
 /**
  *  メッセージのフォーマット
@@ -25,8 +25,8 @@ export class Protocol {
   #capsSent = false;
   constructor(
     command: string,
-    public input: NodeJS.ReadStream,
-    public output: NodeJS.WriteStream,
+    public input: NodeJS.ReadableStream,
+    public output: NodeJS.WritableStream,
     capabilities: string[] = []
   ) {
     this.#command = command;

@@ -1,15 +1,15 @@
 import * as path from "path";
-import { Remote } from "./remote";
 import { Config } from "../config";
 import * as Refs from "../refs";
 import { BaseError, isempty } from "../util";
 import { Refspec } from "./refspec";
+import { Remote } from "./remote";
 
 export type RemoteName = string;
 
 export class InvalidRemote extends BaseError {}
 
-const DEFAULT_REMOTE = "origin";
+export const DEFAULT_REMOTE = "origin";
 
 export class Remotes {
   #config: Config;

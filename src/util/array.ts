@@ -179,3 +179,14 @@ export function compact<T>(xs: T[]): NonNullable<T>[] {
   const notEmpty = (x: T): x is NonNullable<T> => x !== null && x !== undefined;
   return xs.filter(notEmpty);
 }
+
+/**
+ * 配列の先頭のn要素を除外した残りの配列を返します
+ * Ruby Array#drop相当
+ * https://docs.ruby-lang.org/ja/latest/method/Array/i/drop.html
+ * @param xs 配列
+ * @param n 除外する要素数
+ */
+export function drop<T>(xs: T[], n: number): T[] {
+  return xs.filter((x, i) => i >= n);
+}

@@ -135,11 +135,11 @@ export async function readByLine(
  * @param timeout タイムアウト(ms)
  */
 export async function readChunk(
-  stream: NodeJS.ReadStream,
+  stream: NodeJS.ReadableStream,
   size: number,
   timeout = 1000
 ) {
-  const readable = async (stream: NodeJS.ReadStream) => {
+  const readable = async (stream: NodeJS.ReadableStream) => {
     return new Promise((resolve, reject) => {
       const removeListeners = () => {
         stream.removeListener("readable", readableListener);
