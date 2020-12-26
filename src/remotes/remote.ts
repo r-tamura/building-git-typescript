@@ -48,8 +48,8 @@ export class Remote {
   }
 
   private assertString(v: unknown): asserts v is string | undefined {
-    if (v !== undefined || typeof v !== "string") {
-      throw TypeError("value is not string");
+    if (v !== undefined && typeof v !== "string") {
+      throw TypeError(`value '${v}'is not string`);
     }
   }
 }
