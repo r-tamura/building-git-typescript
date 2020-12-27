@@ -1,18 +1,18 @@
 import { promises } from "fs";
-import { Readable, Writable } from "stream";
-import * as assert from "power-assert";
 import * as path from "path";
-import { Environment, Pathname, CompleteCommit, Dict } from "../../src/types";
-import { defaultFs, Logger, Process, exists } from "../../src/services";
-import { Repository } from "../../src/repository";
-import { makeLogger } from "../../src/__test__/util";
+import * as assert from "power-assert";
+import { Readable, Writable } from "stream";
 import * as Command from "../../src/command";
-import { asserts } from "../../src/util";
-import { Revision } from "../../src/revision";
-import * as FileService from "../../src/services";
 import { Blob } from "../../src/database";
-import { RevList } from "../../src/rev_list";
 import { Editor } from "../../src/editor";
+import { Repository } from "../../src/repository";
+import { Revision } from "../../src/revision";
+import { RevList } from "../../src/rev_list";
+import * as FileService from "../../src/services";
+import { defaultFs, exists, Logger, Process } from "../../src/services";
+import { CompleteCommit, Dict, Environment, Pathname } from "../../src/types";
+import { asserts } from "../../src/util";
+import { makeLogger } from "../../src/__test__/util";
 
 export interface TestUtil {
   suffix: Pathname;
@@ -25,18 +25,27 @@ export function create(name?: string) {
 
 const fs = promises;
 export type Contents = [string, string][];
+interface MockTTYOptions {
+  isTTY?: boolean;
+}
+
+interface CommitOptions {
+  time?: Date;
+  author?: boolean;
+}
 
 /** ファイルを実行可能形式へ変更する命令 */
 export const X = "x";
 export class TestUtil {
   envvars: Process["env"] = {};
-  _env: Environment;
-  _repo: Repository;
+  #env: Environment;
+  #repo: Repository;
 
-  constructor(name = "") {
-    this.suffix = name + randomChoice("0123456789abcdefghijklmnopqrstuvwxyz", 6);
+  constructor(protected name = "") {
+    this.suffix =
+      name + randomChoice("0123456789abcdefghijklmnopqrstuvwxyz", 6);
 
-    this._env = {
+    this.#env = {
       fs: defaultFs,
       logger: makeLogger(),
       process: {
@@ -50,15 +59,15 @@ export class TestUtil {
         now: () => new Date(2020, 3, 1),
       },
     };
-    this._repo = new Repository(path.join(this.repoPath, ".git"), this._env);
+    this.#repo = new Repository(path.join(this.repoPath, ".git"), this.#env);
   }
 
   getEnv() {
-    return this._env;
+    return this.#env;
   }
 
   private setEnv(env: Partial<Environment>) {
-    this._env = { ...this._env, ...env };
+    this.#env = { ...this.#env, ...env };
   }
 
   private setTime(time: Date) {
@@ -70,15 +79,18 @@ export class TestUtil {
   }
 
   mockStdio(s: string) {
-    this._env.process = {
-      ...this._env.process,
+    this.#env.process = {
+      ...this.#env.process,
       stdin: this.makeStdin(s),
       stdout: this.makeStdout(),
     };
   }
 
   /** Assersion */
-  async assertWorkspace(contents: Contents, repository: Repository = this.repo) {
+  async assertWorkspace(
+    contents: Contents,
+    repository: Repository = this.repo
+  ) {
     const files: Contents = [];
     const pathnames = await repository.workspace.listFiles();
     for (const pathname of pathnames) {
@@ -92,7 +104,9 @@ export class TestUtil {
     const actual: Contents = [];
     await this.repo.index.load();
     for (const entry of this.repo.index.eachEntry()) {
-      const bytes = await this.repo.database.load(entry.oid).then((blob) => (blob as Blob).data);
+      const bytes = await this.repo.database
+        .load(entry.oid)
+        .then((blob) => (blob as Blob).data);
       actual.push([entry.name, bytes.toString("utf8")]);
     }
     assert.deepEqual(actual, expected);
@@ -148,7 +162,7 @@ export class TestUtil {
   }
 
   get repo(): Repository {
-    return this._repo;
+    return this.#repo;
   }
 
   /** fs */
@@ -199,24 +213,33 @@ export class TestUtil {
   /** I/O
    * TODO: stdin/stdoutの良いモック方法を考える
    */
-  makeStdin(text = "", { isTTY = false }: { isTTY?: boolean } = {}): typeof process.stdin {
-    const readable = Readable.from(text) as any;
-    return this.mockStreamAsTTY(readable, { isTTY });
+  makeStdin(
+    text = "",
+    { isTTY = false }: MockTTYOptions = {}
+  ): NodeJS.Process["stdin"] {
+    const readable = Readable.from(text);
+    return this.mockStreamAsTTY(readable as any, { isTTY });
   }
 
-  makeStdout({ isTTY = false }: { isTTY?: boolean } = {}): typeof process.stdout {
-    const writable = new Writable() as any;
-    return this.mockStreamAsTTY(writable, { isTTY });
+  makeStdout({
+    isTTY = false,
+  }: { isTTY?: boolean } = {}): NodeJS.Process["stdout"] {
+    const writable = new Writable();
+    return this.mockStreamAsTTY(writable as any, { isTTY });
   }
 
-  makeStderr({ isTTY = false }: { isTTY?: boolean } = {}): typeof process.stderr {
-    const writable = new Writable() as any;
-    return this.mockStreamAsTTY(writable, { isTTY });
+  makeStderr({
+    isTTY = false,
+  }: { isTTY?: boolean } = {}): NodeJS.Process["stderr"] {
+    const writable = new Writable();
+    return this.mockStreamAsTTY(writable as any, { isTTY });
   }
 
-  mockStreamAsTTY<T>(stream: T, { isTTY }: { isTTY: boolean }): T {
-    (stream as any).isTTY = isTTY;
-    return stream;
+  mockStreamAsTTY<T>(
+    stream: T,
+    { isTTY }: { isTTY: boolean }
+  ): T & MockTTYOptions {
+    return { ...stream, isTTY };
   }
 
   /** simple git command */
@@ -231,7 +254,7 @@ export class TestUtil {
 
   async commit(
     message: string,
-    { time = new Date(), author = true }: { time?: Date; author?: boolean } = {}
+    { time = new Date(), author = true }: CommitOptions = {}
   ) {
     if (author) {
       this.mockEnvvar("GIT_AUTHOR_NAME", "A. U. Thor");

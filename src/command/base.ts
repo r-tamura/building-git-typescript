@@ -20,21 +20,29 @@ export type BaseConstructor<O extends Options> = {
 export type Options = object;
 export type NoOptions = any;
 
-export abstract class Base<O extends Options = NoOptions> implements Runnable {
+export interface GitCommand {
+  /** コマンド引数 */
+  args: string[];
+  /** 環境変数 */
+  repo: Repository;
+  /** this.env.process.stdoutへのショートカット */
+  stdout: NodeJS.Process["stdout"];
+  /** this.env.process.stderrへのショートカット */
+  stderr: NodeJS.Process["stderr"];
+}
+export abstract class Base<O extends Options = NoOptions>
+  implements Runnable, GitCommand {
   /** 作業ディレクトリ */
   protected dir: string;
-  /** 環境変数 */
-  envvars: EnvVars;
   /** ページャ-  */
   private pager: Pager | null = null;
   /** ロガー */
   public logger: Logger;
   /** プロセスの出力がTTYか */
   private isatty: boolean;
-  /** this.env.process.stdoutへのショートカット */
-  protected stdout: NodeJS.Process["stdout"];
-  /** this.env.process.stderrへのショートカット */
-  protected stderr: NodeJS.Process["stderr"];
+  envvars: EnvVars;
+  stdout: NodeJS.Process["stdout"];
+  stderr: NodeJS.Process["stderr"];
 
   /** options */
   options!: O;
@@ -43,7 +51,7 @@ export abstract class Base<O extends Options = NoOptions> implements Runnable {
   status = 0;
 
   #repo!: Repository;
-  constructor(protected args: string[], public env: Environment) {
+  constructor(public args: string[], public env: Environment) {
     this.dir = env.process.cwd();
     this.envvars = env.process.env;
     this.isatty = env.process.stdout.isTTY;

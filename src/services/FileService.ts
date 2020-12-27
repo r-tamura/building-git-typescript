@@ -1,4 +1,5 @@
 import * as CallbackFs from "fs";
+import * as path from "path";
 import * as readline from "readline";
 import { Readable } from "stream";
 import { promisify } from "util";
@@ -61,6 +62,28 @@ export async function rmrf(fs: FileService, pathname: Pathname) {
 
 export async function mkdirp(fs: FileService, pathname: Pathname) {
   return fs.mkdir(pathname, { recursive: true });
+}
+
+export async function readdirRecursive(
+  fs: FileService,
+  pathname: Pathname
+): Promise<string[]> {
+  const parent = pathname;
+  const envtries = await fs.readdir(parent);
+
+  const files: string[] = [];
+  for (const entry of envtries) {
+    const entryPath = path.join(parent, entry);
+    const stat = await fs.stat(entry);
+    if (stat.isDirectory()) {
+      const childs = await readdirRecursive(fs, entryPath);
+      files.push(...childs);
+    } else {
+      files.push(entryPath);
+    }
+  }
+
+  return files;
 }
 
 /** zlib */

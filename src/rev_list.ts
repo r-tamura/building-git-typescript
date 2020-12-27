@@ -1,19 +1,19 @@
+import * as Database from "./database";
+import { PathFilter } from "./path_filter";
+import { SymRef } from "./refs";
 import { Repository } from "./repository";
-import { Revision, HEAD, COMMIT, InvalidObject } from "./revision";
+import { COMMIT, HEAD, InvalidObject, Revision } from "./revision";
+import { CompleteCommit, OID, Pathname } from "./types";
 import {
   asserts,
+  clone,
+  compact,
+  first,
   found,
   insert,
   isempty,
-  first,
   last,
-  clone,
-  compact,
 } from "./util";
-import { OID, CompleteCommit, Pathname } from "./types";
-import { PathFilter } from "./path_filter";
-import * as Database from "./database";
-import { SymRef } from "./refs";
 
 type Flag = "seen" | "added" | "uninteresting" | "treesame";
 const RANGE = /^(.*)\.\.(.*)$/;
@@ -21,7 +21,7 @@ const EXCLUDE = /^\^(.+)$/;
 
 type OidPair = [OID | null, OID | null];
 
-interface Options {
+export interface Options {
   walk: boolean;
   /** コミットのみでなく、全てのオブジェクトも探索対象に含めるか */
   objects: boolean;

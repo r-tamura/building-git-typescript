@@ -4,7 +4,5 @@
     "**/*.map": true,
     "integ/**/*.js": true,
     "src/**/*.js": true
-  },
-  "jest.pathToJest": "yarn integ",
-  "powershell.codeFormatting.addWhitespaceAroundPipe": true
+  }
 }
