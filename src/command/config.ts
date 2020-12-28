@@ -43,7 +43,9 @@ export class Config extends Base<Options> {
       if (value) {
         await this.editConfig((config) => config.set(key, value));
       } else {
-        await this.readConfig((config) => config.get(key).then((value) => compact([value])));
+        await this.readConfig((config) =>
+          config.get(key).then((value) => compact([value]))
+        );
       }
     } catch (e) {
       if (e instanceof ConfigLib.ParseError) {
@@ -99,7 +101,9 @@ export class Config extends Base<Options> {
 
   private async replaceVariable(keyFromArgs: string) {
     const key = this.parseKey(keyFromArgs);
-    return await this.editConfig((config) => config.replaceAll(key, this.args[0]));
+    return await this.editConfig((config) =>
+      config.replaceAll(key, this.args[0])
+    );
   }
 
   private async unsetSingle(keyFromArgs: string) {
@@ -123,7 +127,9 @@ export class Config extends Base<Options> {
   }
 
   private async readConfig(
-    callback: (config: ConfigLib.Stack | ConfigLib.Config) => ReturnType<ConfigLib.Config["getAll"]>
+    callback: (
+      config: ConfigLib.Stack | ConfigLib.Config
+    ) => ReturnType<ConfigLib.Config["getAll"]>
   ) {
     let config: ConfigLib.Stack | ConfigLib.Config = this.repo.config;
     if (this.options["file"]) {
@@ -142,7 +148,9 @@ export class Config extends Base<Options> {
     this.exit(0);
   }
 
-  private async editConfig(callback: (config: ConfigLib.Config) => void): Promise<never> {
+  private async editConfig(
+    callback: (config: ConfigLib.Config) => void
+  ): Promise<never> {
     const config = this.repo.config.file(this.options["file"] ?? "local");
 
     try {

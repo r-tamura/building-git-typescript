@@ -13,6 +13,11 @@ export function asserts(cond: boolean, msg?: string): asserts cond {
   if (!cond) throw new AssertionError({ message: msg });
 }
 
+/**
+ * Git objectがoidを持っていることを保証する
+ * @param obj Git object
+ * @param msg 条件を満たさない場合のエラーに含まれるメッセージ
+ */
 export function assertsComplete<T extends GitObject>(
   obj: T,
   msg?: string

@@ -16,13 +16,13 @@ export class Remote {
     this.#name = name;
   }
 
-  async fetchUrl(): Promise<string | undefined> {
+  async fetchUrl(): Promise<string> {
     const url = await this.#config.get(["remote", this.#name, "url"]);
     this.assertString(url);
     return url;
   }
 
-  async pushUrl(): Promise<string | undefined> {
+  async pushUrl(): Promise<string> {
     const url =
       (await this.#config.get(["remote", this.#name, "pushurl"])) ??
       (await this.fetchUrl());
@@ -30,14 +30,15 @@ export class Remote {
     return url;
   }
 
-  async fetchSpecs(): Promise<(string | undefined)[]> {
-    return (await this.#config.getAll(["remote", this.#name, "fetch"])) as (
-      | string
-      | undefined
-    )[];
+  async fetchSpecs(): Promise<string[]> {
+    return (await this.#config.getAll([
+      "remote",
+      this.#name,
+      "fetch",
+    ])) as string[];
   }
 
-  async uploader(): Promise<string | undefined> {
+  async uploader(): Promise<string> {
     const uploader = await this.#config.get([
       "remote",
       this.#name,
@@ -47,7 +48,7 @@ export class Remote {
     return uploader;
   }
 
-  private assertString(v: unknown): asserts v is string | undefined {
+  private assertString(v: unknown): asserts v is string {
     if (v !== undefined && typeof v !== "string") {
       throw TypeError(`value '${v}'is not string`);
     }

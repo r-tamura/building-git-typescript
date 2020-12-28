@@ -57,7 +57,7 @@ export class Remote extends Base<Options> {
     }
 
     const remote = await this.repo.remotes.get(name);
-    asserts(remote !== null, "存在するリモートの中から選ばれる");
+    asserts(remote !== undefined, "存在するリモートの中から選ばれる");
     this.log(`${name}\t${await remote.fetchUrl()} (fetch)`);
     this.log(`${name}\t${await remote.pushUrl()} (push)`);
   }

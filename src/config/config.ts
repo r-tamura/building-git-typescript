@@ -1,9 +1,9 @@
 import { Lockfile } from "../lockfile";
 import { readByLine } from "../services";
 import { Nullable, Pathname } from "../types";
-import { ObjectKeyHash } from "../util/collection";
-import { clone, first, isempty, last } from "../util/array";
 import { asserts, BaseError } from "../util";
+import { clone, first, isempty, last } from "../util/array";
+import { ObjectKeyHash } from "../util/collection";
 
 export type Name = string;
 export type Value = string | number | boolean;
@@ -108,7 +108,9 @@ export class Config {
     } else if ((match = BLANK_LINE.exec(line))) {
       return Line.of(line, section);
     }
-    throw new ParseError(`bad config line ${this.lineCount() + 1} in file ${this.#pathname}`);
+    throw new ParseError(
+      `bad config line ${this.lineCount() + 1} in file ${this.#pathname}`
+    );
   }
 
   private parseValue(value: string) {
@@ -130,10 +132,12 @@ export class Config {
     return value.replace(/\\\n/, "");
   }
 
-  async getAll(key: SectionName): Promise<(Value | undefined)[]> {
+  async getAll(key: SectionName): Promise<Value[]> {
     const [name, varname] = this.splitKey(key);
     const [_, lines] = this.findLines(name, varname);
-    return lines.map((l: Line) => l.variable?.value);
+    return lines
+      .map((l: Line) => l.variable?.value)
+      .filter((value) => value !== undefined) as Value[];
   }
 
   async get(key: SectionName) {
@@ -155,7 +159,12 @@ export class Config {
     this.addVariable(section, name, varname, value);
   }
 
-  private addVariable(section: Nullable<Section>, key: SectionName, varname: Name, value: Value) {
+  private addVariable(
+    section: Nullable<Section>,
+    key: SectionName,
+    varname: Name,
+    value: Value
+  ) {
     section ??= this.addSection(key);
 
     const text = Variable.serialize(varname, value);
@@ -182,7 +191,9 @@ export class Config {
     } else if (lines.length === 1) {
       this.updateVariable(first(lines), varname, value);
     } else {
-      throw new Conflict("connot overwrite multiple values with a single value");
+      throw new Conflict(
+        "connot overwrite multiple values with a single value"
+      );
     }
   }
 
@@ -208,7 +219,9 @@ export class Config {
       const name = Section.nomalize(section.name);
       this.#lines?.set(
         name,
-        linesFromConfig.filter((lineFromConfig) => !Line.equals(line, lineFromConfig))
+        linesFromConfig.filter(
+          (lineFromConfig) => !Line.equals(line, lineFromConfig)
+        )
       );
     });
   }
@@ -375,7 +388,9 @@ export class Section {
 export class Line {
   static equals(l1: Line, l2: Line) {
     return (
-      l1.section === l2.section && l1.text === l2.text && Section.equals(l1.section, l2.section)
+      l1.section === l2.section &&
+      l1.text === l2.text &&
+      Section.equals(l1.section, l2.section)
     );
   }
 
@@ -383,21 +398,31 @@ export class Line {
     return new this(text, section, variable);
   }
 
-  constructor(public text: string, public section: Section, public variable?: Variable) {}
+  constructor(
+    public text: string,
+    public section: Section,
+    public variable?: Variable
+  ) {}
 
   normalVariable() {
     return Variable.normalize(this.variable?.name);
   }
 }
 
-export function assertsString(value: Value | undefined): asserts value is string | undefined {
+export function assertsString(
+  value: Value | undefined
+): asserts value is string | undefined {
   asserts(value === undefined || typeof value === "string");
 }
 
-export function assertsBoolean(value: Value | undefined): asserts value is boolean | undefined {
+export function assertsBoolean(
+  value: Value | undefined
+): asserts value is boolean | undefined {
   asserts(value === undefined || typeof value === "boolean");
 }
 
-export function assertsNumber(value: Value | undefined): asserts value is number | undefined {
+export function assertsNumber(
+  value: Value | undefined
+): asserts value is number | undefined {
   asserts(value === undefined || typeof value === "number");
 }

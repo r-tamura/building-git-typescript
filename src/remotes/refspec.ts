@@ -1,8 +1,11 @@
 import { asserts } from "../util";
 
-type TargetRef = string;
-type SourceRef = string;
-type Mappings = Record<TargetRef, [source: SourceRef, forced: boolean]>;
+export type TargetRef = string;
+export type SourceRef = string;
+export type RefspecMappings = Record<
+  TargetRef,
+  [source: SourceRef, forced: boolean]
+>;
 
 const REFSPEC_FORMAT = /^(\+?)([^:]+):([^:]+)$/;
 export class Refspec {
@@ -13,7 +16,7 @@ export class Refspec {
     return new this(source, target, forceSign === "+");
   }
 
-  static expand(specs: string[], refs: string[]): Mappings {
+  static expand(specs: string[], refs: string[]): RefspecMappings {
     const refspecs = specs.map((spec) => this.parse(spec));
 
     return refspecs.reduce((mappings, refspec) => {
@@ -27,7 +30,7 @@ export class Refspec {
     public forced: boolean
   ) {}
 
-  matchRefs(refs: string[]): Mappings {
+  matchRefs(refs: string[]): RefspecMappings {
     if (!this.source.includes("*")) {
       return { [this.target]: [this.source, this.forced] };
     }

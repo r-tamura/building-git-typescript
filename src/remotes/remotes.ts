@@ -22,10 +22,10 @@ export class Remotes {
     return this.#config.subsections("remote");
   }
 
-  async get(name: RemoteName) {
+  async get(name: RemoteName): Promise<Remote | undefined> {
     await this.#config.open();
     if (!this.#config.section(["remote", name])) {
-      return null;
+      return undefined;
     }
     return Remote.of(this.#config, name);
   }
