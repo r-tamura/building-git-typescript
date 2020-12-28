@@ -4,6 +4,7 @@ import { BaseError } from "../util";
 import { Base } from "./base";
 import * as remote_agent from "./shared/remote_agent";
 import { checkConnected } from "./shared/remote_common";
+import * as send_objects from "./shared/send_objects";
 
 export class UploadPack extends Base implements remote_agent.RemoteAgent {
   /** クライアントが必要としているRefセット */
@@ -25,6 +26,7 @@ export class UploadPack extends Base implements remote_agent.RemoteAgent {
     await remote_agent.sendReferences(this);
     await this.recvWantList();
     await this.recvHaveList();
+    await this.sendObjects();
     this.exit(0);
   }
 
@@ -60,5 +62,13 @@ export class UploadPack extends Base implements remote_agent.RemoteAgent {
       result.add(match[1]);
     }
     return result;
+  }
+
+  private async sendObjects() {
+    const revs = [
+      ...this.#wanted,
+      ...Array.from(this.#remoteHas).map((oid) => "^" + oid),
+    ];
+    await send_objects.sendPackedObjects(this, revs);
   }
 }

@@ -4,13 +4,14 @@ import * as pack from "./pack";
 import { InvalidPack } from "./pack";
 
 export class Stream {
-  #input: NodeJS.ReadStream;
+  #input: NodeJS.ReadableStream;
   digest = crypto.createHash("sha1");
   offset = 0;
   #buffer = Buffer.alloc(0);
   #capture: Buffer | null = null;
-  constructor(input: NodeJS.ReadStream) {
+  constructor(input: NodeJS.ReadableStream, prefix = "") {
     this.#input = input;
+    this.#buffer = Buffer.concat([this.#buffer, Buffer.from(prefix, "utf8")]);
   }
 
   async read(size: number): Promise<Buffer> {
@@ -36,9 +37,11 @@ export class Stream {
     }
   }
 
-  async capture(callback: () => Promise<pack.Record>) {
+  async capture(
+    callback: () => Promise<pack.Record>
+  ): Promise<readonly [pack.Record, Buffer]> {
     this.#capture = this.newByte();
-    const result = [await callback(), this.#capture];
+    const result = [await callback(), this.#capture] as const;
     this.digest.update(this.#capture);
     this.#capture = null;
     return result;
@@ -66,8 +69,8 @@ export class Stream {
     if (block) {
       fromIO = await readChunk(this.#input, needed);
     } else {
-      fromIO = await Promise.resolve(this.#input.read(needed)).then(
-        (res) => res ?? Buffer.alloc(0)
+      fromIO = await Promise.resolve(this.#input.read(needed)).then((res) =>
+        typeof res === "string" ? Buffer.from(res) : res ?? Buffer.alloc(0)
       );
     }
 

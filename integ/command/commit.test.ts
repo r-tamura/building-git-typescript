@@ -14,7 +14,9 @@ describe("commit", () => {
     await t.commit("first");
 
     const commit = await t.loadCommit("HEAD");
-    t.assertInfo(`[master (root-commit) ${t.repo.database.shortOid(commit.oid)}] first`);
+    t.assertInfo(
+      `[master (root-commit) ${t.repo.database.shortOid(commit.oid)}] first`
+    );
   });
 
   it("親コミットが存在するとき、rootコミットであるメッセージを出力しない", async () => {
@@ -40,7 +42,9 @@ describe("commit", () => {
     await t.kitCmd("commit", "--message", "first");
     await t.kitCmd("commit", "--file", path.join(t.repoPath, "message.txt"));
     const commit = await t.loadCommit("HEAD");
-    t.assertInfo(`[master ${t.repo.database.shortOid(commit.oid)}] message from file`);
+    t.assertInfo(
+      `[master ${t.repo.database.shortOid(commit.oid)}] message from file`
+    );
   });
 
   describe("committing to branches", () => {
@@ -76,7 +80,7 @@ describe("commit", () => {
     });
   });
 
-  describe.skip("configuring an author", () => {
+  describe("configuring an author", () => {
     beforeEach(async () => {
       await t.kitCmd("config", "user.name", "A. N. User");
       await t.kitCmd("config", "user.email", "user@example.com");
@@ -117,7 +121,9 @@ describe("commit", () => {
     });
 
     it("replaces the last commit;s message", async () => {
-      const editorSpy = jest.spyOn(Editor, "edit").mockResolvedValue("third [amended]");
+      const editorSpy = jest
+        .spyOn(Editor, "edit")
+        .mockResolvedValue("third [amended]");
       await t.kitCmd("commit", "--amend");
       const revs = await RevList.fromRevs(t.repo, ["HEAD"]);
       const messages = await T.getRevListMessages(revs);

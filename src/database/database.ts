@@ -8,7 +8,6 @@ import {
   CompleteGitObject,
   CompleteTree,
   Dict,
-  GitObject,
   GitObjectParser,
   Nullable,
   OID,
@@ -51,6 +50,12 @@ export type Environment = {
 type GitObjectType = "blob" | "tree" | "commit";
 type Parsers = Record<GitObjectType, GitObjectParser>;
 
+interface Seriarizable {
+  type: GitObjectType;
+  toString(): string;
+  oid: Nullable<OID>;
+}
+
 const TYPES: Parsers = {
   blob: Blob,
   tree: Tree,
@@ -71,7 +76,7 @@ export class Database {
     this.#zlib = env.zlib ?? defaultZlib;
   }
 
-  hashObject(obj: GitObject) {
+  hashObject(obj: Seriarizable) {
     return this.hashContent(this.seliarizeObject(obj));
   }
 
@@ -210,7 +215,7 @@ export class Database {
     return oid.slice(0, 7);
   }
 
-  async store(obj: GitObject) {
+  async store(obj: Seriarizable) {
     const content = this.seliarizeObject(obj);
     obj.oid = this.hashContent(content);
 
@@ -277,7 +282,7 @@ export class Database {
     return path.join(this.#pathname, oid.slice(0, 2), oid.slice(2));
   }
 
-  private seliarizeObject(obj: GitObject) {
+  private seliarizeObject(obj: Seriarizable) {
     const str = obj.toString();
     const contentStr = `${obj.type} ${str.length}\0${str}`;
     const bytes = Buffer.from(contentStr, "binary");

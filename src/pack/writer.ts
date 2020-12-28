@@ -8,7 +8,7 @@ import * as numbers from "./numbers";
 import { BLOB, COMMIT, GitObjectType, SIGNATURE, TREE, VERSION } from "./pack";
 
 interface Options {
-  compressLevel?: number;
+  readonly compressLevel?: number;
 }
 
 interface Environment {
@@ -20,14 +20,14 @@ class Entry {
 }
 
 export class Writer {
-  #output: NodeJS.WriteStream;
+  #output: NodeJS.WritableStream;
   #database: database.Database;
   #digest: crypto.Hash = crypto.createHash("sha1");
   #compressLevel: number;
   #packList: Entry[] = [];
   #zlib: Zlib;
   constructor(
-    output: NodeJS.WriteStream,
+    output: NodeJS.WritableStream,
     database: database.Database,
     { compressLevel = constants.Z_DEFAULT_COMPRESSION }: Options = {},
     env: Environment = {}

@@ -6,6 +6,7 @@ import { OID } from "../types";
 import { asserts, BaseError } from "../util";
 import * as array from "../util/array";
 import { Base } from "./base";
+import * as receive_objects from "./shared/receive_objects";
 import * as remote_client from "./shared/remote_client";
 import { checkConnected } from "./shared/remote_common";
 
@@ -67,6 +68,7 @@ export class Fetch extends Base<Options> implements remote_client.RemoteClient {
 
     await this.sendWantList();
     await this.sendHaveList();
+    await this.recvObjects();
 
     this.exit(array.isempty(this.#errors) ? 0 : 1);
   }
@@ -156,5 +158,9 @@ export class Fetch extends Base<Options> implements remote_client.RemoteClient {
   private async waitForObjects() {
     checkConnected(this.conn);
     for await (const _ of this.conn.recvUntil(pack.SIGNATURE));
+  }
+
+  private async recvObjects() {
+    await receive_objects.receiveObjects(this, pack.SIGNATURE);
   }
 }

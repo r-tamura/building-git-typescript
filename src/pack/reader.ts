@@ -13,7 +13,7 @@ interface Environment {
 export class Reader {
   #input: Stream;
   /** Pack内のオブジェクト数 */
-  #count = 0;
+  count = 0;
   #zlib: Zlib;
   constructor(input: Stream, env: Environment = {}) {
     this.#input = input;
@@ -34,7 +34,7 @@ export class Reader {
     const decorder = new TextDecoder();
     const signature = decorder.decode(bytes32.slice(0, 1));
     const version = bytes32[1];
-    this.#count = bytes32[2];
+    this.count = bytes32[2];
 
     if (signature !== SIGNATURE) {
       throw new InvalidPack(`bad pack signature: ${signature}`);
