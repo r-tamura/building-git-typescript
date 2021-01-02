@@ -6,6 +6,7 @@ import { OID } from "../types";
 import { asserts, BaseError } from "../util";
 import * as array from "../util/array";
 import { Base } from "./base";
+import * as fast_forward from "./shared/fast_forward";
 import * as receive_objects from "./shared/receive_objects";
 import * as remote_client from "./shared/remote_client";
 import { checkConnected } from "./shared/remote_common";
@@ -27,7 +28,7 @@ const UPLOAD_PACK = "git-upload-pack";
 
 export class Fetch extends Base<Options> implements remote_client.RemoteClient {
   #fetchUrl?: string;
-  #errors: string[] = [];
+  #errors: Record<remotes.TargetRef, fast_forward.FastForwardError> = {};
   #uploader?: string;
   #fetchSpecs: string[] = [];
 
@@ -53,7 +54,7 @@ export class Fetch extends Base<Options> implements remote_client.RemoteClient {
    * }
    */
   remoteRefs: Record<remotes.TargetRef, OID> = {};
-  localRefs: Record<remotes.TargetRef, OID> = {};
+  localRefs: Record<remotes.TargetRef, OID | undefined> = {};
   conn?: remotes.Protocol;
   async run(): Promise<void> {
     await this.configure();
@@ -66,11 +67,18 @@ export class Fetch extends Base<Options> implements remote_client.RemoteClient {
       url: this.#fetchUrl,
     });
 
+    console.log({ remote: "-- recv references --" });
+    await remote_client.recvReferences(this);
+    console.log({ remote: "-- sendWantList --" });
     await this.sendWantList();
+    console.log({ remote: "-- sendHaveList --" });
     await this.sendHaveList();
+    console.log({ remote: "-- recvObjects --" });
     await this.recvObjects();
+    console.log({ remote: "-- updateRefs --" });
+    await this.updateRemoteRefs();
 
-    this.exit(array.isempty(this.#errors) ? 0 : 1);
+    this.exit(array.isempty(Object.keys(this.#errors)) ? 0 : 1);
   }
 
   defineSpec(): arg.Spec {
@@ -83,8 +91,8 @@ export class Fetch extends Base<Options> implements remote_client.RemoteClient {
     };
   }
 
-  initOptions(): Options {
-    return {
+  initOptions(): void {
+    this.options = {
       force: false,
     };
   }
@@ -109,24 +117,25 @@ export class Fetch extends Base<Options> implements remote_client.RemoteClient {
   private async sendWantList(): Promise<void> {
     asserts(this.remoteRefs !== undefined);
     checkConnected(this.conn);
-    remotes.Refspec.expand(this.#fetchSpecs, Object.keys(this.remoteRefs));
-    const wanted = new Set<string>();
+
+    // console.log(Object.keys(this.remoteRefs).map((s) => Buffer.from(s)));
+    this.#targets = remotes.Refspec.expand(
+      this.#fetchSpecs,
+      Object.keys(this.remoteRefs)
+    );
+    const wanted = new Set<OID>();
 
     this.localRefs = {};
 
     for (const [target, [source, _]] of Object.entries(this.#targets)) {
       const localOid = await this.repo.refs.readRef(target);
-      if (localOid === null) {
-        throw new BaseError("couldn't find the specified ref");
-      }
 
       const remoteOid = this.remoteRefs[source];
-
       if (localOid === remoteOid) {
         continue;
       }
-
-      this.localRefs[target] = localOid;
+      // null -> undefined変換
+      this.localRefs[target] = localOid ?? undefined;
       wanted.add(remoteOid);
     }
 
@@ -162,5 +171,37 @@ export class Fetch extends Base<Options> implements remote_client.RemoteClient {
 
   private async recvObjects() {
     await receive_objects.receiveObjects(this, pack.SIGNATURE);
+  }
+
+  private async updateRemoteRefs() {
+    this.logger.error(`From ${this.#fetchUrl}`);
+
+    this.#errors = {};
+    for (const [target, oid] of Object.entries(this.localRefs)) {
+      await this.attemptRefUpdate(target, oid);
+    }
+  }
+
+  private async attemptRefUpdate(
+    target: remotes.TargetRef,
+    oldOid: OID | undefined
+  ) {
+    const [source, forced] = this.#targets[target];
+    const newOid = this.remoteRefs[source];
+    const refNames = [source, target] as const;
+    const ffError = await fast_forward.fastForwardError(this, oldOid, newOid);
+
+    if (this.options["force"] || forced || ffError === undefined) {
+      await this.repo.refs.updateRef(target, newOid);
+    } else {
+      this.#errors[target] = ffError;
+    }
+
+    remote_client.reportRefUpdate(this, {
+      refNames,
+      oldOid,
+      newOid,
+      isFF: ffError === undefined,
+    });
   }
 }

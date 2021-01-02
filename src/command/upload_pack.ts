@@ -6,6 +6,17 @@ import * as remote_agent from "./shared/remote_agent";
 import { checkConnected } from "./shared/remote_common";
 import * as send_objects from "./shared/send_objects";
 
+function log(message: string) {
+  // require("fs").writeFileSync(
+  //   `/Users/r-tamura/Documents/GitHub/building-git-typescript/__uploadpack.log`,
+  //   message + "\n",
+  //   {
+  //     flag: "a",
+  //   }
+  // );
+  console.warn({ remote: message });
+}
+
 export class UploadPack extends Base implements remote_agent.RemoteAgent {
   /** クライアントが必要としているRefセット */
   #wanted: Set<OID> = new Set();
@@ -14,19 +25,25 @@ export class UploadPack extends Base implements remote_agent.RemoteAgent {
 
   stdin: NodeJS.Process["stdin"];
   conn?: remotes.Protocol;
+  #env: Environment;
 
   constructor(args: string[], env: Environment) {
     super(args, env);
+    this.#env = env;
     this.stdin = env.process?.stdin ?? process.stdin;
   }
 
   async run(): Promise<void> {
     remote_agent.acceptClient(this, { name: "upload-pack" });
-
-    await remote_agent.sendReferences(this);
+    log("-- sendReferences --");
+    await remote_agent.sendReferences(this, this.#env);
+    log("-- wantlist --");
     await this.recvWantList();
+    log("-- havelist --");
     await this.recvHaveList();
+    log("-- send objects --");
     await this.sendObjects();
+    log("-- exit --");
     this.exit(0);
   }
 
@@ -48,15 +65,17 @@ export class UploadPack extends Base implements remote_agent.RemoteAgent {
     terminator: string | null
   ): Promise<Set<OID>> {
     checkConnected(this.conn);
+    // TODO: [0-9a-f]で正規表現がマッチしない
     const pattern = new RegExp(`^${prefix} ([0-9a-f]+)$`);
     const result = new Set<OID>();
 
     for await (const line of this.conn.recvUntil(terminator)) {
       if (line === null) {
-        throw new BaseError("unexpected error");
+        throw new BaseError("unexpected null");
       }
       const match = pattern.exec(line);
       if (match === null) {
+        log("couldn't match");
         throw new BaseError("pattern should not be null");
       }
       result.add(match[1]);

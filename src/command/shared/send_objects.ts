@@ -14,7 +14,7 @@ export async function sendPackedObjects(cmd: SendObject, revs: string[]) {
     (await cmd.repo.config.get(["pack", "compression"])) ||
     (await cmd.repo.config.get(["core", "compress"]));
 
-  if (typeof packCompression !== "number") {
+  if (packCompression !== undefined && typeof packCompression !== "number") {
     throw new TypeError("compress level requires to be number type");
   }
 

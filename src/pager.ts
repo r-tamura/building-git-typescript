@@ -1,5 +1,5 @@
-import { Process } from "./services";
 import { spawn } from "child_process";
+import { Process } from "./services";
 
 const PAGER_CMD = "less";
 // less, lvコマンドに対応
@@ -13,7 +13,11 @@ export class Pager {
     public stderr: Process["stderr"]
   ) {}
 
-  static of(envvars: Process["env"], stdout: Process["stdout"], stderr: Process["stderr"]) {
+  static of(
+    envvars: Process["env"],
+    stdout: Process["stdout"],
+    stderr: Process["stderr"]
+  ) {
     const pager = new this(envvars, stdout, stderr);
     const env: NodeJS.ProcessEnv = { ...PAGER_ENV, ...envvars };
     const cmd = env["GIT_PAGER"] ?? env["PAGER"] ?? PAGER_CMD;

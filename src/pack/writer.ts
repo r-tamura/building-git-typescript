@@ -1,4 +1,5 @@
 import * as crypto from "crypto";
+import * as fs from "fs";
 import { constants } from "zlib";
 import * as database from "../database";
 import { RevList } from "../rev_list";
@@ -6,6 +7,9 @@ import { defaultZlib, Zlib } from "../services";
 import { CompleteCommit, OID } from "../types";
 import * as numbers from "./numbers";
 import { BLOB, COMMIT, GitObjectType, SIGNATURE, TREE, VERSION } from "./pack";
+
+const to_s = (buf: Buffer | Uint8Array) =>
+  [...buf].map((b) => b.toString(16).padStart(2, "0")).join(" ");
 
 interface Options {
   readonly compressLevel?: number;
@@ -43,6 +47,7 @@ export class Writer {
     this.writeHeader();
     await this.writeEntries();
     this.#output.write(this.#digest.digest());
+    this.#output.end();
   }
 
   private async preparePackList(revlist: RevList) {
@@ -90,15 +95,40 @@ export class Writer {
     const object = await this.#database.loadRaw(entry.oid);
     const header = numbers.VarIntLE.write(object.size);
     header[0] |= entry.type << 4;
-
+    const out =
+      "/Users/r-tamura/Documents/GitHub/building-git-typescript/__upload-pack.log";
+    // fs.writeFileSync(out, header, { flag: "a" });
+    const compressed = await this.#zlib.deflate(object.data, {
+      level: this.#compressLevel,
+    });
     this.write(header);
-    this.write(
-      await this.#zlib.deflate(object.data, { level: this.#compressLevel })
+    const to_hex = (buffer: Buffer | Uint8Array) =>
+      [...buffer].map((b) => b.toString(16).padStart(2, "0")).join(" ");
+    fs.writeFileSync(
+      out,
+      JSON.stringify(
+        {
+          entry: { oid: entry.oid, type: entry.type },
+          header: to_hex(header),
+          decompressedBytes: to_hex(object.data),
+          decompressedSize: object.data.byteLength,
+          compressed: to_hex(compressed),
+          compressedSize: compressed.byteLength,
+        },
+        null,
+        2
+      ) + "\n",
+      { flag: "a" }
     );
+    // fs.writeFileSync(out, compressed, { flag: "a" });
+    this.write(compressed);
   }
 
-  private write(data: string | Uint8Array) {
-    this.#output.write(data);
+  private write(data: Buffer | Uint8Array) {
+    const flushed = this.#output.write(data);
+    if (!flushed) {
+      throw new Error("NOT FLUSHED!!!");
+    }
     this.#digest.update(data);
   }
 }

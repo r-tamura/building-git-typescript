@@ -17,6 +17,7 @@
 import { asserts } from "../util";
 import { Stream } from "./stream";
 
+export const OBJECT_TYPE_MASK = 0x7; // object type: 3bit
 export const MASK_FOR_FIRST = 0xf;
 export const SHIFT_FOR_FIRST = 4;
 export const MASK = 0x7f;

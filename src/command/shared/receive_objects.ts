@@ -17,4 +17,20 @@ export async function receiveObjects(cmd: ReceiveObjects, prefix = "") {
     await cmd.repo.database.store(record);
   }
   await stream.verifyChecksum();
+
+  // cmd.conn.input
+  //   .on("readable", () => {
+  //     const data = cmd.conn?.input.read();
+  //     if (!data) {
+  //       console.log("no data");
+  //       return;
+  //     }
+  //     console.log(
+  //       [...data].map((b) => b.toString(16).padStart(2, "0")).join(" ")
+  //     );
+  //   })
+  //   .on("end", () => {
+  //     console.log("complete read");
+  //     cmd.conn?.input.pause();
+  //   });
 }

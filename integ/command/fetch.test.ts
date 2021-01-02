@@ -5,10 +5,13 @@ import * as assert from "power-assert";
 import { Repository } from "../../src/repository";
 import * as revlist from "../../src/rev_list";
 import * as FileService from "../../src/services/FileService";
+import { stripIndent } from "../../src/util";
 import * as T from "./helper";
 import { RemoteRepo } from "./remote_repo";
 
 const t = T.create("fetch");
+
+// jest.setTimeout(30000);
 
 describe("fetch", () => {
   let remote: RemoteRepo;
@@ -48,7 +51,17 @@ describe("fetch", () => {
     assert.equal(actual, expectedCount);
   }
 
+  function kitPath() {
+    return path.join(__dirname, "../../bin/kit");
+  }
+
   describe("with a single branch in the remote repository", () => {
+    beforeEach(async () => {
+      fsCb.truncateSync(
+        "/Users/r-tamura/Documents/GitHub/building-git-typescript/__upload-pack.log"
+      );
+    });
+
     beforeEach(async () => {
       remote = new RemoteRepo("fetch-remote");
       await remote.kitCmd("init", remote.repoPath);
@@ -61,7 +74,7 @@ describe("fetch", () => {
       await t.kitCmd(
         "config",
         "remote.origin.uploadpack",
-        `${t.repoPath} upload-pack`
+        `${kitPath()} upload-pack`
       );
     });
 
@@ -69,8 +82,24 @@ describe("fetch", () => {
       await FileService.rmrf(fs, remote.repoPath);
     });
 
-    it("succeed", () => {
-      assert(true);
+    it("display a new branch being fetched", async () => {
+      await t.kitCmd("fetch");
+      t.assertStatus(0);
+
+      t.assertError(stripIndent`
+        From file://${remote.repoPath}
+        * [new branch] master -> origin/master
+      `);
+    });
+
+    it.skip("maps the remote's heads/* to the local's remotes/origin/*", async () => {
+      await t.kitCmd("fetch");
+      //       assert_equal @remote.repo.refs.read_ref("refs/heads/master"),
+      // repo.refs.read_ref("refs/remotes/origin/master")
+      assert.equal(
+        await remote.repo.refs.readRef("refs/head/master"),
+        t.repo.refs.readRef("refs/remotes/origin/master")
+      );
     });
   });
 });

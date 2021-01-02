@@ -175,7 +175,7 @@ export function transpose<T>(xs: T[][]): T[][] {
   return transposed;
 }
 
-export function compact<T>(xs: T[]): NonNullable<T>[] {
+export function compact<T>(xs: readonly T[]): NonNullable<T>[] {
   const notEmpty = (x: T): x is NonNullable<T> => x !== null && x !== undefined;
   return xs.filter(notEmpty);
 }

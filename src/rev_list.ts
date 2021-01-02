@@ -177,7 +177,7 @@ export class RevList {
     return commit;
   }
 
-  private mark(oid: OID, flag: Flag) {
+  private mark(oid: OID, flag: Flag): boolean {
     if (!this.#flags.has(oid)) {
       this.#flags.set(oid, new Set());
     }
@@ -229,13 +229,9 @@ export class RevList {
   private async markTreeUninteresting(treeOid: OID) {
     const entry = await this.#repo.database.loadTreeEntry(treeOid);
     asserts(entry !== null);
-    const traverser = this.traverseTree(entry);
-    let result = await traverser.next();
-    while (!result.done) {
-      result = await traverser.next(
-        this.mark(result.value.oid, "uninteresting")
-      );
-    }
+    return this.traverseTree(entry, (object) =>
+      this.mark(object.oid, "uninteresting")
+    );
   }
 
   private async setStartpoint(rev: string, interesting: boolean) {
@@ -341,48 +337,45 @@ export class RevList {
   }
 
   private async *traverseTree(
-    entry: Database.Entry
-  ): AsyncGenerator<Database.Entry, void, boolean> {
-    const marked = yield entry;
-    if (marked) {
+    entry: Database.Entry,
+    isInteresting: (entry: Database.Entry) => boolean
+  ): AsyncGenerator<Database.Entry, void, void> {
+    if (!isInteresting(entry)) {
       return;
     }
-
-    if (!entry.tree) {
+    yield entry;
+    if (!entry.tree()) {
       return;
     }
-
     const tree = await this.#repo.database.load(entry.oid);
     asserts(tree.type === "tree");
 
     for (const item of Object.values(tree.entries)) {
       // databaseから読み込まれたtreeオブジェクトのエントリ
       asserts(item.type === "database");
-      yield* this.traverseTree(item);
+      yield* this.traverseTree(item, (object) => {
+        return Boolean(object);
+      });
     }
   }
 
-  private async *traversePending() {
+  private async *traversePending(): AsyncGenerator<Database.Entry, void, void> {
     if (!this.#objects) {
       return;
     }
 
     for (const entry of this.#pending) {
-      const traverser = this.traverseTree(entry);
-      let result = await traverser.next();
-      while (!result.done) {
-        const object = result.value;
+      yield* this.traverseTree(entry, (object) => {
         if (this.marked(object.oid, "uninteresting")) {
-          continue;
+          return false;
         }
 
         if (!this.mark(object.oid, "seen")) {
-          continue;
+          return false;
         }
 
-        yield object;
-        result = await traverser.next(true);
-      }
+        return Boolean(object);
+      });
     }
   }
 

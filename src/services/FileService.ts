@@ -87,19 +87,17 @@ export async function readdirRecursive(
 }
 
 /** zlib */
+type Deflate = typeof zlib.deflate;
 const deflate = promisify(zlib.deflate) as (
-  buf: Parameters<typeof zlib.deflate>[0],
-  options: Parameters<typeof zlib.deflate>[1]
+  buf: Parameters<Deflate>[0],
+  options: Parameters<Deflate>[1]
 ) => Promise<Buffer>;
-const inflate = promisify<zlib.InputType, Buffer>(zlib.deflate);
+const inflate = promisify<zlib.InputType, Buffer>(zlib.inflate);
 export type Zlib = {
   deflate: typeof deflate;
   inflate: typeof inflate;
 };
-export const defaultZlib = {
-  deflate: promisify(zlib.deflate) as typeof deflate,
-  inflate: promisify(zlib.inflate) as typeof inflate,
-};
+export const defaultZlib = { deflate, inflate };
 
 /**
  * ReadableStreamからPromiseを生成します
@@ -160,9 +158,15 @@ export async function readByLine(
 export async function readChunk(
   stream: NodeJS.ReadableStream,
   size: number,
-  timeout = 1000
+  timeout = 2000
 ) {
   const readable = async (stream: NodeJS.ReadableStream) => {
+    // TypeScriptのNodeJS型定義にreadableEndedが定義されていない
+    // https://nodejs.org/api/stream.html#stream_readable_readableended
+    if ((stream as any).readableEnded) {
+      throw new Error("stream has emmited 'error' or 'end' already");
+    }
+
     return new Promise((resolve, reject) => {
       const removeListeners = () => {
         stream.removeListener("readable", readableListener);
@@ -184,13 +188,23 @@ export async function readChunk(
 
   let raw = Buffer.alloc(0);
   const deadline = Date.now() + timeout;
-  await readable(stream);
-  while (Date.now() < deadline && raw.length < size) {
+  while (raw.length < size) {
+    await readable(stream);
     // https://nodejs.org/api/stream.html#stream_readable_read_size
     // Readable.readは指定したサイズのデータが取得できない場合はnullを返す
     // readのサイズが指定されない場合はバッファ内に存在する全てのデータを返す
-    const chunk = (stream.read(size - raw.length) ??
-      stream.read()) as Buffer | null;
+    // const chunk = (stream.read(size - raw.length) ??
+    //   stream.read()) as Buffer | null;
+
+    const readWithSize = stream.read(size - raw.length);
+
+    // console.log({ readWithSize });
+    let readWoSize;
+    if (readWithSize === null) {
+      readWoSize = stream.read();
+    }
+    const chunk = (readWithSize ?? readWoSize) as Buffer | null;
+    // console.log({ chunk });
     if (chunk === null) break;
     raw = Buffer.concat([raw, chunk]);
   }

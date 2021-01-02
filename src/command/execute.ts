@@ -1,25 +1,29 @@
-import { BaseError, asserts } from "../util";
-import { BaseConstructor, NoOptions, Options } from "./base";
+import { Environment } from "../types";
+import { asserts, BaseError } from "../util";
 import { Add } from "./add";
-import { Commit } from "./commit";
+import { BaseConstructor, NoOptions, Options } from "./base";
 import { Branch } from "./branch";
 import { Checkout } from "./checkout";
+import { CherryPick } from "./cherry_pick";
+import { Commit } from "./commit";
+import { Config } from "./config";
 import { Diff } from "./diff";
+import { Fetch } from "./fetch";
 import { Init } from "./init";
 import { Log } from "./log";
 import { Merge } from "./merge";
-import { Status } from "./status";
-import { Environment } from "../types";
-import { Rm } from "./rm";
-import { Reset } from "./reset";
-import { CherryPick } from "./cherry_pick";
-import { Revert } from "./revert";
-import { Config } from "./config";
 import { Remote } from "./remote";
+import { Reset } from "./reset";
+import { Revert } from "./revert";
+import { Rm } from "./rm";
+import { Status } from "./status";
+import { UploadPack } from "./upload_pack";
 
 export class Unknown extends BaseError {}
 
-type CommandMap<O extends Options = NoOptions> = { [s: string]: BaseConstructor<O> };
+type CommandMap<O extends Options = NoOptions> = {
+  [s: string]: BaseConstructor<O>;
+};
 
 const COMMANDS: CommandMap = {
   init: Init,
@@ -37,6 +41,8 @@ const COMMANDS: CommandMap = {
   status: Status,
   config: Config,
   remote: Remote,
+  fetch: Fetch,
+  "upload-pack": UploadPack,
 } as const;
 
 export async function execute(args: string[], env: Environment) {

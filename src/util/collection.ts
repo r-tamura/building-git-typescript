@@ -141,6 +141,10 @@ export function equal<T>(s1: Set<T>, s2: Set<T>) {
   return superset(s1, s2);
 }
 
+export function intersection<T>(s1: Set<T>, s2: Set<T>): Set<T> {
+  return new Set([...s1].filter((s) => s2.has(s)));
+}
+
 export function merge<T>(s1: Set<T>, s2: Set<T>) {
   return new Set([...s1, ...s2]);
 }

@@ -23,12 +23,16 @@ export type NoOptions = any;
 export interface GitCommand {
   /** コマンド引数 */
   args: string[];
-  /** 環境変数 */
+  /** Gitレポジトリ */
   repo: Repository;
+  /** Gitレポジトリを管理するオブジェクト。基本的にはプライベートだが、一部モジュールからは参照可能 */
+  _repo: Repository;
   /** this.env.process.stdoutへのショートカット */
   stdout: NodeJS.Process["stdout"];
   /** this.env.process.stderrへのショートカット */
   stderr: NodeJS.Process["stderr"];
+  /** ロガー */
+  logger: Logger;
 }
 export abstract class Base<O extends Options = NoOptions>
   implements Runnable, GitCommand {
@@ -36,10 +40,9 @@ export abstract class Base<O extends Options = NoOptions>
   protected dir: string;
   /** ページャ-  */
   private pager: Pager | null = null;
-  /** ロガー */
-  public logger: Logger;
   /** プロセスの出力がTTYか */
   private isatty: boolean;
+  logger: Logger;
   envvars: EnvVars;
   stdout: NodeJS.Process["stdout"];
   stderr: NodeJS.Process["stderr"];
@@ -50,7 +53,7 @@ export abstract class Base<O extends Options = NoOptions>
   /** 終了ステータス */
   status = 0;
 
-  #repo!: Repository;
+  _repo!: Repository;
   constructor(public args: string[], public env: Environment) {
     this.dir = env.process.cwd();
     this.envvars = env.process.env;
@@ -109,7 +112,7 @@ export abstract class Base<O extends Options = NoOptions>
   }
 
   get repo() {
-    return (this.#repo ??= new Repository(
+    return (this._repo ??= new Repository(
       path.join(this.dir, ".git"),
       this.env
     ));

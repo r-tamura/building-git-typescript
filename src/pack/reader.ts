@@ -1,4 +1,5 @@
 import { TextDecoder } from "util";
+import * as zlib from "zlib";
 import { defaultZlib, Zlib } from "../services";
 import { asserts, includes, isNodeError } from "../util";
 import * as numbers from "./numbers";
@@ -10,6 +11,8 @@ interface Environment {
   zlib?: Zlib;
 }
 
+type RecordHeader = [type: pack.GitObjectType, size: number];
+
 export class Reader {
   #input: Stream;
   /** Pack内のオブジェクト数 */
@@ -20,7 +23,7 @@ export class Reader {
     this.#zlib = env.zlib ?? defaultZlib;
   }
 
-  async readHeader() {
+  async readHeader(): Promise<void> {
     /*
      *   4 Bytes                4 Bytes              4 Bytes
      *   +---------------------+--------------------+--------------------+
@@ -28,13 +31,12 @@ export class Reader {
      *   +---------------------+--------------------+--------------------+
      */
     const buf = await this.#input.read(HEADER_SIZE);
-    const bytes32 = new Uint32Array(buf);
 
     // ruby: data.unpack(HEADER_FORMAT)
     const decorder = new TextDecoder();
-    const signature = decorder.decode(bytes32.slice(0, 1));
-    const version = bytes32[1];
-    this.count = bytes32[2];
+    const signature = decorder.decode(buf.slice(0, 4));
+    const version = buf.readUInt32BE(4);
+    this.count = buf.readUInt32BE(8);
 
     if (signature !== SIGNATURE) {
       throw new InvalidPack(`bad pack signature: ${signature}`);
@@ -45,7 +47,7 @@ export class Reader {
     }
   }
 
-  async readRecord() {
+  async readRecord(): Promise<pack.Record> {
     const [type, _] = await this.readRecordHeader();
     const typeNames = Object.keys(
       pack.TYPE_CODES
@@ -56,11 +58,10 @@ export class Reader {
     return pack.Record.of(typeName, await this.readZlibStream());
   }
 
-  private async readRecordHeader(): Promise<
-    [type: pack.GitObjectType, size: number]
-  > {
+  private async readRecordHeader(): Promise<RecordHeader> {
+    console.log("read record header");
     const [byte, size] = await numbers.VarIntLE.read(this.#input);
-    const type = (byte >> 4) & numbers.MASK_FOR_FIRST;
+    const type = (byte >> 4) & numbers.OBJECT_TYPE_MASK;
     asserts(type === pack.COMMIT || type === pack.TREE || type === pack.BLOB);
     return [type, size];
   }
@@ -70,6 +71,7 @@ export class Reader {
     let body: Buffer | null = null;
     let bodyDeflated = Buffer.alloc(0);
     let total = 0;
+
     while (!finished) {
       const chunk = await this.#input.readNonblock(256);
       total += chunk.byteLength;
@@ -86,14 +88,28 @@ export class Reader {
         throw e;
       }
     }
+
     if (body === null) {
-      throw new TypeError("couldn't find deflated data");
+      throw new TypeError("couldn't find deflated data within timeout");
     }
 
     // zlib#inflateによって処理されたバイト数
-    const totalIn = bodyDeflated.byteLength;
+    // TODO: zlib#inflateでbytesWrittenが取得できない。ストリームのクラスを使う必要があるか。
+    const totalIn = (
+      await this.#zlib.deflate(body, {
+        level: zlib.constants.Z_DEFAULT_COMPRESSION,
+      })
+    ).byteLength;
     this.#input.seek(totalIn - total);
 
+    // console.log({
+    //   decompressed: new TextDecoder().decode(body),
+    //   decompressedRaw: [...body]
+    //     .map((b) => b.toString(16).padStart(2, "0"))
+    //     .join(" "),
+    //   deflatedSize: totalIn,
+    //   read: total,
+    // });
     return body;
   }
 }

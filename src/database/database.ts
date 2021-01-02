@@ -215,6 +215,10 @@ export class Database {
     return oid.slice(0, 7);
   }
 
+  async has(oid: OID) {
+    return await this.fileExists(this.objectPath(oid));
+  }
+
   async store(obj: Seriarizable) {
     const content = this.seliarizeObject(obj);
     obj.oid = this.hashContent(content);
