@@ -66,16 +66,14 @@ export class Fetch extends Base<Options> implements remote_client.RemoteClient {
       program: this.#uploader,
       url: this.#fetchUrl,
     });
-
-    console.log({ remote: "-- recv references --" });
+    // console.log({ remote: "-- recv references --" });
     await remote_client.recvReferences(this);
-    console.log({ remote: "-- sendWantList --" });
+    // console.log({ remote: "-- sendWantList --" });
     await this.sendWantList();
-    console.log({ remote: "-- sendHaveList --" });
+    // console.log({ remote: "-- sendHaveList --" });
     await this.sendHaveList();
-    console.log({ remote: "-- recvObjects --" });
     await this.recvObjects();
-    console.log({ remote: "-- updateRefs --" });
+    // console.log({ client: "-- updateRefs --" });
     await this.updateRemoteRefs();
 
     this.exit(array.isempty(Object.keys(this.#errors)) ? 0 : 1);
@@ -118,7 +116,6 @@ export class Fetch extends Base<Options> implements remote_client.RemoteClient {
     asserts(this.remoteRefs !== undefined);
     checkConnected(this.conn);
 
-    // console.log(Object.keys(this.remoteRefs).map((s) => Buffer.from(s)));
     this.#targets = remotes.Refspec.expand(
       this.#fetchSpecs,
       Object.keys(this.remoteRefs)

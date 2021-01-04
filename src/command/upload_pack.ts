@@ -1,3 +1,4 @@
+import * as debug from "../debug";
 import * as remotes from "../remotes/protocol";
 import { Environment, OID } from "../types";
 import { BaseError } from "../util";
@@ -14,7 +15,7 @@ function log(message: string) {
   //     flag: "a",
   //   }
   // );
-  console.warn({ remote: message });
+  // console.warn({ remote: message });
 }
 
 export class UploadPack extends Base implements remote_agent.RemoteAgent {
@@ -35,15 +36,22 @@ export class UploadPack extends Base implements remote_agent.RemoteAgent {
 
   async run(): Promise<void> {
     remote_agent.acceptClient(this, { name: "upload-pack" });
-    log("-- sendReferences --");
+    // log("-- sendReferences --");
     await remote_agent.sendReferences(this, this.#env);
-    log("-- wantlist --");
+    // log("-- wantlist --");
     await this.recvWantList();
-    log("-- havelist --");
+    // log("-- havelist --");
     await this.recvHaveList();
     log("-- send objects --");
     await this.sendObjects();
+    log("-- waiting exit --");
+    await new Promise((resolve) => {
+      setTimeout(() => resolve(null), 2000);
+    });
     log("-- exit --");
+
+    debug.log({ message: "-- exit --" });
+
     this.exit(0);
   }
 

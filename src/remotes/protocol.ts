@@ -13,9 +13,9 @@ function log(command: string, ...messages: (string | number | Buffer)[]) {
   if (command === "fetch") {
     // console.log({ client: messages });
   } else if (command === "upload-pack") {
-    console.warn({ remote: messages });
+    // console.warn({ remote: messages });
   } else {
-    console.warn(`${command} is not supported`);
+    // console.warn(`${command} is not supported`);
   }
 }
 
@@ -64,7 +64,7 @@ export class Protocol {
 
   async recvPacket(): Promise<string | null> {
     const rawHead = await readChunk(this.input, HEAD_SIZE);
-    const head = rawHead.toString("utf8");
+    const head = rawHead.toString("binary");
     if (!/[0-9a-f]{4}/.test(head)) {
       log(this.#command, "recv", "head", head);
       return head;

@@ -11,7 +11,7 @@ import { RemoteRepo } from "./remote_repo";
 
 const t = T.create("fetch");
 
-// jest.setTimeout(30000);
+jest.setTimeout(10000);
 
 describe("fetch", () => {
   let remote: RemoteRepo;
@@ -60,6 +60,9 @@ describe("fetch", () => {
       fsCb.truncateSync(
         "/Users/r-tamura/Documents/GitHub/building-git-typescript/__upload-pack.log"
       );
+      fsCb.truncateSync(
+        "/Users/r-tamura/Documents/GitHub/building-git-typescript/__fetch.log"
+      );
     });
 
     beforeEach(async () => {
@@ -92,13 +95,64 @@ describe("fetch", () => {
       `);
     });
 
-    it.skip("maps the remote's heads/* to the local's remotes/origin/*", async () => {
+    it("maps the remote's heads/* to the local's remotes/origin/*", async () => {
       await t.kitCmd("fetch");
-      //       assert_equal @remote.repo.refs.read_ref("refs/heads/master"),
-      // repo.refs.read_ref("refs/remotes/origin/master")
       assert.equal(
-        await remote.repo.refs.readRef("refs/head/master"),
-        t.repo.refs.readRef("refs/remotes/origin/master")
+        await remote.repo.refs.readRef("refs/heads/master"),
+        await t.repo.refs.readRef("refs/remotes/origin/master")
+      );
+    });
+
+    it("maps the remote's heads/* to a different local ref", async () => {
+      await t.kitCmd(
+        "fetch",
+        "origin",
+        "refs/heads/*:refs/remotes/other/prefix-*"
+      );
+
+      assert.equal(
+        await remote.repo.refs.readRef("refs/heads/master"),
+        await t.repo.refs.readRef("refs/remotes/other/prefix-master")
+      );
+    });
+
+    it.skip("accepts short-hand refs in the fetch refspec", async () => {
+      await t.kitCmd("fetch", "origin", "master:topic");
+
+      assert.equal(
+        await remote.repo.refs.readRef("refs/heads/master"),
+        await t.repo.refs.readRef("refs/remotes/topic")
+      );
+    });
+
+    it.skip("accepts short-hand refs in the fetch refspec", async () => {
+      await t.kitCmd("fetch", "origin", "master:heads/topic");
+
+      assert.equal(
+        await remote.repo.refs.readRef("refs/heads/master"),
+        await t.repo.refs.readRef("refs/remotes/topic")
+      );
+    });
+
+    it("does not create any other local refs", async () => {
+      await t.kitCmd("fetch");
+
+      assert.deepEqual(
+        ["HEAD", "refs/remotes/origin/master"],
+        (
+          await t.repo.refs
+            .listAllRefs()
+            .then((refs) => refs.map((ref) => ref.path))
+        ).sort()
+      );
+    });
+
+    it("retrieves all the commits from the remote's history", async () => {
+      await t.kitCmd("fetch");
+
+      assert.deepEqual(
+        await commits(remote.repo, ["master"]),
+        await commits(t.repo, ["origin/master"])
       );
     });
   });

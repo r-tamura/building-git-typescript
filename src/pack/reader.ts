@@ -59,10 +59,12 @@ export class Reader {
   }
 
   private async readRecordHeader(): Promise<RecordHeader> {
-    console.log("read record header");
     const [byte, size] = await numbers.VarIntLE.read(this.#input);
     const type = (byte >> 4) & numbers.OBJECT_TYPE_MASK;
-    asserts(type === pack.COMMIT || type === pack.TREE || type === pack.BLOB);
+    asserts(
+      type === pack.COMMIT || type === pack.TREE || type === pack.BLOB,
+      `needs 1, 2, or 3, got ${type}`
+    );
     return [type, size];
   }
 
@@ -85,13 +87,11 @@ export class Reader {
           // not enough data to inflate
           continue;
         }
+        console.error(e, bodyDeflated);
         throw e;
       }
     }
-
-    if (body === null) {
-      throw new TypeError("couldn't find deflated data within timeout");
-    }
+    asserts(body !== null);
 
     // zlib#inflateによって処理されたバイト数
     // TODO: zlib#inflateでbytesWrittenが取得できない。ストリームのクラスを使う必要があるか。
@@ -100,16 +100,9 @@ export class Reader {
         level: zlib.constants.Z_DEFAULT_COMPRESSION,
       })
     ).byteLength;
+
     this.#input.seek(totalIn - total);
 
-    // console.log({
-    //   decompressed: new TextDecoder().decode(body),
-    //   decompressedRaw: [...body]
-    //     .map((b) => b.toString(16).padStart(2, "0"))
-    //     .join(" "),
-    //   deflatedSize: totalIn,
-    //   read: total,
-    // });
     return body;
   }
 }

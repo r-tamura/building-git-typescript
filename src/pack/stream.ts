@@ -1,11 +1,27 @@
 import * as crypto from "crypto";
+import { log } from "../debug";
 import { readChunk } from "../services";
+import { BaseError } from "../util";
 import * as pack from "./pack";
 import { InvalidPack } from "./pack";
 
-const to_s = (buf: Buffer) =>
-  [...buf].map((b) => b.toString(16).padStart(2, "0")).join(" ");
+const to_s = (buf: Buffer, strip = true) => {
+  const s = [...buf].map((b) => b.toString(16).padStart(2, "0")).join(" ");
 
+  if (strip === false || buf.byteLength < 21) {
+    return s;
+  }
+
+  return s.slice(0, 2 * 10 + 10) + "..." + s.slice(-1 * (2 * 10 + 10));
+};
+
+class StreamEndedError extends BaseError {}
+
+interface ReadableStream extends NodeJS.ReadableStream {
+  // TypeScriptのNodeJS型定義にreadableEndedが定義されていない
+  // https://nodejs.org/api/stream.html#stream_readable_readableended
+  readableEnded: boolean;
+}
 export class Stream {
   #input: NodeJS.ReadableStream;
   digest = crypto.createHash("sha1");
@@ -47,7 +63,6 @@ export class Stream {
   ): Promise<readonly [pack.Record, Buffer]> {
     this.#capture = this.newByte();
     const result = [await callback(), this.#capture] as const;
-    console.log({ captured: to_s(result[0].data) });
     this.digest.update(this.#capture);
     this.#capture = null;
     return result;
@@ -63,63 +78,52 @@ export class Stream {
     }
 
     // ruby: Array#slice!(amount .. -1)
-    const bytes = this.#capture.slice(amount);
-    this.#capture = this.#capture.slice(0, this.#capture.byteLength + amount);
-
-    this.#buffer = Buffer.concat([bytes, this.#buffer]);
-    console.log("data added to buffer", {
-      prepended: to_s(bytes),
-      buffer: to_s(this.#buffer),
-      bufferSize: this.#buffer.byteLength,
+    const prependBytes = this.#capture.slice(amount);
+    const captureRest = this.#capture.slice(
+      0,
+      this.#capture.byteLength + amount
+    );
+    const nextBuffer = Buffer.concat([prependBytes, this.#buffer]);
+    log({
+      event: "seek",
+      amount,
+      prepended: to_s(prependBytes),
+      captureRest: to_s(captureRest),
+      bufferBefore: to_s(this.#buffer),
+      bufferBeforeSize: this.#buffer.byteLength,
+      bufferAfter: to_s(nextBuffer),
+      bufferAfterSize: nextBuffer.byteLength,
     });
+    this.#capture = captureRest;
+    this.#buffer = nextBuffer;
     this.offset += amount;
   }
 
   private async readBuffered(size: number, block = true): Promise<Buffer> {
-    if (this.#buffer.byteLength < size && block) {
-      console.warn({
-        buffer: this.#buffer,
-        byteLength: this.#buffer.byteLength,
-        neededSize: size,
-      });
+    if (size === 0) {
+      log({ message: "to read zero bytes" });
     }
-    console.log("data read from buffer", {
-      readSize: Math.min(this.#buffer.byteLength, size),
-      buffer: to_s(this.#buffer),
-      bufferSizeAfter: Math.max(this.#buffer.byteLength - size, 0),
-    });
+
+    // log({
+    //   event: "data read from buffer",
+    //   neededSize: size,
+    //   readSize: Math.min(this.#buffer.byteLength, size),
+    //   buffer: to_s(this.#buffer),
+    //   bufferSizeAfter: Math.max(this.#buffer.byteLength - size, 0),
+    // });
     const fromBuf = this.#buffer.slice(0, size);
     this.#buffer = this.#buffer.slice(size);
-    if (this.#buffer.byteLength === 0) {
-      console.warn("buffer got empty!");
-    }
     const needed = size - fromBuf.byteLength;
 
     if (needed === 0) {
       return fromBuf;
     }
 
-    let fromIO: Buffer | null = null;
-    if (block) {
-      fromIO = await readChunk(this.#input, needed);
-    } else {
-      if (this.#input.readable) {
-        fromIO = await new Promise<Buffer | null>((resolve, reject) => {
-          this.#input.once("data", (read: Buffer) => {
-            if (read.byteLength > needed) {
-              const onlyNeeded = read.slice(0, needed);
-              const rest = read.slice(needed);
-              this.#buffer = Buffer.concat([this.#buffer, rest]);
-              resolve(onlyNeeded);
-            } else {
-              resolve(read);
-            }
-          });
-        }).then((res) =>
-          typeof res === "string" ? Buffer.from(res) : res ?? null
-        );
-      }
+    if (!this.#input.readable && !block) {
+      return fromBuf;
     }
+
+    const fromIO = await readChunk(this.#input, needed, { block });
     // console.log("stream", {
     //   fromBuf: [...fromBuf]
     //     .map((byte) => byte.toString(16).padStart(2, "0"))
@@ -136,6 +140,12 @@ export class Stream {
 
   private updateState(bytes: Buffer): void {
     if (this.#capture !== null) {
+      log({
+        event: "append to capture",
+        before: to_s(this.#capture),
+        append: to_s(bytes),
+        after: to_s(Buffer.concat([this.#capture, bytes])),
+      });
       this.#capture = Buffer.concat([this.#capture, bytes]);
     }
     this.offset += bytes.byteLength;

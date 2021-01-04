@@ -4,7 +4,9 @@ import * as readline from "readline";
 import { Readable } from "stream";
 import { promisify } from "util";
 import * as zlib from "zlib";
+import { log } from "../debug";
 import { Pathname } from "../types";
+import { BaseError } from "../util";
 const fs = CallbackFs.promises;
 
 export type FileService = Pick<
@@ -149,8 +151,33 @@ export async function readByLine(
   });
 }
 
+export class TimeoutError extends BaseError {}
+
+interface ReadChunkOptions {
+  /**
+   * 読み込み処理タイムアウト(ms)
+   * @default 3000
+   * */
+  timeout?: number;
+  /**
+   * 指定サイズが読み込めない場合にブロックするか
+   * @default true
+   * */
+  block?: boolean;
+}
+
 /**
- * ReadStreamから指定されたバイト数分のデータを読み込みます
+ * ReadableStreamから指定されたバイト数分のデータを読み込みます。
+ *
+ * ReadableStreamのバッファに指定サイズより少ないデータしかなく、ストリームからこれ以上読み込むデータがない場合、そのデータを全て返します。
+ *
+ * See: https://nodejs.org/api/stream.html#stream_readable_read_size
+ * The readable.read() method pulls some data out of the internal buffer and returns it.
+ * If no data available to be read, null is returned. By default, the data will be returned as a Buffer object
+ * unless an encoding has been specified using the readable.setEncoding() method or the stream is operating in object mode.
+ * The optional size argument specifies a specific number of bytes to read. If size bytes are not available to be read,
+ * null will be returned unless the stream has ended, in which case all of the data remaining in the internal buffer will be returned.
+ *
  * @param stream
  * @param size 読み込みバイト数
  * @param timeout タイムアウト(ms)
@@ -158,8 +185,8 @@ export async function readByLine(
 export async function readChunk(
   stream: NodeJS.ReadableStream,
   size: number,
-  timeout = 2000
-) {
+  { timeout = 3000, block = true }: ReadChunkOptions = {}
+): Promise<Buffer> {
   const readable = async (stream: NodeJS.ReadableStream) => {
     // TypeScriptのNodeJS型定義にreadableEndedが定義されていない
     // https://nodejs.org/api/stream.html#stream_readable_readableended
@@ -186,27 +213,48 @@ export async function readChunk(
     });
   };
 
-  let raw = Buffer.alloc(0);
+  const read = (stream: NodeJS.ReadableStream, size: number): Buffer | null =>
+    stream.read(size) as Buffer | null;
+
+  let raw = read(stream, size);
+
+  if (!block && raw !== null && raw.byteLength < size) {
+    // ReadableStreamバッファの最後のデータ
+    return raw;
+  }
+
   const deadline = Date.now() + timeout;
-  while (raw.length < size) {
-    await readable(stream);
-    // https://nodejs.org/api/stream.html#stream_readable_read_size
-    // Readable.readは指定したサイズのデータが取得できない場合はnullを返す
-    // readのサイズが指定されない場合はバッファ内に存在する全てのデータを返す
-    // const chunk = (stream.read(size - raw.length) ??
-    //   stream.read()) as Buffer | null;
-
-    const readWithSize = stream.read(size - raw.length);
-
-    // console.log({ readWithSize });
-    let readWoSize;
-    if (readWithSize === null) {
-      readWoSize = stream.read();
+  while (raw === null) {
+    if (Date.now() > deadline) {
+      const streamBuffer = stream.read() as Buffer | null;
+      throw new TimeoutError(
+        "timeout error: " +
+          JSON.stringify({
+            buffer: streamBuffer,
+            bufferSize: streamBuffer?.byteLength ?? 0,
+            size,
+          }) || "timeout error"
+      );
     }
-    const chunk = (readWithSize ?? readWoSize) as Buffer | null;
-    // console.log({ chunk });
-    if (chunk === null) break;
-    raw = Buffer.concat([raw, chunk]);
+
+    /** TODO: 正しいディレイ設定を考える */
+    await new Promise((resolve) => {
+      setTimeout(() => resolve(null), 10);
+    });
+    await readable(stream);
+    raw = read(stream, size);
+    log({
+      process: process.pid,
+      chunk:
+        raw === null
+          ? "null"
+          : [...raw].map((b) => b.toString(16).padStart(2, "0")).join(" "),
+    });
+
+    if (block === false) {
+      raw = (stream.read() as Buffer | null) ?? Buffer.alloc(0);
+      break;
+    }
   }
   return raw;
 }

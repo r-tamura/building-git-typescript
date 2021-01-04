@@ -34,11 +34,12 @@ export function startAgent(
     .spawn(command, args, { stdio: ["pipe", "pipe", "inherit"] })
     .on("error", (err) => {
       if (err) {
-        console.error("errrrrror");
+        console.error("error");
       }
     })
     .on("exit", (code: string) => {
       console.log({ childExitCode: code });
+      // cmd.conn?.input.emit("end");
     });
 
   cmd.conn = new remotes.Protocol(name, stdout, stdin, capabilities);
