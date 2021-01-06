@@ -12,6 +12,7 @@ import { checkConnected, Connectable } from "./remote_common";
 const REF_LINE = /^([0-9a-f]+) (.*)$/;
 const ZERO_OID = "0".repeat(40);
 
+class NotSupportedProtocolError extends BaseError {}
 export interface RemoteClient extends GitCommand, Connectable {
   remoteRefs: Record<string, string>;
 }
@@ -44,9 +45,28 @@ export function startAgent(
   cmd.conn = new remotes.Protocol(name, stdout, stdin, capabilities);
 }
 
-function buildAgentCommand(program: string, url: string): string[] {
+export function buildAgentCommand(program: string, url: string): string[] {
   const uri = new URL(url);
-  return [...shlex.split(program), uri.pathname];
+  const argv = [...shlex.split(program), uri.pathname];
+
+  switch (uri.protocol) {
+    case "file:":
+      return argv;
+    case "ssh:":
+      return sshCommand(uri, argv);
+  }
+  throw new NotSupportedProtocolError(`${uri.protocol} is not supported.`);
+}
+
+function sshCommand(uri: URL, argv: string[]): string[] {
+  const ssh = ["ssh", uri.hostname];
+  if (uri.port) {
+    ssh.push("-p", uri.port);
+  }
+  if (uri.username) {
+    ssh.push("-l", uri.username);
+  }
+  return [...ssh, argv.map((part) => shlex.quote(part)).join(" ")];
 }
 
 export async function recvReferences(cmd: RemoteClient) {
