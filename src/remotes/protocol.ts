@@ -66,6 +66,8 @@ export class Protocol {
     const rawHead = await readChunk(this.input, HEAD_SIZE);
     const head = rawHead.toString("binary");
     if (!/[0-9a-f]{4}/.test(head)) {
+      if (this.#command === "upload-pack")
+        console.warn({ command: this.#command, rawHead });
       log(this.#command, "recv", "head", head);
       return head;
     }
@@ -132,7 +134,6 @@ export class Protocol {
     while (true) {
       const line = await this.recvPacket();
       if (line === terminator) {
-        log(this.#command, "terminate", JSON.stringify(line));
         break;
       }
       yield line;

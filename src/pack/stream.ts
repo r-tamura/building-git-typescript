@@ -1,5 +1,4 @@
 import * as crypto from "crypto";
-import { log } from "../debug";
 import { readChunk } from "../services";
 import { BaseError } from "../util";
 import * as pack from "./pack";
@@ -84,33 +83,22 @@ export class Stream {
       this.#capture.byteLength + amount
     );
     const nextBuffer = Buffer.concat([prependBytes, this.#buffer]);
-    log({
-      event: "seek",
-      amount,
-      prepended: to_s(prependBytes),
-      captureRest: to_s(captureRest),
-      bufferBefore: to_s(this.#buffer),
-      bufferBeforeSize: this.#buffer.byteLength,
-      bufferAfter: to_s(nextBuffer),
-      bufferAfterSize: nextBuffer.byteLength,
-    });
+    // log({
+    //   event: "seek",
+    //   amount,
+    //   prepended: to_s(prependBytes),
+    //   captureRest: to_s(captureRest),
+    //   bufferBefore: to_s(this.#buffer),
+    //   bufferBeforeSize: this.#buffer.byteLength,
+    //   bufferAfter: to_s(nextBuffer),
+    //   bufferAfterSize: nextBuffer.byteLength,
+    // });
     this.#capture = captureRest;
     this.#buffer = nextBuffer;
     this.offset += amount;
   }
 
   private async readBuffered(size: number, block = true): Promise<Buffer> {
-    if (size === 0) {
-      log({ message: "to read zero bytes" });
-    }
-
-    // log({
-    //   event: "data read from buffer",
-    //   neededSize: size,
-    //   readSize: Math.min(this.#buffer.byteLength, size),
-    //   buffer: to_s(this.#buffer),
-    //   bufferSizeAfter: Math.max(this.#buffer.byteLength - size, 0),
-    // });
     const fromBuf = this.#buffer.slice(0, size);
     this.#buffer = this.#buffer.slice(size);
     const needed = size - fromBuf.byteLength;
@@ -124,14 +112,6 @@ export class Stream {
     }
 
     const fromIO = await readChunk(this.#input, needed, { block });
-    // console.log("stream", {
-    //   fromBuf: [...fromBuf]
-    //     .map((byte) => byte.toString(16).padStart(2, "0"))
-    //     .join(" "),
-    //   fromIO: [...(fromIO ?? [])]
-    //     .map((byte) => byte.toString(16).padStart(2, "0"))
-    //     .join(" "),
-    // });
     if (fromIO !== null) {
       return Buffer.concat([fromBuf, fromIO]);
     }
@@ -140,12 +120,6 @@ export class Stream {
 
   private updateState(bytes: Buffer): void {
     if (this.#capture !== null) {
-      log({
-        event: "append to capture",
-        before: to_s(this.#capture),
-        append: to_s(bytes),
-        after: to_s(Buffer.concat([this.#capture, bytes])),
-      });
       this.#capture = Buffer.concat([this.#capture, bytes]);
     }
     this.offset += bytes.byteLength;

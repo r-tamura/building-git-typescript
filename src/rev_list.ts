@@ -227,7 +227,7 @@ export class RevList {
   }
 
   private async markTreeUninteresting(treeOid: OID) {
-    const entry = await this.#repo.database.loadTreeEntry(treeOid);
+    const entry = this.#repo.database.treeEntry(treeOid);
     asserts(entry !== null);
     return this.traverseTree(entry, (object) =>
       this.mark(object.oid, "uninteresting")

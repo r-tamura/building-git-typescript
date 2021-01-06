@@ -1,10 +1,10 @@
-import { OID } from "../types";
-import { Base } from "./base";
-import { Revision, InvalidObject } from "../revision";
-import { asserts } from "../util";
-import { shallowEqual } from "../util/object";
-import { Migration, Conflict } from "../repository";
 import { SymRef } from "../refs";
+import { Conflict, Migration } from "../repository";
+import { InvalidObject, Revision } from "../revision";
+import { OID } from "../types";
+import { asserts, BaseError } from "../util";
+import { shallowEqual } from "../util/object";
+import { Base } from "./base";
 
 const DETACHED_HEAD_MESSAGE = `You are in 'detached HEAD' state. You can look around, make experimental
 changes and commit them, and you can discard any commits you make in this
@@ -17,7 +17,7 @@ do so (now or later) by using the branch command. Example:
 `;
 export class Checkout extends Base {
   #target!: string;
-  #currentOid!: OID;
+  #currentOid: OID | null = null;
   #targetOid!: OID;
   #currentRef!: SymRef;
   #newRef!: SymRef;
@@ -26,28 +26,30 @@ export class Checkout extends Base {
 
     this.#currentRef = await this.repo.refs.currentRef();
     const currendOid = await this.#currentRef.readOid();
-    asserts(currendOid !== null, "現在指しているrefのOID");
     this.#currentOid = currendOid;
 
     const oidOrNull = await this.repo.refs.readHead();
-    asserts(oidOrNull !== null, "HEADが存在する");
     this.#currentOid = oidOrNull;
 
     const revision = new Revision(this.repo, this.#target);
     try {
       this.#targetOid = await revision.resolve("commit");
-    } catch (e) {
-      switch (e.constructor) {
-        case InvalidObject:
-          this.handleInvalidObject(revision, e);
-        default:
-          throw e;
+    } catch (e: unknown) {
+      if (e instanceof BaseError) {
+        switch (e.constructor) {
+          case InvalidObject:
+            this.handleInvalidObject(revision, e);
+            break;
+        }
       }
+      throw e;
     }
 
     await this.repo.index.loadForUpdate();
-
-    const treeDiff = await this.repo.database.treeDiff(this.#currentOid, this.#targetOid);
+    const treeDiff = await this.repo.database.treeDiff(
+      this.#currentOid,
+      this.#targetOid
+    );
     const migration = this.repo.migration(treeDiff);
     try {
       await migration.applyChanges();
@@ -89,7 +91,10 @@ export class Checkout extends Base {
 
   private async printPreviousHead() {
     if (this.#currentRef.head() && this.#currentOid === this.#targetOid) {
-      await this.printHeadPosition("Previous HEAD position was", this.#currentOid);
+      await this.printHeadPosition(
+        "Previous HEAD position was",
+        this.#currentOid
+      );
     }
   }
 

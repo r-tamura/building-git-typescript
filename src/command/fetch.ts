@@ -188,14 +188,16 @@ export class Fetch extends Base<Options> implements remote_client.RemoteClient {
     const refNames = [source, target] as const;
     const ffError = await fast_forward.fastForwardError(this, oldOid, newOid);
 
+    let error = undefined; // else節を通過しなければundefined
     if (this.options["force"] || forced || ffError === undefined) {
       await this.repo.refs.updateRef(target, newOid);
     } else {
-      this.#errors[target] = ffError;
+      error = this.#errors[target] = ffError;
     }
 
     remote_client.reportRefUpdate(this, {
       refNames,
+      error,
       oldOid,
       newOid,
       isFF: ffError === undefined,

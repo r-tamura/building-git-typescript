@@ -99,7 +99,10 @@ export class Database {
    */
   async loadTreeEntry(oid: OID, pathname: Nullable<Pathname> = null) {
     const commit = await this.load(oid);
-    asserts(commit.type === "commit", "commitのOIDである必要があります");
+    asserts(
+      commit.type === "commit",
+      `commitのOIDである必要があります: '${commit.type}'`
+    );
     const root = new Entry(commit.tree, Tree.TREE_MODE);
 
     if (!pathname) {
@@ -185,10 +188,6 @@ export class Database {
   }
 
   async readObject(oid: OID): Promise<CompleteGitObject> {
-    // const objPath = this.objectPath(oid);
-    // const compressed = await this.#fs.readFile(objPath);
-    // const data = await this.#zlib.inflate(compressed);
-
     const { type, body } = await this.readObjectHeader(oid);
     const object = TYPES[type].parse(body);
     object.oid = oid;

@@ -1,10 +1,9 @@
 import * as os from "os";
 import * as path from "path";
-import { FileService, defaultFs, exists, directory } from "./services";
-import { OID } from "./types";
-import { BaseError, find, ascend, asserts } from "./util";
 import { Lockfile, MissingParent } from "./lockfile";
-import { Pathname, Nullable } from "./types";
+import { defaultFs, directory, exists, FileService } from "./services";
+import { Nullable, OID, Pathname } from "./types";
+import { ascend, asserts, BaseError, find } from "./util";
 
 export type Environment = {
   fs?: FileService;

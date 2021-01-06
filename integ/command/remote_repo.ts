@@ -10,7 +10,7 @@ export class RemoteRepo extends TestUtil {
     return path.resolve(
       __dirname,
       "..",
-      `test-repo-${this.name}`
+      `test-repo-${this.suffix}`
       // path.basename(__filename)
     );
   }

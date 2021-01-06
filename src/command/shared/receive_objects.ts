@@ -15,41 +15,4 @@ export async function receiveObjects(cmd: ReceiveObjects, prefix = "") {
     await cmd.repo.database.store(record);
   }
   await stream.verifyChecksum();
-
-  // const readable = {
-  //   read: async (size: number) => {
-  //     const input = cmd.conn?.input;
-  //     if (input === undefined) {
-  //       return Promise.reject();
-  //     }
-  //     let buf = input.read(size) as Buffer | null;
-  //     if (buf !== null && buf.byteLength < size) {
-  //       console.log("last?");
-  //       return buf;
-  //     }
-
-  //     let count = 0;
-  //     while (buf === null && count < 10) {
-  //       console.log("waiting");
-  //       await new Promise((resolve) => {
-  //         input.once("readable", () => {
-  //           console.log("readable!");
-  //           resolve(true);
-  //         });
-  //       });
-  //       buf = input.read(size) as Buffer | null;
-  //       count++;
-  //     }
-  //     return buf;
-  //   },
-  // } as const;
-
-  // while (cmd.conn.input.readable) {
-  //   console.log(await readable.read(5));
-  //   await new Promise((resolve) => {
-  //     nextTick(() => resolve(null));
-  //   });
-  // }
-
-  // return;
 }

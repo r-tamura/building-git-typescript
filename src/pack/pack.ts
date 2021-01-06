@@ -35,7 +35,7 @@ export class Record {
     return new this(type, data);
   }
 
-  toString(encoding: Parameters<Buffer["toString"]>[0] = "utf8") {
+  toString(encoding: Parameters<Buffer["toString"]>[0] = "binary") {
     return this.data.toString(encoding);
   }
 }

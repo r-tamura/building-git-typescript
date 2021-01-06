@@ -4,7 +4,6 @@ import * as readline from "readline";
 import { Readable } from "stream";
 import { promisify } from "util";
 import * as zlib from "zlib";
-import { log } from "../debug";
 import { Pathname } from "../types";
 import { BaseError } from "../util";
 const fs = CallbackFs.promises;
@@ -243,15 +242,19 @@ export async function readChunk(
     });
     await readable(stream);
     raw = read(stream, size);
-    log({
-      process: process.pid,
-      chunk:
-        raw === null
-          ? "null"
-          : [...raw].map((b) => b.toString(16).padStart(2, "0")).join(" "),
-    });
+    // log({
+    //   process: process.pid,
+    //   title: "readChunk",
+    //   expectedSize: size,
+    //   actualSize: raw?.byteLength ?? 0,
+    //   block,
+    //   chunk:
+    //     raw === null
+    //       ? "null"
+    //       : [...raw].map((b) => b.toString(16).padStart(2, "0")).join(" "),
+    // });
 
-    if (block === false) {
+    if (raw === null && block === false) {
       raw = (stream.read() as Buffer | null) ?? Buffer.alloc(0);
       break;
     }

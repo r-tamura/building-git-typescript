@@ -1,5 +1,4 @@
 import * as crypto from "crypto";
-import * as fs from "fs";
 import { constants } from "zlib";
 import * as database from "../database";
 import { RevList } from "../rev_list";
@@ -10,12 +9,6 @@ import { BLOB, COMMIT, GitObjectType, SIGNATURE, TREE, VERSION } from "./pack";
 
 const to_s = (buf: Buffer | Uint8Array) =>
   [...buf].map((b) => b.toString(16).padStart(2, "0")).join(" ");
-
-function log(message: string) {
-  const out =
-    "/Users/r-tamura/Documents/GitHub/building-git-typescript/__upload-pack.log";
-  fs.writeFileSync(out, message, { flag: "a" });
-}
 
 interface Options {
   readonly compressLevel?: number;
@@ -54,15 +47,7 @@ export class Writer {
     await this.writeEntries();
 
     const digest = this.#digest.digest();
-    log(
-      JSON.stringify(
-        {
-          digest: to_s(digest),
-        },
-        null,
-        2
-      ) + "\n"
-    );
+
     this.#output.write(digest);
     this.#output.end();
   }
@@ -117,20 +102,6 @@ export class Writer {
       level: this.#compressLevel,
     });
     this.write(header);
-    log(
-      JSON.stringify(
-        {
-          entry: { oid: entry.oid, type: entry.type },
-          header: to_s(header),
-          decompressedBytes: to_s(object.data),
-          decompressedSize: object.data.byteLength,
-          compressed: to_s(compressed),
-          compressedSize: compressed.byteLength,
-        },
-        null,
-        2
-      ) + "\n"
-    );
     this.write(compressed);
   }
 

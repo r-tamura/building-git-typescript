@@ -1,4 +1,3 @@
-import * as debug from "../debug";
 import * as remotes from "../remotes/protocol";
 import { Environment, OID } from "../types";
 import { BaseError } from "../util";
@@ -6,18 +5,6 @@ import { Base } from "./base";
 import * as remote_agent from "./shared/remote_agent";
 import { checkConnected } from "./shared/remote_common";
 import * as send_objects from "./shared/send_objects";
-
-function log(message: string) {
-  // require("fs").writeFileSync(
-  //   `/Users/r-tamura/Documents/GitHub/building-git-typescript/__uploadpack.log`,
-  //   message + "\n",
-  //   {
-  //     flag: "a",
-  //   }
-  // );
-  // console.warn({ remote: message });
-}
-
 export class UploadPack extends Base implements remote_agent.RemoteAgent {
   /** クライアントが必要としているRefセット */
   #wanted: Set<OID> = new Set();
@@ -36,22 +23,10 @@ export class UploadPack extends Base implements remote_agent.RemoteAgent {
 
   async run(): Promise<void> {
     remote_agent.acceptClient(this, { name: "upload-pack" });
-    // log("-- sendReferences --");
     await remote_agent.sendReferences(this, this.#env);
-    // log("-- wantlist --");
     await this.recvWantList();
-    // log("-- havelist --");
     await this.recvHaveList();
-    log("-- send objects --");
     await this.sendObjects();
-    log("-- waiting exit --");
-    await new Promise((resolve) => {
-      setTimeout(() => resolve(null), 2000);
-    });
-    log("-- exit --");
-
-    debug.log({ message: "-- exit --" });
-
     this.exit(0);
   }
 
@@ -83,7 +58,6 @@ export class UploadPack extends Base implements remote_agent.RemoteAgent {
       }
       const match = pattern.exec(line);
       if (match === null) {
-        log("couldn't match");
         throw new BaseError("pattern should not be null");
       }
       result.add(match[1]);

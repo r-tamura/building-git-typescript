@@ -83,11 +83,13 @@ export class Reader {
         body = await this.#zlib.inflate(bodyDeflated);
         finished = true;
       } catch (e: unknown) {
-        if (isNodeError(e) && e.code === "Z_BUF_ERROR") {
-          // not enough data to inflate
-          continue;
+        if (isNodeError(e)) {
+          switch (e.code) {
+            // not enough data to inflate
+            case "Z_BUF_ERROR":
+              continue;
+          }
         }
-        console.error(e, bodyDeflated);
         throw e;
       }
     }

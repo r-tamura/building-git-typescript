@@ -11,8 +11,6 @@ import { RemoteRepo } from "./remote_repo";
 
 const t = T.create("fetch");
 
-jest.setTimeout(10000);
-
 describe("fetch", () => {
   let remote: RemoteRepo;
 
@@ -29,7 +27,7 @@ describe("fetch", () => {
     repo: Repository,
     revs: string[],
     options: Partial<revlist.Options> = {}
-  ) {
+  ): Promise<string[]> {
     const list = await revlist.RevList.fromRevs(repo, revs, options);
     const _commits: string[] = [];
     for await (const commit of list) {
@@ -56,15 +54,6 @@ describe("fetch", () => {
   }
 
   describe("with a single branch in the remote repository", () => {
-    beforeEach(async () => {
-      fsCb.truncateSync(
-        "/Users/r-tamura/Documents/GitHub/building-git-typescript/__upload-pack.log"
-      );
-      fsCb.truncateSync(
-        "/Users/r-tamura/Documents/GitHub/building-git-typescript/__fetch.log"
-      );
-    });
-
     beforeEach(async () => {
       remote = new RemoteRepo("fetch-remote");
       await remote.kitCmd("init", remote.repoPath);
@@ -154,6 +143,148 @@ describe("fetch", () => {
         await commits(remote.repo, ["master"]),
         await commits(t.repo, ["origin/master"])
       );
+    });
+
+    it("retrieves enough information to check out the remote's commits", async () => {
+      // Act
+      await t.kitCmd("fetch");
+
+      // Assert
+      await t.kitCmd("checkout", "origin/master^");
+      await t.assertWorkspace([
+        ["dir/two.txt", "dir/two"],
+        ["one.txt", "one"],
+      ]);
+
+      await t.kitCmd("checkout", "origin/master");
+      await t.assertWorkspace([
+        ["dir/two.txt", "dir/two"],
+        ["one.txt", "one"],
+        ["three.txt", "three"],
+      ]);
+
+      await t.kitCmd("checkout", "origin/master^^");
+      await t.assertWorkspace([["one.txt", "one"]]);
+    });
+
+    describe.skip("when an unpack limit is set", () => {
+      beforeEach(async () => {
+        await t.kitCmd("config", 'fetch.unpackLimit", "5');
+      });
+
+      it("keeps the pack on disk with an index", async () => {
+        await t.kitCmd("fetch");
+        await assertObjectCount(2);
+      });
+
+      it("can load commits from the stored pack", async () => {
+        await t.kitCmd("fetch");
+        assert.deepEqual(
+          await commits(remote.repo, ["master"]),
+          await commits(t.repo, ["origin/master"])
+        );
+      });
+    });
+
+    describe("when the remote ref is ahead of its local counterpart", () => {
+      let localHead: string;
+      let remoteHead: string;
+      beforeEach(async () => {
+        await t.kitCmd("fetch");
+
+        await remote.writeFile("one.txt", "changed");
+        await remote.kitCmd("add", ".");
+        await remote.commit("changed");
+
+        localHead = (await commits(t.repo, ["origin/master"]))[0];
+        remoteHead = (await commits(remote.repo, ["master"]))[0];
+      });
+
+      it("displays a fast-forward on the change branch", async () => {
+        await t.kitCmd("fetch");
+        t.assertStatus(0);
+
+        t.assertError(stripIndent`
+        From file://${remote.repoPath}
+        \  ${localHead}..${remoteHead} master -> origin/master
+        `);
+      });
+    });
+
+    describe("when the remote ref is diverged from its local counterpart", () => {
+      let localHead: string;
+      let remoteHead: string;
+      beforeEach(async () => {
+        await t.kitCmd("fetch");
+
+        await remote.writeFile("one.txt", "changed");
+        await remote.kitCmd("add", ".");
+        await remote.kitCmd("commit", "--amend");
+
+        localHead = (await commits(t.repo, ["origin/master"]))[0];
+        remoteHead = (await commits(remote.repo, ["master"]))[0];
+      });
+
+      it("displays a forced update on the changed branch", async () => {
+        await t.kitCmd("fetch");
+        t.assertStatus(0);
+
+        t.assertError(stripIndent`
+        From file://${remote.repoPath}
+        \+ ${localHead}...${remoteHead} master -> origin/master (forced update)
+        `);
+      });
+
+      it("displays a forced update if requested", async () => {
+        await t.kitCmd(
+          "fetch",
+          "-f",
+          "origin",
+          "refs/heads/*:refs/remotes/origin/*"
+        );
+        t.assertStatus(0);
+
+        t.assertError(stripIndent`
+        From file://${remote.repoPath}
+        \+ ${localHead}...${remoteHead} master -> origin/master (forced update)
+        `);
+      });
+
+      it("updates the local remotes/origin/* ref", async () => {
+        await t.kitCmd("fetch");
+
+        assert.notEqual(remoteHead, localHead);
+        assert.equal(remoteHead, (await commits(t.repo, ["origin/master"]))[0]);
+      });
+
+      describe("if a fetch is not forced", () => {
+        beforeEach(async () => {
+          await t.kitCmd(
+            "fetch",
+            "origin",
+            "refs/heads/*:refs/remotes/origin/*"
+          );
+        });
+
+        it("exits with an error", () => {
+          t.assertStatus(1);
+        });
+
+        it("displays a rejection", () => {
+          t.assertError(stripIndent`
+          From file://${remote.repoPath}
+          \! [rejected] master -> origin/master (non-fast-forward)
+          `);
+        });
+
+        it("does not update the local remotes/origin/* ref", async () => {
+          assert.notEqual(remoteHead, localHead);
+          assert.equal(
+            localHead,
+            (await commits(t.repo, ["origin/master"]))[0]
+          );
+        });
+      });
     });
   });
 });
