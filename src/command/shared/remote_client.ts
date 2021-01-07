@@ -31,16 +31,9 @@ export function startAgent(
   { name, program, url, capabilities = [] }: StartAgentParams
 ): void {
   const [command, ...args] = buildAgentCommand(program, url);
-  const { stdin, stdout } = child_process
-    .spawn(command, args, { stdio: ["pipe", "pipe", "inherit"] })
-    .on("error", (err) => {
-      if (err) {
-        console.error("error");
-      }
-    })
-    .on("exit", (code: string) => {
-      console.log({ childExitCode: code });
-    });
+  const { stdin, stdout } = child_process.spawn(command, args, {
+    stdio: ["pipe", "pipe", "inherit"],
+  });
 
   cmd.conn = new remotes.Protocol(name, stdout, stdin, capabilities);
 }

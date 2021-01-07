@@ -1,6 +1,7 @@
 import * as arg from "arg";
 import * as pack from "../pack";
 import * as remotes from "../remotes";
+import { SourceRef } from "../remotes";
 import * as rev_list from "../rev_list";
 import { OID } from "../types";
 import { asserts, BaseError } from "../util";
@@ -127,6 +128,7 @@ export class Fetch extends Base<Options> implements remote_client.RemoteClient {
     for (const [target, [source, _]] of Object.entries(this.#targets)) {
       const localOid = await this.repo.refs.readRef(target);
 
+      this.assertsSourceRef(source);
       const remoteOid = this.remoteRefs[source];
       if (localOid === remoteOid) {
         continue;
@@ -184,6 +186,8 @@ export class Fetch extends Base<Options> implements remote_client.RemoteClient {
     oldOid: OID | undefined
   ) {
     const [source, forced] = this.#targets[target];
+    this.assertsSourceRef(source);
+
     const newOid = this.remoteRefs[source];
     const refNames = [source, target] as const;
     const ffError = await fast_forward.fastForwardError(this, oldOid, newOid);
@@ -202,5 +206,14 @@ export class Fetch extends Base<Options> implements remote_client.RemoteClient {
       newOid,
       isFF: ffError === undefined,
     });
+  }
+
+  private assertsSourceRef(
+    ref: SourceRef | undefined
+  ): asserts ref is SourceRef {
+    asserts(
+      ref !== undefined,
+      "'source'が空文字となるのはpushコマンドでremoteブランチを削除する場合"
+    );
   }
 }

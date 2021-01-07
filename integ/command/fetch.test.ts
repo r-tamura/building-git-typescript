@@ -105,17 +105,26 @@ describe("fetch", () => {
       );
     });
 
-    it.skip("accepts short-hand refs in the fetch refspec", async () => {
+    it("accepts short-hand refs in the fetch refspec", async () => {
       await t.kitCmd("fetch", "origin", "master:topic");
 
       assert.equal(
         await remote.repo.refs.readRef("refs/heads/master"),
-        await t.repo.refs.readRef("refs/remotes/topic")
+        await t.repo.refs.readRef("refs/heads/topic")
       );
     });
 
-    it.skip("accepts short-hand refs in the fetch refspec", async () => {
+    it("accepts short-hand 'head' refs in the fetch refspec", async () => {
       await t.kitCmd("fetch", "origin", "master:heads/topic");
+
+      assert.equal(
+        await remote.repo.refs.readRef("refs/heads/master"),
+        await t.repo.refs.readRef("refs/heads/topic")
+      );
+    });
+
+    it("accepts short-hand 'head' refs in the fetch refspec", async () => {
+      await t.kitCmd("fetch", "origin", "master:remotes/topic");
 
       assert.equal(
         await remote.repo.refs.readRef("refs/heads/master"),

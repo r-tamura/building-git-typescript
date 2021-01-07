@@ -1,6 +1,6 @@
-import { OID } from "./types";
 import { Repository } from "./repository";
-import { asserts, times, BaseError } from "./util";
+import { OID } from "./types";
+import { asserts, BaseError, times } from "./util";
 
 const INVALID_BRANCH_NAME = [
   /^\./, // Unixの隠しファイルパスの形式
@@ -56,6 +56,10 @@ export class Revision {
     }
 
     return null;
+  }
+
+  static validRef(revision: string) {
+    return !INVALID_BRANCH_NAME.some((regex) => regex.test(revision));
   }
 
   async commitParent(oid: OID | null, n = 1) {
@@ -129,7 +133,9 @@ export class Revision {
       const info = `  ${short} ${object.type}`;
 
       if (object.type === "commit") {
-        objects.push(`${info} ${object.author.shortDate()} - ${object.titleLine()}`);
+        objects.push(
+          `${info} ${object.author.shortDate()} - ${object.titleLine()}`
+        );
       } else {
         objects.push(info);
       }
@@ -138,10 +144,6 @@ export class Revision {
     const message = `short SHA1 ${name} is ambiguous`;
     const hint = ["The candidates are:"].concat(objects);
     this.errors.push(new HintedError(message, hint));
-  }
-
-  private static validRef(revision: string) {
-    return !INVALID_BRANCH_NAME.some((regex) => regex.test(revision));
   }
 }
 

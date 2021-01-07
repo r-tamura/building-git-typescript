@@ -242,17 +242,6 @@ export async function readChunk(
     });
     await readable(stream);
     raw = read(stream, size);
-    // log({
-    //   process: process.pid,
-    //   title: "readChunk",
-    //   expectedSize: size,
-    //   actualSize: raw?.byteLength ?? 0,
-    //   block,
-    //   chunk:
-    //     raw === null
-    //       ? "null"
-    //       : [...raw].map((b) => b.toString(16).padStart(2, "0")).join(" "),
-    // });
 
     if (raw === null && block === false) {
       raw = (stream.read() as Buffer | null) ?? Buffer.alloc(0);
