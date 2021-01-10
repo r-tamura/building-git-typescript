@@ -86,7 +86,9 @@ export class Fetch extends Base<Options> implements remote_client.RemoteClient {
         this.options["force"] = true;
       }),
       "-f": "--force",
-      "--upload-pack": String,
+      "--upload-pack": (uploader: string) => {
+        this.options["uploader"] = uploader;
+      },
     };
   }
 
@@ -169,7 +171,7 @@ export class Fetch extends Base<Options> implements remote_client.RemoteClient {
   }
 
   private async recvObjects() {
-    await receive_objects.receiveObjects(this, pack.SIGNATURE);
+    await receive_objects.receivePackedObjects(this, pack.SIGNATURE);
   }
 
   private async updateRemoteRefs() {

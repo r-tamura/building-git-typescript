@@ -18,17 +18,17 @@ interface AcceptClientParams {
   /**
    * @default []
    */
-  capbilities?: string[];
+  capabilities?: string[];
 }
 
 export function acceptClient(
   cmd: RemoteAgent,
-  { name, capbilities = [] }: AcceptClientParams
+  { name, capabilities = [] }: AcceptClientParams
 ) {
-  cmd.conn = new remotes.Protocol(name, cmd.stdin, cmd.stdout, capbilities);
+  cmd.conn = new remotes.Protocol(name, cmd.stdin, cmd.stdout, capabilities);
 }
 
-const ZERO_OID = "0".repeat(40);
+export const ZERO_OID = "0".repeat(40);
 
 export async function sendReferences(cmd: RemoteAgent, env: RepositoryEnv) {
   checkConnected(cmd.conn);

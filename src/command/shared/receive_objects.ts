@@ -2,9 +2,12 @@ import * as pack from "../../pack";
 import { GitCommand } from "../base";
 import { checkConnected, Connectable } from "./remote_common";
 
-interface ReceiveObjects extends GitCommand, Connectable {}
+interface ReceivePackedObjects extends GitCommand, Connectable {}
 
-export async function receiveObjects(cmd: ReceiveObjects, prefix = "") {
+export async function receivePackedObjects(
+  cmd: ReceivePackedObjects,
+  prefix = ""
+) {
   checkConnected(cmd.conn);
   const stream = new pack.Stream(cmd.conn.input, prefix);
   const reader = new pack.Reader(stream);

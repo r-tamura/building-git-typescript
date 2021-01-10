@@ -30,11 +30,27 @@ export class Remote {
     return url;
   }
 
+  async receiver(): Promise<string> {
+    return (await this.#config.get([
+      "remote",
+      this.#name,
+      "receivepack",
+    ])) as string;
+  }
+
   async fetchSpecs(): Promise<string[]> {
     return (await this.#config.getAll([
       "remote",
       this.#name,
       "fetch",
+    ])) as string[];
+  }
+
+  async pushSpecs(): Promise<string[]> {
+    return (await this.#config.getAll([
+      "remote",
+      this.#name,
+      "push",
     ])) as string[];
   }
 

@@ -10,7 +10,7 @@ import { FastForwardError } from "./fast_forward";
 import { checkConnected, Connectable } from "./remote_common";
 
 const REF_LINE = /^([0-9a-f]+) (.*)$/;
-const ZERO_OID = "0".repeat(40);
+export const ZERO_OID = "0".repeat(40);
 
 class NotSupportedProtocolError extends BaseError {}
 export interface RemoteClient extends GitCommand, Connectable {
