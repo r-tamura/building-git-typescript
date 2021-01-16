@@ -67,14 +67,10 @@ export class Fetch extends Base<Options> implements remote_client.RemoteClient {
       program: this.#uploader,
       url: this.#fetchUrl,
     });
-    // console.log({ remote: "-- recv references --" });
     await remote_client.recvReferences(this);
-    // console.log({ remote: "-- sendWantList --" });
     await this.sendWantList();
-    // console.log({ remote: "-- sendHaveList --" });
     await this.sendHaveList();
     await this.recvObjects();
-    // console.log({ client: "-- updateRefs --" });
     await this.updateRemoteRefs();
 
     this.exit(array.isempty(Object.keys(this.#errors)) ? 0 : 1);

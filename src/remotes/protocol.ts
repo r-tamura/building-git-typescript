@@ -10,13 +10,13 @@ const FETCH_SEP = " ";
 const OTHERS_SEP = "\0";
 
 function log(command: string, ...messages: (string | number | Buffer)[]) {
-  if (command === "fetch") {
-    // console.log({ client: messages });
-  } else if (command === "upload-pack") {
-    // console.warn({ remote: messages });
-  } else {
-    // console.warn(`${command} is not supported`);
-  }
+  // if (command === "fetch" || command === "push") {
+  //   console.log({ client: messages });
+  // } else if (command === "upload-pack" || command === "receive-pack") {
+  //   console.warn({ remote: messages });
+  // } else {
+  //   console.warn(`${command} is not supported`);
+  // }
 }
 
 /**
@@ -52,22 +52,21 @@ export class Protocol {
       this.output.write(FLUSH_PACKET);
       return;
     }
+    log(this.#command, line);
 
     line = this.appendCaps(line);
     const LINE_SEP_SIZE = 1; // メッセージののバイト数
     const size = HEAD_SIZE + Buffer.from(line).length + LINE_SEP_SIZE;
     this.output.write(size.toString(16).padStart(4, "0"));
     log(this.#command, "send", line);
-    this.output.write(line);
-    this.output.write("\n");
+    this.output.write(line + "\n");
+    // this.output.write("\n");
   }
 
   async recvPacket(): Promise<string | null> {
     const rawHead = await readChunk(this.input, HEAD_SIZE);
     const head = rawHead.toString("binary");
     if (!/[0-9a-f]{4}/.test(head)) {
-      if (this.#command === "upload-pack")
-        console.warn({ command: this.#command, rawHead });
       log(this.#command, "recv", "head", head);
       return head;
     }
@@ -121,7 +120,7 @@ export class Protocol {
     const [sep, n] =
       this.#command === "upload-pack" ? [FETCH_SEP, 3] : [OTHERS_SEP, 2];
     const parts = line.split(sep);
-    const caps = parts.length >= n ? parts.slice(n).join(" ") : "";
+    const caps = parts.length >= n ? parts.slice(n - 1).join(" ") : "";
     this.#capsRemote = caps.split(/ +/);
     return parts.slice(0, n - 1).join(" ");
   }

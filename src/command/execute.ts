@@ -12,6 +12,8 @@ import { Fetch } from "./fetch";
 import { Init } from "./init";
 import { Log } from "./log";
 import { Merge } from "./merge";
+import { Push } from "./push";
+import { ReceivePack } from "./receive_pack";
 import { Remote } from "./remote";
 import { Reset } from "./reset";
 import { Revert } from "./revert";
@@ -43,6 +45,8 @@ const COMMANDS: CommandMap = {
   remote: Remote,
   fetch: Fetch,
   "upload-pack": UploadPack,
+  push: Push,
+  "receive-pack": ReceivePack,
 } as const;
 
 export async function execute(args: string[], env: Environment) {

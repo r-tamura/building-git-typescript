@@ -4,10 +4,16 @@ import { Lockfile, MissingParent } from "./lockfile";
 import { defaultFs, directory, exists, FileService } from "./services";
 import { Nullable, OID, Pathname } from "./types";
 import { ascend, asserts, BaseError, find } from "./util";
+import { nullify } from "./util/logic";
 
-export type Environment = {
+export interface Environment {
   fs?: FileService;
-};
+}
+interface UpdateReFileOptions {
+  retry?: Nullable<number>;
+  /** lockfile作成時に実行される関数 */
+  onLockfileCreated?: () => Promise<void>;
+}
 
 const INVALID_BRANCH_NAME = [
   /^\./, // Unixの隠しファイルパスの形式
@@ -66,6 +72,7 @@ export interface Ref {
   oid: OID;
   readOid(): Promise<string>;
 }
+
 export class Ref {
   type = "ref" as const;
   constructor(public oid: OID) {}
@@ -87,6 +94,7 @@ export const REMOTES_DIR = path.join(REFS_DIR, "remotes");
 
 export class LockDenied extends BaseError {}
 export class InvalidBranch extends BaseError {}
+export class StaleValue extends BaseError {}
 export class Refs {
   #pathname: Pathname;
   #refspath: Pathname;
@@ -194,23 +202,55 @@ export class Refs {
   }
 
   /**
-   * 指定された名前でRefをファイルに書き込みます
+   * 指定された名前のrefのオブジェクトIDを更新します
    * @param name ref名
-   * @param oid
+   * @param oid オブジェクトID
    */
-  async updateRef(name: string, oid: Nullable<OID>) {
-    return this.updateRefFile(path.join(this.#pathname, name), oid);
+  async updateRef(name: string, oid: Nullable<OID>): Promise<void> {
+    return this.updateRefFile(
+      path.join(this.#pathname, name),
+      oid === null ? undefined : oid
+    );
+  }
+
+  /**
+   * ファイルシステム上にあるOIDが変更前OIDと一致した場合、新しいOIDへアトミックに変更します
+   *
+   * @param name ref名
+   * @param oldOid
+   * @param newOid
+   */
+  async compareAndSwap(
+    name: string,
+    oldOid: OID | undefined,
+    newOid: OID | undefined
+  ): Promise<void> {
+    const refpath = path.join(this.#pathname, name);
+    await this.updateRefFile(refpath, newOid, {
+      onLockfileCreated: async () => {
+        const currentOid = await this.readSymRef(refpath);
+        if (nullify(oldOid) !== currentOid) {
+          throw new StaleValue(`value of ${name} changed since last read`);
+        }
+      },
+    });
   }
 
   private async updateRefFile(
     pathname: Pathname,
-    oid: Nullable<OID>,
-    retry: Nullable<number> = null
-  ) {
+    oid: OID | undefined,
+    { retry = null, onLockfileCreated }: UpdateReFileOptions = {}
+  ): Promise<void> {
+    let lockfile;
     try {
-      const lockfile = new Lockfile(pathname, { fs: this.#fs });
+      lockfile = new Lockfile(pathname, { fs: this.#fs });
       await lockfile.holdForUpdate();
-      if (oid) {
+
+      if (onLockfileCreated) {
+        await onLockfileCreated();
+      }
+
+      if (oid !== undefined) {
         await this.writeLockfile(lockfile, oid);
       } else {
         await this.#fs.unlink(pathname).catch((e: NodeJS.ErrnoException) => {
@@ -226,12 +266,16 @@ export class Refs {
         case MissingParent:
           // リトライ回数: 1
           if (retry === 0) {
+            await lockfile?.rollback();
             throw e;
           }
           await this.#fs.mkdir(path.dirname(pathname), { recursive: true });
-          await this.updateRefFile(pathname, oid, retry ? retry - 1 : 1);
+          await this.updateRefFile(pathname, oid, {
+            retry: retry ? retry - 1 : 1,
+          });
           break;
         default:
+          await lockfile?.rollback();
           throw e;
       }
     }
@@ -340,8 +384,10 @@ export class Refs {
   /**
    * HEADを含めた全てのrefのリストを取得します
    */
-  async listAllRefs() {
-    return [symref(this, HEAD), ...(await this.listRefs(this.#refspath))];
+  async listAllRefs(): Promise<SymRef[]> {
+    const head = symref(this, HEAD);
+    const result = [head, ...(await this.listRefs(this.#refspath))];
+    return result;
   }
 
   private get headPath() {

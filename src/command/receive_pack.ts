@@ -1,6 +1,6 @@
 import * as remotes from "../remotes";
 import { Environment, OID } from "../types";
-import { BaseError } from "../util";
+import { asserts, BaseError } from "../util";
 import { Base } from "./base";
 import * as receive_objects from "./shared/receive_objects";
 import * as remote_agent from "./shared/remote_agent";
@@ -23,19 +23,25 @@ export class ReceivePack extends Base {
   }
 
   async run(): Promise<void> {
+    // console.warn({ remote: "--- acceptClient ---" });
     remote_agent.acceptClient(this, {
       name: "receive-pack",
       capabilities: CAPABILITIES,
     });
 
+    // console.warn({ remote: "--- sendReferences ---" });
     await remote_agent.sendReferences(this, this.env);
+    // console.warn({ remote: "--- recvUpdateRequests ---" });
     await this.recvUpdateRequests();
-    await receive_objects.receivePackedObjects(this);
-
+    // console.warn({ remote: "--- recvObjects ---" });
+    await this.recvObjects();
+    // console.warn({ remote: "--- updateRefs ---" });
+    await this.updateRefs();
+    // console.warn({ remote: "--- exit ---" });
     this.exit(0);
   }
 
-  async recvUpdateRequests() {
+  private async recvUpdateRequests() {
     checkConnected(this.conn);
     this.#requests = {};
 
@@ -50,14 +56,14 @@ export class ReceivePack extends Base {
     }
   }
 
-  zeroToUndefined(oid: string) {
+  private zeroToUndefined(oid: string) {
     return oid === remote_agent.ZERO_OID ? undefined : oid;
   }
 
-  async recvObjects() {
+  private async recvObjects() {
     try {
       this.#unpackError = undefined;
-      if (Object.values(this.#requests).some(([_oldOid, newOid]) => newOid)) {
+      if (Object.values(this.#requests).some(([, newOid]) => newOid)) {
         await receive_objects.receivePackedObjects(this);
       }
       this.reportStatus("unpack ok");
@@ -68,7 +74,33 @@ export class ReceivePack extends Base {
     }
   }
 
-  reportStatus(line: string) {
+  private async updateRefs() {
+    for (const [ref, [oldOid, newOid]] of Object.entries(this.#requests)) {
+      await this.updateRef(ref, oldOid, newOid);
+    }
+    this.reportStatus(null);
+  }
+
+  private async updateRef(
+    ref: string,
+    oldOid: OID | undefined,
+    newOid: OID | undefined
+  ): Promise<void> {
+    if (this.#unpackError) {
+      this.reportStatus(`ng ${ref} unpacker error`);
+      return;
+    }
+
+    try {
+      await this.repo.refs.compareAndSwap(ref, oldOid, newOid);
+      this.reportStatus(`ok ${ref}`);
+    } catch (e: unknown) {
+      asserts(e instanceof Error);
+      this.reportStatus(`ng ${ref} ${e.message}`);
+    }
+  }
+
+  private reportStatus(line: string | null): void {
     checkConnected(this.conn);
     if (this.conn.capable("report-status")) {
       this.conn.sendPacket(line);

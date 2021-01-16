@@ -65,6 +65,7 @@ function sshCommand(uri: URL, argv: string[]): string[] {
 export async function recvReferences(cmd: RemoteClient) {
   checkConnected(cmd.conn);
   for await (const line of cmd.conn.recvUntil(null)) {
+    // console.log({ client: { line } });
     if (line === null) {
       continue;
     }
@@ -72,7 +73,7 @@ export async function recvReferences(cmd: RemoteClient) {
     if (match === null) {
       throw new BaseError(`Invalid record: '${line}'`);
     }
-    const [_, oid, ref] = match;
+    const [, oid, ref] = match;
     if (oid === ZERO_OID) {
       continue;
     }
@@ -80,16 +81,16 @@ export async function recvReferences(cmd: RemoteClient) {
   }
 }
 
-type SouceTargetPair = readonly [
-  source: remotes.SourceRef,
-  target: remotes.TargetRef
+export type SouceTargetPair = readonly [
+  source: remotes.SourceRef | undefined,
+  target: remotes.TargetRef | undefined
 ];
 interface ReportRefUpdateParams {
   readonly refNames: SouceTargetPair;
   readonly error?: FastForwardError;
   readonly oldOid?: OID;
   readonly newOid?: OID;
-  readonly isFF: boolean;
+  readonly isFF?: boolean;
 }
 
 export function reportRefUpdate(

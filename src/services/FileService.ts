@@ -230,16 +230,17 @@ export async function readChunk(
         "timeout error: " +
           JSON.stringify({
             buffer: streamBuffer,
+            string: streamBuffer?.toString("binary"),
             bufferSize: streamBuffer?.byteLength ?? 0,
             size,
-          }) || "timeout error"
+          })
       );
     }
 
     /** TODO: 正しいディレイ設定を考える */
-    await new Promise((resolve) => {
-      setTimeout(() => resolve(null), 10);
-    });
+    // await new Promise((resolve) => {
+    //   setTimeout(() => resolve(null), 10);
+    // });
     await readable(stream);
     raw = read(stream, size);
 

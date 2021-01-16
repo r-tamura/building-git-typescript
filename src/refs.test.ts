@@ -1,9 +1,9 @@
-import { Refs, LockDenied, InvalidBranch, Environment, symref } from "./refs";
-import * as Service from "./services/FileService";
 import * as assert from "power-assert";
 import { Lockfile } from "./lockfile";
+import { Environment, InvalidBranch, LockDenied, Refs, symref } from "./refs";
 import { defaultFs, FileService } from "./services";
-import { mockFsError, mockFs } from "./__test__";
+import * as Service from "./services/FileService";
+import { mockFs, mockFsError } from "./__test__";
 
 jest.mock("./lockfile");
 const MockedLockfile = (Lockfile as unknown) as jest.Mock<Partial<Lockfile>>;
@@ -322,6 +322,59 @@ describe("Refs#updateHead", () => {
     // Assert
     it("ファイルにOIDが書き込まれない", () => {
       assert.equal(mockedWrite.mock.calls.length, 0);
+    });
+  });
+});
+
+describe("Refs#updateRef", () => {
+  const testRootPath = "/test/project";
+  const testOId = "123456789abcdeffedcba98765abcdef12345678";
+  const mockedWrite = jest.fn();
+  const mockedCommit = jest.fn();
+  const mockedRollback = jest.fn();
+  describe("refを更新する", () => {
+    beforeAll(async () => {
+      MockedLockfile.mockRestore();
+      MockedLockfile.mockImplementationOnce((pathname: string) => ({
+        holdForUpdate: () => Promise.resolve(),
+        write: mockedWrite,
+        commit: mockedCommit,
+        rollback: mockedRollback,
+      }));
+      const refs = new Refs(testRootPath);
+      await refs.updateRef("/heads/master", testOId);
+    });
+
+    it("refが更新される", async () => {
+      assert.equal(testOId, mockedWrite.mock.calls[0][0]);
+    });
+  });
+
+  describe("refを削除する", () => {
+    const mockedEnv = mockEnv({
+      unlink: jest.fn().mockResolvedValueOnce(null),
+    });
+    beforeAll(async () => {
+      MockedLockfile.mockRestore();
+      MockedLockfile.mockImplementationOnce(() => ({
+        holdForUpdate: jest.fn().mockResolvedValueOnce(null),
+        write: mockedWrite,
+        commit: mockedCommit,
+        rollback: mockedRollback,
+      }));
+      const refs = new Refs(testRootPath, mockedEnv);
+      await refs.updateRef("heads/master", null);
+    });
+
+    it("refが削除される", () => {
+      assert.equal(
+        testRootPath + "/" + "heads/master",
+        (mockedEnv.fs.unlink as jest.Mock).mock.calls[0][0]
+      );
+    });
+
+    it("lockfileが削除される", () => {
+      assert.equal(1, mockedRollback.mock.calls.length);
     });
   });
 });

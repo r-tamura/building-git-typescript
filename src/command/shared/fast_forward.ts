@@ -2,7 +2,7 @@ import * as merge from "../../merge";
 import { OID } from "../../types";
 import * as base from "../base";
 
-export type FastForwardError = "fetch first" | "non-fast-forward";
+export type FastForwardError = string;
 
 export async function fastForwardError(
   cmd: base.GitCommand,

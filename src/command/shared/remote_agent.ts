@@ -30,7 +30,10 @@ export function acceptClient(
 
 export const ZERO_OID = "0".repeat(40);
 
-export async function sendReferences(cmd: RemoteAgent, env: RepositoryEnv) {
+export async function sendReferences(
+  cmd: RemoteAgent,
+  env: RepositoryEnv
+): Promise<void> {
   checkConnected(cmd.conn);
   const refs = await repo(cmd, env).refs.listAllRefs();
   let sent = false;
@@ -39,13 +42,14 @@ export async function sendReferences(cmd: RemoteAgent, env: RepositoryEnv) {
   for (const symref of refs) {
     const oid = await symref.readOid();
     if (oid === null) {
-      return;
+      continue;
     }
     cmd.conn.sendPacket(`${oid.toLowerCase()} ${symref.path}`);
     sent = true;
   }
 
-  if (sent) {
+  if (!sent) {
+    // capabilities^{}はref名の代わり
     cmd.conn.sendPacket(`${ZERO_OID} capabilities^{}`);
   }
   cmd.conn.sendPacket(null);

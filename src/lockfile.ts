@@ -1,9 +1,9 @@
-import { FileService, defaultFs } from "./services";
-import { BaseError } from "./util";
 import { constants, promises } from "fs";
-import { IOHandle } from "./types";
-import { LockDenied } from "./refs";
 import * as path from "path";
+import { LockDenied } from "./refs";
+import { defaultFs, FileService } from "./services";
+import { IOHandle } from "./types";
+import { BaseError } from "./util";
 export type LockfileEnvironment = {
   fs?: FileService;
 };
@@ -42,7 +42,7 @@ export class Lockfile implements IOHandle {
   /**
    * ロックされていない場合はロックを取得し、ロックされているときは例外LockDeniedを発生させる
    */
-  async holdForUpdate() {
+  async holdForUpdate(): Promise<void> {
     const flags = constants.O_RDWR | constants.O_CREAT | constants.O_EXCL;
     try {
       if (this.#lock === null) {
@@ -53,7 +53,9 @@ export class Lockfile implements IOHandle {
       switch (nodeErr.code) {
         case "EEXIST":
           // すでにロックされている場合
-          throw new LockDenied(`Unable to create ${this.#lockPath}: File exists.`);
+          throw new LockDenied(
+            `Unable to create ${this.#lockPath}: File exists.`
+          );
         case "ENOENT":
           throw new MissingParent(nodeErr.message);
         case "EACCES":
@@ -62,7 +64,7 @@ export class Lockfile implements IOHandle {
     }
   }
 
-  async rollback() {
+  async rollback(): Promise<void> {
     this.throwOnStaleLock(this.#lock);
 
     await this.#lock.close();
@@ -70,12 +72,13 @@ export class Lockfile implements IOHandle {
     this.#lock = null;
   }
 
+  write(data: Buffer): Promise<{ bytesWritten: number; buffer: Buffer }>;
+  write(data: string): Promise<{ bytesWritten: number; buffer: string }>;
   async write(data: Buffer | string) {
     this.throwOnStaleLock(this.#lock);
     if (typeof data === "string") {
       const res = await this.#lock.write(data, null, "binary");
-      // Note: コンパイラが { bytesWritten: number, buffer: string } として認識しない
-      return res as any;
+      return res;
     }
     return this.#lock.write(data);
   }

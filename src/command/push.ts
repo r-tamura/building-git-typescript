@@ -2,8 +2,10 @@ import * as arg from "arg";
 import * as remotes from "../remotes";
 import { Revision } from "../revision";
 import { OID } from "../types";
-import { asserts } from "../util";
+import { asserts, BaseError } from "../util";
 import * as array from "../util/array";
+import { nullify } from "../util/logic";
+import * as objectUtil from "../util/object";
 import { Base } from "./base";
 import * as fast_forward from "./shared/fast_forward";
 import * as remote_client from "./shared/remote_client";
@@ -19,10 +21,12 @@ interface Options {
 
 const RECEIVE_PACK = "git-receive-pack";
 const CAPABILITIES = ["report-status"];
+const UNPACK_LINE = /^unpack (.+)/;
+const UPDATE_LINE = /^(ok|ng) (\S+)(.*)$/;
 
 type PushError = [
-  y: [x: undefined, target: remotes.TargetRef],
-  message: string
+  pair: remote_client.SouceTargetPair,
+  message: fast_forward.FastForwardError
 ];
 
 type Update = [
@@ -54,11 +58,18 @@ export class Push extends Base<Options> {
       capabilities: CAPABILITIES,
     });
 
+    // console.log({ client: "--- recvReferences ---" });
     await remote_client.recvReferences(this);
+    // console.log({ client: "--- sendUpdateRequests ---" });
     await this.sendUpdateRequests();
+    // console.log({ client: "--- sendObjects ---" });
     await this.sendObjects();
+    this.printSummary();
+    // console.log({ client: "--- recvReportStatus ---" });
+    await this.recvReportStatus();
 
-    this.exit(0);
+    // console.log({ client: "--- exit ---" });
+    this.exit(array.isempty(this.#errors) ? 0 : 1);
   }
 
   defineSpec(): arg.Spec {
@@ -94,6 +105,7 @@ export class Push extends Base<Options> {
   }
 
   private async sendUpdateRequests() {
+    checkConnected(this.conn);
     this.#updates = {};
     this.#errors = [];
 
@@ -102,10 +114,14 @@ export class Push extends Base<Options> {
       .then((refs) => refs.map((ref) => ref.path))
       .then((paths) => paths.sort());
     const targets = remotes.Refspec.expand(this.#pushSpecs, localRefs);
-
     for (const [target, [source, forced]] of Object.entries(targets)) {
       await this.selectUpdate(target, source, forced);
     }
+
+    for (const [ref, [, , oldOid, newOid]] of Object.entries(this.#updates)) {
+      this.sendUpdate(ref, oldOid, newOid);
+    }
+    this.conn?.sendPacket(null);
   }
 
   private async selectUpdate(
@@ -129,17 +145,12 @@ export class Push extends Base<Options> {
 
     if (this.options["force"] || forced || ffError === undefined) {
       this.#updates[target] = [source, ffError, oldOid, newOid];
+    } else {
+      this.#errors.push([[source, target], ffError]);
     }
-
-    for (const [ref, [_, __, oldOid, newOid]] of Object.entries(
-      this.#updates
-    )) {
-      this.sendUpdate(ref, oldOid, newOid);
-    }
-    this.conn?.sendPacket(null);
   }
 
-  private selectDeletion(target: remotes.TargetRef) {
+  private selectDeletion(target: remotes.TargetRef): void {
     checkConnected(this.conn);
     if (this.conn.capable("delete-refs")) {
       this.#updates[target] = [
@@ -183,5 +194,87 @@ export class Push extends Base<Options> {
     revs.push(...Object.values(this.remoteRefs).map((oid) => `^${oid}`));
 
     await send_objects.sendPackedObjects(this, revs);
+  }
+
+  private printSummary() {
+    if (objectUtil.isempty(this.#updates) && array.isempty(this.#errors)) {
+      this.logger.error("Everything up-to-date");
+    } else {
+      this.logger.error(`To ${this.#pushUrl}`);
+
+      for (const [refNames, error] of this.#errors) {
+        remote_client.reportRefUpdate(this, { refNames, error });
+      }
+    }
+  }
+
+  private async recvReportStatus(): Promise<void> {
+    checkConnected(this.conn);
+    if (
+      !this.conn.capable("report-status") ||
+      objectUtil.isempty(this.#updates)
+    ) {
+      return;
+    }
+    const packet = await this.conn.recvPacket();
+    if (packet === null) {
+      throw new BaseError("this packet should not be null");
+    }
+    const unpackResult = UNPACK_LINE.exec(packet)?.[1];
+    if (unpackResult === undefined) {
+      throw new BaseError("couldn't unpack result");
+    }
+
+    if (unpackResult !== "ok") {
+      this.logger.error(`error: remote unpack failed: ${unpackResult}`);
+    }
+
+    for await (const line of this.conn.recvUntil(null)) {
+      await this.handleStatus(line);
+    }
+  }
+
+  private async handleStatus(line: string | null): Promise<void> {
+    let match;
+    if (line === null || !(match = UPDATE_LINE.exec(line))) {
+      return;
+    }
+
+    const [, status, ref] = match;
+    const error = status === "ok" ? undefined : match[3].trim();
+
+    if (error) {
+      // Note: rubyソースだと@errors.push([ref, error]) if error
+      // ここでのrefはtargetなので、[undefined, ref]が正しい?
+      this.#errors.push([[undefined, ref], error]);
+    }
+    this.reportUpdate(ref, error);
+
+    const targets = remotes.Refspec.expand(this.#fetchSpecs, [ref]);
+
+    for (const [localRef, [remoteRef]] of Object.entries(targets)) {
+      if (remoteRef === undefined) {
+        continue;
+      }
+      const newOid = array.last(this.#updates[remoteRef]);
+      if (!error) {
+        await this.repo.refs.updateRef(localRef, nullify(newOid));
+      }
+    }
+  }
+
+  private reportUpdate(
+    target: remotes.TargetRef,
+    error: string | undefined
+  ): void {
+    const [source, ffError, oldOid, newOid] = this.#updates[target];
+    const refNames = [source, target] as const;
+    remote_client.reportRefUpdate(this, {
+      refNames,
+      error,
+      oldOid,
+      newOid,
+      isFF: ffError === undefined,
+    });
   }
 }
