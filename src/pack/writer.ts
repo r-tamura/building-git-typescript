@@ -1,17 +1,16 @@
 import * as crypto from "crypto";
 import { constants } from "zlib";
 import * as database from "../database";
+import { Progress } from "../progress";
 import { RevList } from "../rev_list";
 import { defaultZlib, Zlib } from "../services";
 import { CompleteCommit, OID } from "../types";
 import * as numbers from "./numbers";
 import { BLOB, COMMIT, GitObjectType, SIGNATURE, TREE, VERSION } from "./pack";
 
-const to_s = (buf: Buffer | Uint8Array) =>
-  [...buf].map((b) => b.toString(16).padStart(2, "0")).join(" ");
-
 interface Options {
   readonly compressLevel?: number;
+  readonly progress?: Progress;
 }
 
 interface Environment {
@@ -28,17 +27,21 @@ export class Writer {
   #digest: crypto.Hash = crypto.createHash("sha1");
   #compressLevel: number;
   #packList: Entry[] = [];
+  /** 書き込んだデータ量(byte)の合計 */
+  #offset = 0;
+  #progress?: Progress;
   #zlib: Zlib;
   constructor(
     output: NodeJS.WritableStream,
     database: database.Database,
-    { compressLevel = constants.Z_DEFAULT_COMPRESSION }: Options = {},
+    { compressLevel = constants.Z_DEFAULT_COMPRESSION, progress }: Options = {},
     env: Environment = {}
   ) {
     this.#output = output;
     this.#database = database;
     this.#compressLevel = compressLevel;
     this.#zlib = env.zlib ?? defaultZlib;
+    this.#progress = progress;
   }
 
   async writeObjects(revlist: RevList) {
@@ -54,9 +57,13 @@ export class Writer {
 
   private async preparePackList(revlist: RevList) {
     this.#packList = [];
+    this.#progress?.start("Counting objects");
+
     for await (const object of revlist.eachWithObjects()) {
       this.addToPackList(object);
+      this.#progress?.tick();
     }
+    this.#progress?.stop();
   }
 
   private addToPackList(object: CompleteCommit | database.Entry) {
@@ -88,9 +95,16 @@ export class Writer {
   }
 
   private async writeEntries() {
+    const count = this.#packList.length;
+
+    if (this.#output === process.stdout) {
+      this.#progress?.start("Writing objects", count);
+    }
+
     for (const entry of this.#packList) {
       await this.writeEntry(entry);
     }
+    this.#progress?.stop();
   }
 
   private async writeEntry(entry: Entry) {
@@ -103,10 +117,12 @@ export class Writer {
     });
     this.write(header);
     this.write(compressed);
+    this.#progress?.tick();
   }
 
   private write(data: Buffer | Uint8Array) {
     this.#output.write(data);
     this.#digest.update(data);
+    this.#offset += data.byteLength;
   }
 }
