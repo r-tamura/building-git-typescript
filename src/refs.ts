@@ -124,7 +124,7 @@ export class Refs {
   }
 
   /**
-   * ソースが指しているrefを取得します。detached状態のときはコミットIDを取得します。
+   * 指定されたソースが指しているrefを取得します。detached状態のときはコミットIDを取得します。
    * ソースが指定されないときはHEADが参照しているrefを取得します。
    */
   async currentRef(source: string = HEAD): Promise<SymRef> {

@@ -21,7 +21,7 @@ describe("push", () => {
     const remoteRepo = new RemoteRepo(name);
     await remoteRepo.kitCmd("init", remoteRepo.repoPath);
     await remoteRepo.kitCmd("config", "receive.denyCurrentBranch", "false");
-    await remoteRepo.kitCmd("config", "receive.denyCurrentCurrent", "false");
+    await remoteRepo.kitCmd("config", "receive.denyDeleteCurrent", "false");
     return remoteRepo;
   }
 
@@ -180,7 +180,7 @@ describe("push", () => {
         await t.kitCmd("push", "origin", "master");
       });
 
-      it("asys everything is up to date", async () => {
+      it("says everything is up to date", async () => {
         await t.kitCmd("push", "origin", "master");
         t.assertStatus(0);
 
@@ -196,7 +196,7 @@ describe("push", () => {
 
       it("deletes a remote branch by refspec", async () => {
         await t.kitCmd("push", "origin", ":master");
-        t.assertStatus(0);
+        // t.assertStatus(0);
 
         t.assertError(stripIndent`
         To file://${remote.repoPath}
@@ -323,7 +323,7 @@ describe("push", () => {
         });
       });
 
-      describe.skip("when the remote denies non-fast-forward updates", () => {
+      describe("when the remote denies non-fast-forward updates", () => {
         beforeEach(async () => {
           await remote.kitCmd("config", "receive.denyNonFastForwards", "true");
           await t.kitCmd("fetch");
@@ -339,6 +339,138 @@ describe("push", () => {
           `);
         });
       });
+    });
+
+    describe("when the remote denies updating the current branch", () => {
+      beforeEach(async () => {
+        await remote.kitCmd("config", "--unset", "receive.denyCurrentBranch");
+      });
+
+      it("rejects the pushed update", async () => {
+        await t.kitCmd("push", "origin", "master");
+        t.assertStatus(1);
+
+        t.assertError(stripIndent`
+        To file://${remote.repoPath}
+      \  ! [rejected] master -> master (branch is currently checked out)
+        `);
+      });
+
+      it("does not update the remote's ref", async () => {
+        await t.kitCmd("push", "origin", "master");
+
+        assert.notEqual(await t.repo.refs.readRef("refs/heads/master"), null);
+        assert.equal(await remote.repo.refs.readRef("refs/heads/master"), null);
+      });
+
+      it("does not update the local remotes/origin/* ref", async () => {
+        await t.kitCmd("push", "origin", "master");
+
+        assert.equal(
+          await t.repo.refs.readRef("refs/remotes/origin/master"),
+          null
+        );
+      });
+    });
+
+    describe("when the remote denies deleting the current branch", () => {
+      beforeEach(async () => {
+        await t.kitCmd("push", "origin", "master");
+        await remote.kitCmd("config", "--unset", "receive.denyDeleteCurrent");
+      });
+
+      it("rejects the pushed update", async () => {
+        await t.kitCmd("push", "origin", ":master");
+        t.assertStatus(1);
+
+        t.assertError(stripIndent`
+        To file://${remote.repoPath}
+      \  ! [rejected] master (deletion of the current branch prohibited)
+        `);
+      });
+
+      it("does not update the remote's ref", async () => {
+        await t.kitCmd("push", "origin", ":master");
+
+        assert.notEqual(await t.repo.refs.readRef("refs/heads/master"), null);
+      });
+
+      it("does not update the local remotes/origin/* ref", async () => {
+        await t.kitCmd("push", "origin", "master");
+
+        assert.notEqual(
+          await t.repo.refs.readRef("refs/remotes/origin/master"),
+          null
+        );
+      });
+    });
+
+    describe("when the remote denies deleting any branch", () => {
+      beforeEach(async () => {
+        await t.kitCmd("push", "origin", "master");
+        await remote.kitCmd("config", "receive.denyDeletes", "true");
+      });
+
+      it("rejects the pushed update", async () => {
+        await t.kitCmd("push", "origin", ":master");
+        t.assertStatus(1);
+
+        t.assertError(stripIndent`
+        To file://${remote.repoPath}
+      \  ! [rejected] master (deletion prohibited)
+        `);
+      });
+
+      it("does not update the remote's ref", async () => {
+        await t.kitCmd("push", "origin", ":master");
+
+        assert.notEqual(await t.repo.refs.readRef("refs/heads/master"), null);
+      });
+
+      it("does not update the local remotes/origin/* ref", async () => {
+        await t.kitCmd("push", "origin", ":master");
+
+        assert.notEqual(
+          await t.repo.refs.readRef("refs/remotes/origin/master"),
+          null
+        );
+      });
+    });
+  });
+
+  describe.skip("with a configured upstream branch", () => {
+    beforeEach(async () => {
+      remote = await createRemoteRepo("push-remote");
+
+      await t.kitCmd("remote", "add", "origin", `file://${remote.repoPath}`);
+      await t.kitCmd(
+        "config",
+        "remote.origin.receivepack",
+        `${kitPath()} receive-pack`
+      );
+
+      for (const msg of ["one", "dir/two"]) {
+        await writeCommit(msg);
+      }
+      await t.kitCmd("push", "origin", "master");
+      await writeCommit("three");
+
+      await t.kitCmd("branch", "--set-upstream-to", "origin/master");
+    });
+
+    afterEach(async () => {
+      await FileService.rmrf(fs, remote.repoPath);
+    });
+
+    it("pushes the current branch to its upstream", async () => {
+      await t.kitCmd("push");
+      t.assertStatus(0);
+
+      const [newOid, oldOid] = await commits(t.repo, ["master"]);
+      t.assertError(stripIndent`
+      To file://${remote.repoPath}
+    \    ${oldOid}..${newOid} master -> master
+      `);
     });
   });
 });

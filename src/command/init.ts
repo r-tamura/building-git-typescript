@@ -1,6 +1,7 @@
 import * as path from "path";
-import { Environment } from "../types";
+import { Config } from "../config";
 import { Refs } from "../refs";
+import { Environment } from "../types";
 import { Base } from "./base";
 
 const DEFAULT_BRANCH = "master";
@@ -25,6 +26,11 @@ export class Init extends Base {
         })
     );
     await Promise.all(creations);
+
+    const config = new Config(path.join(gitPath, "config"));
+    await config.openForUpdate();
+    config.set(["core", "bare"], false);
+    await config.save();
 
     const refs = new Refs(gitPath);
     const headPath = path.join("refs", "heads", DEFAULT_BRANCH);

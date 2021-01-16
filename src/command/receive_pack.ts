@@ -2,6 +2,7 @@ import * as remotes from "../remotes";
 import { Environment, OID } from "../types";
 import { asserts, BaseError } from "../util";
 import { Base } from "./base";
+import * as fast_forward from "./shared/fast_forward";
 import * as receive_objects from "./shared/receive_objects";
 import * as remote_agent from "./shared/remote_agent";
 import { checkConnected } from "./shared/remote_common";
@@ -92,6 +93,7 @@ export class ReceivePack extends Base {
     }
 
     try {
+      await this.validateUpdate(ref, oldOid, newOid);
       await this.repo.refs.compareAndSwap(ref, oldOid, newOid);
       this.reportStatus(`ok ${ref}`);
     } catch (e: unknown) {
@@ -104,6 +106,51 @@ export class ReceivePack extends Base {
     checkConnected(this.conn);
     if (this.conn.capable("report-status")) {
       this.conn.sendPacket(line);
+    }
+  }
+
+  private async validateUpdate(
+    ref: string,
+    oldOid: OID | undefined,
+    newOid: OID | undefined
+  ): Promise<void> {
+    if (await this.repo.config.get(["receive", "denyDeletes"])) {
+      if (newOid === undefined) {
+        throw new BaseError("deletion prohibited");
+      }
+    }
+
+    if (await this.repo.config.get(["receive", "denyNonFastForwards"])) {
+      if (await fast_forward.fastForwardError(this, oldOid, newOid)) {
+        throw new BaseError("non-fast-forward");
+      }
+    }
+
+    const isBare = await this.repo.config.get(["core", "bare"]);
+    const currentRef = (await this.repo.refs.currentRef()).path;
+    if (!(isBare === false && currentRef === ref)) {
+      return;
+    }
+
+    const denyCurrentBranch = await this.repo.config.get([
+      "receive",
+      "denyCurrentBranch",
+    ]);
+    if (!(denyCurrentBranch === false)) {
+      if (newOid) {
+        throw new BaseError("branch is currently checked out");
+      }
+    }
+
+    const denyDeleteCurrent = await this.repo.config.get([
+      "receive",
+      "denyDeleteCurrent",
+    ]);
+
+    if (!(denyDeleteCurrent === false)) {
+      if (newOid === undefined) {
+        throw new BaseError("deletion of the current branch prohibited");
+      }
     }
   }
 }

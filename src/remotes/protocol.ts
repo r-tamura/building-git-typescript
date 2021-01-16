@@ -130,6 +130,11 @@ export class Protocol {
   }
 
   async *recvUntil(terminator: string | null) {
+    if (!this.input.readable) {
+      console.warn("not readable");
+      return;
+    }
+
     while (true) {
       const line = await this.recvPacket();
       if (line === terminator) {
