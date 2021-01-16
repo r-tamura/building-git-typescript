@@ -1,10 +1,20 @@
-import * as path from "path";
 import * as arg from "arg";
-import { OID, CompleteTree, CompleteCommit, Pathname, Nullable } from "../../types";
-import { Base } from "../base";
+import * as path from "path";
 import { Author, Commit, Tree } from "../../database";
+import {
+  Error,
+  MergeType,
+  PendingCommit,
+} from "../../repository/pending_commit";
+import {
+  CompleteCommit,
+  CompleteTree,
+  Nullable,
+  OID,
+  Pathname,
+} from "../../types";
 import { asserts, assertsComplete, BaseError } from "../../util";
-import { Error, MergeType, PendingCommit } from "../../repository/pending_commit";
+import { Base } from "../base";
 import { COMMIT_NOTES } from "../commit";
 
 export const CONFLICT_MESSAGE = `hint: Fix them up in the work tree, and then use 'kit add/rm <file>'
@@ -23,7 +33,7 @@ const CHERRY_PICK_NOTES = `
   \t.git/CHERRY_PICK_HEAD
   and try again.
 `;
-export type CommitPendable = { pendingCommit: PendingCommit | null }
+export type CommitPendable = { pendingCommit: PendingCommit | null };
 export interface CommitOptions {
   message?: string;
   file?: Pathname;
@@ -37,7 +47,9 @@ export interface CommitArgSpec extends arg.Spec {
   "-F": "--file";
 }
 
-export function defineWriteCommitOptions<O extends CommitOptions>(cmd: Base<O>): CommitArgSpec {
+export function defineWriteCommitOptions<O extends CommitOptions>(
+  cmd: Base<O>
+): CommitArgSpec {
   return {
     "--message": (message: string) => {
       cmd.options["message"] = message;
@@ -59,7 +71,7 @@ export function defineWriteCommitOptions<O extends CommitOptions>(cmd: Base<O>):
     "-e": "--edit",
     "--no-edit": arg.flag(() => {
       cmd.options["edit"] = false;
-    })
+    }),
   };
 }
 
@@ -67,7 +79,10 @@ export async function readMessage<O extends CommitOptions>(cmd: Base<O>) {
   if (cmd.options["message"]) {
     return `${cmd.options["message"]}`;
   } else if (cmd.options["file"]) {
-    return cmd.repo.env.fs.readFile(cmd.options["file"], "utf-8") as Promise<string>;
+    return cmd.repo.env.fs.readFile(
+      cmd.options["file"],
+      "utf-8"
+    ) as Promise<string>;
   }
   return null;
 }
@@ -78,8 +93,7 @@ export async function readMessage<O extends CommitOptions>(cmd: Base<O>) {
  * コンフリクトが解決されていない場合はプロセスを終了します。
  */
 export async function resumeMerge(type: MergeType, cmd: Base & CommitPendable) {
-
-  switch(type) {
+  switch (type) {
     case "merge":
       await writeMergeCommit(cmd);
       break;
@@ -93,7 +107,6 @@ export async function resumeMerge(type: MergeType, cmd: Base & CommitPendable) {
 
   return cmd.exit(0);
 }
-
 
 export async function writeMergeCommit(cmd: Base & CommitPendable) {
   handleConflictedIndex(cmd);
@@ -121,9 +134,18 @@ export async function writeCherryPickCommit(cmd: Base & CommitPendable) {
   }
   const pickOid = await pendingCommit(cmd).mergeOid("cherry_pick");
   const commit = await cmd.repo.database.load(pickOid);
-  asserts(commit.type === "commit", "cherry-pick対象のオブジェクトIDはコミットID");
+  asserts(
+    commit.type === "commit",
+    "cherry-pick対象のオブジェクトIDはコミットID"
+  );
   const tree = await writeTree(cmd);
-  const picked = new Commit(parents, tree.oid, commit.author, await currentAuthor(cmd), message);
+  const picked = new Commit(
+    parents,
+    tree.oid,
+    commit.author,
+    await currentAuthor(cmd),
+    message
+  );
 
   await cmd.repo.database.store(picked);
   assertsComplete(picked);
@@ -143,19 +165,18 @@ export async function writeRevertCommit(cmd: Base & CommitPendable) {
   await pendingCommit(cmd).clear("revert");
 }
 
-export async function writeCommit(parents: OID[], message: Nullable<string>, cmd: Base) {
-
+export async function writeCommit(
+  parents: OID[],
+  message: Nullable<string>,
+  cmd: Base
+) {
   if (!message) {
     cmd.logger.error("Aborting commit due to empty commit message.");
     cmd.exit(1);
   }
 
   const tree = await writeTree(cmd);
-  const name = cmd.envvars["GIT_AUTHOR_NAME"];
-  const email = cmd.envvars["GIT_AUTHOR_EMAIL"];
-  asserts(name !== undefined, "Environment variable 'GIT_AUTHOR_NAME' is not set.");
-  asserts(email !== undefined, "Environment variable 'GIT_AUTHOR_EMAIL' is not set.");
-  const author = new Author(name, email, cmd.env.date.now());
+  const author = await currentAuthor(cmd);
 
   const commit = new Commit(parents, tree.oid, author, author, message);
   await cmd.repo.database.store(commit);
@@ -200,7 +221,10 @@ export async function printCommit(commit: CompleteCommit, cmd: Base) {
   cmd.log(`[${info}] ${commit.titleLine()}`);
 }
 
-export function composeMergeMessage(notes: Nullable<string> = null, cmd: Base & CommitPendable) {
+export function composeMergeMessage(
+  notes: Nullable<string> = null,
+  cmd: Base & CommitPendable
+) {
   return cmd.editFile(commitMessagePath(cmd), async (editor) => {
     await editor.puts(await pendingCommit(cmd).mergeMessage());
     if (notes) {
@@ -216,7 +240,7 @@ export function commitMessagePath(cmd: Base) {
 }
 
 export function pendingCommit(cmd: Base & CommitPendable) {
-  return cmd.pendingCommit ??= cmd.repo.pendingCommit();
+  return (cmd.pendingCommit ??= cmd.repo.pendingCommit());
 }
 
 export async function currentAuthor(cmd: Base) {
@@ -229,10 +253,14 @@ export async function currentAuthor(cmd: Base) {
   const email = cmd.envvars["GIT_AUTHOR_EMAIL"] ?? configEmail;
 
   if (name === undefined) {
-    throw new BaseError("GIT_AUTHOR_NAMEもしくはコンフィグファイルにauthorがセットされている必要がある");
+    throw new BaseError(
+      "GIT_AUTHOR_NAMEもしくはコンフィグファイルにauthorがセットされている必要がある"
+    );
   }
   if (email === undefined) {
-    throw new BaseError("GIT_AUTHOR_EMAILもしくはコンフィグファイルにemailがセットされている必要がある");
+    throw new BaseError(
+      "GIT_AUTHOR_EMAILもしくはコンフィグファイルにemailがセットされている必要がある"
+    );
   }
-  return new Author(name, email, new Date);
+  return new Author(name, email, new Date());
 }
