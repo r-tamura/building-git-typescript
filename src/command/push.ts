@@ -58,17 +58,16 @@ export class Push extends Base<Options> {
       capabilities: CAPABILITIES,
     });
 
-    // console.log({ client: "--- recvReferences ---" });
     await remote_client.recvReferences(this);
-    // console.log({ client: "--- sendUpdateRequests ---" });
     await this.sendUpdateRequests();
-    // console.log({ client: "--- sendObjects ---" });
     await this.sendObjects();
+
+    // Note: 子プロセスのstdinへの入力の終了を明示的に伝えないと、子プロセスがハングする
+    this.conn?.output.end();
+
     this.printSummary();
-    // console.log({ client: "--- recvReportStatus ---" });
     await this.recvReportStatus();
 
-    // console.log({ client: "--- exit ---" });
     this.exit(array.isempty(this.#errors) ? 0 : 1);
   }
 

@@ -38,7 +38,8 @@ export class ReceivePack extends Base {
     await this.recvObjects();
     // console.warn({ remote: "--- updateRefs ---" });
     await this.updateRefs();
-    // console.warn({ remote: "--- exit ---" });
+
+    this.conn?.output.end();
     this.exit(0);
   }
 
