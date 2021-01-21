@@ -10,6 +10,10 @@ export const COMMIT = 1;
 export const TREE = 2;
 export const BLOB = 3;
 
+/** XDeltaアルゴリズム操作の定数 */
+export const MAX_COPY_SIZE = 0xffffff;
+export const MAX_INSERT_SIZE = 0x7f;
+
 export class InvalidPack extends BaseError {}
 
 export type GitObjectType = typeof COMMIT | typeof TREE | typeof BLOB;
