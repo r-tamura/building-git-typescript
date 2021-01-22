@@ -59,8 +59,11 @@ export class Reader {
   }
 
   private async readRecordHeader(): Promise<RecordHeader> {
-    const [byte, size] = await numbers.VarIntLE.read(this.#input);
-    const type = (byte >> 4) & numbers.OBJECT_TYPE_MASK;
+    const [byte, size] = await numbers.VarIntLE.read(
+      this.#input,
+      numbers.VarIntLE.SHIFT_FOR_FIRST
+    );
+    const type = (byte >> 4) & numbers.VarIntLE.OBJECT_TYPE_MASK;
     asserts(
       type === pack.COMMIT || type === pack.TREE || type === pack.BLOB,
       `needs 1, 2, or 3, got ${type}`

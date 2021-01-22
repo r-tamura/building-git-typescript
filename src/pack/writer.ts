@@ -109,7 +109,10 @@ export class Writer {
 
   private async writeEntry(entry: Entry) {
     const object = await this.#database.loadRaw(entry.oid);
-    const header = numbers.VarIntLE.write(object.size);
+    const header = numbers.VarIntLE.write(
+      object.size,
+      numbers.VarIntLE.SHIFT_FOR_FIRST
+    );
     header[0] |= entry.type << 4;
     // fs.writeFileSync(out, header, { flag: "a" });
     const compressed = await this.#zlib.deflate(object.data, {
