@@ -17,7 +17,7 @@ export class Author {
     if (match === null) {
       throw TypeError(`'${str}' doesn't match author format`);
     }
-    const [_, name, email, timestamp, timezone] = match;
+    const [, name, email, timestamp] = match;
     const author = new Author(
       name,
       email,

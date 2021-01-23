@@ -262,5 +262,5 @@ export async function currentAuthor(cmd: Base) {
       "GIT_AUTHOR_EMAILもしくはコンフィグファイルにemailがセットされている必要がある"
     );
   }
-  return new Author(name, email, new Date());
+  return new Author(name, email, cmd.env.date.now());
 }

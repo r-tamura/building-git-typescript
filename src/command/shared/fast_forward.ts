@@ -13,7 +13,6 @@ export async function fastForwardError(
   if (oldOid === undefined || newOid === undefined) {
     return undefined;
   }
-
   if (!(await cmd.repo.database.has(oldOid))) {
     return "fetch first";
   }

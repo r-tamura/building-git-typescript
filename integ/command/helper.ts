@@ -66,12 +66,12 @@ export class TestUtil {
     return this.#env;
   }
 
-  private setEnv(env: Partial<Environment>) {
-    this.#env = { ...this.#env, ...env };
+  setTime(time: Date) {
+    this.setEnv({ date: { now: () => time } });
   }
 
-  private setTime(time: Date) {
-    this.setEnv({ date: { now: () => time } });
+  private setEnv(env: Partial<Environment>) {
+    this.#env = { ...this.#env, ...env };
   }
 
   private mockEnvvar(key: string, value: string) {

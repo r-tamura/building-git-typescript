@@ -124,9 +124,10 @@ export class Fetch extends Base<Options> implements remote_client.RemoteClient {
     this.localRefs = {};
 
     for (const [target, [source, _]] of Object.entries(this.#targets)) {
+      this.assertsSourceRef(source);
+
       const localOid = await this.repo.refs.readRef(target);
 
-      this.assertsSourceRef(source);
       const remoteOid = this.remoteRefs[source];
       if (localOid === remoteOid) {
         continue;

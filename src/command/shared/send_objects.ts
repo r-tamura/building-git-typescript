@@ -24,6 +24,5 @@ export async function sendPackedObjects(cmd: SendObject, revs: string[]) {
     cmd.repo.database,
     write_options
   );
-
   await writer.writeObjects(revList);
 }
