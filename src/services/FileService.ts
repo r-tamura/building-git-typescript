@@ -237,10 +237,6 @@ export async function readChunk(
       );
     }
 
-    /** TODO: 正しいディレイ設定を考える */
-    // await new Promise((resolve) => {
-    //   setTimeout(() => resolve(null), 10);
-    // });
     await readable(stream);
     raw = read(stream, size);
 

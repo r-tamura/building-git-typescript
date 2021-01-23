@@ -1,3 +1,72 @@
+import * as stream from "stream";
+import * as FileService from "../services";
+import { asserts } from "../util";
+import * as iter from "../util/iter";
+
+/**
+ * NodeJS.ReadableとRubyのReadable、Building git内で実装したStreamのインタフェースが合わないため、
+ * それらを統一するためのインタフェース
+ */
+export interface Readable {
+  read(size: number): Promise<Buffer | null>;
+  readByte(): Promise<number | null>;
+  readableEnded: boolean;
+}
+
+export function fromBuffer(inputBuffer: Buffer): Readable {
+  const input = stream.Readable.from(inputBuffer);
+  let buffer = Buffer.alloc(0);
+  let readBytes = 0;
+
+  function splitBuffer(buffer: Buffer, point: number) {
+    const first = buffer.slice(0, point);
+    const second = buffer.slice(point);
+    return [first, second];
+  }
+
+  function consumeBuffer(size: number): Buffer {
+    const [needed, rest] = splitBuffer(buffer, size);
+    buffer = rest;
+    return needed;
+  }
+
+  async function read(size: number): Promise<Buffer | null> {
+    const fromBuffer = consumeBuffer(size);
+
+    if (fromBuffer.byteLength === size) {
+      return fromBuffer;
+    }
+    const neededSize = size - fromBuffer.byteLength;
+    const fromStream = await FileService.readChunk(input, size);
+    const [needed, rest] = splitBuffer(fromStream, neededSize);
+    if (rest.byteLength > 0) {
+      buffer = Buffer.concat([buffer, rest]);
+    }
+    readBytes += fromStream.byteLength;
+    return Promise.resolve(Buffer.concat([fromBuffer, needed]));
+  }
+
+  async function readByte(): Promise<number | null> {
+    return (await read(1))?.[0] ?? null;
+  }
+
+  function isStreamEnded() {
+    return readBytes >= inputBuffer.byteLength;
+  }
+
+  function isBufferEmpty() {
+    return buffer.byteLength === 0;
+  }
+
+  return {
+    read,
+    readByte,
+    get readableEnded() {
+      return isStreamEnded() && isBufferEmpty();
+    },
+  };
+}
+
 /**
  * variable-length-integer, little-endian
  *
@@ -13,11 +82,6 @@
  * 最初のみ4bit (1101)
  * 残りは7bitずつ (0001011, 1101010)
  */
-
-import { asserts } from "../util";
-import * as iter from "../util/iter";
-import { Stream } from "./stream";
-
 export class VarIntLE {
   static OBJECT_TYPE_MASK = 0x7; // object type: 3bit
   static MASK_FOR_FIRST = 0xf;
@@ -25,7 +89,7 @@ export class VarIntLE {
   static MASK = 0x7f;
   static SHIFT = 7;
 
-  static async read(input: Stream, shift: number): Promise<[number, number]> {
+  static async read(input: Readable, shift: number): Promise<[number, number]> {
     // 最初の1バイト
     const first = await input.readByte();
     asserts(first !== null);
@@ -84,15 +148,15 @@ export class PackedInt56LE {
     return Buffer.of(...bytes);
   }
 
-  static read(input: Buffer, header: number): number {
-    let value = 0;
-    let offset = 0;
+  static async read(input: Readable, header: number): Promise<bigint> {
+    let value = BigInt(0);
     for (const i of iter.range(0, 7)) {
       if ((header & (1 << i)) === 0) {
         continue;
       }
-      value |= input[offset] << (8 * i);
-      offset += 1;
+      const byte = await input.readByte();
+      asserts(typeof byte !== null);
+      value |= BigInt(byte) << BigInt(8 * i);
     }
     return value;
   }

@@ -4,23 +4,7 @@ import { BaseError } from "../util";
 import * as pack from "./pack";
 import { InvalidPack } from "./pack";
 
-const to_s = (buf: Buffer, strip = true) => {
-  const s = [...buf].map((b) => b.toString(16).padStart(2, "0")).join(" ");
-
-  if (strip === false || buf.byteLength < 21) {
-    return s;
-  }
-
-  return s.slice(0, 2 * 10 + 10) + "..." + s.slice(-1 * (2 * 10 + 10));
-};
-
 class StreamEndedError extends BaseError {}
-
-interface ReadableStream extends NodeJS.ReadableStream {
-  // TypeScriptのNodeJS型定義にreadableEndedが定義されていない
-  // https://nodejs.org/api/stream.html#stream_readable_readableended
-  readableEnded: boolean;
-}
 export class Stream {
   #input: NodeJS.ReadableStream;
   digest = crypto.createHash("sha1");
@@ -83,16 +67,6 @@ export class Stream {
       this.#capture.byteLength + amount
     );
     const nextBuffer = Buffer.concat([prependBytes, this.#buffer]);
-    // log({
-    //   event: "seek",
-    //   amount,
-    //   prepended: to_s(prependBytes),
-    //   captureRest: to_s(captureRest),
-    //   bufferBefore: to_s(this.#buffer),
-    //   bufferBeforeSize: this.#buffer.byteLength,
-    //   bufferAfter: to_s(nextBuffer),
-    //   bufferAfterSize: nextBuffer.byteLength,
-    // });
     this.#capture = captureRest;
     this.#buffer = nextBuffer;
     this.offset += amount;
@@ -127,5 +101,9 @@ export class Stream {
 
   private newByte() {
     return Buffer.alloc(0);
+  }
+
+  get readableEnded(): boolean {
+    return !this.#input.readable;
   }
 }
