@@ -34,7 +34,7 @@ describe("Myers#diff", () => {
     const actual = myers.diff();
     assert.deepEqual(
       actual.map((e) => e.toString()),
-      expected
+      expected,
     );
   });
 });

@@ -101,7 +101,7 @@ export class Database {
     const commit = await this.load(oid);
     asserts(
       commit.type === "commit",
-      `commitのOIDである必要があります: '${commit.type}'`
+      `commitのOIDである必要があります: '${commit.type}'`,
     );
     const root = new Entry(commit.tree, Tree.TREE_MODE);
 
@@ -132,7 +132,7 @@ export class Database {
    */
   async loadTreeList(
     oid: Nullable<OID> = null,
-    pathname: Nullable<Pathname> = null
+    pathname: Nullable<Pathname> = null,
   ) {
     if (!oid) {
       return {};
@@ -146,7 +146,7 @@ export class Database {
   private async buildList(
     list: Dict<Entry>,
     entry: Nullable<Entry>,
-    prefix: Pathname
+    prefix: Pathname,
   ) {
     if (!entry) {
       return;
@@ -310,13 +310,13 @@ class Raw {
   constructor(
     public type: GitObjectType,
     public size: number,
-    public data: Buffer
+    public data: Buffer,
   ) {}
 }
 
 function assertGitObjectType(type: string): asserts type is GitObjectType {
   asserts(
     type === "blob" || type === "tree" || type === "commit",
-    `'${type}'はGitオブジェクトでサポートされているタイプです`
+    `'${type}'はGitオブジェクトでサポートされているタイプです`,
   );
 }

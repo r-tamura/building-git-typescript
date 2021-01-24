@@ -54,7 +54,7 @@ export class Lockfile implements IOHandle {
         case "EEXIST":
           // すでにロックされている場合
           throw new LockDenied(
-            `Unable to create ${this.#lockPath}: File exists.`
+            `Unable to create ${this.#lockPath}: File exists.`,
           );
         case "ENOENT":
           throw new MissingParent(nodeErr.message);

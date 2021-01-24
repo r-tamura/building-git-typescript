@@ -48,8 +48,14 @@ export class Resolve {
    */
   private async prepareTreeDiff() {
     const baseOid = first(this.#inputs.baseOids);
-    this.#leftDiff = await this.#repo.database.treeDiff(baseOid, this.#inputs.leftOid);
-    this.#rightDiff = await this.#repo.database.treeDiff(baseOid, this.#inputs.rightOid);
+    this.#leftDiff = await this.#repo.database.treeDiff(
+      baseOid,
+      this.#inputs.leftOid,
+    );
+    this.#rightDiff = await this.#repo.database.treeDiff(
+      baseOid,
+      this.#inputs.rightOid,
+    );
     this.#cleanDiff = new Map();
     this.#conflicts = new Map();
     this.#untracked = new Map();
@@ -74,7 +80,11 @@ export class Resolve {
    * @param oldItem
    * @param newItem
    */
-  private async samePathCOnflict(pathname: Pathname, base: Entry | null, right: Entry | null) {
+  private async samePathCOnflict(
+    pathname: Pathname,
+    base: Entry | null,
+    right: Entry | null,
+  ) {
     /**
      * (0) 親ディレクトリでコンフリクトがない(ある場合はfileDirConflictで判定される)
      * (1) left diffがない -> コンフリクトがない/baseとleftに差分がない
@@ -109,8 +119,16 @@ export class Resolve {
     }
 
     // (3)
-    const [oidOk, oid] = await this.mergeBlobs(base?.oid, left?.oid, right?.oid);
-    const [modeOk, mode] = await this.mergeModes(base?.mode, left?.mode, right?.mode);
+    const [oidOk, oid] = await this.mergeBlobs(
+      base?.oid,
+      left?.oid,
+      right?.oid,
+    );
+    const [modeOk, mode] = await this.mergeModes(
+      base?.mode,
+      left?.mode,
+      right?.mode,
+    );
 
     // (4)
     this.#cleanDiff.set(pathname, [left, new Entry(oid, mode)]);
@@ -126,7 +144,7 @@ export class Resolve {
   private merge3<T extends number | string>(
     base: T | undefined,
     left: T | undefined,
-    right: T | undefined
+    right: T | undefined,
   ): [boolean, T] | null {
     // left:削除 right:変更
     if (!left) {
@@ -152,7 +170,11 @@ export class Resolve {
     return null;
   }
 
-  private async mergeBlobs(base: OID | undefined, left: OID | undefined, right: OID | undefined) {
+  private async mergeBlobs(
+    base: OID | undefined,
+    left: OID | undefined,
+    right: OID | undefined,
+  ) {
     const result = this.merge3(base, left, right);
     if (result) {
       return result;
@@ -161,8 +183,12 @@ export class Resolve {
     const oids = [base, left, right] as const;
     const blobs = await Promise.all(
       oids.map(async (oid) =>
-        oid ? ((await this.#repo.database.load(oid)) as Blob).data.toString("utf8") : ""
-      )
+        oid
+          ? ((await this.#repo.database.load(oid)) as Blob).data.toString(
+              "utf8",
+            )
+          : "",
+      ),
     );
 
     const merge = Diff3.merge(blobs[0], blobs[1], blobs[2]);
@@ -184,7 +210,7 @@ export class Resolve {
   private async mergeModes(
     base: ModeNumber | undefined,
     left: ModeNumber | undefined,
-    right: ModeNumber | undefined
+    right: ModeNumber | undefined,
   ) {
     // merge3で判定できないとき、leftとrightは両方とも存在する
     return this.merge3(base, left, right) ?? [false, left!];
@@ -199,7 +225,11 @@ export class Resolve {
   /**
    * 指定されたパスに対してfile/directoryコンフリクトであるかを判定します
    */
-  private fileDirConflict(pathname: Pathname, diff: Changes, branchName: string) {
+  private fileDirConflict(
+    pathname: Pathname,
+    diff: Changes,
+    branchName: string,
+  ) {
     for (const parent of ascend(path.dirname(pathname))) {
       const [oldItem, newItem] = diff.get(parent) ?? [null, null];
       if (!newItem) {
@@ -236,7 +266,10 @@ export class Resolve {
 
   private logConflict(pathname: Pathname, rename?: Pathname) {
     // コンフリクトが発生したパスのみこの関数が呼び出される
-    asserts(this.#conflicts.get(pathname) !== undefined, `${pathname}上のコンフリクトが存在する`);
+    asserts(
+      this.#conflicts.get(pathname) !== undefined,
+      `${pathname}上のコンフリクトが存在する`,
+    );
     const [base, left, right] = this.#conflicts.get(pathname)!;
 
     if (left && right) {
@@ -260,7 +293,7 @@ export class Resolve {
     this.log(
       `CONFLICT (modify/delete): ${pathname}` +
         ` deleted in ${deleted} and modified in ${modified}.` +
-        ` Version ${modified} of ${pathname} left in tree${rename}.`
+        ` Version ${modified} of ${pathname} left in tree${rename}.`,
     );
   }
 
@@ -270,12 +303,14 @@ export class Resolve {
   }
 
   private logFileDirectoryConflict(pathname: Pathname, rename?: Pathname) {
-    const type = this.#conflicts.get(pathname)![1] ? "file/directory" : "directory/file";
+    const type = this.#conflicts.get(pathname)![1]
+      ? "file/directory"
+      : "directory/file";
     const [branch, _] = this.logBranchNames(pathname);
     this.log(
       `CONFLICT (${type}): There is a directory` +
         ` with name ${pathname} in ${branch}.` +
-        ` Adding ${pathname} as ${rename}`
+        ` Adding ${pathname} as ${rename}`,
     );
   }
 

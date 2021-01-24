@@ -8,20 +8,26 @@ import { HEAD } from "../revision";
 import { asserts } from "../util/assert";
 import { CherryPick } from "../merge";
 import { stripIndent } from "../util";
-import { commitMessagePath, currentAuthor, writeTree } from "./shared/write_commit";
+import {
+  commitMessagePath,
+  currentAuthor,
+  writeTree,
+} from "./shared/write_commit";
 import { COMMIT_NOTES } from "./commit";
 import { MergeType, PendingCommit } from "../repository/pending_commit";
 import { Commit } from "../database";
 
 export class Revert extends Base<Sequencing.Options> {
   pendingCommit!: PendingCommit;
-  #sequencer!: Sequencer
+  #sequencer!: Sequencer;
   async run() {
     await Sequencing.run(this);
   }
 
   async storeCommitSequence() {
-    const commits = await RevList.fromRevs(this.repo, this.args, { walk: false });
+    const commits = await RevList.fromRevs(this.repo, this.args, {
+      walk: false,
+    });
     for await (const commit of commits) {
       this.sequencer.revert(commit);
     }
@@ -48,7 +54,13 @@ export class Revert extends Base<Sequencing.Options> {
     message = await this.editRevertMessage(message);
     asserts(message !== null);
     const tree = await writeTree(this);
-    const picked = new Commit([inputs.leftOid], tree.oid, author, author, message);
+    const picked = new Commit(
+      [inputs.leftOid],
+      tree.oid,
+      author,
+      author,
+      message,
+    );
     await Sequencing.finishCommit(picked, this);
   }
 
@@ -57,7 +69,7 @@ export class Revert extends Base<Sequencing.Options> {
   }
 
   get sequencer() {
-    return this.#sequencer ??= new Sequencer(this.repo);
+    return (this.#sequencer ??= new Sequencer(this.repo));
   }
 
   private async revertMergeInputs(commit: CompleteCommit) {

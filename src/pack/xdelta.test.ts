@@ -11,7 +11,7 @@ describe("Xdelta", () => {
     source: string,
     target: string,
     expected: Operation[],
-    encoding: BufferEncoding = "utf8"
+    encoding: BufferEncoding = "utf8",
   ) {
     const delta = Xdelta.createIndex(Buffer.from(source, encoding));
     const actual = delta.compress(Buffer.from(target, encoding));

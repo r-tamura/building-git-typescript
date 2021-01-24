@@ -13,7 +13,10 @@ export class Myers {
   *backTrack() {
     let [x, y] = [this.a.length, this.b.length];
 
-    const descending = ([x1, i1]: [number[], number], [x2, i2]: [number[], number]) => i2 - i1;
+    const descending = (
+      [x1, i1]: [number[], number],
+      [x2, i2]: [number[], number],
+    ) => i2 - i1;
 
     const enumerated = enumerate(this.shortestEdit());
     const reversed = enumerated.sort(descending);
@@ -94,7 +97,11 @@ export const SYMBOLS = {
 type SymbolKey = keyof typeof SYMBOLS;
 
 export class Edit {
-  constructor(public type: SymbolKey, public a_line: Line | null, public b_line: Line | null) {
+  constructor(
+    public type: SymbolKey,
+    public a_line: Line | null,
+    public b_line: Line | null,
+  ) {
     this.throwOnInvalid();
   }
 
@@ -122,5 +129,9 @@ export class Edit {
 const shouldMoveDown = (v: number[], d: number, k: number) =>
   k === -d || (k !== d && get(v, k - 1) < get(v, k + 1));
 
-const canMoveDiagnally = (x: number, prev_x: number, y: number, prev_y: number) =>
-  x > prev_x && y > prev_y;
+const canMoveDiagnally = (
+  x: number,
+  prev_x: number,
+  y: number,
+  prev_y: number,
+) => x > prev_x && y > prev_y;

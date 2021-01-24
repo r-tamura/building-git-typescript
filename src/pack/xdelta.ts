@@ -108,7 +108,7 @@ export class Xdelta {
     const slice = this.#target.slice(this.#offset, this.#offset + BLOCK_SIZE);
     asserts(
       this.#offset >= 0,
-      `@offset must be greater than or equal to 0, got ${this.#offset}`
+      `@offset must be greater than or equal to 0, got ${this.#offset}`,
     );
     const sliceString = slice.toString(ENCODING);
 

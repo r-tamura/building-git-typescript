@@ -11,7 +11,7 @@ export type Logger = {
 export function createLogger(
   stdout: NodeJS.WriteStream = process.stdout,
   stderr: NodeJS.WriteStream = stdout,
-  level: Logger["level"] = "info"
+  level: Logger["level"] = "info",
 ) {
   const con = new Console(stdout, stderr, false);
   return {

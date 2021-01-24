@@ -7,7 +7,7 @@ export type FastForwardError = string;
 export async function fastForwardError(
   cmd: base.GitCommand,
   oldOid: OID | undefined,
-  newOid: OID | undefined
+  newOid: OID | undefined,
 ): Promise<FastForwardError | undefined> {
   // fast-forward
   if (oldOid === undefined || newOid === undefined) {
@@ -28,7 +28,7 @@ export async function fastForwardError(
 async function fastforward(
   cmd: base.GitCommand,
   oldOid: OID,
-  newOid: OID
+  newOid: OID,
 ): Promise<boolean> {
   const common = await merge.CommonAncestors.of(cmd.repo.database, oldOid, [
     newOid,

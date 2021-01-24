@@ -23,7 +23,7 @@ export class Init extends Base {
         .catch((err: NodeJS.ErrnoException) => {
           logger.error(`fatal: ${err}`);
           this.exit(1);
-        })
+        }),
     );
     await Promise.all(creations);
 

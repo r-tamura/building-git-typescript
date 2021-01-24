@@ -26,14 +26,14 @@ const UPDATE_LINE = /^(ok|ng) (\S+)(.*)$/;
 
 type PushError = [
   pair: remote_client.SouceTargetPair,
-  message: fast_forward.FastForwardError
+  message: fast_forward.FastForwardError,
 ];
 
 type Update = [
   source: remotes.SourceRef | undefined,
   ffError: fast_forward.FastForwardError | undefined,
   old: OID,
-  new: OID | undefined
+  new: OID | undefined,
 ];
 
 export class Push extends Base<Options> {
@@ -126,7 +126,7 @@ export class Push extends Base<Options> {
   private async selectUpdate(
     target: remotes.TargetRef,
     source: remotes.SourceRef | undefined,
-    forced: boolean
+    forced: boolean,
   ): Promise<void> {
     if (source === undefined) {
       this.selectDeletion(target);
@@ -169,7 +169,7 @@ export class Push extends Base<Options> {
   private sendUpdate(
     ref: string,
     oldOid: OID | undefined,
-    newOid: OID | undefined
+    newOid: OID | undefined,
   ): void {
     checkConnected(this.conn);
     const _oldOid = this.undefinedToZero(oldOid);
@@ -184,7 +184,7 @@ export class Push extends Base<Options> {
 
   private async sendObjects() {
     const revs = array.compact(
-      Object.values(this.#updates).map((update) => update[3])
+      Object.values(this.#updates).map((update) => update[3]),
     );
     if (array.isempty(revs)) {
       return;
@@ -264,7 +264,7 @@ export class Push extends Base<Options> {
 
   private reportUpdate(
     target: remotes.TargetRef,
-    error: string | undefined
+    error: string | undefined,
   ): void {
     const [source, ffError, oldOid, newOid] = this.#updates[target];
     const refNames = [source, target] as const;

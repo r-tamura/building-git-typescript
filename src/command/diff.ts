@@ -73,18 +73,28 @@ export class Diff extends Base<Options> {
       switch (state) {
         case "added": {
           const targetFromIndex = await this.fromIndex(pathname);
-          asserts(targetFromIndex !== null, `ファイル '${pathname}' は存在する`);
+          asserts(
+            targetFromIndex !== null,
+            `ファイル '${pathname}' は存在する`,
+          );
           await printDiff(this.fromNothing(pathname), targetFromIndex, this);
           break;
         }
         case "modified": {
           const targetFromIndex = await this.fromIndex(pathname);
-          asserts(targetFromIndex !== null, `ファイル '${pathname}' は存在する`);
+          asserts(
+            targetFromIndex !== null,
+            `ファイル '${pathname}' は存在する`,
+          );
           await printDiff(await this.fromHead(pathname), targetFromIndex, this);
           break;
         }
         case "deleted": {
-          await printDiff(await this.fromHead(pathname), this.fromNothing(pathname), this);
+          await printDiff(
+            await this.fromHead(pathname),
+            this.fromNothing(pathname),
+            this,
+          );
           break;
         }
       }
@@ -96,7 +106,10 @@ export class Diff extends Base<Options> {
       return;
     }
 
-    const paths = [...this.#status.conflicts.keys(), ...this.#status.workspaceChanges.keys()];
+    const paths = [
+      ...this.#status.conflicts.keys(),
+      ...this.#status.workspaceChanges.keys(),
+    ];
 
     for (const pathname of paths.sort()) {
       if (this.#status.conflicts.has(pathname)) {
@@ -111,7 +124,12 @@ export class Diff extends Base<Options> {
     const entry = this.#status.headTree[pathname];
     const blob = await this.repo.database.load(entry.oid);
     asserts(blob instanceof Database.Blob);
-    return Target.of(pathname, entry.oid, entry.mode.toString(8), blob.data.toString());
+    return Target.of(
+      pathname,
+      entry.oid,
+      entry.mode.toString(8),
+      blob.data.toString(),
+    );
   }
 
   private async fromIndex(pathname: Pathname, stage: Stage = 0) {
@@ -121,7 +139,12 @@ export class Diff extends Base<Options> {
     }
     const blob = await this.repo.database.load(entry.oid);
     asserts(blob instanceof Database.Blob);
-    return Target.of(entry.name, entry.oid, entry.mode.toString(8), blob.data.toString());
+    return Target.of(
+      entry.name,
+      entry.oid,
+      entry.mode.toString(8),
+      blob.data.toString(),
+    );
   }
 
   private async fromFile(pathname: Pathname) {
@@ -138,7 +161,9 @@ export class Diff extends Base<Options> {
 
   private async printConflictDiff(pathname: Pathname) {
     const targets = [];
-    for await (const target of STAGES.map((stage) => this.fromIndex(pathname, stage))) {
+    for await (const target of STAGES.map((stage) =>
+      this.fromIndex(pathname, stage),
+    )) {
       targets.push(target);
     }
     const left = targets[2];

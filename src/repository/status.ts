@@ -17,7 +17,7 @@ export class Status {
   untrackedFiles: Set<Pathname> = new Set();
   conflicts: Map<Pathname, ConflictStatus> = new SortedMap();
 
-  headTree:  Dict<Database.Entry> = {};
+  headTree: Dict<Database.Entry> = {};
   stats: Dict<Stats> = {};
 
   #inspector: Inspector;

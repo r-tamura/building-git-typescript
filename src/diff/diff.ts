@@ -19,7 +19,8 @@ export function diffHunks(a: TextDocument, b: TextDocument) {
 }
 
 export function lines(document: TextDocument) {
-  const _document = typeof document === "string" ? splitByLine(document) : document;
+  const _document =
+    typeof document === "string" ? splitByLine(document) : document;
   return _document.map((line, i) => Line.of(i + 1, line));
 }
 
@@ -37,6 +38,9 @@ export function combined(as: [TextDocument, TextDocument], b: TextDocument) {
   return new Combined(diffs).toArray();
 }
 
-export function combinedHunk(as: [TextDocument, TextDocument], b: TextDocument) {
+export function combinedHunk(
+  as: [TextDocument, TextDocument],
+  b: TextDocument,
+) {
   return Hunk.filter(combined(as, b));
 }

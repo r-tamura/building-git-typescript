@@ -43,15 +43,17 @@ export class PendingCommit {
    */
   async mergeOid(type: MergeType = "merge") {
     const headPath = path.join(this.#pathname, HeadFiles[type]);
-    return this.#fs.readFile(headPath, "ascii").catch((e: NodeJS.ErrnoException) => {
-      switch (e.code) {
-        case "ENOENT":
-          const name = path.basename(headPath);
-          throw new Error(`There is no merge in progress (${name} missing).`);
-        default:
-          throw e;
-      }
-    });
+    return this.#fs
+      .readFile(headPath, "ascii")
+      .catch((e: NodeJS.ErrnoException) => {
+        switch (e.code) {
+          case "ENOENT":
+            const name = path.basename(headPath);
+            throw new Error(`There is no merge in progress (${name} missing).`);
+          default:
+            throw e;
+        }
+      });
   }
 
   async mergeType() {
@@ -66,7 +68,10 @@ export class PendingCommit {
 
   async clear(type: MergeType = "merge") {
     const headPath = path.join(this.#pathname, HeadFiles[type]);
-    const promises = [this.#fs.unlink(headPath), this.#fs.unlink(this.messagePath)];
+    const promises = [
+      this.#fs.unlink(headPath),
+      this.#fs.unlink(this.messagePath),
+    ];
     return Promise.all(promises).catch((e: NodeJS.ErrnoException) => {
       if (e.code === "ENOENT") {
         const name = path.basename(headPath);

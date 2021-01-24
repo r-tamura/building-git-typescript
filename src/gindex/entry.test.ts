@@ -7,7 +7,7 @@ const testPath = "README.md";
 const testOid = "ba78afac62556e840341715936909cc36fe83a77"; // sha1 of 'jit'
 
 const toBytes = (...numbers: (number | string)[]) => {
-  let concated = numbers.join("");
+  const concated = numbers.join("");
   const buf = Buffer.from(concated, "hex");
   return buf;
 };
@@ -79,8 +79,8 @@ describe("Entry.parse", () => {
       Entry.create(
         "b.txt",
         "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391",
-        makeTestStats(fakeFiles["b.txt"].stat)
-      )
+        makeTestStats(fakeFiles["b.txt"].stat),
+      ),
     );
   });
 });
@@ -109,7 +109,7 @@ describe("Entry#toString", () => {
       "ba78afac62556e840341715936909cc36fe83a77", // oid
       "0009", // file's name length
       "524541444d452e6d64", // file name
-      "00" // padding
+      "00", // padding
     );
     assert.deepStrictEqual(Buffer.from(actual, "binary"), expected);
   });
@@ -121,7 +121,7 @@ describe("Entry#parentDirectories", () => {
     const entry = Entry.create(
       "test/nested/nested2/file.txt",
       testOid,
-      makeTestStats()
+      makeTestStats(),
     );
     const actual = entry.parentDirectories;
 

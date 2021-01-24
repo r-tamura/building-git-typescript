@@ -117,7 +117,7 @@ export class Fetch extends Base<Options> implements remote_client.RemoteClient {
 
     this.#targets = remotes.Refspec.expand(
       this.#fetchSpecs,
-      Object.keys(this.remoteRefs)
+      Object.keys(this.remoteRefs),
     );
     const wanted = new Set<OID>();
 
@@ -182,7 +182,7 @@ export class Fetch extends Base<Options> implements remote_client.RemoteClient {
 
   private async attemptRefUpdate(
     target: remotes.TargetRef,
-    oldOid: OID | undefined
+    oldOid: OID | undefined,
   ) {
     const [source, forced] = this.#targets[target];
     this.assertsSourceRef(source);
@@ -208,11 +208,11 @@ export class Fetch extends Base<Options> implements remote_client.RemoteClient {
   }
 
   private assertsSourceRef(
-    ref: SourceRef | undefined
+    ref: SourceRef | undefined,
   ): asserts ref is SourceRef {
     asserts(
       ref !== undefined,
-      "'source'が空文字となるのはpushコマンドでremoteブランチを削除する場合"
+      "'source'が空文字となるのはpushコマンドでremoteブランチを削除する場合",
     );
   }
 }

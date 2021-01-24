@@ -48,7 +48,7 @@ export class Checkout extends Base {
     await this.repo.index.loadForUpdate();
     const treeDiff = await this.repo.database.treeDiff(
       this.#currentOid,
-      this.#targetOid
+      this.#targetOid,
     );
     const migration = this.repo.migration(treeDiff);
     try {
@@ -93,7 +93,7 @@ export class Checkout extends Base {
     if (this.#currentRef.head() && this.#currentOid === this.#targetOid) {
       await this.printHeadPosition(
         "Previous HEAD position was",
-        this.#currentOid
+        this.#currentOid,
       );
     }
   }

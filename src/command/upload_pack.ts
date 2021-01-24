@@ -45,7 +45,7 @@ export class UploadPack extends Base implements remote_agent.RemoteAgent {
 
   private async recvOids(
     prefix: string,
-    terminator: string | null
+    terminator: string | null,
   ): Promise<Set<OID>> {
     checkConnected(this.conn);
     // TODO: [0-9a-f]で正規表現がマッチしない

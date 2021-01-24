@@ -6,7 +6,7 @@ describe("Entry#mode", () => {
   it.each([
     ["100755", Entry.EXECUTABLE_MODE],
     ["100644", Entry.REGULAR_MODE],
-    ["100655", Entry.REGULAR_MODE]
+    ["100655", Entry.REGULAR_MODE],
   ])("ファイルモード: %s", (osMode: string, expectedGitMode: string) => {
     // Arrange
     const stats = new Stats();
@@ -15,7 +15,7 @@ describe("Entry#mode", () => {
     const entry = new Entry(
       "/test/repo",
       "cc628ccd10742baea8241c5924df992b5c019f71",
-      stats
+      stats,
     );
     const actual = entry.mode;
 

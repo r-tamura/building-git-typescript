@@ -7,7 +7,10 @@ import { shallowEqual } from "../util";
 import { ConflictStatus } from "../repository";
 import { MergeType } from "../repository/pending_commit";
 
-const SHORT_STATUS: Record<Exclude<Repository.ChangeType, null> | "nochange", string> = {
+const SHORT_STATUS: Record<
+  Exclude<Repository.ChangeType, null> | "nochange",
+  string
+> = {
   deleted: "D",
   added: "A",
   modified: "M",
@@ -38,7 +41,9 @@ function getConflictShortStatus(conflict: Repository.ConflictStatus) {
     conflictEquals([3]) ? "UA" :
     null;
   if (message === null) {
-    throw new TypeError(`サポートされていないコンフリクト状態です。 '${conflict}'`);
+    throw new TypeError(
+      `サポートされていないコンフリクト状態です。 '${conflict}'`,
+    );
   }
   return message;
 }
@@ -56,13 +61,18 @@ function getConflictLongStatus(conflict: Repository.ConflictStatus) {
     conflictEquals([3]) ? "added by them:" :
     null;
   if (message === null) {
-    throw new TypeError(`サポートされていないコンフリクト状態です。 '${conflict}'`);
+    throw new TypeError(
+      `サポートされていないコンフリクト状態です。 '${conflict}'`,
+    );
   }
   return message;
 }
 
 type LableSet = keyof typeof UI_WIDTHS;
-const UI_WIDTHS = { normal: LABEL_WIDTH, conflict: CONFLICT_LABEL_WIDTH } as const;
+const UI_WIDTHS = {
+  normal: LABEL_WIDTH,
+  conflict: CONFLICT_LABEL_WIDTH,
+} as const;
 
 interface Option {
   format: "long" | "porcelain";
@@ -117,7 +127,7 @@ export class Status extends Base<Option> {
       | Map<Pathname, Repository.ConflictStatus>
       | Set<Pathname>,
     style: Style,
-    labelSet: LableSet = "normal"
+    labelSet: LableSet = "normal",
   ) {
     if (changeset.size === 0) {
       return;
@@ -130,8 +140,12 @@ export class Status extends Base<Option> {
     // Note: for .. of の場合, Set型の挙動がMapと異なるので forEachを利用
     changeset.forEach(
       (
-        type: Repository.ChangeType | Repository.ConflictStatus | Pathname | null,
-        pathname: Pathname
+        type:
+          | Repository.ChangeType
+          | Repository.ConflictStatus
+          | Pathname
+          | null,
+        pathname: Pathname,
       ) => {
         // prettier-ignore
         const status = isStatusType(type) ? getLongStatus(type).padEnd(width)
@@ -139,7 +153,7 @@ export class Status extends Base<Option> {
         : "";
 
         this.log("\t" + this.fmt(style, status + pathname));
-      }
+      },
     );
     this.log("");
   }
@@ -173,9 +187,22 @@ export class Status extends Base<Option> {
     await this.printBranchStatus();
     await this.printPendingCommitStatus();
 
-    this.printChanges("Changes to be committed", this.#status.indexChanges, "green");
-    this.printChanges("Unmerged paths", this.#status.conflicts, "red", "conflict");
-    this.printChanges("Changes not staged for commit", this.#status.workspaceChanges, "red");
+    this.printChanges(
+      "Changes to be committed",
+      this.#status.indexChanges,
+      "green",
+    );
+    this.printChanges(
+      "Unmerged paths",
+      this.#status.conflicts,
+      "red",
+      "conflict",
+    );
+    this.printChanges(
+      "Changes not staged for commit",
+      this.#status.workspaceChanges,
+      "red",
+    );
     this.printChanges("Untracked files", this.#status.untrackedFiles, "red");
 
     this.printCommitStatus();
@@ -186,7 +213,10 @@ export class Status extends Base<Option> {
       const status = this.statusFor(p);
       return `${status} ${p}`;
     });
-    this.print(this.#status.untrackedFiles, (p) => `${SHORT_STATUS.untracked} ${p}`);
+    this.print(
+      this.#status.untrackedFiles,
+      (p) => `${SHORT_STATUS.untracked} ${p}`,
+    );
   }
 
   private async printPendingCommitStatus() {
@@ -236,8 +266,10 @@ export class Status extends Base<Option> {
       // コンフリクトが存在することが保証されている
       return getConflictShortStatus(this.#status.conflicts.get(pathname)!);
     } else {
-      const left = SHORT_STATUS[this.#status.indexChanges.get(pathname) ?? "nochange"];
-      const right = SHORT_STATUS[this.#status.workspaceChanges.get(pathname) ?? "nochange"];
+      const left =
+        SHORT_STATUS[this.#status.indexChanges.get(pathname) ?? "nochange"];
+      const right =
+        SHORT_STATUS[this.#status.workspaceChanges.get(pathname) ?? "nochange"];
 
       return left + right;
     }

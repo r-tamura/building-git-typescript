@@ -25,7 +25,9 @@ export class Stack {
   }
 
   async open() {
-    await Promise.all(Object.values(this.#configs).map((config) => config.open()));
+    await Promise.all(
+      Object.values(this.#configs).map((config) => config.open()),
+    );
   }
 
   async get(key: SectionName) {

@@ -79,7 +79,7 @@ export abstract class Base<O extends Options = NoOptions>
         }
       },
       await this.editorCommand(),
-      { fs: this.env.fs, stdout: this.stdout, stderr: this.stderr }
+      { fs: this.env.fs, stdout: this.stdout, stderr: this.stderr },
     );
     return message;
   }
@@ -114,7 +114,7 @@ export abstract class Base<O extends Options = NoOptions>
   get repo() {
     return (this._repo ??= new Repository(
       path.join(this.dir, ".git"),
-      this.env
+      this.env,
     ));
   }
 

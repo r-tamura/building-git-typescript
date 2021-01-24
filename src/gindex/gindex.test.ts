@@ -19,7 +19,8 @@ const MockedLockfile = (Lockfile as unknown) as jest.Mock<Partial<Lockfile>>;
 const testObjectPath = "README.md";
 const testOid = "ba78afac62556e840341715936909cc36fe83a77"; // sha1 of 'jit\n'
 
-const randOid = () => crypto.createHash("sha1").update(Math.random().toString()).digest("hex");
+const randOid = () =>
+  crypto.createHash("sha1").update(Math.random().toString()).digest("hex");
 
 // book
 describe("Index#add", () => {
@@ -49,7 +50,10 @@ describe("Index#add", () => {
     index.add("alice.txt/nested.txt", oid, stat);
 
     // Assert
-    assert.deepEqual(index.eachEntry().map(extractName), ["alice.txt/nested.txt", "bob.txt"]);
+    assert.deepEqual(index.eachEntry().map(extractName), [
+      "alice.txt/nested.txt",
+      "bob.txt",
+    ]);
   });
 
   it("replaces a directory with a file", () => {
@@ -60,7 +64,10 @@ describe("Index#add", () => {
     index.add("nested", oid, stat);
 
     // Assert
-    assert.deepEqual(index.eachEntry().map(extractName), ["alice.txt", "nested"]);
+    assert.deepEqual(index.eachEntry().map(extractName), [
+      "alice.txt",
+      "nested",
+    ]);
   });
 
   it("recursively replaces a directory with a file", () => {
@@ -71,7 +78,10 @@ describe("Index#add", () => {
     index.add("nested/inner/claire.txt", oid, stat);
 
     index.add("nested", oid, stat);
-    assert.deepEqual(index.eachEntry().map(extractName), ["alice.txt", "nested"]);
+    assert.deepEqual(index.eachEntry().map(extractName), [
+      "alice.txt",
+      "nested",
+    ]);
   });
 });
 
@@ -124,7 +134,7 @@ describe("Index#writeUpdates", () => {
           0x00,
           0x00,
           0x01, // number of entries
-        ])
+        ]),
       );
     });
 
@@ -141,7 +151,7 @@ describe("Index#writeUpdates", () => {
       const actualSha1 = mockedWrite.mock.calls[2][0];
       assert.deepEqual(
         Buffer.from(actualSha1, "binary"),
-        Buffer.from("5731b15defefca2d8429d179e2650f99f4bccdbd", "hex")
+        Buffer.from("5731b15defefca2d8429d179e2650f99f4bccdbd", "hex"),
       );
     });
 
@@ -204,7 +214,11 @@ describe("Index#writeUpdates", () => {
           }),
         ],
 
-        ["README.md", "78e6cf75f4a8afa5a46741523101393381913dd4", makeTestStats()],
+        [
+          "README.md",
+          "78e6cf75f4a8afa5a46741523101393381913dd4",
+          makeTestStats(),
+        ],
       ] as [string, string, Stats][];
       entries.forEach((e) => index.add(...e));
       await index.writeUpdates();
@@ -226,12 +240,17 @@ describe("Index#writeUpdates", () => {
 describe("Index#loadForUpdate", () => {
   // Arrange
   const mockedRead = jest
-    .fn<ReturnType<promises.FileHandle["read"]>, Parameters<promises.FileHandle["read"]>>()
+    .fn<
+      ReturnType<promises.FileHandle["read"]>,
+      Parameters<promises.FileHandle["read"]>
+    >()
     .mockImplementation(createFakeRead());
-  const mockedOpen = jest.fn<Promise<Partial<promises.FileHandle>>, any>().mockResolvedValue({
-    read: mockedRead as any,
-    close: jest.fn(),
-  });
+  const mockedOpen = jest
+    .fn<Promise<Partial<promises.FileHandle>>, any>()
+    .mockResolvedValue({
+      read: mockedRead as any,
+      close: jest.fn(),
+    });
   const env = {
     fs: { ...defaultFs, open: mockedOpen as any },
   };
@@ -285,14 +304,14 @@ describe("Index#loadForUpdate", () => {
       assert.equal(
         mockedRead.mock.calls.length,
         6,
-        "header + (file meta + file name)x2 + checksum"
+        "header + (file meta + file name)x2 + checksum",
       );
     });
     it("データが読み込まれる", () => {
       assert.equal(
         mockedWrite.mock.calls.length,
         5,
-        "header + indexファイルのデータx2 + 追加データx1 + checksum"
+        "header + indexファイルのデータx2 + 追加データx1 + checksum",
       );
     });
   });

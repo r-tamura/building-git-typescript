@@ -4,7 +4,14 @@ import { stripIndent } from "../util";
 
 describe("Diff3.merge", () => {
   it.each([
-    ["cleanly merges two lists", ["a", "b", "c"], ["d", "b", "c"], ["a", "b", "e"], "dbe", true],
+    [
+      "cleanly merges two lists",
+      ["a", "b", "c"],
+      ["d", "b", "c"],
+      ["a", "b", "e"],
+      "dbe",
+      true,
+    ],
     [
       "cleanly merges two lists with the same edit",
       ["a", "b", "c"],
@@ -47,9 +54,30 @@ describe("Diff3.merge", () => {
   });
 
   it("コンフリクト部分のdiffを返す", () => {
-    const orig = ["celery", "garlic", "onions", "salmon", "tomatoes", "wine"].join("\n");
-    const left = ["celery", "salmon", "tomatoes", "garlic", "onions", "wine"].join("\n");
-    const right = ["celery", "salmon", "garlic", "onions", "tomatoes", "wine"].join("\n");
+    const orig = [
+      "celery",
+      "garlic",
+      "onions",
+      "salmon",
+      "tomatoes",
+      "wine",
+    ].join("\n");
+    const left = [
+      "celery",
+      "salmon",
+      "tomatoes",
+      "garlic",
+      "onions",
+      "wine",
+    ].join("\n");
+    const right = [
+      "celery",
+      "salmon",
+      "garlic",
+      "onions",
+      "tomatoes",
+      "wine",
+    ].join("\n");
 
     // Act
     const actual = Diff3.merge(orig, left, right);
@@ -70,7 +98,7 @@ describe("Diff3.merge", () => {
       garlic
       onions
       wine
-    `
+    `,
     );
   });
 });

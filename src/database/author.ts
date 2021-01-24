@@ -22,14 +22,14 @@ export class Author {
       name,
       email,
       // commitオブジェクトは秒までだが、Dateはmsまで必要
-      new Date(Number.parseInt(timestamp) * 1000)
+      new Date(Number.parseInt(timestamp) * 1000),
     );
     return author;
   }
 
   get readableTime() {
     const { year, smonth, date, day, hour, minute, second } = timeForPrint(
-      this.time
+      this.time,
     );
     const tz = this.getTimezoneString();
 

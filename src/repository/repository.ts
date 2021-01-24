@@ -31,11 +31,17 @@ export class Repository {
   constructor(public gitPath: Pathname, public env: RepositoryEnv) {}
 
   get database() {
-    return (this.#database ??= new Database(path.join(this.gitPath, "objects"), this.env));
+    return (this.#database ??= new Database(
+      path.join(this.gitPath, "objects"),
+      this.env,
+    ));
   }
 
   get index() {
-    return (this.#index ??= new Index(path.join(this.gitPath, "index"), this.env));
+    return (this.#index ??= new Index(
+      path.join(this.gitPath, "index"),
+      this.env,
+    ));
   }
 
   get refs() {
@@ -47,7 +53,10 @@ export class Repository {
   }
 
   get workspace() {
-    return (this.#workspace ??= new Workspace(path.dirname(this.gitPath), this.env));
+    return (this.#workspace ??= new Workspace(
+      path.dirname(this.gitPath),
+      this.env,
+    ));
   }
 
   migration(treeDiff: Changes) {

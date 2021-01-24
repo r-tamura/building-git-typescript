@@ -22,7 +22,7 @@ export async function sendPackedObjects(cmd: SendObject, revs: string[]) {
   const writer = new pack.Writer(
     cmd.conn.output,
     cmd.repo.database,
-    write_options
+    write_options,
   );
   await writer.writeObjects(revList);
 }

@@ -1,4 +1,12 @@
-import { Ref, Parent, Ancestor, Revision, Rev, InvalidObject, HintedError } from "./revision";
+import {
+  Ref,
+  Parent,
+  Ancestor,
+  Revision,
+  Rev,
+  InvalidObject,
+  HintedError,
+} from "./revision";
 import * as assert from "power-assert";
 import { Database, Commit, Author, Blob } from "./database";
 import { Refs } from "./refs";
@@ -11,7 +19,7 @@ const mockCommit = (oid: string) => {
     "testtree123456",
     new Author("", "", new Date(2020, 3, 1)),
     new Author("", "", new Date(2020, 3, 1)),
-    [`message is ${oid}`].join("\n")
+    [`message is ${oid}`].join("\n"),
   );
   commit.oid = oid;
   return commit as CompleteGitObject;
@@ -73,7 +81,11 @@ describe("Revision#readRef", () => {
     const actual = await rev.readRef("3a3c4ec");
 
     // Assert
-    assert.equal(spyPrefixMatch.mock.calls[0][0], "3a3c4ec", "オブジェクトIDのprefixによる検索");
+    assert.equal(
+      spyPrefixMatch.mock.calls[0][0],
+      "3a3c4ec",
+      "オブジェクトIDのprefixによる検索",
+    );
     assert.equal(actual, "3a3c4ec0ae9589c881029c161dd129bcc318dc08", "返り値");
   });
 
@@ -81,24 +93,26 @@ describe("Revision#readRef", () => {
     // Arrange
     const testObjects = {
       "3a3c4ec0ae9589c881029c161dd129bcc318dc08": mockCommit(
-        "3a3c4ec0ae9589c881029c161dd129bcc318dc08"
+        "3a3c4ec0ae9589c881029c161dd129bcc318dc08",
       ),
       "3a3c4ec0ae9589c881029c161dd129bcc318dzzz": mockCommit(
-        "3a3c4ec0ae9589c881029c161dd129bcc318dzzz"
+        "3a3c4ec0ae9589c881029c161dd129bcc318dzzz",
       ),
       "3a3c4ec0ae9589c881029c161dd129bcc3object": mockBlob(
-        "3a3c4ec0ae9589c881029c161dd129bcc3object"
+        "3a3c4ec0ae9589c881029c161dd129bcc3object",
       ),
     } as const;
 
     const testPrefix = "3a3c4ec";
     const spys = [
       jest.spyOn(Refs.prototype, "readRef").mockResolvedValue(null),
-      jest.spyOn(Database.prototype, "prefixMatch").mockResolvedValue(Object.keys(testObjects)),
+      jest
+        .spyOn(Database.prototype, "prefixMatch")
+        .mockResolvedValue(Object.keys(testObjects)),
       jest
         .spyOn(Database.prototype, "load")
         .mockImplementation((oid: string) =>
-          Promise.resolve(testObjects[oid as keyof typeof testObjects])
+          Promise.resolve(testObjects[oid as keyof typeof testObjects]),
         ),
       jest.spyOn(Database.prototype, "shortOid").mockReturnValue(testPrefix),
     ];
@@ -116,7 +130,7 @@ describe("Revision#readRef", () => {
         "  3a3c4ec commit 2020-04-01 - message is 3a3c4ec0ae9589c881029c161dd129bcc318dzzz",
         "  3a3c4ec blob",
       ],
-      "エラーメッセージ"
+      "エラーメッセージ",
     );
     assert.equal(actual, null, "返り値");
 
@@ -175,10 +189,10 @@ describe("Revision#resolve", () => {
       [
         new HintedError(
           "object 3a3c4ec0ae9589c881029c161dd129bcc318dc08 is a blob, not a commit",
-          []
+          [],
         ),
       ],
-      "エラーメッセージ"
+      "エラーメッセージ",
     );
   });
 });

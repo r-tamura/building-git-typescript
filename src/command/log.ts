@@ -122,7 +122,7 @@ export class Log extends Base<Options> {
 
     const [[head], restRefs] = partition(
       refs,
-      (ref) => ref.head() && !this.#currentRef.head()
+      (ref) => ref.head() && !this.#currentRef.head(),
     );
     const names = restRefs.map((ref) => this.decorationName(head, ref));
 
@@ -175,12 +175,12 @@ export class Log extends Base<Options> {
     this.blankLine();
     this.log(
       this.fmt("yellow", `commit ${this.abbrev(commit)}`) +
-        this.decorate(commit)
+        this.decorate(commit),
     );
 
     if (commit.merge) {
       const oids = commit.parents.map((oid) =>
-        this.repo.database.shortOid(oid)
+        this.repo.database.shortOid(oid),
       );
       this.log(`Merge: ${oids.join(" ")}`);
     }
@@ -248,13 +248,13 @@ export class Log extends Base<Options> {
         // diff内に存在するpathであることは diffs[0].keys() より保証されている
         const parent = await this.fromDiffItem(
           pathname,
-          diff.get(pathname)![0]
+          diff.get(pathname)![0],
         );
         parents.push(parent);
       }
       const child = await this.fromDiffItem(
         pathname,
-        diffs[0].get(pathname)![1]
+        diffs[0].get(pathname)![1],
       );
       await printCombinedDiff(parents as [Target, Target], child, this);
     }
@@ -268,7 +268,7 @@ export class Log extends Base<Options> {
         pathname,
         item.oid,
         item.mode.toString(8),
-        blob.data.toString()
+        blob.data.toString(),
       );
     } else {
       return Target.of(pathname, NULL_OID, null, "");

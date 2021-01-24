@@ -28,7 +28,7 @@ interface StartAgentParams {
 
 export function startAgent(
   cmd: RemoteClient,
-  { name, program, url, capabilities = [] }: StartAgentParams
+  { name, program, url, capabilities = [] }: StartAgentParams,
 ): void {
   const [command, ...args] = buildAgentCommand(program, url);
   const { stdin, stdout } = child_process.spawn(command, args, {
@@ -83,7 +83,7 @@ export async function recvReferences(cmd: RemoteClient) {
 
 export type SouceTargetPair = readonly [
   source: remotes.SourceRef | undefined,
-  target: remotes.TargetRef | undefined
+  target: remotes.TargetRef | undefined,
 ];
 interface ReportRefUpdateParams {
   readonly refNames: SouceTargetPair;
@@ -95,7 +95,7 @@ interface ReportRefUpdateParams {
 
 export function reportRefUpdate(
   cmd: RemoteClient,
-  { refNames, error, oldOid, newOid, isFF = false }: ReportRefUpdateParams
+  { refNames, error, oldOid, newOid, isFF = false }: ReportRefUpdateParams,
 ): void {
   if (error) {
     showRefUpdate(cmd, {
@@ -129,7 +129,7 @@ interface ReportRangeUpdateParams {
 
 function reportRangeUpdate(
   cmd: RemoteClient,
-  { refNames, oldOid, newOid, isFF }: ReportRangeUpdateParams
+  { refNames, oldOid, newOid, isFF }: ReportRangeUpdateParams,
 ) {
   const oldOidShort = cmd.repo.database.shortOid(oldOid);
   const newOidShort = cmd.repo.database.shortOid(newOid);
@@ -158,7 +158,7 @@ interface ShowRefUpdateParams {
 
 function showRefUpdate(
   cmd: RemoteClient,
-  { flag, summary, refNames, reason }: ShowRefUpdateParams
+  { flag, summary, refNames, reason }: ShowRefUpdateParams,
 ) {
   const names = array
     .compact(refNames)

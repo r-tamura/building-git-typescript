@@ -48,7 +48,7 @@ export class Commit extends Base<Options> {
 
     const parent = await this.repo.refs.readHead();
     const message = await this.composeMessage(
-      (await readMessage(this)) ?? (await this.reusedMessage())
+      (await readMessage(this)) ?? (await this.reusedMessage()),
     );
     const commit = await writeCommit(parent ? [parent] : [], message, this);
     await printCommit(commit, this);
@@ -108,7 +108,10 @@ export class Commit extends Base<Options> {
 
   async handleAmend() {
     const head = await this.repo.refs.readHead();
-    asserts(head !== null, "--amendオプションはコミットが一つ以上存在する場合にのみ使われる");
+    asserts(
+      head !== null,
+      "--amendオプションはコミットが一つ以上存在する場合にのみ使われる",
+    );
     // HEADはコミットID
     const oldCommit = (await this.repo.database.load(head)) as CompleteCommit;
     const tree = await writeTree(this);
@@ -124,7 +127,7 @@ export class Commit extends Base<Options> {
       tree.oid,
       oldCommit.author,
       commiter,
-      message
+      message,
     );
 
     await this.repo.database.store(newCommit);

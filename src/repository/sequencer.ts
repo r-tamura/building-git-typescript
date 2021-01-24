@@ -17,7 +17,8 @@ export interface Environment {
 export type Action = "pick" | "revert";
 export type Command = [Action, CompleteCommit];
 
-const UNSAFE_MESSAGE = "You seem to have moved HEAD. Not rewinding, check your HEAD!";
+const UNSAFE_MESSAGE =
+  "You seem to have moved HEAD. Not rewinding, check your HEAD!";
 
 export class Sequencer {
   #repo: Repository;
@@ -112,7 +113,9 @@ export class Sequencer {
       asserts(action === "pick" || action === "revert", "Action名");
       const oids = await this.#repo.database.prefixMatch(oid);
       // todoファイルに書き込まれるのはコミットIDのみ
-      const commit = (await this.#repo.database.load(oids[0])) as CompleteCommit;
+      const commit = (await this.#repo.database.load(
+        oids[0],
+      )) as CompleteCommit;
       this.#commands.push([action, commit]);
     }
   }

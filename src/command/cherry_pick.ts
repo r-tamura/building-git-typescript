@@ -63,7 +63,7 @@ export class CherryPick extends Base<Sequencing.Options> {
       tree.oid,
       commit.author,
       await currentAuthor(this),
-      commit.message
+      commit.message,
     );
 
     await Sequencing.finishCommit(picked, this);

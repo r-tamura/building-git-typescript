@@ -8,7 +8,12 @@ describe("Hunk.filter", () => {
   describe("通常diff", () => {
     const tests: [string, TextDocument, TextDocument, Hunk[]][] = [
       ["編集回数0", "A", "A", []],
-      ["編集回数1", "A", [], [Hunk.of([], null, [Edit.of("del", Line.of(1, "A"), null)])]],
+      [
+        "編集回数1",
+        "A",
+        [],
+        [Hunk.of([], null, [Edit.of("del", Line.of(1, "A"), null)])],
+      ],
       [
         "編集回数2",
         Array.from("AAABAAA"),

@@ -25,7 +25,7 @@ const unpackEntry = (s: string): [string, string, string, string] => {
 
 const unpackEntries = (serializedEntry: string) => {
   let rest = serializedEntry;
-  let entries = [];
+  const entries = [];
   let count = 0;
   while (rest !== "") {
     const [mode, name, hash, _rest] = unpackEntry(rest);
@@ -53,12 +53,12 @@ describe("Tree#traverse", () => {
       new Entry(
         "test/hello.txt",
         "ce013625030ba8dba906f756967f9e9ca394464a",
-        testStats("readable")
+        testStats("readable"),
       ),
       new Entry(
         "test/test2/world.txt",
         "cc628ccd10742baea8241c5924df992b5c019f71",
-        testStats("readable")
+        testStats("readable"),
       ),
     ];
 
@@ -73,7 +73,7 @@ describe("Tree#traverse", () => {
       "world.txt": new Entry(
         "test/test2/world.txt",
         "cc628ccd10742baea8241c5924df992b5c019f71",
-        testStats("readable")
+        testStats("readable"),
       ),
     });
     test2.oid = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
@@ -81,7 +81,7 @@ describe("Tree#traverse", () => {
       "hello.txt": new Entry(
         "test/hello.txt",
         "ce013625030ba8dba906f756967f9e9ca394464a",
-        testStats("readable")
+        testStats("readable"),
       ),
       test2,
     });
@@ -99,7 +99,7 @@ describe("Tree#traverse", () => {
       assert.deepStrictEqual(mockedCallback.mock.calls[0][0], test2);
       assert.equal(
         mockedCallback.mock.results[0].value,
-        "100644 world.txt cc628ccd10742baea8241c5924df992b5c019f71"
+        "100644 world.txt cc628ccd10742baea8241c5924df992b5c019f71",
       );
     });
 
@@ -110,7 +110,7 @@ describe("Tree#traverse", () => {
         [
           "100644 hello.txt ce013625030ba8dba906f756967f9e9ca394464a",
           "40000 test2 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
-        ].join("\n")
+        ].join("\n"),
       );
     });
 
@@ -118,7 +118,7 @@ describe("Tree#traverse", () => {
       assert.deepStrictEqual(mockedCallback.mock.calls[2][0], root);
       assert.equal(
         mockedCallback.mock.results[2].value,
-        ["40000 test aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"].join("\n")
+        ["40000 test aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"].join("\n"),
       );
     });
   });
@@ -130,12 +130,12 @@ describe("Tree#toString", () => {
     const firstFileName = Buffer.from("hello.txt\0");
     const firstFileHash = Buffer.from(
       "ce013625030ba8dba906f756967f9e9ca394464a",
-      "hex"
+      "hex",
     );
     const secondFileName = Buffer.from("world.txt\0");
     const secondFileHash = Buffer.from(
       "cc628ccd10742baea8241c5924df992b5c019f71",
-      "hex"
+      "hex",
     );
 
     const expected1 = Buffer.concat([mode, firstFileName, firstFileHash]);
@@ -150,12 +150,12 @@ describe("Tree#toString", () => {
       new Entry(
         "hello.txt",
         "ce013625030ba8dba906f756967f9e9ca394464a",
-        testStats("readable")
+        testStats("readable"),
       ),
       new Entry(
         "world.txt",
         "cc628ccd10742baea8241c5924df992b5c019f71",
-        testStats("readable")
+        testStats("readable"),
       ),
     ];
 
@@ -174,12 +174,12 @@ describe("Tree#toString", () => {
       new Entry(
         "world.txt",
         "cc628ccd10742baea8241c5924df992b5c019f71",
-        testStats("readable")
+        testStats("readable"),
       ),
       new Entry(
         "hello.txt",
         "ce013625030ba8dba906f756967f9e9ca394464a",
-        testStats("readable")
+        testStats("readable"),
       ),
     ];
 
@@ -198,7 +198,7 @@ describe("Tree#toString", () => {
       new Entry(
         "hello.txt",
         "ce013625030ba8dba906f756967f9e9ca394464a",
-        testStats("executable")
+        testStats("executable"),
       ),
     ];
 
@@ -217,7 +217,7 @@ describe("Tree#toString", () => {
       new Entry(
         "test/nested/hello.txt",
         "ce013625030ba8dba906f756967f9e9ca394464a",
-        testStats("readable")
+        testStats("readable"),
       ),
     ];
 
@@ -243,14 +243,14 @@ describe("Tree.parse", () => {
       new Database.Tree({
         "test.txt": new Database.Entry(
           "ec635144f60048986bc560c5576355344005e6e7",
-          0o0100644
+          0o0100644,
         ),
         dir: new Database.Entry(
           "ff1c31c22e6b80ace79f41a8344042941e572b08",
-          0o040000
+          0o040000,
         ),
       }).toString(),
-      "binary"
+      "binary",
     );
 
     // Act
@@ -267,7 +267,7 @@ describe("Tree#addEntry", () => {
     const tree = new Tree();
     tree.addEntry(
       ["dir", "dir/nested"],
-      new Entry("hello.txt", "oid", makeTestStats())
+      new Entry("hello.txt", "oid", makeTestStats()),
     );
 
     // Assert

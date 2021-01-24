@@ -8,7 +8,7 @@ export interface Connectable {
 class NotConnected extends BaseError {}
 
 export function checkConnected(
-  conn: remotes.Protocol | undefined
+  conn: remotes.Protocol | undefined,
 ): asserts conn is remotes.Protocol {
   if (conn === undefined) {
     throw new NotConnected();

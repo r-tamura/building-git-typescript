@@ -10,13 +10,13 @@ export class Pager {
   constructor(
     public envvars: Process["env"],
     public stdout: Process["stdout"],
-    public stderr: Process["stderr"]
+    public stderr: Process["stderr"],
   ) {}
 
   static of(
     envvars: Process["env"],
     stdout: Process["stdout"],
-    stderr: Process["stderr"]
+    stderr: Process["stderr"],
   ) {
     const pager = new this(envvars, stdout, stderr);
     const env: NodeJS.ProcessEnv = { ...PAGER_ENV, ...envvars };

@@ -7,7 +7,7 @@ interface ReceivePackedObjects extends GitCommand, Connectable {}
 
 export async function receivePackedObjects(
   cmd: ReceivePackedObjects,
-  prefix = ""
+  prefix = "",
 ) {
   checkConnected(cmd.conn);
   const stream = new pack.Stream(cmd.conn.input, prefix);

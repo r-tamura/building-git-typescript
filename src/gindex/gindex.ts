@@ -33,7 +33,9 @@ export class Index {
   }
 
   add(pathname: Pathname, oid: OID, stat: Stats) {
-    ([BASE, LEFT, RIGHT] as const).forEach((stage) => this.removeEntryWithStage(pathname, stage));
+    ([BASE, LEFT, RIGHT] as const).forEach((stage) =>
+      this.removeEntryWithStage(pathname, stage),
+    );
     const entry = Entry.create(pathname, oid, stat);
     this.discardConflicts(entry);
     this.storeEntry(entry);
@@ -52,7 +54,11 @@ export class Index {
    */
   addConflictSet(
     pathname: Pathname,
-    items: readonly [Database.Entry | null, Database.Entry | null, Database.Entry | null]
+    items: readonly [
+      Database.Entry | null,
+      Database.Entry | null,
+      Database.Entry | null,
+    ],
   ) {
     this.removeEntryWithStage(pathname, 0);
 
@@ -208,12 +214,14 @@ export class Index {
   }
 
   private async openIndexFile() {
-    return this.#fs.open(this.#pathname, constants.O_RDONLY).catch((e: NodeJS.ErrnoException) => {
-      if (e.code === "ENOENT") {
-        return null;
-      }
-      throw e;
-    });
+    return this.#fs
+      .open(this.#pathname, constants.O_RDONLY)
+      .catch((e: NodeJS.ErrnoException) => {
+        if (e.code === "ENOENT") {
+          return null;
+        }
+        throw e;
+      });
   }
 
   private async readHeader(reader: Checksum) {
@@ -221,11 +229,15 @@ export class Index {
     const [signature, version, count] = this.unpackHeader(data);
 
     if (signature !== Index.SIGNATURE) {
-      throw new Invalid(`Signature: expected '${Index.SIGNATURE}' but found '${signature}'`);
+      throw new Invalid(
+        `Signature: expected '${Index.SIGNATURE}' but found '${signature}'`,
+      );
     }
 
     if (version !== Index.VERSION) {
-      throw new Invalid(`Version: expected '${Index.VERSION} but found '${version}'`);
+      throw new Invalid(
+        `Version: expected '${Index.VERSION} but found '${version}'`,
+      );
     }
 
     return count;

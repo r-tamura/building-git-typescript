@@ -19,7 +19,10 @@ export type Changes = {
 export class Conflict extends BaseError {}
 
 type Conflicts = Record<
-  "stale_file" | "stale_directory" | "untracked_overwritten" | "untracked_removed",
+  | "stale_file"
+  | "stale_directory"
+  | "untracked_overwritten"
+  | "untracked_removed",
   Set<string>
 >;
 
@@ -28,7 +31,10 @@ const MESSAGES: Record<keyof Conflicts, [string, string]> = {
     "Your local changes to the following files would be overwritten by checkout:",
     "Please commit your changes or stash them before you switch branches.",
   ],
-  stale_directory: ["Updating the following directories would lose untracked files in them:", "\n"],
+  stale_directory: [
+    "Updating the following directories would lose untracked files in them:",
+    "\n",
+  ],
   untracked_overwritten: [
     "The following untracked working tree files would be overwritten by checkout:",
     "Please move or remove them before you switch branches.",
@@ -74,7 +80,7 @@ export class Migration {
   private async checkForConflict(
     pathname: Pathname,
     oldItem: Database.Entry | null,
-    newItem: Database.Entry | null
+    newItem: Database.Entry | null,
   ) {
     const entry = this.#repo.index.entryForPath(pathname);
 
@@ -96,7 +102,10 @@ export class Migration {
       }
     } else if (stat.isFile()) {
       // indexとの差分がある
-      const changed = await this.#inspector.compareIndexToWorkspace(entry, stat);
+      const changed = await this.#inspector.compareIndexToWorkspace(
+        entry,
+        stat,
+      );
       if (changed) {
         this.#conflicts[type].add(pathname);
       }
@@ -128,7 +137,7 @@ export class Migration {
   private indexDiffersFromTrees(
     entry: Index.Entry | null,
     oldItem: Database.Entry | null,
-    newItem: Database.Entry | null
+    newItem: Database.Entry | null,
   ) {
     return (
       this.#inspector.compareTreeToIndex(oldItem, entry) &&
@@ -139,7 +148,7 @@ export class Migration {
   private getErrorType(
     stat: Stats | null,
     entry: Index.Entry | null,
-    item: Database.Entry | null
+    item: Database.Entry | null,
   ): keyof Conflicts {
     if (entry) {
       return "stale_file";
@@ -199,7 +208,7 @@ export class Migration {
   private recordChange(
     pathname: Pathname,
     oldItem: Database.Entry | null,
-    newItem: Database.Entry | null
+    newItem: Database.Entry | null,
   ) {
     const parentDirs = descend(path.dirname(pathname));
 

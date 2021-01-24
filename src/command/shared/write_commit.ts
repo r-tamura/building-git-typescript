@@ -48,7 +48,7 @@ export interface CommitArgSpec extends arg.Spec {
 }
 
 export function defineWriteCommitOptions<O extends CommitOptions>(
-  cmd: Base<O>
+  cmd: Base<O>,
 ): CommitArgSpec {
   return {
     "--message": (message: string) => {
@@ -81,7 +81,7 @@ export async function readMessage<O extends CommitOptions>(cmd: Base<O>) {
   } else if (cmd.options["file"]) {
     return cmd.repo.env.fs.readFile(
       cmd.options["file"],
-      "utf-8"
+      "utf-8",
     ) as Promise<string>;
   }
   return null;
@@ -136,7 +136,7 @@ export async function writeCherryPickCommit(cmd: Base & CommitPendable) {
   const commit = await cmd.repo.database.load(pickOid);
   asserts(
     commit.type === "commit",
-    "cherry-pick対象のオブジェクトIDはコミットID"
+    "cherry-pick対象のオブジェクトIDはコミットID",
   );
   const tree = await writeTree(cmd);
   const picked = new Commit(
@@ -144,7 +144,7 @@ export async function writeCherryPickCommit(cmd: Base & CommitPendable) {
     tree.oid,
     commit.author,
     await currentAuthor(cmd),
-    message
+    message,
   );
 
   await cmd.repo.database.store(picked);
@@ -168,7 +168,7 @@ export async function writeRevertCommit(cmd: Base & CommitPendable) {
 export async function writeCommit(
   parents: OID[],
   message: Nullable<string>,
-  cmd: Base
+  cmd: Base,
 ) {
   if (!message) {
     cmd.logger.error("Aborting commit due to empty commit message.");
@@ -223,7 +223,7 @@ export async function printCommit(commit: CompleteCommit, cmd: Base) {
 
 export function composeMergeMessage(
   notes: Nullable<string> = null,
-  cmd: Base & CommitPendable
+  cmd: Base & CommitPendable,
 ) {
   return cmd.editFile(commitMessagePath(cmd), async (editor) => {
     await editor.puts(await pendingCommit(cmd).mergeMessage());
@@ -254,12 +254,12 @@ export async function currentAuthor(cmd: Base) {
 
   if (name === undefined) {
     throw new BaseError(
-      "GIT_AUTHOR_NAMEもしくはコンフィグファイルにauthorがセットされている必要がある"
+      "GIT_AUTHOR_NAMEもしくはコンフィグファイルにauthorがセットされている必要がある",
     );
   }
   if (email === undefined) {
     throw new BaseError(
-      "GIT_AUTHOR_EMAILもしくはコンフィグファイルにemailがセットされている必要がある"
+      "GIT_AUTHOR_EMAILもしくはコンフィグファイルにemailがセットされている必要がある",
     );
   }
   return new Author(name, email, cmd.env.date.now());

@@ -44,7 +44,7 @@ export class Config extends Base<Options> {
         await this.editConfig((config) => config.set(key, value));
       } else {
         await this.readConfig((config) =>
-          config.get(key).then((value) => compact([value]))
+          config.get(key).then((value) => compact([value])),
         );
       }
     } catch (e) {
@@ -102,7 +102,7 @@ export class Config extends Base<Options> {
   private async replaceVariable(keyFromArgs: string) {
     const key = this.parseKey(keyFromArgs);
     return await this.editConfig((config) =>
-      config.replaceAll(key, this.args[0])
+      config.replaceAll(key, this.args[0]),
     );
   }
 
@@ -128,8 +128,8 @@ export class Config extends Base<Options> {
 
   private async readConfig(
     callback: (
-      config: ConfigLib.Stack | ConfigLib.Config
-    ) => ReturnType<ConfigLib.Config["getAll"]>
+      config: ConfigLib.Stack | ConfigLib.Config,
+    ) => ReturnType<ConfigLib.Config["getAll"]>,
   ) {
     let config: ConfigLib.Stack | ConfigLib.Config = this.repo.config;
     if (this.options["file"]) {
@@ -149,7 +149,7 @@ export class Config extends Base<Options> {
   }
 
   private async editConfig(
-    callback: (config: ConfigLib.Config) => void
+    callback: (config: ConfigLib.Config) => void,
   ): Promise<never> {
     const config = this.repo.config.file(this.options["file"] ?? "local");
 

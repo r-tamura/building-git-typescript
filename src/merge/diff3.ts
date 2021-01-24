@@ -6,7 +6,7 @@ import { splitByLine } from "../util/text";
  * baseドキュメントと比較して何行目とある比較対象のドキュメントの何行目が一致しているかをマップしたもの
  * キーがbaseドキュメントの行数、値が比較対象のドキュメント
  */
-type Matches = Map<LineNumber, LineNumber>
+type Matches = Map<LineNumber, LineNumber>;
 
 /** ドキュメント中の行番号 */
 type LineNumber = number;
@@ -15,10 +15,10 @@ type LineNumber = number;
 type LineString = string;
 
 /** base/a/bの各ドキュメントでの一致行 */
-type MatchingLineNumbers = [orig: LineNumber, a: LineNumber, b: LineNumber]
+type MatchingLineNumbers = [orig: LineNumber, a: LineNumber, b: LineNumber];
 
 /** ドキュメント内のmatchin/mismatchingパート */
-type Chunk = Clean | Conflict
+type Chunk = Clean | Conflict;
 
 export class Diff3 {
   #chunks: Chunk[] = [];
@@ -28,8 +28,8 @@ export class Diff3 {
   #o: LineString[];
   #a: LineString[];
   #b: LineString[];
-  #match_a: Matches = new Map;
-  #match_b: Matches = new Map;
+  #match_a: Matches = new Map();
+  #match_b: Matches = new Map();
 
   private constructor(o: LineString[], a: LineString[], b: LineString[]) {
     this.#o = o;
@@ -77,8 +77,7 @@ export class Diff3 {
           this.emitFinalChunk();
           return;
         }
-      }
-      else if (i) {
+      } else if (i) {
         // mismatchingパート(mistmatchingの種類でClean/Conflictが変わる)
         this.emitChunk(this.#line_o + i, this.#line_a + i, this.#line_b + i);
       } else {
@@ -127,7 +126,10 @@ export class Diff3 {
   private findNextMatch(): MatchingLineNumbers {
     let o = this.#line_o + 1;
     // ドキュメントの行数内 かつ base/a/bの全てが一致しない限りindexを加算する
-    while (o <= this.#o.length && (!this.#match_a.get(o) || !this.#match_b.get(o))) {
+    while (
+      o <= this.#o.length &&
+      (!this.#match_a.get(o) || !this.#match_b.get(o))
+    ) {
       o += 1;
     }
     // whileの条件より、whileを抜けた時点でoに対する値が存在することが確定する
@@ -137,14 +139,22 @@ export class Diff3 {
   }
 
   private emitChunk(o: LineNumber, a: LineNumber, b: LineNumber) {
-    this.writeChunk(this.#o.slice(this.#line_o, o - 1), this.#a.slice(this.#line_a, a - 1), this.#b.slice(this.#line_b, b - 1));
+    this.writeChunk(
+      this.#o.slice(this.#line_o, o - 1),
+      this.#a.slice(this.#line_a, a - 1),
+      this.#b.slice(this.#line_b, b - 1),
+    );
     this.#line_o = o - 1;
     this.#line_a = a - 1;
     this.#line_b = b - 1;
   }
 
   private emitFinalChunk() {
-    this.writeChunk(this.#o.slice(this.#line_o), this.#a.slice(this.#line_a), this.#b.slice(this.#line_b));
+    this.writeChunk(
+      this.#o.slice(this.#line_o),
+      this.#a.slice(this.#line_a),
+      this.#b.slice(this.#line_b),
+    );
   }
 
   private inBound(i: number) {
@@ -196,9 +206,17 @@ class Clean {
 
 /** diff3でa/bがコンフリクトとなるチャンク */
 class Conflict {
-  private constructor(public o_lines: LineString[], public a_lines: LineString[], public b_lines: LineString[]) {}
+  private constructor(
+    public o_lines: LineString[],
+    public a_lines: LineString[],
+    public b_lines: LineString[],
+  ) {}
 
-  static of(o_lines: LineString[], a_lines: LineString[], b_lines: LineString[]) {
+  static of(
+    o_lines: LineString[],
+    a_lines: LineString[],
+    b_lines: LineString[],
+  ) {
     const self = new Conflict(o_lines, a_lines, b_lines);
     return self;
   }
@@ -214,9 +232,13 @@ class Conflict {
   toString(a_name: string | null = null, b_name: string | null = null) {
     let text = "";
     text = this.separator(text, "<", a_name);
-    this.a_lines.forEach(line => { text = text + line; });
+    this.a_lines.forEach((line) => {
+      text = text + line;
+    });
     text = this.separator(text, "=");
-    this.b_lines.forEach(line => { text = text + line;});
+    this.b_lines.forEach((line) => {
+      text = text + line;
+    });
     text = this.separator(text, ">", b_name);
     return text;
   }
@@ -239,10 +261,10 @@ class Result {
   }
 
   clean() {
-    return this.chunks.every(chunk => chunk.isClean());
+    return this.chunks.every((chunk) => chunk.isClean());
   }
 
   toString(a_name: string | null = null, b_name: string | null = null) {
-    return this.chunks.map(chunk => chunk.toString(a_name, b_name)).join("");
+    return this.chunks.map((chunk) => chunk.toString(a_name, b_name)).join("");
   }
 }

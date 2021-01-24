@@ -26,8 +26,12 @@ export type Style = keyof typeof SRG_CODES;
 
 export function assertsStyle(cand: string): asserts cand is Style;
 export function assertsStyle(cand: string[]): asserts cand is Style[];
-export function assertsStyle(candidates: string | string[]): asserts candidates is Style | Style[] {
-  coerce(candidates).map((cand) => asserts(includes(cand, Object.keys(SRG_CODES))));
+export function assertsStyle(
+  candidates: string | string[],
+): asserts candidates is Style | Style[] {
+  coerce(candidates).map((cand) =>
+    asserts(includes(cand, Object.keys(SRG_CODES))),
+  );
 }
 
 // Ruby coerce to array [*x] 相当

@@ -134,8 +134,25 @@ export class Entry {
     //  ----------------
     //  11000000000101      = 12293
     const flags = (n << 12) | Math.min(pathname.length, this.MAX_PATH_SIZE);
-    asserts(item.mode !== MODE.directory, "indexファイルのエントリはファイルのみ");
-    return new this(0, 0, 0, 0, 0, 0, item.mode, 0, 0, 0, item.oid, flags, pathname);
+    asserts(
+      item.mode !== MODE.directory,
+      "indexファイルのエントリはファイルのみ",
+    );
+    return new this(
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      item.mode,
+      0,
+      0,
+      0,
+      item.oid,
+      flags,
+      pathname,
+    );
   }
 
   static parse(data: Buffer) {
@@ -213,13 +230,17 @@ export class Entry {
       meta.push(data.readUInt32BE(i));
     }
     // oid
-    const oid = data.slice(metaLength, metaLength + Entry.OID_SIZE).toString("hex");
+    const oid = data
+      .slice(metaLength, metaLength + Entry.OID_SIZE)
+      .toString("hex");
 
     // file name
     const flags = data.readUInt16BE(metaLength + Entry.OID_SIZE);
     const filenameOffset = metaLength + Entry.OID_SIZE + Entry.FLAGS_SIZE;
     const filenameLength = extractFilenameLength(flags);
-    const name = data.slice(filenameOffset, filenameOffset + filenameLength).toString();
+    const name = data
+      .slice(filenameOffset, filenameOffset + filenameLength)
+      .toString();
     return [...meta, oid, flags, name] as EntryConstructorParameters;
   }
 
@@ -233,7 +254,8 @@ export class Entry {
     const sha1Offset = metaLength;
     const fileSizeOffset = sha1Offset + Entry.OID_SIZE;
     const filenameOffset = fileSizeOffset + Entry.FLAGS_SIZE;
-    const bufferSize = metaLength + Entry.OID_SIZE + Entry.FLAGS_SIZE + filenameLength;
+    const bufferSize =
+      metaLength + Entry.OID_SIZE + Entry.FLAGS_SIZE + filenameLength;
     const padCount = Entry.BLOCK_SIZE - (bufferSize % Entry.BLOCK_SIZE);
 
     // File metadata

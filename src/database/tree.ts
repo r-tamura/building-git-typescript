@@ -40,7 +40,7 @@ export class Tree {
       const mode = Number.parseInt(modeStr, 8);
       asserts(
         mode === 0o0100644 || mode === 0o0100755 || mode === 0o040000,
-        `'${mode}'は数値タイプのモード`
+        `'${mode}'は数値タイプのモード`,
       );
       entries[name] = new Database.Entry(oid, mode);
     }
@@ -54,7 +54,8 @@ export class Tree {
       this.entries[entry.basename] = entry;
     } else {
       const treeName = path.basename(parents[0]);
-      const tree = (this.entries[treeName] = this.entries[treeName] ?? new Tree());
+      const tree = (this.entries[treeName] =
+        this.entries[treeName] ?? new Tree());
       asserts(tree instanceof Tree);
       parents.shift();
       tree.addEntry(parents, entry);

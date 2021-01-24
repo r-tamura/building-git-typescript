@@ -39,8 +39,14 @@ export class Combined implements Enumerable<Row> {
   }
 
   private *consumeDeletions(diff: Diff, i: number) {
-    while (this.#offsets[i] < diff.length && diff[this.#offsets[i]].type === "del") {
-      const edits = new Array(this.#diffs.length).fill(null) as [CombinedEdit, CombinedEdit];
+    while (
+      this.#offsets[i] < diff.length &&
+      diff[this.#offsets[i]].type === "del"
+    ) {
+      const edits = new Array(this.#diffs.length).fill(null) as [
+        CombinedEdit,
+        CombinedEdit,
+      ];
       edits[i] = diff[this.#offsets[i]];
       this.#offsets[i] += 1;
       yield Row.of(edits);

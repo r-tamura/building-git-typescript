@@ -97,11 +97,16 @@ export class Rm extends Base<Options> {
       throw new Runtime(`kit rm: '${pathname}': Operation not permitted`);
     }
 
-    const item = await this.repo.database.loadTreeEntry(this.#headOid, pathname);
+    const item = await this.repo.database.loadTreeEntry(
+      this.#headOid,
+      pathname,
+    );
     const entry = this.repo.index.entryForPath(pathname);
 
     const stagedChange = this.#inspector.compareTreeToIndex(item, entry);
-    const unstagedChange = stat ? await this.#inspector.compareIndexToWorkspace(entry, stat) : null;
+    const unstagedChange = stat
+      ? await this.#inspector.compareIndexToWorkspace(entry, stat)
+      : null;
 
     if (stagedChange && unstagedChange) {
       this.#bothChanged.push(pathname);

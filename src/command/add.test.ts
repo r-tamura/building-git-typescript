@@ -75,7 +75,7 @@ describe("add", () => {
       assert.equal(
         mockedLoadforUpdate.mock.calls.length,
         1,
-        "index更新前にindexファイルを読み込む"
+        "index更新前にindexファイルを読み込む",
       );
 
       const mockedAdd = instance.add as jest.Mock;
@@ -88,7 +88,7 @@ describe("add", () => {
         assert.deepEqual(
           mockedAdd.mock.calls[i],
           expected,
-          "最初のadd対象ファイルがindexへ追加"
+          "最初のadd対象ファイルがindexへ追加",
         );
       });
 
@@ -96,7 +96,7 @@ describe("add", () => {
       assert.equal(
         mockedWriteUpdates.mock.calls.length,
         1,
-        "indexファイルの更新"
+        "indexファイルの更新",
       );
     });
   });
@@ -160,10 +160,10 @@ describe("add", () => {
         assert.equal(
           mockedReadFile.mock.calls.length,
           0,
-          "indexファイルのオープン"
+          "indexファイルのオープン",
         );
         assert.equal(cmd.status, code, "プロセス返り値");
-      }
+      },
     );
   });
 });

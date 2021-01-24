@@ -12,11 +12,13 @@ export class Commit {
     public tree: OID,
     public author: Author,
     public commiter: Author,
-    public message: string
+    public message: string,
   ) {}
 
   static parse(buf: Buffer) {
-    const headers = new Hash<string, string[]>((hash, key) => hash.set(key, []));
+    const headers = new Hash<string, string[]>((hash, key) =>
+      hash.set(key, []),
+    );
     let offset = 0;
     while (true) {
       const [linebytes, position] = scanUntil("\n", buf, offset);
@@ -44,7 +46,7 @@ export class Commit {
       headers.get("tree")[0],
       Author.parse(headers.get("author")[0]),
       Author.parse(headers.get("committer")[0]),
-      comment
+      comment,
     );
   }
 

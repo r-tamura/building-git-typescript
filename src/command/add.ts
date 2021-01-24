@@ -55,7 +55,7 @@ export class Add extends Base {
       entryPaths.map((entryPath) => {
         const absPath = this.expeandedPathname(entryPath);
         return this.repo.workspace.listFiles(absPath);
-      })
+      }),
     );
     const pathnames = pathnameslist.flat();
     return pathnames;

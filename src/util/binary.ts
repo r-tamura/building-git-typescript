@@ -22,7 +22,7 @@ export function scanUntil(
   char: string,
   buf: Buffer,
   offset = 0,
-  encoding: BufferEncoding = "binary"
+  encoding: BufferEncoding = "binary",
 ): [result: string, potision: number] {
   if (typeof char === "string" && char.length !== 1) {
     throw TypeError("scan character has to be 1 character");

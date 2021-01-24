@@ -23,7 +23,7 @@ interface AcceptClientParams {
 
 export function acceptClient(
   cmd: RemoteAgent,
-  { name, capabilities = [] }: AcceptClientParams
+  { name, capabilities = [] }: AcceptClientParams,
 ) {
   cmd.conn = new remotes.Protocol(name, cmd.stdin, cmd.stdout, capabilities);
 }
@@ -32,7 +32,7 @@ export const ZERO_OID = "0".repeat(40);
 
 export async function sendReferences(
   cmd: RemoteAgent,
-  env: RepositoryEnv
+  env: RepositoryEnv,
 ): Promise<void> {
   checkConnected(cmd.conn);
   const refs = await repo(cmd, env).refs.listAllRefs();

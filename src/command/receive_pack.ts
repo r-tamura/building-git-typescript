@@ -53,7 +53,7 @@ export class ReceivePack extends Base {
       }
       const [oldOid, newOid, ref] = line?.split(/ +/);
       this.#requests[ref] = [oldOid, newOid].map(
-        this.zeroToUndefined
+        this.zeroToUndefined,
       ) as OldNewOidPair;
     }
   }
@@ -86,7 +86,7 @@ export class ReceivePack extends Base {
   private async updateRef(
     ref: string,
     oldOid: OID | undefined,
-    newOid: OID | undefined
+    newOid: OID | undefined,
   ): Promise<void> {
     if (this.#unpackError) {
       this.reportStatus(`ng ${ref} unpacker error`);
@@ -113,7 +113,7 @@ export class ReceivePack extends Base {
   private async validateUpdate(
     ref: string,
     oldOid: OID | undefined,
-    newOid: OID | undefined
+    newOid: OID | undefined,
   ): Promise<void> {
     if (await this.repo.config.get(["receive", "denyDeletes"])) {
       if (newOid === undefined) {

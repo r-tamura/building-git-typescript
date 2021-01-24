@@ -109,7 +109,7 @@ export class Config {
       return Line.of(line, section);
     }
     throw new ParseError(
-      `bad config line ${this.lineCount() + 1} in file ${this.#pathname}`
+      `bad config line ${this.lineCount() + 1} in file ${this.#pathname}`,
     );
   }
 
@@ -163,7 +163,7 @@ export class Config {
     section: Nullable<Section>,
     key: SectionName,
     varname: Name,
-    value: Value
+    value: Value,
   ) {
     section ??= this.addSection(key);
 
@@ -192,7 +192,7 @@ export class Config {
       this.updateVariable(first(lines), varname, value);
     } else {
       throw new Conflict(
-        "connot overwrite multiple values with a single value"
+        "connot overwrite multiple values with a single value",
       );
     }
   }
@@ -220,8 +220,8 @@ export class Config {
       this.#lines?.set(
         name,
         linesFromConfig.filter(
-          (lineFromConfig) => !Line.equals(line, lineFromConfig)
-        )
+          (lineFromConfig) => !Line.equals(line, lineFromConfig),
+        ),
       );
     });
   }
@@ -401,7 +401,7 @@ export class Line {
   constructor(
     public text: string,
     public section: Section,
-    public variable?: Variable
+    public variable?: Variable,
   ) {}
 
   normalVariable() {
@@ -410,19 +410,19 @@ export class Line {
 }
 
 export function assertsString(
-  value: Value | undefined
+  value: Value | undefined,
 ): asserts value is string | undefined {
   asserts(value === undefined || typeof value === "string");
 }
 
 export function assertsBoolean(
-  value: Value | undefined
+  value: Value | undefined,
 ): asserts value is boolean | undefined {
   asserts(value === undefined || typeof value === "boolean");
 }
 
 export function assertsNumber(
-  value: Value | undefined
+  value: Value | undefined,
 ): asserts value is number | undefined {
   asserts(value === undefined || typeof value === "number");
 }

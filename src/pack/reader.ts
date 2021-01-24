@@ -50,7 +50,7 @@ export class Reader {
   async readRecord(): Promise<pack.Record> {
     const [type, _] = await this.readRecordHeader();
     const typeNames = Object.keys(
-      pack.TYPE_CODES
+      pack.TYPE_CODES,
     ) as (keyof typeof pack.TYPE_CODES)[];
     const typeName = typeNames.find((name) => pack.TYPE_CODES[name] === type);
 
@@ -61,12 +61,12 @@ export class Reader {
   private async readRecordHeader(): Promise<RecordHeader> {
     const [byte, size] = await numbers.VarIntLE.read(
       this.#input,
-      numbers.VarIntLE.SHIFT_FOR_FIRST
+      numbers.VarIntLE.SHIFT_FOR_FIRST,
     );
     const type = (byte >> 4) & numbers.VarIntLE.OBJECT_TYPE_MASK;
     asserts(
       type === pack.COMMIT || type === pack.TREE || type === pack.BLOB,
-      `needs 1, 2, or 3, got ${type}`
+      `needs 1, 2, or 3, got ${type}`,
     );
     return [type, size];
   }

@@ -13,10 +13,14 @@ export class Hunk {
   constructor(
     public a_starts: (number | null)[],
     public b_start: number | null,
-    public edits: HunkEdit[]
+    public edits: HunkEdit[],
   ) {}
 
-  static of(a_starts: (number | null)[], b_start: number | null, edits: HunkEdit[]) {
+  static of(
+    a_starts: (number | null)[],
+    b_start: number | null,
+    edits: HunkEdit[],
+  ) {
     return new this(a_starts, b_start, edits);
   }
 
@@ -34,7 +38,8 @@ export class Hunk {
       offset += progress - (HUNK_CONTEXT + 1);
 
       // TODO: .map(prop("number"))とすると、a_linesにnullが含まれるのでコンパイルエラー
-      const a_starts = offset < 0 ? [] : edits[offset].a_lines.map(getLineNumber);
+      const a_starts =
+        offset < 0 ? [] : edits[offset].a_lines.map(getLineNumber);
       const b_start = offset < 0 ? null : edits[offset].b_line?.number ?? null;
       hunks.push(Hunk.of(a_starts, b_start, []));
       offset = Hunk.build(get(hunks, -1), edits, offset);
@@ -73,22 +78,33 @@ export class Hunk {
    */
   header() {
     const a_lines = transpose(this.edits.map(prop("a_lines")));
-    const offsets = a_lines.map((lines, i) => this.format("-", lines, this.a_starts[i]));
+    const offsets = a_lines.map((lines, i) =>
+      this.format("-", lines, this.a_starts[i]),
+    );
 
-    offsets.push(this.format("+", this.edits.map(prop("b_line")), this.b_start));
+    offsets.push(
+      this.format("+", this.edits.map(prop("b_line")), this.b_start),
+    );
     const sep = "@".repeat(offsets.length);
 
     return [sep, ...offsets, sep].join(" ");
   }
 
-  private format(sign: "+" | "-", lines: (Line | null)[], start: number | null) {
+  private format(
+    sign: "+" | "-",
+    lines: (Line | null)[],
+    start: number | null,
+  ) {
     const nonNullLines = lines.filter(notNull);
     const start_ = nonNullLines[0]?.number ?? start ?? 0;
     return `${sign}${start_},${nonNullLines.length}`;
   }
 }
 
-function progressUntilChange(edits: HunkEdit[], start: number): [progress: number, done: boolean] {
+function progressUntilChange(
+  edits: HunkEdit[],
+  start: number,
+): [progress: number, done: boolean] {
   let offset = start;
   while (edits[offset]?.type == "eql" && offset < edits.length) {
     offset += 1;

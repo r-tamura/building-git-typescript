@@ -39,7 +39,7 @@ export class Refspec {
   }
 
   static canonical(
-    name: SourceRef | TargetRef | undefined
+    name: SourceRef | TargetRef | undefined,
   ): SourceRef | TargetRef | undefined {
     if (name === undefined || name === "") {
       return undefined;
@@ -58,7 +58,7 @@ export class Refspec {
   constructor(
     public source: SourceRef | undefined,
     public target: TargetRef,
-    public forced: boolean
+    public forced: boolean,
   ) {}
 
   matchRefs(refs: string[]): RefspecMappings {

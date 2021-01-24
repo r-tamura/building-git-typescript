@@ -6,7 +6,7 @@ import * as assert from "assert";
 import { makeLogger } from "../__test__/util";
 
 jest.mock("../refs");
-let MockedRefs = (Refs as unknown) as jest.Mock<Partial<Refs>>;
+const MockedRefs = (Refs as unknown) as jest.Mock<Partial<Refs>>;
 
 const testEnvGlobal: Environment = {
   fs: { ...defaultFs },

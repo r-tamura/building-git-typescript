@@ -106,28 +106,36 @@ export async function finishCommit(commit: Commit, cmd: Base) {
 export async function failOnConflict(
   inputs: Resolvable,
   message: string,
-  cmd: SequenceCmmand & WriteCommit.CommitPendable
+  cmd: SequenceCmmand & WriteCommit.CommitPendable,
 ) {
   await cmd.sequencer.dump();
   console.assert(inputs.rightOid !== null, `${inputs.rightOid} is null!`);
   await WriteCommit.pendingCommit(cmd).start(inputs.rightOid, cmd.mergeType);
 
-  await cmd.editFile(WriteCommit.pendingCommit(cmd).messagePath, async (editor) => {
-    await editor.puts(message);
-    await editor.puts("");
-    await editor.note("Conflicts:");
-    for (const name of cmd.repo.index.conflictPaths()) {
-      await editor.note(`\t${name}`);
-    }
-    editor.close();
-  });
+  await cmd.editFile(
+    WriteCommit.pendingCommit(cmd).messagePath,
+    async (editor) => {
+      await editor.puts(message);
+      await editor.puts("");
+      await editor.note("Conflicts:");
+      for (const name of cmd.repo.index.conflictPaths()) {
+        await editor.note(`\t${name}`);
+      }
+      editor.close();
+    },
+  );
 
   cmd.logger.error(`error: could not apply ${inputs.rightName}`);
-  CONFLICT_NOTES.split("\n").forEach((line) => cmd.logger.error(`hint: ${line}`));
+  CONFLICT_NOTES.split("\n").forEach((line) =>
+    cmd.logger.error(`hint: ${line}`),
+  );
   return cmd.exit(1);
 }
 
-export async function selectParent(commit: CompleteCommit, cmd: SequenceCmmand) {
+export async function selectParent(
+  commit: CompleteCommit,
+  cmd: SequenceCmmand,
+) {
   const mainline = await cmd.sequencer.getOption("mainline");
   assertsNumber(mainline);
 
@@ -136,19 +144,25 @@ export async function selectParent(commit: CompleteCommit, cmd: SequenceCmmand) 
       return commit.parents[mainline - 1];
     }
 
-    cmd.logger.error(`error: commit ${commit.oid} is a merge but no -m option was given`);
+    cmd.logger.error(
+      `error: commit ${commit.oid} is a merge but no -m option was given`,
+    );
     cmd.exit(1);
   } else {
     if (!mainline) {
       return commit.parent;
     }
 
-    cmd.logger.error(`error: mainline was specified but commit ${commit.oid} is not a merge`);
+    cmd.logger.error(
+      `error: mainline was specified but commit ${commit.oid} is not a merge`,
+    );
     cmd.exit(1);
   }
 }
 
-export async function handleContinue(cmd: SequenceCmmand & WriteCommit.CommitPendable) {
+export async function handleContinue(
+  cmd: SequenceCmmand & WriteCommit.CommitPendable,
+) {
   try {
     await cmd.repo.index.load();
 
@@ -181,7 +195,9 @@ export async function handleContinue(cmd: SequenceCmmand & WriteCommit.CommitPen
 /**
  * 現在のHEADを維持したままコンフリクトを中断する
  */
-export async function handleQuit(cmd: SequenceCmmand & WriteCommit.CommitPendable) {
+export async function handleQuit(
+  cmd: SequenceCmmand & WriteCommit.CommitPendable,
+) {
   if (await WriteCommit.pendingCommit(cmd).inProgress()) {
     await WriteCommit.pendingCommit(cmd).clear(cmd.mergeType);
   }
@@ -192,7 +208,9 @@ export async function handleQuit(cmd: SequenceCmmand & WriteCommit.CommitPendabl
 /**
  * cherry-pickを実行する直前の状態へ復帰して、コンフリクトを中断する
  */
-export async function handleAbort(cmd: SequenceCmmand & WriteCommit.CommitPendable) {
+export async function handleAbort(
+  cmd: SequenceCmmand & WriteCommit.CommitPendable,
+) {
   if (await WriteCommit.pendingCommit(cmd).inProgress()) {
     await WriteCommit.pendingCommit(cmd).clear(cmd.mergeType);
   }

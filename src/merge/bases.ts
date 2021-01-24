@@ -50,7 +50,7 @@ export class Bases {
     }
 
     const othersSet = new Set(
-      others.filter((oid) => common.marked(oid, "parent1"))
+      others.filter((oid) => common.marked(oid, "parent1")),
     );
     return (this.#redundant = merge(this.#redundant, othersSet));
   }

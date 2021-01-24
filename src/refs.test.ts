@@ -32,7 +32,7 @@ describe("Refs#createBranch", () => {
       const refs = new Refs(".git");
       // Act & Assert
       await expect(refs.createBranch(branchName, "3a3c4ec")).rejects.toThrow(
-        InvalidBranch
+        InvalidBranch,
       );
     });
   });
@@ -71,7 +71,7 @@ describe("Refs#deleteBranch", () => {
     assert.equal(
       readFile.mock.calls[0][0],
       ".git/refs/heads/topic",
-      "symrefの読み込み"
+      "symrefの読み込み",
     );
     assert.equal(actual, oid, "返り値");
   });
@@ -110,7 +110,7 @@ describe("Refs#listBranch", () => {
     assert.equal(
       readdir.mock.calls[0][0],
       ".git/refs/heads",
-      "headsディレクトリ"
+      "headsディレクトリ",
     );
 
     assert.deepEqual(
@@ -120,7 +120,7 @@ describe("Refs#listBranch", () => {
         symref(refs, "refs/heads/bar"),
         symref(refs, "refs/heads/qux"),
       ],
-      "返り値"
+      "返り値",
     );
 
     spyDirectory.mockRestore();
@@ -190,7 +190,7 @@ describe("Refs#readRef", () => {
       spyServiceExists = jest
         .spyOn(Service, "exists")
         .mockImplementation(async (_fs, pathname) =>
-          pathname.includes("heads")
+          pathname.includes("heads"),
         );
       const env = mockEnv({ readFile: mockedReadFile });
 
@@ -369,7 +369,7 @@ describe("Refs#updateRef", () => {
     it("refが削除される", () => {
       assert.equal(
         testRootPath + "/" + "heads/master",
-        (mockedEnv.fs.unlink as jest.Mock).mock.calls[0][0]
+        (mockedEnv.fs.unlink as jest.Mock).mock.calls[0][0],
       );
     });
 

@@ -99,15 +99,17 @@ export class Branch extends Base<Options> {
       return;
     }
 
-    const oid = await this.repo.refs.deleteBranch(branchName).catch((e: BaseError) => {
-      switch (e.constructor) {
-        case InvalidBranch:
-          this.logger.error(`error: ${e.message}`);
-          this.exit(1);
-        default:
-          throw e;
-      }
-    });
+    const oid = await this.repo.refs
+      .deleteBranch(branchName)
+      .catch((e: BaseError) => {
+        switch (e.constructor) {
+          case InvalidBranch:
+            this.logger.error(`error: ${e.message}`);
+            this.exit(1);
+          default:
+            throw e;
+        }
+      });
     const short = this.repo.database.shortOid(oid);
 
     this.log(`Deleted branch ${branchName} (was ${short})`);

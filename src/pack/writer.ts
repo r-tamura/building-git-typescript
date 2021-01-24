@@ -35,7 +35,7 @@ export class Writer {
     output: NodeJS.WritableStream,
     database: database.Database,
     { compressLevel = constants.Z_DEFAULT_COMPRESSION, progress }: Options = {},
-    env: Environment = {}
+    env: Environment = {},
   ) {
     this.#output = output;
     this.#database = database;
@@ -68,7 +68,7 @@ export class Writer {
 
   private addToPackList(
     object: CompleteCommit | database.Entry,
-    pathname?: Pathname
+    pathname?: Pathname,
   ) {
     if (object.type === "commit") {
       // Database.Commit
@@ -114,7 +114,7 @@ export class Writer {
     const object = await this.#database.loadRaw(entry.oid);
     const header = numbers.VarIntLE.write(
       object.size,
-      numbers.VarIntLE.SHIFT_FOR_FIRST
+      numbers.VarIntLE.SHIFT_FOR_FIRST,
     );
     header[0] |= entry.type << 4;
     // fs.writeFileSync(out, header, { flag: "a" });

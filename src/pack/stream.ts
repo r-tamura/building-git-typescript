@@ -42,7 +42,7 @@ export class Stream {
   }
 
   async capture(
-    callback: () => Promise<pack.Record>
+    callback: () => Promise<pack.Record>,
   ): Promise<readonly [pack.Record, Buffer]> {
     this.#capture = this.newByte();
     const result = [await callback(), this.#capture] as const;
@@ -64,7 +64,7 @@ export class Stream {
     const prependBytes = this.#capture.slice(amount);
     const captureRest = this.#capture.slice(
       0,
-      this.#capture.byteLength + amount
+      this.#capture.byteLength + amount,
     );
     const nextBuffer = Buffer.concat([prependBytes, this.#buffer]);
     this.#capture = captureRest;

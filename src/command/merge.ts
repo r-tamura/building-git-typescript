@@ -11,7 +11,10 @@ import {
   CommitOptions,
   defineWriteCommitOptions,
 } from "./shared/write_commit";
-import { PendingCommit, Error as NotInProgressError } from "../repository/pending_commit";
+import {
+  PendingCommit,
+  Error as NotInProgressError,
+} from "../repository/pending_commit";
 import { asserts } from "../util";
 
 interface Options extends CommitOptions {
@@ -98,7 +101,9 @@ export class Merge extends Base<Options> {
 
   private async composeMerge() {
     return this.editFile(this.pendingCommit.messagePath, async (editor) => {
-      await editor.puts((await readMessage(this)) ?? this.defaultCommitMessage());
+      await editor.puts(
+        (await readMessage(this)) ?? this.defaultCommitMessage(),
+      );
       await editor.puts("");
       await editor.note(COMMIT_NOTES);
       if (!this.options["edit"]) {
@@ -121,7 +126,10 @@ export class Merge extends Base<Options> {
 
     await this.repo.index.loadForUpdate();
 
-    const treeDiff = await this.repo.database.treeDiff(this.#inputs.leftOid, this.#inputs.rightOid);
+    const treeDiff = await this.repo.database.treeDiff(
+      this.#inputs.leftOid,
+      this.#inputs.rightOid,
+    );
     await this.repo.migration(treeDiff).applyChanges();
 
     await this.repo.index.writeUpdates();
@@ -173,7 +181,9 @@ export class Merge extends Base<Options> {
 
   private async failOnConflict() {
     await this.editFile(this.pendingCommit.messagePath, async (editor) => {
-      await editor.puts((await readMessage(this)) ?? this.defaultCommitMessage());
+      await editor.puts(
+        (await readMessage(this)) ?? this.defaultCommitMessage(),
+      );
       await editor.puts("");
       await editor.note("Conflicts:");
       for (const name of this.repo.index.conflictPaths()) {
@@ -181,7 +191,9 @@ export class Merge extends Base<Options> {
       }
       editor.close();
     });
-    this.log("Automatic merge failed; fix conflicts and then commit the result.");
+    this.log(
+      "Automatic merge failed; fix conflicts and then commit the result.",
+    );
     this.exit(1);
   }
 

@@ -209,7 +209,7 @@ export class Refs {
   async updateRef(name: string, oid: Nullable<OID>): Promise<void> {
     return this.updateRefFile(
       path.join(this.#pathname, name),
-      oid === null ? undefined : oid
+      oid === null ? undefined : oid,
     );
   }
 
@@ -223,7 +223,7 @@ export class Refs {
   async compareAndSwap(
     name: string,
     oldOid: OID | undefined,
-    newOid: OID | undefined
+    newOid: OID | undefined,
   ): Promise<void> {
     const refpath = path.join(this.#pathname, name);
     await this.updateRefFile(refpath, newOid, {
@@ -239,7 +239,7 @@ export class Refs {
   private async updateRefFile(
     pathname: Pathname,
     oid: OID | undefined,
-    { retry = null, onLockfileCreated }: UpdateReFileOptions = {}
+    { retry = null, onLockfileCreated }: UpdateReFileOptions = {},
   ): Promise<void> {
     let lockfile;
     try {
@@ -299,7 +299,7 @@ export class Refs {
 
   private async updateSymRef(
     pathname: Pathname,
-    oid: OID
+    oid: OID,
   ): Promise<Nullable<string>> {
     const lockfile = new Lockfile(pathname);
     await lockfile.holdForUpdate();
@@ -375,7 +375,7 @@ export class Refs {
       [this.#remotesPath, this.#headspath, this.#pathname],
       (dir) => {
         return ascend(path.dirname(fullpath)).some((parent) => parent === dir);
-      }
+      },
     );
     asserts(prefix !== null);
     return path.relative(prefix, fullpath);

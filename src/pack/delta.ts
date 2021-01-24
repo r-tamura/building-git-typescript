@@ -28,7 +28,7 @@ export class Copy {
 
   toString(): string {
     const bytes = numbers.PackedInt56LE.write(
-      this.size * 2 ** 32 + this.offset
+      this.size * 2 ** 32 + this.offset,
     );
     // Copy操作は先頭1ビットが1
     bytes[0] |= 0x80;

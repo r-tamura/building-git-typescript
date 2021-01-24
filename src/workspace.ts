@@ -95,18 +95,20 @@ export class Workspace {
   }
 
   async readFile(pathname: Pathname) {
-    return this.#fs.readFile(this.join(pathname), "ascii").catch((e: NodeJS.ErrnoException) => {
-      if (e.code === "EACCES") {
-        throw new NoPermission(`open('${pathname}'): Permission denied`);
-      }
-      throw e;
-    });
+    return this.#fs
+      .readFile(this.join(pathname), "ascii")
+      .catch((e: NodeJS.ErrnoException) => {
+        if (e.code === "EACCES") {
+          throw new NoPermission(`open('${pathname}'): Permission denied`);
+        }
+        throw e;
+      });
   }
 
   async writeFile(
     pathname: Pathname,
     data: string | Buffer,
-    { mode, mkdir = false }: WriteFileOption = {}
+    { mode, mkdir = false }: WriteFileOption = {},
   ) {
     const fullPath = this.join(pathname);
     if (mkdir) {
@@ -181,7 +183,9 @@ export class Workspace {
     } catch (e) {
       switch (e.code) {
         case "ENOENT":
-          throw new MissingFile(`pathspec '${relavtive}' did not match any files`);
+          throw new MissingFile(
+            `pathspec '${relavtive}' did not match any files`,
+          );
         default:
           throw e;
       }
@@ -191,16 +195,18 @@ export class Workspace {
   private async removeDirectory(dirname: Pathname) {
     // ディレクトリの存在、空であるかは考えずにrmdirを試み
     // エラーであれば何もしない
-    return this.#fs.rmdir(this.join(dirname)).catch((e: NodeJS.ErrnoException) => {
-      switch (e.code) {
-        case "ENOENT":
-        case "ENOTDIR":
-        case "ENOTEMPTY":
-          return;
-        default:
-          throw e;
-      }
-    });
+    return this.#fs
+      .rmdir(this.join(dirname))
+      .catch((e: NodeJS.ErrnoException) => {
+        switch (e.code) {
+          case "ENOENT":
+          case "ENOTDIR":
+          case "ENOTEMPTY":
+            return;
+          default:
+            throw e;
+        }
+      });
   }
 
   private async makeDirectory(dirname: Pathname) {

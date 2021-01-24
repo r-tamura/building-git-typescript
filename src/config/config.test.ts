@@ -196,7 +196,10 @@ describe("Config", () => {
       config.set(["core", "editor"], "ed");
       await config.save();
 
-      assert.equal(await openConfig().then((config) => config.get(["core", "editor"])), "ed");
+      assert.equal(
+        await openConfig().then((config) => config.get(["core", "editor"])),
+        "ed",
+      );
     });
 
     it("retrieves variables from subsections", async () => {
@@ -205,12 +208,16 @@ describe("Config", () => {
       await config.save();
 
       assert.equal(
-        await openConfig().then((config) => config.get(["branch", "master", "remote"])),
-        "origin"
+        await openConfig().then((config) =>
+          config.get(["branch", "master", "remote"]),
+        ),
+        "origin",
       );
       assert.equal(
-        await openConfig().then((config) => config.get(["branch", "Master", "remote"])),
-        "another"
+        await openConfig().then((config) =>
+          config.get(["branch", "Master", "remote"]),
+        ),
+        "another",
       );
     });
 
@@ -219,8 +226,10 @@ describe("Config", () => {
       await config.save();
 
       assert.equal(
-        await openConfig().then((config) => config.get(["url", "git@github.com:", "insteadOf"])),
-        "gh:"
+        await openConfig().then((config) =>
+          config.get(["url", "git@github.com:", "insteadOf"]),
+        ),
+        "gh:",
       );
     });
 

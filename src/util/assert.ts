@@ -20,7 +20,7 @@ export function asserts(cond: boolean, msg?: string): asserts cond {
  */
 export function assertsComplete<T extends GitObject>(
   obj: T,
-  msg?: string
+  msg?: string,
 ): asserts obj is NonNullProps<T> {
   asserts(obj.oid !== null, msg ?? "OIDを持つGit Objectです");
 }

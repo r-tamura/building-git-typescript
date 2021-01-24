@@ -31,14 +31,18 @@ export class Editor {
     pathname: Pathname,
     callback: EditCallback,
     command: string | undefined = undefined,
-    env: Environment = {}
+    env: Environment = {},
   ) {
     const editor = new this(pathname, command, env);
     await callback(editor);
     return editor.editFile();
   }
 
-  constructor(pathname: Pathname, command: string = DEFAULT_EDITOR, env: Environment = {}) {
+  constructor(
+    pathname: Pathname,
+    command: string = DEFAULT_EDITOR,
+    env: Environment = {},
+  ) {
     this.#pathname = pathname;
     this.#command = command;
     this.#fs = env.fs ?? fs;
@@ -56,7 +60,9 @@ export class Editor {
     if (
       !this.#closed &&
       !isProcessFinishedSuccessfully(
-        spawnSync(editorCommand, commandArgs, { stdio: ["inherit", this.#stdout, this.#stderr] })
+        spawnSync(editorCommand, commandArgs, {
+          stdio: ["inherit", this.#stdout, this.#stderr],
+        }),
       )
     ) {
       throw new Error(`There was a problem with the editor '${this.#command}'`);
@@ -87,7 +93,7 @@ export class Editor {
 
   async file() {
     const flags = O_WRONLY | O_CREAT | O_TRUNC;
-    return this.#file ??= await this.#fs.open(this.#pathname, flags);
+    return (this.#file ??= await this.#fs.open(this.#pathname, flags));
   }
 
   private removeNotes(text: string) {

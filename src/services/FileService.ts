@@ -67,7 +67,7 @@ export async function mkdirp(fs: FileService, pathname: Pathname) {
 
 export async function readdirRecursive(
   fs: FileService,
-  pathname: Pathname
+  pathname: Pathname,
 ): Promise<string[]> {
   const parent = pathname;
   const envtries = await fs.readdir(parent);
@@ -91,7 +91,7 @@ export async function readdirRecursive(
 type Deflate = typeof zlib.deflate;
 const deflate = promisify(zlib.deflate) as (
   buf: Parameters<Deflate>[0],
-  options: Parameters<Deflate>[1]
+  options: Parameters<Deflate>[1],
 ) => Promise<Buffer>;
 const inflate = promisify<zlib.InputType, Buffer>(zlib.inflate);
 export type Zlib = {
@@ -109,7 +109,7 @@ export const defaultZlib = { deflate, inflate };
  */
 export function readTextStream(
   stream: Readable,
-  encoding: BufferEncoding = "utf8"
+  encoding: BufferEncoding = "utf8",
 ) {
   stream.setEncoding(encoding);
   return new Promise<string>((resolve, reject) => {
@@ -126,7 +126,7 @@ export function readTextStream(
 // https://github.com/nodejs/node/issues/30831
 async function createReadStreamSafe(
   filename: Pathname,
-  encoding: BufferEncoding = "utf8"
+  encoding: BufferEncoding = "utf8",
 ): Promise<CallbackFs.ReadStream> {
   return new Promise((resolve, reject) => {
     const fileStream = CallbackFs.createReadStream(filename, { encoding })
@@ -142,7 +142,7 @@ async function createReadStreamSafe(
  */
 export async function readByLine(
   pathname: Pathname,
-  encoding: BufferEncoding = "utf8"
+  encoding: BufferEncoding = "utf8",
 ): Promise<readline.Interface> {
   const fileStream = await createReadStreamSafe(pathname, encoding);
   return readline.createInterface({
@@ -184,7 +184,7 @@ interface ReadChunkOptions {
 export async function readChunk(
   stream: NodeJS.ReadableStream,
   size: number,
-  { timeout = 3000, block = true }: ReadChunkOptions = {}
+  { timeout = 3000, block = true }: ReadChunkOptions = {},
 ): Promise<Buffer> {
   const readable = async (stream: NodeJS.ReadableStream) => {
     // TypeScriptのNodeJS型定義にreadableEndedが定義されていない
@@ -233,7 +233,7 @@ export async function readChunk(
             string: streamBuffer?.toString("binary"),
             bufferSize: streamBuffer?.byteLength ?? 0,
             size,
-          })
+          }),
       );
     }
 

@@ -71,7 +71,7 @@ export function createFakeRead(data: Buffer = fakeIndex) {
     buffer: Buffer | Uint8Array,
     offset?: any,
     length?: any,
-    point?: any
+    point?: any,
   ) => {
     assert.equal(point, null);
     const empty = { bytesRead: 0, buffer };

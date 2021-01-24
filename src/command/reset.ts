@@ -70,7 +70,10 @@ export class Reset extends Base<Options> {
   }
 
   private async resetPath(pathname?: Pathname) {
-    const listing = await this.repo.database.loadTreeList(this.#commitOid, pathname);
+    const listing = await this.repo.database.loadTreeList(
+      this.#commitOid,
+      pathname,
+    );
     if (pathname) {
       await this.repo.index.remove(pathname);
     }

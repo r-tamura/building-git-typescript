@@ -4,7 +4,7 @@ import { Checksum } from "./checksum";
 describe("Checksum#writeChecksum", () => {
   const expectedSha1 = Buffer.from(
     "44115646e09ab3481adc2b1dc17be10dd9cdaa09",
-    "hex"
+    "hex",
   ); // 'testdata'のSHA1値
   const mockedWrite = jest.fn();
   const mockedRead = jest.fn().mockResolvedValue({

@@ -92,12 +92,14 @@ const fakeReaddir = jest
     return names;
   });
 
-const fakeStat = jest.fn<Promise<Stats>, [string]>().mockImplementation(async (pathname) => {
-  MockedStat.mockImplementation(() => ({
-    isDirectory: jest.fn().mockReturnValue(retrieve(pathname).type === "d"),
-  }));
-  return new Stats();
-});
+const fakeStat = jest
+  .fn<Promise<Stats>, [string]>()
+  .mockImplementation(async (pathname) => {
+    MockedStat.mockImplementation(() => ({
+      isDirectory: jest.fn().mockReturnValue(retrieve(pathname).type === "d"),
+    }));
+    return new Stats();
+  });
 
 describe("WorkSpace#listFiles", () => {
   const testPath = "test";

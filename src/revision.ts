@@ -134,7 +134,7 @@ export class Revision {
 
       if (object.type === "commit") {
         objects.push(
-          `${info} ${object.author.shortDate()} - ${object.titleLine()}`
+          `${info} ${object.author.shortDate()} - ${object.titleLine()}`,
         );
       } else {
         objects.push(info);

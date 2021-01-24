@@ -46,6 +46,6 @@ describe("XDelta Encoding", () => {
       ]);
 
       assert.deepEqual(actual, expected);
-    }
+    },
   );
 });

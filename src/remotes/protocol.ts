@@ -40,7 +40,7 @@ export class Protocol {
     command: string,
     public input: NodeJS.ReadableStream,
     public output: NodeJS.WritableStream,
-    capabilities: string[] = []
+    capabilities: string[] = [],
   ) {
     this.#command = command;
     this.#capsLocal = capabilities;

@@ -11,12 +11,16 @@ export class Inputs {
   private constructor(
     repo: Repository,
     public leftName: RevisionName,
-    public rightName: RevisionName
+    public rightName: RevisionName,
   ) {
     this.#repo = repo;
   }
 
-  static async of(repo: Repository, leftName: RevisionName, rightName: RevisionName) {
+  static async of(
+    repo: Repository,
+    leftName: RevisionName,
+    rightName: RevisionName,
+  ) {
     const self = new this(repo, leftName, rightName);
     self.leftOid = await self.resolveRev(leftName);
     self.rightOid = await self.resolveRev(rightName);
@@ -50,6 +54,6 @@ export class CherryPick {
     public rightName: RevisionName,
     public leftOid: OID,
     public rightOid: OID,
-    public baseOids: OID[]
+    public baseOids: OID[],
   ) {}
 }

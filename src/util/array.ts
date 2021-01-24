@@ -31,7 +31,7 @@ export function clone<XS extends unknown[] | []>(xs: XS): XS {
 export function exclude<T>(
   xs: T[],
   ys: T[],
-  equal: (x: T, y: T) => boolean = (x, y) => x === y
+  equal: (x: T, y: T) => boolean = (x, y) => x === y,
 ) {
   return xs.filter((x) => !ys.find((y) => equal(x, y)));
 }
@@ -48,7 +48,7 @@ type Primitive = number | string | symbol | bigint | null | undefined;
  */
 export function includes<X extends Primitive, XS extends readonly X[]>(
   x: X,
-  xs: XS
+  xs: XS,
 ): x is XS[number] {
   return xs.includes(x);
 }
@@ -74,7 +74,7 @@ export function get<T>(xs: T[], index: number): T {
     throw new RangeError(
       `index has to be within array's length. ${-xs.length} <= actual:${index} < ${
         xs.length
-      }`
+      }`,
     );
   }
   const actualIndex = jsindex(xs, index);

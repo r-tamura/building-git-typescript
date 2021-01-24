@@ -91,10 +91,10 @@ describe("Database#readObject", () => {
     // Act
     const db = new Database(
       ".git/objects",
-      mockEnv({ zlib: Buffer.from(testObject) })
+      mockEnv({ zlib: Buffer.from(testObject) }),
     );
     const actual = await db.readObject(
-      "08cf6101416f0ce0dda3c80e627f333854c4085c"
+      "08cf6101416f0ce0dda3c80e627f333854c4085c",
     );
 
     // Assert
@@ -134,7 +134,7 @@ describe("Database#store", () => {
     it("オブジェクトID", () => {
       assert.equal(
         mockedWriteObject.mock.calls[0][0],
-        "08cf6101416f0ce0dda3c80e627f333854c4085c"
+        "08cf6101416f0ce0dda3c80e627f333854c4085c",
       );
     });
     it("シリアライズされたオブジェクト", () => {
@@ -184,7 +184,7 @@ describe("Database#writeObject", () => {
       assert.equal(
         firstCall[0],
         path.join(testRepoPath, tempPath),
-        "一時ファイル名"
+        "一時ファイル名",
       );
       assert.equal(firstCall[1], O_RDWR | O_CREAT | O_EXCL, "一時ファイル名");
     });
@@ -195,7 +195,7 @@ describe("Database#writeObject", () => {
       assert.deepStrictEqual(
         call[1],
         { level: Z_BEST_SPEED },
-        "圧縮オプション"
+        "圧縮オプション",
       );
     });
 
@@ -245,7 +245,7 @@ describe("Database#writeObject", () => {
       assert.equal(
         mockedOpen.mock.calls.length,
         2,
-        "例外発生前と後で2回呼び出される"
+        "例外発生前と後で2回呼び出される",
       );
     });
 

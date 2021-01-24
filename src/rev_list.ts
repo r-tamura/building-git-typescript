@@ -63,7 +63,7 @@ export class RevList {
       objects = false,
       all = false,
       missing = false,
-    }: Partial<Options> = {}
+    }: Partial<Options> = {},
   ): Promise<RevList> {
     const list = new this(repo, { walk, objects, all, missing });
 
@@ -91,7 +91,7 @@ export class RevList {
     const changes = await this.#repo.database.treeDiff(
       oldOid,
       newOid,
-      this.#filter
+      this.#filter,
     );
     this.#diffs.set(key, changes);
     return changes;
@@ -148,7 +148,7 @@ export class RevList {
       this.#queue = insert(
         this.#queue,
         found(index) ? index : this.#queue.length,
-        commit
+        commit,
       );
     } else {
       this.#queue.push(commit);
@@ -238,7 +238,7 @@ export class RevList {
     const entry = this.#repo.database.treeEntry(treeOid);
     asserts(entry !== null);
     return this.traverseTree(entry, (object) =>
-      this.mark(object.oid, "uninteresting")
+      this.mark(object.oid, "uninteresting"),
     );
   }
 
@@ -347,7 +347,7 @@ export class RevList {
   private async *traverseTree(
     entry: Database.Entry,
     isInteresting: (entry: Database.Entry) => boolean,
-    pathname = ""
+    pathname = "",
   ): AsyncGenerator<Database.Entry, void, void> {
     this.#path[entry.oid] ??= pathname;
 
@@ -369,7 +369,7 @@ export class RevList {
         (object) => {
           return Boolean(object);
         },
-        path.join(pathname, name)
+        path.join(pathname, name),
       );
     }
   }

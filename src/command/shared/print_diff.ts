@@ -1,5 +1,11 @@
 import * as path from "path";
-import { Hunk, diffHunks, HunkEdit, combinedHunk, TextDocument } from "../../diff";
+import {
+  Hunk,
+  diffHunks,
+  HunkEdit,
+  combinedHunk,
+  TextDocument,
+} from "../../diff";
 import { OID, Pathname } from "../../types";
 import { Base } from "../base";
 import arg = require("arg");
@@ -31,7 +37,7 @@ const DIFF_FORMATS = {
 } as const;
 
 export function definePrintDiffOptions<T extends PrintDiffOption>(
-  cmd: Base<T>
+  cmd: Base<T>,
 ): DefinedPrintDiffOptionReponse {
   return {
     "--patch": arg.flag(() => {
@@ -110,7 +116,11 @@ export async function printDiffEdit(edit: HunkEdit, cmd: Base) {
   }
 }
 
-export async function printCombinedDiff(as: [Target, Target], b: Target, cmd: Base) {
+export async function printCombinedDiff(
+  as: [Target, Target],
+  b: Target,
+  cmd: Base,
+) {
   await header(`diff --cc ${b.name}`, cmd);
 
   const a_oids = as.map((a) => short(a.oid, cmd));
@@ -124,7 +134,10 @@ export async function printCombinedDiff(as: [Target, Target], b: Target, cmd: Ba
   await header(`--- a/${b.deffPath}`, cmd);
   await header(`+++ b/${b.deffPath}`, cmd);
 
-  const hunks = combinedHunk(as.map(prop("data")) as [TextDocument, TextDocument], b.data);
+  const hunks = combinedHunk(
+    as.map(prop("data")) as [TextDocument, TextDocument],
+    b.data,
+  );
   for (const hunk of hunks) {
     await printDiffHunk(hunk, cmd);
   }
@@ -141,7 +154,11 @@ export function short(oid: OID, cmd: Base) {
   return cmd.repo.database.shortOid(oid);
 }
 
-export async function diffFmt(name: keyof typeof DIFF_FORMATS, text: string, cmd: Base) {
+export async function diffFmt(
+  name: keyof typeof DIFF_FORMATS,
+  text: string,
+  cmd: Base,
+) {
   const key = ["color", "diff", name] as SectionName;
   const value = await cmd.repo.config.get(key);
   assertsString(value);
@@ -155,7 +172,7 @@ export class Target {
     public name: Pathname,
     public oid: OID,
     public mode: string | null,
-    public data: string
+    public data: string,
   ) {}
 
   static of(name: Pathname, oid: OID, mode: string | null, data: string) {
