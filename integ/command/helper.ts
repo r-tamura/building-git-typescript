@@ -351,7 +351,7 @@ export function addSeconds(time: Date, n: number) {
 
 export async function getRevListMessages(revs: RevList) {
   const messages = [] as string[];
-  for await (const commit of revs.each()) {
+  for await (const commit of revs) {
     messages.push(commit.message);
   }
   return messages;

@@ -1,19 +1,16 @@
 import * as arg from "arg";
 import { Base } from ".";
-import { HEAD } from "../revision";
-import { CompleteCommit } from "../types";
-import {
-  currentAuthor,
-  writeTree,
-} from "./shared/write_commit";
-import * as Merge from "../merge";
 import { Commit } from "../database";
-import { RevList } from "../rev_list";
+import * as Merge from "../merge";
 import { PendingCommit } from "../repository/pending_commit";
+import { Sequencer } from "../repository/sequencer";
+import { HEAD } from "../revision";
+import { RevList } from "../rev_list";
+import { CompleteCommit } from "../types";
 import { asserts } from "../util/assert";
 import { reverse } from "../util/asynciter";
-import { Sequencer } from "../repository/sequencer";
 import * as Sequencing from "./shared/sequencing";
+import { currentAuthor, writeTree } from "./shared/write_commit";
 
 export class CherryPick extends Base<Sequencing.Options> {
   pendingCommit!: PendingCommit;
@@ -28,19 +25,23 @@ export class CherryPick extends Base<Sequencing.Options> {
 
   initOptions() {
     this.options = {
-      ...Sequencing.initOptions()
+      ...Sequencing.initOptions(),
     };
   }
 
   async storeCommitSequence() {
-    const commits = await RevList.fromRevs(this.repo, this.args.reverse(), { walk: false });
+    const commits = await RevList.fromRevs(this.repo, this.args.reverse(), {
+      walk: false,
+    });
     for await (const commit of reverse(commits)) {
       this.sequencer.pick(commit);
     }
   }
 
   get sequencer() {
-    return this.#sequencer ??= new Sequencer(this.repo, { fs: this.repo.env.fs });
+    return (this.#sequencer ??= new Sequencer(this.repo, {
+      fs: this.repo.env.fs,
+    }));
   }
 
   get mergeType(): "cherry_pick" {
@@ -78,6 +79,8 @@ export class CherryPick extends Base<Sequencing.Options> {
     const rightName = `${short}... ${commit.titleLine()}`;
     const rightOid = commit.oid;
 
-    return new Merge.CherryPick(leftName, rightName, leftOid, rightOid, [parent]);
+    return new Merge.CherryPick(leftName, rightName, leftOid, rightOid, [
+      parent,
+    ]);
   }
 }

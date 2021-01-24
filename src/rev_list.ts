@@ -1,3 +1,4 @@
+import path = require("path");
 import * as Database from "./database";
 import { PathFilter } from "./path_filter";
 import { SymRef } from "./refs";
@@ -20,6 +21,8 @@ const RANGE = /^(.*)\.\.(.*)$/;
 const EXCLUDE = /^\^(.+)$/;
 
 type OidPair = [OID | null, OID | null];
+
+type EntryPathPair = [CompleteCommit, undefined] | [Database.Entry, Pathname];
 
 export interface Options {
   walk: boolean;
@@ -44,6 +47,7 @@ export class RevList {
   #objects: boolean;
   #missing: boolean;
   #pending: Database.Entry[] = [];
+  #path: Record<OID, Pathname> = {};
   private constructor(repo: Repository, { walk, objects, missing }: Options) {
     this.#repo = repo;
     this.#walk = walk;
@@ -93,7 +97,7 @@ export class RevList {
     return changes;
   }
 
-  async *each() {
+  async *each(): AsyncGenerator<CompleteCommit> {
     if (this.#limited) {
       await this.limitList();
     }
@@ -107,9 +111,13 @@ export class RevList {
    * コミット・オブジェクトを出力します
    * コンストラクタのobjectsがfalseの場合はeachと同等で
    */
-  async *eachWithObjects() {
-    yield* this;
-    yield* this.traversePending();
+  async *eachWithObjects(): AsyncGenerator<EntryPathPair> {
+    for await (const commit of this) {
+      yield [commit, undefined];
+    }
+    for await (const object of this.traversePending()) {
+      yield [object, this.#path[object.oid]];
+    }
   }
 
   private async addParents(commit: CompleteCommit) {
@@ -338,8 +346,11 @@ export class RevList {
 
   private async *traverseTree(
     entry: Database.Entry,
-    isInteresting: (entry: Database.Entry) => boolean
+    isInteresting: (entry: Database.Entry) => boolean,
+    pathname = ""
   ): AsyncGenerator<Database.Entry, void, void> {
+    this.#path[entry.oid] ??= pathname;
+
     if (!isInteresting(entry)) {
       return;
     }
@@ -350,12 +361,16 @@ export class RevList {
     const tree = await this.#repo.database.load(entry.oid);
     asserts(tree.type === "tree");
 
-    for (const item of Object.values(tree.entries)) {
+    for (const [name, item] of Object.entries(tree.entries)) {
       // databaseから読み込まれたtreeオブジェクトのエントリ
       asserts(item.type === "database");
-      yield* this.traverseTree(item, (object) => {
-        return Boolean(object);
-      });
+      yield* this.traverseTree(
+        item,
+        (object) => {
+          return Boolean(object);
+        },
+        path.join(pathname, name)
+      );
     }
   }
 

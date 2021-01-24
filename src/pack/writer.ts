@@ -4,7 +4,7 @@ import * as database from "../database";
 import { Progress } from "../progress";
 import { RevList } from "../rev_list";
 import { defaultZlib, Zlib } from "../services";
-import { CompleteCommit, OID } from "../types";
+import { CompleteCommit, OID, Pathname } from "../types";
 import * as numbers from "./numbers";
 import { BLOB, COMMIT, GitObjectType, SIGNATURE, TREE, VERSION } from "./pack";
 
@@ -59,14 +59,17 @@ export class Writer {
     this.#packList = [];
     this.#progress?.start("Counting objects");
 
-    for await (const object of revlist.eachWithObjects()) {
+    for await (const [object, pathname] of revlist.eachWithObjects()) {
       this.addToPackList(object);
       this.#progress?.tick();
     }
     this.#progress?.stop();
   }
 
-  private addToPackList(object: CompleteCommit | database.Entry) {
+  private addToPackList(
+    object: CompleteCommit | database.Entry,
+    pathname?: Pathname
+  ) {
     if (object.type === "commit") {
       // Database.Commit
       this.#packList.push(new Entry(object.oid, COMMIT));
