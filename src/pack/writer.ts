@@ -4,9 +4,10 @@ import * as database from "../database";
 import { Progress } from "../progress";
 import { RevList } from "../rev_list";
 import { defaultZlib, Zlib } from "../services";
-import { CompleteCommit, OID, Pathname } from "../types";
+import { CompleteCommit, Pathname } from "../types";
+import { Entry } from "./entry";
 import * as numbers from "./numbers";
-import { BLOB, COMMIT, GitObjectType, SIGNATURE, TREE, VERSION } from "./pack";
+import { SIGNATURE, VERSION } from "./pack";
 
 interface Options {
   readonly compressLevel?: number;
@@ -15,10 +16,6 @@ interface Options {
 
 interface Environment {
   zlib?: Zlib;
-}
-
-class Entry {
-  constructor(public oid: OID, public type: GitObjectType) {}
 }
 
 export class Writer {
@@ -60,24 +57,18 @@ export class Writer {
     this.#progress?.start("Counting objects");
 
     for await (const [object, pathname] of revlist.eachWithObjects()) {
-      this.addToPackList(object);
+      await this.addToPackList(object, pathname);
       this.#progress?.tick();
     }
     this.#progress?.stop();
   }
 
-  private addToPackList(
+  private async addToPackList(
     object: CompleteCommit | database.Entry,
     pathname?: Pathname,
   ) {
-    if (object.type === "commit") {
-      // Database.Commit
-      this.#packList.push(new Entry(object.oid, COMMIT));
-    } else if (object instanceof database.Entry) {
-      // Database.Entry (Tree or Blob)
-      const type = object.tree() ? TREE : BLOB;
-      this.#packList.push(new Entry(object.oid, type));
-    }
+    const info = await this.#database.loadInfo(object.oid);
+    this.#packList.push(new Entry(object.oid, info, pathname));
   }
 
   private writeHeader() {
@@ -116,7 +107,7 @@ export class Writer {
       object.size,
       numbers.VarIntLE.SHIFT_FOR_FIRST,
     );
-    header[0] |= entry.type << 4;
+    header[0] |= entry.packedType << 4;
     // fs.writeFileSync(out, header, { flag: "a" });
     const compressed = await this.#zlib.deflate(object.data, {
       level: this.#compressLevel,

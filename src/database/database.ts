@@ -89,6 +89,11 @@ export class Database {
     return new Raw(type, size, body);
   }
 
+  async loadInfo(oid: OID): Promise<Raw> {
+    const { type, size } = await this.readObjectHeader(oid, 128);
+    return new Raw(type, size);
+  }
+
   /**
    * あるコミット内の指定されたファイルパスのエントリを取得します。
    * ファイルパスが指定されない場合はコミットのTreeエントリを返します。
@@ -194,7 +199,8 @@ export class Database {
     return object as CompleteGitObject;
   }
 
-  private async readObjectHeader(oid: OID) {
+  private async readObjectHeader(oid: OID, readBytes?: number) {
+    // TODO: 指定バイト数のみを読み込むことができるかを調査
     const objPath = this.objectPath(oid);
     const compressed = await this.#fs.readFile(objPath);
     const data = await this.#zlib.inflate(compressed);
@@ -306,11 +312,11 @@ export class Database {
   }
 }
 
-class Raw {
+export class Raw {
   constructor(
     public type: GitObjectType,
     public size: number,
-    public data: Buffer,
+    public data: Buffer = Buffer.alloc(0),
   ) {}
 }
 
