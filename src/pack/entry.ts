@@ -50,6 +50,6 @@ export class Entry {
   }
 
   get packedSize() {
-    return this.delta ? this.delta.length : this.#info.size;
+    return this.delta ? this.delta.size : this.#info.size;
   }
 }

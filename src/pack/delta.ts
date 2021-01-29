@@ -84,11 +84,11 @@ export class Delta {
     }
   }
 
-  get length() {
+  get size() {
     return this.data.length;
   }
 
-  get byteLength() {
+  get byteSize() {
     return this.data.byteLength;
   }
 

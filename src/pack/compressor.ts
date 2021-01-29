@@ -108,17 +108,54 @@ export class Compressor {
       return;
     }
 
-    const delta = new Delta(source, target);
-    const size = target.entry.packedType;
-
-    if (delta.length > size) {
+    const maxSize = this.maxSizeHuristic(source, target);
+    if (!this.capableSize(source, target, maxSize)) {
       return;
     }
 
-    if (delta.length === size && delta.base.depth + 1 >= target.depth) {
+    const delta = new Delta(source, target);
+    const size = target.entry.packedType;
+
+    if (delta.size > size) {
+      return;
+    }
+
+    if (delta.size === size && delta.base.depth + 1 >= target.depth) {
       return;
     }
 
     target.entry.assignDelta(delta);
+  }
+
+  private maxSizeHuristic(source: Unpacked, target: Unpacked): number {
+    const [maxSize, refDepth] = target.delta
+      ? [target.delta.size, target.depth]
+      : [Math.floor(target.size / 2) - 20, 1];
+    return (
+      maxSize *
+      Math.floor((MAX_DEPTH - source.depth) / (MAX_DEPTH + 1 - refDepth))
+    );
+  }
+
+  private capableSize(
+    source: Unpacked,
+    target: Unpacked,
+    maxSize: number,
+  ): boolean {
+    const sizeDiff = Math.max(target.size - source.size, 0);
+    if (maxSize === 0) {
+      return false;
+    }
+
+    if (sizeDiff >= maxSize) {
+      return false;
+    }
+
+    if (target.size < source.size / 32) {
+      // ターゲットサイズがソースに対して小さすぎるときはオブジェクト同士が似ていない
+      return false;
+    }
+
+    return true;
   }
 }
