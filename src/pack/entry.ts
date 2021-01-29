@@ -1,13 +1,14 @@
 import * as path from "path";
 import * as database from "../database";
 import { OID, Pathname } from "../types";
+import { Delta } from "./delta";
 import { TYPE_CODES } from "./pack";
 
 export class Entry {
   #info: database.Raw;
   #pathname: Pathname | undefined;
-  #delta = null;
-  #depth = 0;
+  delta?: Delta;
+  depth = 0;
   constructor(
     public oid: OID,
     info: database.Raw,
@@ -15,6 +16,11 @@ export class Entry {
   ) {
     this.#info = info;
     this.#pathname = pathname;
+  }
+
+  assignDelta(delta: Delta) {
+    this.delta = delta;
+    this.depth += delta.base.depth + 1;
   }
 
   get type() {
@@ -41,5 +47,9 @@ export class Entry {
 
   get packedType() {
     return TYPE_CODES[this.#info.type];
+  }
+
+  get packedSize() {
+    return this.delta ? this.delta.length : this.#info.size;
   }
 }

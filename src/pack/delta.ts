@@ -1,5 +1,8 @@
 import { asserts } from "../util";
+import { Entry } from "./entry";
 import * as numbers from "./numbers";
+import { Unpacked } from "./windows";
+import { Xdelta } from "./xdelta";
 
 /**
  * XDeltaアルゴリズムのCopy操作 (7バイト/56bit)
@@ -60,5 +63,37 @@ export class Insert {
     const size = Buffer.of(this.data.byteLength);
 
     return Buffer.concat([size, this.data]).toString("binary");
+  }
+}
+
+export class Delta {
+  base: Entry;
+  data: Buffer;
+  constructor(source: Unpacked, target: Unpacked) {
+    this.base = source.entry;
+    this.data = Buffer.concat([this.sizeof(source), this.sizeof(target)]);
+
+    source.deltaIndex ??= Xdelta.createIndex(source.data);
+
+    const delta = source.deltaIndex.compress(target.data);
+    for (const op of delta) {
+      this.data = Buffer.concat([
+        this.data,
+        Buffer.from(op.toString(), "binary"),
+      ]);
+    }
+  }
+
+  get length() {
+    return this.data.length;
+  }
+
+  get byteLength() {
+    return this.data.byteLength;
+  }
+
+  private sizeof(entry: Unpacked): Buffer {
+    const bytes = numbers.VarIntLE.write(entry.size, 7);
+    return bytes;
   }
 }
