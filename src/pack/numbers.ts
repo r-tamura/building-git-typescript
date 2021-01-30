@@ -89,13 +89,15 @@ export class VarIntLE {
   static MASK = 0x7f;
   static SHIFT = 7;
 
-  static async read(input: Readable, shift: number): Promise<[number, number]> {
+  static async read(
+    input: Readable,
+    shift: number,
+  ): Promise<[first: number, value: number]> {
     // 最初の1バイト
     const first = await input.readByte();
     asserts(first !== null);
     let value = first & (2 ** shift - 1);
 
-    // let shift = SHIFT_FOR_FIRST;
     let byte: number | null = first;
     while (byte >= 0x80) {
       byte = await input.readByte();
@@ -106,7 +108,7 @@ export class VarIntLE {
     return [first, value];
   }
 
-  static write(value: number, shift: number) {
+  static write(value: number, shift: number): Buffer {
     const bytes: number[] = [];
     let mask = 2 ** shift - 1;
 

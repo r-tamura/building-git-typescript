@@ -1,9 +1,9 @@
 import * as assert from "assert";
 import { createHash } from "crypto";
-import { constants } from "fs";
 import { constants as zlibConstants } from "zlib";
 import { PathFilter } from "../path_filter";
 import { defaultFs, defaultZlib, FileService, Zlib } from "../services";
+import { TempFile } from "../tempfile";
 import {
   CompleteGitObject,
   CompleteTree,
@@ -241,14 +241,6 @@ export class Database {
     return new Entry(oid, Tree.TREE_MODE);
   }
 
-  private genTempName() {
-    let suffix = "";
-    for (let i = 0; i < 6; i++) {
-      suffix += this.#rand.sample(TEMP_CHARS);
-    }
-    return `tmp_obj_${suffix}`;
-  }
-
   async writeObject(oid: OID, content: Buffer) {
     const objPathname = this.objectPath(oid);
 
@@ -256,31 +248,14 @@ export class Database {
       return;
     }
 
-    const dirPath = path.dirname(objPathname);
-    const tempPath = path.join(dirPath, this.genTempName());
-
-    const flags = constants.O_RDWR | constants.O_CREAT | constants.O_EXCL;
-
-    let fileHandle = null; // FileHandle型はエクスポートされていない
-    try {
-      fileHandle = await this.#fs.open(tempPath, flags);
-    } catch (e) {
-      const nodeErr = e as NodeJS.ErrnoException;
-      if (nodeErr.code === "ENOENT") {
-        await this.#fs.mkdir(dirPath);
-        fileHandle = await this.#fs.open(tempPath, flags);
-      } else {
-        throw e;
-      }
-    }
+    const file = new TempFile(path.dirname(objPathname), "tmp_obj", {
+      fs: this.#fs,
+    });
     const compressed = await this.#zlib.deflate(content, {
       level: zlibConstants.Z_BEST_SPEED,
     });
-    await this.#fs.writeFile(fileHandle, compressed);
-    await this.#fs.rename(tempPath, objPathname);
-    if (fileHandle) {
-      await fileHandle.close();
-    }
+    await file.write(compressed);
+    await file.move(path.basename(objPathname));
   }
 
   private hashContent(bytes: Buffer) {

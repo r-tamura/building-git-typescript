@@ -1,6 +1,6 @@
 import { promises } from "fs";
-import { Process, FileService, Logger } from "./services";
 import * as Database from "./database";
+import { FileService, Logger, Process } from "./services";
 
 /**
  * Type utility
@@ -51,3 +51,7 @@ export type EnvVars = { [s: string]: EnvVar };
 // Util
 export type Dict<T> = { [s: string]: T };
 export type Nullable<T> = T | null;
+
+export interface Rand {
+  sample: (str: string) => string;
+}
