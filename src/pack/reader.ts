@@ -2,6 +2,8 @@ import { TextDecoder } from "util";
 import * as zlib from "zlib";
 import { defaultZlib, Zlib } from "../services";
 import { asserts, includes, isNodeError } from "../util";
+import * as array from "../util/array";
+import * as binary from "../util/binary";
 import * as numbers from "./numbers";
 import * as pack from "./pack";
 import { HEADER_SIZE, InvalidPack, SIGNATURE, VERSION } from "./pack";
@@ -47,15 +49,25 @@ export class Reader {
     }
   }
 
-  async readRecord(): Promise<pack.Record> {
-    const [type, _] = await this.readRecordHeader();
+  async readRecord(): Promise<pack.Record | pack.RefDelta> {
+    const [type] = await this.readRecordHeader();
     const typeNames = Object.keys(
       pack.TYPE_CODES,
     ) as (keyof typeof pack.TYPE_CODES)[];
-    const typeName = typeNames.find((name) => pack.TYPE_CODES[name] === type);
 
-    asserts(includes(typeName, typeNames));
-    return pack.Record.of(typeName, await this.readZlibStream());
+    switch (type) {
+      case pack.COMMIT:
+      case pack.TREE:
+      case pack.BLOB: {
+        const typeName = typeNames.find(
+          (name) => pack.TYPE_CODES[name] === type,
+        );
+        asserts(includes(typeName, typeNames));
+        return pack.Record.of(typeName, await this.readZlibStream());
+      }
+      case pack.REF_DELTA:
+        return await this.readRefDelta();
+    }
   }
 
   private async readRecordHeader(): Promise<RecordHeader> {
@@ -65,13 +77,18 @@ export class Reader {
     );
     const type = (byte >> 4) & numbers.VarIntLE.OBJECT_TYPE_MASK;
     asserts(
-      type === pack.COMMIT || type === pack.TREE || type === pack.BLOB,
-      `needs 1, 2, or 3, got ${type}`,
+      array.includes(type, [
+        pack.COMMIT,
+        pack.TREE,
+        pack.BLOB,
+        pack.REF_DELTA,
+      ] as const),
+      `should be 1, 2, 3, or 7, got ${type}`,
     );
     return [type, size];
   }
 
-  private async readZlibStream() {
+  private async readZlibStream(): Promise<Buffer> {
     let finished = false;
     let body: Buffer | null = null;
     let bodyDeflated = Buffer.alloc(0);
@@ -93,6 +110,7 @@ export class Reader {
               continue;
           }
         }
+        console.error(e);
         throw e;
       }
     }
@@ -109,5 +127,11 @@ export class Reader {
     this.#input.seek(totalIn - total);
 
     return body;
+  }
+
+  async readRefDelta(): Promise<pack.RefDelta> {
+    const baseOidBytes = await this.#input.read(20);
+    const baseOid = binary.unpackHex(baseOidBytes);
+    return new pack.RefDelta(baseOid, await this.readZlibStream());
   }
 }

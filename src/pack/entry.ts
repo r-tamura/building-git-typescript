@@ -1,14 +1,16 @@
 import * as path from "path";
 import * as database from "../database";
 import { OID, Pathname } from "../types";
+import * as binary from "../util/binary";
 import { Delta } from "./delta";
-import { TYPE_CODES } from "./pack";
+import { REF_DELTA, TYPE_CODES } from "./pack";
 
 export class Entry {
   #info: database.Raw;
   #pathname: Pathname | undefined;
   delta?: Delta;
   depth = 0;
+  offset?: number;
   constructor(
     public oid: OID,
     info: database.Raw,
@@ -46,10 +48,14 @@ export class Entry {
   }
 
   get packedType() {
-    return TYPE_CODES[this.#info.type];
+    return this.delta ? REF_DELTA : TYPE_CODES[this.#info.type];
   }
 
   get packedSize() {
     return this.delta ? this.delta.size : this.#info.size;
+  }
+
+  get deltaPrefix() {
+    return this.delta ? binary.packHex(this.delta.base.oid) : Buffer.alloc(0);
   }
 }

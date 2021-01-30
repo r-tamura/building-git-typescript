@@ -42,8 +42,8 @@ export class Stream {
   }
 
   async capture(
-    callback: () => Promise<pack.Record>,
-  ): Promise<readonly [pack.Record, Buffer]> {
+    callback: () => Promise<pack.Record | pack.RefDelta>,
+  ): Promise<readonly [pack.Record | pack.RefDelta, Buffer]> {
     this.#capture = this.newByte();
     const result = [await callback(), this.#capture] as const;
     this.digest.update(this.#capture);

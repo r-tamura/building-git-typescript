@@ -9,6 +9,8 @@ export const VERSION = 2;
 export const COMMIT = 1;
 export const TREE = 2;
 export const BLOB = 3;
+// デルタ圧縮されたオブジェクト
+export const REF_DELTA = 7;
 
 /** XDeltaアルゴリズム操作の定数 */
 export const MAX_COPY_SIZE = 0xffffff;
@@ -16,7 +18,11 @@ export const MAX_INSERT_SIZE = 0x7f;
 
 export class InvalidPack extends BaseError {}
 
-export type GitObjectType = typeof COMMIT | typeof TREE | typeof BLOB;
+export type GitObjectType =
+  | typeof COMMIT
+  | typeof TREE
+  | typeof BLOB
+  | typeof REF_DELTA;
 
 export const TYPE_CODES = {
   commit: COMMIT,
@@ -27,6 +33,7 @@ export const TYPE_CODES = {
 type GitObjectName = keyof typeof TYPE_CODES;
 
 export class Record {
+  readonly kind = "record";
   /**
    * 不必要なoid
    * 元々のGitObjec#oidがstring | nullだったため、database.Seriarizable#oidもstring | null
@@ -42,4 +49,9 @@ export class Record {
   toString(encoding: Parameters<Buffer["toString"]>[0] = "binary") {
     return this.data.toString(encoding);
   }
+}
+
+export class RefDelta {
+  readonly kind = "refdelta";
+  constructor(public baseOid: OID, public deltaData: Buffer) {}
 }

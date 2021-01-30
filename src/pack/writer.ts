@@ -5,6 +5,7 @@ import { Progress } from "../progress";
 import { RevList } from "../rev_list";
 import { defaultZlib, Zlib } from "../services";
 import { CompleteCommit, Pathname } from "../types";
+import { Compressor } from "./compressor";
 import { Entry } from "./entry";
 import * as numbers from "./numbers";
 import { SIGNATURE, VERSION } from "./pack";
@@ -43,16 +44,26 @@ export class Writer {
 
   async writeObjects(revlist: RevList) {
     await this.preparePackList(revlist);
+    await this.compressObjects();
     this.writeHeader();
     await this.writeEntries();
 
     const digest = this.#digest.digest();
 
     this.#output.write(digest);
+
     this.#output.end();
   }
 
-  private async preparePackList(revlist: RevList) {
+  private async compressObjects(): Promise<void> {
+    const compressor = new Compressor(this.#database, this.#progress);
+    for (const entry of this.#packList) {
+      compressor.add(entry);
+    }
+    await compressor.buildDeltas();
+  }
+
+  private async preparePackList(revlist: RevList): Promise<void> {
     this.#packList = [];
     this.#progress?.start("Counting objects");
 
@@ -66,12 +77,12 @@ export class Writer {
   private async addToPackList(
     object: CompleteCommit | database.Entry,
     pathname?: Pathname,
-  ) {
+  ): Promise<void> {
     const info = await this.#database.loadInfo(object.oid);
     this.#packList.push(new Entry(object.oid, info, pathname));
   }
 
-  private writeHeader() {
+  private writeHeader(): void {
     /**
      *   4 Bytes                4 Bytes              4 Bytes
         +---------------------+--------------------+--------------------+
@@ -102,19 +113,30 @@ export class Writer {
   }
 
   private async writeEntry(entry: Entry) {
-    const object = await this.#database.loadRaw(entry.oid);
+    if (entry.delta) {
+      await this.writeEntry(entry.delta.base);
+    }
+    if (entry.offset !== undefined) {
+      // すでにpackに書き込み済みの場合はスキップする
+      return;
+    }
+    entry.offset = this.#offset;
+
+    const object = entry.delta ?? (await this.#database.loadRaw(entry.oid));
     const header = numbers.VarIntLE.write(
-      object.size,
+      entry.packedSize,
       numbers.VarIntLE.SHIFT_FOR_FIRST,
     );
     header[0] |= entry.packedType << 4;
-    // fs.writeFileSync(out, header, { flag: "a" });
     const compressed = await this.#zlib.deflate(object.data, {
       level: this.#compressLevel,
     });
     this.write(header);
+    if (entry.delta) {
+      this.write(entry.deltaPrefix);
+    }
     this.write(compressed);
-    this.#progress?.tick();
+    this.#progress?.tick(this.#offset);
   }
 
   private write(data: Buffer | Uint8Array) {

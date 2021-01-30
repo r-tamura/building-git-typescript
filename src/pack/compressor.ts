@@ -15,11 +15,11 @@ const MAX_DEPTH = 50;
 
 export class Compressor {
   #database: database.Database;
-  #progress: progress.Progress;
+  #progress?: progress.Progress;
   #objects: Entry[] = [];
   #widnow: Window;
 
-  constructor(database: database.Database, progress: progress.Progress) {
+  constructor(database: database.Database, progress?: progress.Progress) {
     this.#database = database;
     this.#progress = progress;
     this.#widnow = new Window(WINDOW_SIZE);
@@ -84,10 +84,10 @@ export class Compressor {
 
     for (const entry of this.#objects) {
       await this.buildDelta(entry);
-      this.#progress.tick();
+      this.#progress?.tick();
     }
 
-    this.#progress.stop();
+    this.#progress?.stop();
   }
 
   async buildDelta(entry: Entry): Promise<void> {
@@ -114,7 +114,7 @@ export class Compressor {
     }
 
     const delta = new Delta(source, target);
-    const size = target.entry.packedType;
+    const size = target.entry.packedSize;
 
     if (delta.size > size) {
       return;
