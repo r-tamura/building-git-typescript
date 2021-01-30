@@ -65,8 +65,13 @@ export class ReceivePack extends Base {
   private async recvObjects() {
     try {
       this.#unpackError = undefined;
+      const unpackLimit = await this.repo.config.get([
+        "receive",
+        "unpackLimit",
+      ]);
+      asserts(typeof unpackLimit === "number" || unpackLimit === undefined);
       if (Object.values(this.#requests).some(([, newOid]) => newOid)) {
-        await receive_objects.receivePackedObjects(this);
+        await receive_objects.receivePackedObjects(this, { unpackLimit });
       }
       this.reportStatus("unpack ok");
     } catch (e: unknown) {

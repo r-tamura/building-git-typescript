@@ -168,7 +168,12 @@ export class Fetch extends Base<Options> implements remote_client.RemoteClient {
   }
 
   private async recvObjects() {
-    await receive_objects.receivePackedObjects(this, pack.SIGNATURE);
+    const unpackLimit = await this.repo.config.get(["receive", "unpackLimit"]);
+    asserts(typeof unpackLimit === "number" || unpackLimit === undefined);
+    await receive_objects.receivePackedObjects(this, {
+      unpackLimit,
+      prefix: pack.SIGNATURE,
+    });
   }
 
   private async updateRemoteRefs() {
