@@ -262,6 +262,10 @@ export class Database {
     return createHash("sha1").update(bytes).digest("hex");
   }
 
+  packPath(): string {
+    return path.join(this.#pathname, "pack");
+  }
+
   private objectPath(oid: OID) {
     return path.join(this.#pathname, oid.slice(0, 2), oid.slice(2));
   }
