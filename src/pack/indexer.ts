@@ -9,6 +9,7 @@ import { TempFile } from "../tempfile";
 import { OID, Pathname } from "../types";
 import { asserts } from "../util";
 import { Hash } from "../util/collection";
+import { Expander } from "./expander";
 import { Record as PackRecord, RefDelta } from "./pack";
 
 type OffsetCrc32Pair = readonly [offset: number, crc32: number];
@@ -18,6 +19,7 @@ export class Indexer {
   #stream: Stream;
   #progress?: progress.Progress;
   #index: Record<OID, OffsetCrc32Pair> = {};
+  /** non-deltifiedオブジェクトに紐づいているdeltifiedオブジェクトのリスト */
   #pending: Hash<OID, OffsetCrc32Pair[]> = new Hash((hash, oid) => {
     hash.set(oid, []);
   });
@@ -98,6 +100,50 @@ export class Indexer {
     const packPath = path.join(this.#database.packPath(), filename);
     this.#pack = new Stream(fs.createReadStream(packPath));
     this.#reader = new Reader(this.#pack);
+  }
+
+  private async resolveDeltas(): Promise<void> {
+    let deltas = 0;
+    for (const [, list] of this.#pending.entries()) {
+      deltas += list.length;
+    }
+
+    this.#progress?.start("Resolving deltas", deltas);
+    for (const [oid, [offset]] of Object.entries(this.#index)) {
+      const record = await this.readRecordAt(offset);
+      asserts(record.kind === "record");
+      await this.resolveDeltaBase(record, oid);
+    }
+    this.#progress?.stop();
+  }
+
+  private async resolveDeltaBase(record: PackRecord, oid: OID): Promise<void> {
+    const pending = this.#pending.get(oid);
+    if (pending === undefined) {
+      return;
+    }
+    this.#pending.delete(oid);
+
+    for (const [offset, crc32] of pending) {
+      await this.resolvePending(record, offset, crc32);
+    }
+  }
+
+  private async resolvePending(
+    record: PackRecord,
+    offset: number,
+    crc32: number,
+  ): Promise<void> {
+    const delta = await this.readRecordAt(offset);
+    asserts(delta.kind === "refdelta");
+    const data = await Expander.expand(record.data, delta.deltaData);
+    const object = new PackRecord(record.type, data);
+    const oid = this.#database.hashObject(object);
+
+    this.#index[oid] = [offset, crc32];
+    this.#progress?.tick();
+
+    await this.resolveDeltaBase(object, oid);
   }
 
   private async readRecordAt(offset: number): Promise<PackRecord | RefDelta> {

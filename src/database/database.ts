@@ -22,9 +22,6 @@ import { Tree } from "./tree";
 import { TreeDiff } from "./tree_diff";
 import path = require("path");
 
-const TEMP_CHARS =
-  "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-
 type Rand = {
   sample: (str: string) => string;
 };
