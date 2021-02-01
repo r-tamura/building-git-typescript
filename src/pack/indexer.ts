@@ -2,15 +2,16 @@ import * as crc32lib from "crc-32";
 import * as crypto from "crypto";
 import * as fs from "fs";
 import * as path from "path";
-import { Reader, SIGNATURE, Stream, VERSION } from ".";
+import { IDX_SIGNATURE, Reader, SIGNATURE, Stream, VERSION } from ".";
 import * as database from "../database";
 import * as progress from "../progress";
 import { TempFile } from "../tempfile";
 import { OID, Pathname } from "../types";
 import { asserts } from "../util";
+import * as binary from "../util/binary";
 import { Hash } from "../util/collection";
 import { Expander } from "./expander";
-import { Record as PackRecord, RefDelta } from "./pack";
+import { IDX_MAX_OFFSET, Record as PackRecord, RefDelta } from "./pack";
 
 type OffsetCrc32Pair = readonly [offset: number, crc32: number];
 export class Indexer {
@@ -24,7 +25,9 @@ export class Indexer {
     hash.set(oid, []);
   });
   #packFile: PackFile;
+  #indexFile: PackFile;
   #pack?: Stream;
+  #objectIds?: OID[];
   constructor(
     database: database.Database,
     reader: Reader,
@@ -37,6 +40,7 @@ export class Indexer {
     this.#progress = progress;
 
     this.#packFile = new PackFile(database.packPath(), "tmp_pack");
+    this.#indexFile = new PackFile(database.packPath(), "tmp_idx");
   }
 
   async processPack(): Promise<void> {
@@ -44,9 +48,9 @@ export class Indexer {
     await this.writeObjects();
     await this.writeChecksum();
 
-    // await this.resolveDeltas();
+    await this.resolveDeltas();
 
-    // await this.writeIndex();
+    await this.writeIndex();
   }
 
   private async writeHeader(): Promise<void> {
@@ -150,6 +154,82 @@ export class Indexer {
     asserts(this.#pack !== undefined);
     this.#pack.seek(offset);
     return await this.#reader.readRecord();
+  }
+
+  private async writeIndex(): Promise<void> {
+    this.#objectIds = Object.keys(this.#index).sort();
+
+    await this.writeObjectTable();
+    await this.writeCrc32();
+    await this.writeOffsets();
+    await this.writeIndexChecksum();
+  }
+
+  private async writeObjectTable(): Promise<void> {
+    asserts(this.#objectIds !== undefined);
+    const headerSize = 4 + 4; // Index signature(4byte) + version(4byte)
+    const header = Buffer.alloc(headerSize);
+    header.writeUInt32BE(IDX_SIGNATURE, 0);
+    header.writeUInt32BE(VERSION);
+    await this.#indexFile.write(header);
+
+    const counts = new Array(256).fill(0) as number[];
+    let total = 0;
+
+    for (const oid of this.#objectIds) {
+      const oidHead = oid.slice(0, 2);
+      counts[Number.parseInt(oidHead, 16)] += 1;
+    }
+
+    for (const count of counts) {
+      total += count;
+      const totalbuf = Buffer.alloc(4); // total(4byte)
+      totalbuf.writeUInt32BE(total);
+      await this.#indexFile.write(totalbuf);
+    }
+
+    for (const oid of this.#objectIds) {
+      await this.#indexFile.write(binary.packHex(oid));
+    }
+  }
+
+  private async writeCrc32(): Promise<void> {
+    asserts(this.#objectIds !== undefined);
+    for (const oid of this.#objectIds) {
+      const [, crc32] = this.#index[oid];
+      const crc32buf = binary.packAsInt(crc32);
+      await this.#indexFile.write(crc32buf);
+    }
+  }
+
+  private async writeOffsets(): Promise<void> {
+    asserts(this.#objectIds !== undefined);
+    const largeOffsets = [] as number[];
+
+    for (const oid of this.#objectIds) {
+      let [offset] = this.#index[oid];
+      if (offset >= IDX_MAX_OFFSET) {
+        largeOffsets.push(offset);
+        // JavaScriptのNumber型のbitwiseオペレーションは32bit
+        // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Bitwise_AND
+        offset = Number(
+          BigInt(IDX_MAX_OFFSET) | BigInt(largeOffsets.length - 1),
+        );
+      }
+      await this.#indexFile.write(binary.packAsInt(offset));
+    }
+
+    for (const offset of largeOffsets) {
+      await this.#indexFile.write(binary.packAsLong(offset));
+    }
+  }
+
+  private async writeIndexChecksum(): Promise<void> {
+    const packDigest = this.#packFile.digest.digest();
+    await this.#indexFile.write(packDigest);
+
+    const filename = `pack-${binary.unpackHex(packDigest)}.idx`;
+    await this.#indexFile.move(filename);
   }
 }
 

@@ -5,6 +5,10 @@ export const HEADER_SIZE = 12;
 export const SIGNATURE = "PACK";
 export const VERSION = 2;
 
+/** .idx file */
+export const IDX_SIGNATURE = 0xff744f63;
+export const IDX_MAX_OFFSET = 0x80000000;
+
 /** Pack形式内のオブジェクトタイプ */
 export const COMMIT = 1;
 export const TREE = 2;

@@ -35,3 +35,20 @@ export function scanUntil(
 
   return [buf.slice(offset, p).toString(encoding), p + 1];
 }
+
+const INT_SIZE = 4;
+export function packAsInt(...values: number[]): Buffer {
+  const buf = Buffer.alloc(values.length * 4);
+  for (let i = 0; i < values.length; i++) {
+    buf.writeUInt32BE(values[i], INT_SIZE * i);
+  }
+  return buf;
+}
+
+export function packAsLong(...values: number[]): Buffer {
+  const buf = Buffer.alloc(values.length * 4);
+  for (let i = 0; i < values.length; i++) {
+    buf.writeBigInt64BE(BigInt(values[i]), INT_SIZE * i);
+  }
+  return buf;
+}
