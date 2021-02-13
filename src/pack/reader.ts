@@ -4,10 +4,11 @@ import { defaultZlib, Zlib } from "../services";
 import { asserts, includes, isNodeError } from "../util";
 import * as array from "../util/array";
 import * as binary from "../util/binary";
+import * as fsUtil from "../util/fs";
+import { Expander } from "./expander";
 import * as numbers from "./numbers";
 import * as pack from "./pack";
 import { HEADER_SIZE, InvalidPack, SIGNATURE, VERSION } from "./pack";
-import { Stream } from "./stream";
 
 interface Environment {
   zlib?: Zlib;
@@ -16,11 +17,11 @@ interface Environment {
 type RecordHeader = [type: pack.GitObjectType, size: number];
 
 export class Reader {
-  #input: Stream;
+  #input: fsUtil.Seekable;
   /** Pack内のオブジェクト数 */
   count = 0;
   #zlib: Zlib;
-  constructor(input: Stream, env: Environment = {}) {
+  constructor(input: fsUtil.Seekable, env: Environment = {}) {
     this.#input = input;
     this.#zlib = env.zlib ?? defaultZlib;
   }
@@ -77,12 +78,7 @@ export class Reader {
     );
     const type = (byte >> 4) & numbers.VarIntLE.OBJECT_TYPE_MASK;
     asserts(
-      array.includes(type, [
-        pack.COMMIT,
-        pack.TREE,
-        pack.BLOB,
-        pack.REF_DELTA,
-      ] as const),
+      array.includes(type, [pack.COMMIT, pack.TREE, pack.BLOB, pack.REF_DELTA]),
       `should be 1, 2, 3, or 7, got ${type}`,
     );
     return [type, size];
@@ -133,5 +129,29 @@ export class Reader {
     const baseOidBytes = await this.#input.read(20);
     const baseOid = binary.unpackHex(baseOidBytes);
     return new pack.RefDelta(baseOid, await this.readZlibStream());
+  }
+
+  async readInfo(): Promise<pack.Record | pack.RefDelta> {
+    const [type, size] = await this.readRecordHeader();
+
+    switch (type) {
+      case pack.COMMIT:
+      case pack.TREE:
+      case pack.BLOB: {
+        // ruby: Hash#key
+        const pair = Object.entries(pack.TYPE_CODES).find(
+          ([, value]) => value === type,
+        );
+        asserts(pair !== undefined);
+        const key = pair[0];
+        asserts(array.includes(key, ["commit", "tree", "blob"]));
+        return pack.Record.of(key, Buffer.of(size));
+      }
+      case pack.REF_DELTA: {
+        const delta = await this.readRefDelta();
+        const size = (await Expander.of(delta.deltaData)).targetSize;
+        return new pack.RefDelta(delta.baseOid, Buffer.of(size));
+      }
+    }
   }
 }

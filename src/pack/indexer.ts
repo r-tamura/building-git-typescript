@@ -1,6 +1,5 @@
 import * as crc32lib from "crc-32";
 import * as crypto from "crypto";
-import * as fs from "fs";
 import * as path from "path";
 import { IDX_SIGNATURE, Reader, SIGNATURE, Stream, VERSION } from ".";
 import * as database from "../database";
@@ -102,7 +101,7 @@ export class Indexer {
     await this.#packFile.move(filename);
 
     const packPath = path.join(this.#database.packPath(), filename);
-    this.#pack = new Stream(fs.createReadStream(packPath));
+    this.#pack = Stream.fromFs(packPath);
     this.#reader = new Reader(this.#pack);
   }
 

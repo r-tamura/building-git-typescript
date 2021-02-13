@@ -5,13 +5,17 @@ import * as numbers from "./numbers";
 export class Expander {
   #delta: numbers.Readable;
   #sourceSize = 0;
-  #targetSize = 0;
+  targetSize = 0;
   static async expand(source: Buffer, delta: Buffer): Promise<Buffer> {
+    const expander = await this.of(delta);
+    return expander.expand(source);
+  }
+
+  static async of(delta: Buffer): Promise<Expander> {
     const expander = new Expander(delta);
     expander.#sourceSize = await expander.readSize();
-    expander.#targetSize = await expander.readSize();
-
-    return expander.expand(source);
+    expander.targetSize = await expander.readSize();
+    return expander;
   }
 
   private constructor(delta: Buffer) {
@@ -38,7 +42,7 @@ export class Expander {
       }
     }
 
-    this.checkSize(target, this.#targetSize);
+    this.checkSize(target, this.targetSize);
     return target;
   }
 

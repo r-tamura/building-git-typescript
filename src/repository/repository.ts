@@ -1,17 +1,16 @@
 import * as path from "path";
-import { Database } from "../database";
+import { Stack } from "../config";
+import { Changes, Database } from "../database";
 import { Index } from "../gindex/index";
-import { Workspace } from "../workspace";
 import { Refs } from "../refs";
+import { Remotes } from "../remotes";
+import { FileService, Process } from "../services";
 import { Nullable, OID, Pathname } from "../types";
-import { Process, FileService } from "../services";
-import { Status } from "./status";
-import { Changes } from "../database";
+import { Workspace } from "../workspace";
+import { HardReset } from "./hard_reset";
 import { Migration } from "./migration";
 import { PendingCommit } from "./pending_commit";
-import { HardReset } from "./hard_reset";
-import { Stack } from "../config";
-import { Remotes } from "../remotes";
+import { Status } from "./status";
 
 export type RepositoryEnv = {
   process: Process;

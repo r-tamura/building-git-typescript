@@ -1,7 +1,7 @@
 import * as os from "os";
-import { Author } from "./author";
 import { OID } from "../types";
-import { scanUntil, splitByLine, Hash } from "../util";
+import { Hash, scanUntil, splitByLine } from "../util";
+import { Author } from "./author";
 
 export class Commit {
   readonly type = "commit";

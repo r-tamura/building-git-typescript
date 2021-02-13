@@ -1,16 +1,21 @@
 import * as crypto from "crypto";
+import * as fs from "fs";
 import { readChunk } from "../services";
-import { BaseError } from "../util";
+import { Pathname } from "../types";
+import * as fsUtil from "../util/fs";
 import * as pack from "./pack";
 import { InvalidPack } from "./pack";
-
-class StreamEndedError extends BaseError {}
-export class Stream {
+export class Stream implements fsUtil.Seekable {
   #input: NodeJS.ReadableStream;
   digest = crypto.createHash("sha1");
   offset = 0;
   #buffer = Buffer.alloc(0);
   #capture: Buffer | null = null;
+
+  static fromFs(pathname: Pathname): Stream {
+    return new Stream(fs.createReadStream(pathname));
+  }
+
   constructor(input: NodeJS.ReadableStream, prefix = "") {
     this.#input = input;
     this.#buffer = Buffer.concat([this.#buffer, Buffer.from(prefix, "utf8")]);
@@ -52,7 +57,7 @@ export class Stream {
   }
 
   // TODO: whenceの型を調べる
-  seek(amount: number, whence?: any) {
+  seek(amount: number, whence: fsUtil.Whence = "SEEK_SET") {
     if (amount >= 0) {
       return;
     }

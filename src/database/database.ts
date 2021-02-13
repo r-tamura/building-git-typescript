@@ -1,9 +1,7 @@
 import * as assert from "assert";
 import { createHash } from "crypto";
-import { constants as zlibConstants } from "zlib";
 import { PathFilter } from "../path_filter";
 import { defaultFs, defaultZlib, FileService, Zlib } from "../services";
-import { TempFile } from "../tempfile";
 import {
   CompleteGitObject,
   CompleteTree,
@@ -13,11 +11,13 @@ import {
   OID,
   Pathname,
 } from "../types";
-import { asserts, scanUntil } from "../util";
+import { asserts } from "../util";
 import { eachFile } from "../util/fs";
+import { Backends } from "./backends";
 import { Blob } from "./blob";
 import { Commit } from "./commit";
 import { Entry } from "./entry";
+import { GitObjectType } from "./loose";
 import { Tree } from "./tree";
 import { TreeDiff } from "./tree_diff";
 import path = require("path");
@@ -38,19 +38,26 @@ const defaultRand: Rand = {
   sample,
 };
 
-export type Environment = {
+export interface Environment {
   fs?: FileService;
   rand?: Rand;
   zlib?: Zlib;
-};
+}
 
-type GitObjectType = "blob" | "tree" | "commit";
 type Parsers = Record<GitObjectType, GitObjectParser>;
 
 interface Seriarizable {
   type: GitObjectType;
   toString(): string;
   oid: Nullable<OID>;
+}
+
+export interface Backend {
+  has(oid: OID): Promise<boolean>;
+  loadRaw(oid: OID): Promise<GitRecord>;
+  loadInfo(oid: OID): Promise<Raw>;
+  prefixMatch(oid: OID): Promise<string[]>;
+  writeObject(oid: OID, content: Buffer): Promise<void>;
 }
 
 const TYPES: Parsers = {
@@ -66,11 +73,17 @@ export class Database {
   #fs: NonNullable<Environment["fs"]>;
   #rand: NonNullable<Environment["rand"]>;
   #zlib: NonNullable<Environment["zlib"]>;
+  #backend!: Backend;
   constructor(pathname: string, env: Environment = {}) {
     this.#pathname = pathname;
     this.#fs = env.fs ?? defaultFs;
     this.#rand = env.rand ?? defaultRand;
     this.#zlib = env.zlib ?? defaultZlib;
+    this.#backend = new Backends(pathname, {
+      rand: this.#rand,
+      fs: this.#fs,
+      zlib: this.#zlib,
+    });
   }
 
   hashObject(obj: Seriarizable) {
@@ -79,16 +92,6 @@ export class Database {
 
   async load(oid: OID) {
     return (this.#objects[oid] ??= await this.readObject(oid));
-  }
-
-  async loadRaw(oid: OID) {
-    const { type, size, body } = await this.readObjectHeader(oid);
-    return new Raw(type, size, body);
-  }
-
-  async loadInfo(oid: OID): Promise<Raw> {
-    const { type, size } = await this.readObjectHeader(oid, 128);
-    return new Raw(type, size);
   }
 
   /**
@@ -168,57 +171,15 @@ export class Database {
     }
   }
 
-  async prefixMatch(oidPrefix: OID) {
-    const dirname = path.dirname(this.objectPath(oidPrefix));
-
-    let filenames: string[];
-    try {
-      filenames = await this.#fs.readdir(dirname);
-    } catch (e) {
-      const nodeErr = e as NodeJS.ErrnoException;
-      switch (nodeErr.code) {
-        case "ENOENT":
-          return [];
-        default:
-          throw e;
-      }
-    }
-
-    return filenames
-      .map((fn) => `${path.basename(dirname)}${fn}`)
-      .filter((oid) => oid.startsWith(oidPrefix));
-  }
-
   async readObject(oid: OID): Promise<CompleteGitObject> {
-    const { type, body } = await this.readObjectHeader(oid);
-    const object = TYPES[type].parse(body);
+    const raw = await this.#backend.loadRaw(oid);
+    const object = TYPES[raw.type].parse(raw.data);
     object.oid = oid;
     return object as CompleteGitObject;
   }
 
-  private async readObjectHeader(oid: OID, readBytes?: number) {
-    // TODO: 指定バイト数のみを読み込むことができるかを調査
-    const objPath = this.objectPath(oid);
-    const compressed = await this.#fs.readFile(objPath);
-    const data = await this.#zlib.inflate(compressed);
-
-    const [type, typeRead] = scanUntil(" ", data);
-    const [size, sizeRead] = scanUntil("\0", data, typeRead);
-    assertGitObjectType(type);
-
-    return {
-      type,
-      size: Number.parseInt(size, 10),
-      body: data.slice(sizeRead),
-    };
-  }
-
   shortOid(oid: OID) {
     return oid.slice(0, 7);
-  }
-
-  async has(oid: OID) {
-    return await this.fileExists(this.objectPath(oid));
   }
 
   async store(obj: Seriarizable) {
@@ -238,29 +199,32 @@ export class Database {
     return new Entry(oid, Tree.TREE_MODE);
   }
 
-  async writeObject(oid: OID, content: Buffer) {
-    const objPathname = this.objectPath(oid);
-
-    if (await this.fileExists(objPathname)) {
-      return;
-    }
-
-    const file = new TempFile(path.dirname(objPathname), "tmp_obj", {
-      fs: this.#fs,
-    });
-    const compressed = await this.#zlib.deflate(content, {
-      level: zlibConstants.Z_BEST_SPEED,
-    });
-    await file.write(compressed);
-    await file.move(path.basename(objPathname));
-  }
-
   private hashContent(bytes: Buffer) {
     return createHash("sha1").update(bytes).digest("hex");
   }
 
   packPath(): string {
     return path.join(this.#pathname, "pack");
+  }
+
+  async has(oid: OID): Promise<boolean> {
+    return await this.#backend.has(oid);
+  }
+
+  async loadRaw(oid: OID): Promise<GitRecord> {
+    return await this.#backend.loadRaw(oid);
+  }
+
+  async loadInfo(oid: OID): Promise<Raw> {
+    return await this.#backend.loadInfo(oid);
+  }
+
+  async writeObject(oid: OID, content: Buffer): Promise<void> {
+    await this.#backend.writeObject(oid, content);
+  }
+
+  async prefixMatch(oidPrefix: OID) {
+    return await this.#backend.prefixMatch(oidPrefix);
   }
 
   private objectPath(oid: OID) {
@@ -273,22 +237,13 @@ export class Database {
     const bytes = Buffer.from(contentStr, "binary");
     return bytes;
   }
-
-  private async fileExists(filepath: string) {
-    try {
-      await this.#fs.access(filepath);
-    } catch (e) {
-      const nodeErr = e as NodeJS.ErrnoException;
-      if (nodeErr.code === "ENOENT") {
-        return false;
-      }
-      throw e;
-    }
-    return true;
-  }
 }
 
-export class Raw {
+export interface GitRecord {
+  type: GitObjectType;
+  data: Buffer;
+}
+export class Raw implements GitRecord {
   constructor(
     public type: GitObjectType,
     public size: number,

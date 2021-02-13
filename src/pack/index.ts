@@ -1,5 +1,7 @@
 export * from "./delta";
 export * from "./expander";
+export * from "./gindex";
+export * from "./indexer";
 export * from "./pack";
 export * from "./reader";
 export * from "./stream";

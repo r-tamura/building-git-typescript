@@ -190,3 +190,19 @@ export function compact<T>(xs: readonly T[]): NonNullable<T>[] {
 export function drop<T>(xs: T[], n: number): T[] {
   return xs.filter((x, i) => i >= n);
 }
+
+/**
+ * 配列から指定された正規表現にマッチする部分文字列を持つもののみを取得して返します
+ * @param xs 文字列の配列
+ * @param pattern 取得対象パターン
+ *
+ * @example
+ * > grep(["aa", "bb", "cc", "dd"], /[bc]/)
+ * ["bb", "cc"]
+ */
+export function grep<Element extends string>(
+  xs: Element[],
+  pattern: RegExp,
+): Element[] {
+  return xs.filter((x) => pattern.test(x));
+}
