@@ -1,5 +1,5 @@
-import { defaultProcess, defaultFs, defaultLogger } from "./services";
 import { execute, Unknown } from "./command";
+import { defaultFs, defaultLogger, defaultProcess } from "./services";
 import { Environment } from "./types";
 
 export function createMain() {
@@ -22,7 +22,7 @@ export async function main(argv: string[], env: Environment) {
     await execute(argv, env);
   } catch (e) {
     if (e instanceof Unknown) {
-      console.error(`jit: ${e.message}`);
+      console.error(`kit: ${e.message}`);
     } else {
       console.error(`fatal: ${e.message}`);
       if (process.env.DEBUG) {

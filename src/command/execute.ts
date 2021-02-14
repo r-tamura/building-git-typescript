@@ -55,7 +55,7 @@ export async function execute(args: string[], env: Environment) {
 
   const Command = COMMANDS[name];
   if (!Command) {
-    throw new Unknown(`'${name}' is not a jit command`);
+    throw new Unknown(`'${name}' is not a kit command`);
   }
   const command = new Command(args, env);
   await command.execute();
