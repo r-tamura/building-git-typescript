@@ -177,14 +177,14 @@ export class Log extends Base<Options> {
     }
 
     if (ref.branch()) {
-      ["bold", "green"];
+      return ["bold", "green"];
     }
 
     if (ref.remote()) {
-      ["bold", "red"];
+      return ["bold", "red"];
     }
 
-    throw new AssertionError();
+    throw new AssertionError({ message: `Invalid path: '${ref.path}'` });
   }
 
   private async showCommit(commit: CompleteCommit) {
