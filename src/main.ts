@@ -29,6 +29,6 @@ export async function main(argv: string[], env: Environment) {
         console.error(e.stack);
       }
     }
-    process.exit(0);
+    process.exit(1);
   }
 }
