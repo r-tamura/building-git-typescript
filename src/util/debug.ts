@@ -28,3 +28,14 @@ function blockFn(blockSize: number) {
     return acc;
   };
 }
+
+/**
+ * 環境変数DEBUGが存在する場合にのみログを標準出力へ出力します
+ * @param message メッセージ
+ * @param optionalparams
+ */
+export function debug(message: any, ...optionalParams: any[]): void {
+  if (process.env.NODE_DEBUG) {
+    console.debug(message, ...optionalParams);
+  }
+}

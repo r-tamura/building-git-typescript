@@ -1,3 +1,4 @@
+import { AssertionError } from "assert";
 import * as os from "os";
 import { Style } from "../color";
 import { Change, Entry } from "../database";
@@ -26,6 +27,12 @@ interface Options {
   patch: boolean;
   /** マージ用のdiffを表示するか */
   combined: boolean;
+  /** 全てのブランチを表示するか */
+  all: boolean;
+  /** ローカルブランチを表示するか */
+  branches: boolean;
+  /** リモートブランチを表示するか */
+  remotes: boolean;
 }
 
 export class Log extends Base<Options> {
@@ -41,7 +48,7 @@ export class Log extends Base<Options> {
     this.#currentRef = await this.repo.refs.currentRef();
 
     this.#revList = await RevList.fromRevs(this.repo, this.args);
-    for await (const commit of this.#revList.each()) {
+    for await (const commit of this.#revList) {
       await this.showCommit(commit);
     }
   }
@@ -49,6 +56,15 @@ export class Log extends Base<Options> {
   protected defineSpec(): arg.Spec {
     const printDiffOptions = definePrintDiffOptions(this);
     return {
+      "--all": arg.flag(() => {
+        this.options["all"] = true;
+      }),
+      "--branches": arg.flag(() => {
+        this.options["branches"] = true;
+      }),
+      "--remotes": arg.flag(() => {
+        this.options["remotes"] = true;
+      }),
       "--abbrev-commit": arg.flag(() => {
         this.options.abbrev = true;
       }),
@@ -93,6 +109,9 @@ export class Log extends Base<Options> {
       decorate: "auto",
       patch: false,
       combined: false,
+      all: false,
+      branches: false,
+      remotes: false,
     };
   }
 
@@ -153,7 +172,19 @@ export class Log extends Base<Options> {
   }
 
   private refColor(ref: SymRef): Style[] {
-    return ref.head() ? ["bold", "cyan"] : ["bold", "green"];
+    if (ref.head()) {
+      return ["bold", "cyan"];
+    }
+
+    if (ref.branch()) {
+      ["bold", "green"];
+    }
+
+    if (ref.remote()) {
+      ["bold", "red"];
+    }
+
+    throw new AssertionError();
   }
 
   private async showCommit(commit: CompleteCommit) {

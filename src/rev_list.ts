@@ -30,6 +30,10 @@ export interface Options {
   objects: boolean;
   /** 全てのコミットを含めるか */
   all: boolean;
+  /** ローカルブランチを含めるか */
+  branches: boolean;
+  /** リモートブランチを含めるか */
+  remotes: boolean;
   /** 存在しないrevisionが指定された場合にエラーを無視する */
   missing: boolean;
 }
@@ -63,12 +67,27 @@ export class RevList {
       objects = false,
       all = false,
       missing = false,
+      branches = false,
+      remotes = false,
     }: Partial<Options> = {},
   ): Promise<RevList> {
-    const list = new this(repo, { walk, objects, all, missing });
+    const list = new this(repo, {
+      walk,
+      objects,
+      all,
+      missing,
+      branches,
+      remotes,
+    });
 
     if (all) {
       await list.includeRefs(await list.#repo.refs.listAllRefs());
+    }
+    if (branches) {
+      await list.includeRefs(await list.#repo.refs.listBranches());
+    }
+    if (branches) {
+      await list.includeRefs(await list.#repo.refs.listRemotes());
     }
 
     for (const rev of revs) {

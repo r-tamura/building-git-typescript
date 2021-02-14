@@ -38,6 +38,13 @@ export interface SymRef {
   head(): boolean;
 }
 
+/**
+ * Symbolic Ref
+ *
+ * https://git-scm.com/docs/git-symbolic-ref
+ * > A symbolic ref is a regular file that stores a string that begins with ref: refs/.
+ * > For example, your .git/HEAD is a regular file whose contents is ref: refs/heads/master.
+ */
 export class SymRef {
   type = "symref" as const;
   #refs: Refs;
@@ -63,6 +70,14 @@ export class SymRef {
 
   ord(other: SymRef) {
     return this.path.localeCompare(other.path);
+  }
+
+  branch(): boolean {
+    return this.path.startsWith("refs/heads/");
+  }
+
+  remote(): boolean {
+    return this.path.startsWith("refs/remotes/");
   }
 }
 
@@ -388,6 +403,14 @@ export class Refs {
     const head = symref(this, HEAD);
     const result = [head, ...(await this.listRefs(this.#refspath))];
     return result;
+  }
+
+  async listBranches(): Promise<SymRef[]> {
+    return await this.listRefs(this.#headspath);
+  }
+
+  async listRemotes(): Promise<SymRef[]> {
+    return await this.listRefs(this.#remotesPath);
   }
 
   private get headPath() {
