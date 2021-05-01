@@ -71,6 +71,7 @@ export class Fetch extends Base<Options> implements remote_client.RemoteClient {
     await this.sendWantList();
     await this.sendHaveList();
     await this.recvObjects();
+    this.conn?.output.end();
     await this.updateRemoteRefs();
 
     this.exit(array.isempty(Object.keys(this.#errors)) ? 0 : 1);
