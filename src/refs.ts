@@ -36,6 +36,10 @@ export interface SymRef {
   readOid(): Promise<string>;
   ord(other: SymRef): number;
   head(): boolean;
+  /** Symbolic Refがローカルブランチであるかを判定します */
+  branch(): boolean;
+  /** Symbolic Refがリモートブランチであるかを判定します */
+  remote(): boolean;
 }
 
 /**

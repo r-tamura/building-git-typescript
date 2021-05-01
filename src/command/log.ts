@@ -47,7 +47,12 @@ export class Log extends Base<Options> {
     this.#reverseRefs = await this.repo.refs.reverseRefs();
     this.#currentRef = await this.repo.refs.currentRef();
 
-    this.#revList = await RevList.fromRevs(this.repo, this.args);
+    const revListOpts = {
+      all: this.options["all"],
+      branches: this.options["branches"],
+      remotes: this.options["remotes"],
+    };
+    this.#revList = await RevList.fromRevs(this.repo, this.args, revListOpts);
     for await (const commit of this.#revList) {
       await this.showCommit(commit);
     }

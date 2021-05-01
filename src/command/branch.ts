@@ -1,14 +1,18 @@
 import * as arg from "arg";
-import { Base } from "./base";
 import { InvalidBranch, SymRef } from "../refs";
 import { InvalidObject, Revision } from "../revision";
 import { asserts, BaseError } from "../util";
 import { shallowEqual } from "../util/object";
+import { Base } from "./base";
 
 interface Options {
   verbose: boolean;
   delete: boolean;
   force: boolean;
+  /** ローカル/リモートのブランチを出力します */
+  all: boolean;
+  /** リモートブランチのみを出力します */
+  remotes: boolean;
 }
 
 export class Branch extends Base<Options> {
@@ -27,6 +31,8 @@ export class Branch extends Base<Options> {
       verbose: false,
       delete: false,
       force: false,
+      all: false,
+      remotes: false,
     };
   }
 
@@ -41,12 +47,20 @@ export class Branch extends Base<Options> {
       "--force": arg.flag(() => {
         this.options.force = true;
       }),
+      "--all": arg.flag(() => {
+        this.options["all"] = true;
+      }),
+      "--remotes": arg.flag(() => {
+        this.options["remotes"] = true;
+      }),
       "-D": arg.flag(() => {
         this.options.delete = this.options.force = true;
       }),
       "-v": "--verbose",
       "-d": "--delete",
       "-f": "--force",
+      "-a": "--all",
+      "-r": "--remotes",
     };
   }
 
@@ -106,6 +120,7 @@ export class Branch extends Base<Options> {
           case InvalidBranch:
             this.logger.error(`error: ${e.message}`);
             this.exit(1);
+          // eslint-disable-next-line: no-fallthrough
           default:
             throw e;
         }
@@ -118,9 +133,9 @@ export class Branch extends Base<Options> {
   private async listBranches() {
     const ascending = (s1: SymRef, s2: SymRef) => s1.ord(s2);
     const current = await this.repo.refs.currentRef();
-    const branches = await this.repo.refs
-      .listBranchs()
-      .then((branches) => branches.sort(ascending));
+    const branches = await this.branchRefs().then((branches) =>
+      branches.sort(ascending),
+    );
 
     const maxWidth = Math.max(...branches.map((b) => b.shortName().length));
 
@@ -133,8 +148,25 @@ export class Branch extends Base<Options> {
     }
   }
 
+  private async branchRefs(): Promise<SymRef[]> {
+    const branches = await this.repo.refs.listBranchs();
+    const remotes = await this.repo.refs.listRemotes();
+
+    if (this.options["all"]) {
+      return [...branches, ...remotes];
+    }
+
+    if (this.options["remotes"]) {
+      return remotes;
+    }
+
+    return branches;
+  }
+
   private formatRef(ref: SymRef, current: SymRef) {
     return shallowEqual(ref, current)
+      ? `* ${this.fmt("green", ref.shortName())}`
+      : ref.remote()
       ? `* ${this.fmt("green", ref.shortName())}`
       : `  ${ref.shortName()}`;
   }
