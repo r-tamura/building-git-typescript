@@ -1,7 +1,10 @@
 import * as arg from "arg";
+import * as refs from "../refs";
 import { InvalidBranch, SymRef } from "../refs";
+import * as remotes from "../remotes";
 import { InvalidObject, Revision } from "../revision";
 import { asserts, BaseError } from "../util";
+import * as arrayUtil from "../util/array";
 import { shallowEqual } from "../util/object";
 import { Base } from "./base";
 
@@ -13,10 +16,17 @@ interface Options {
   all: boolean;
   /** リモートブランチのみを出力します */
   remotes: boolean;
+  track: boolean;
+  upstream?: string;
 }
+
+const UNSET = ":unset";
 
 export class Branch extends Base<Options> {
   async run() {
+    if (this.options["upstream"]) {
+      await this.setUpstreamBranch();
+    }
     if (this.options.delete) {
       await this.deleteBranches();
     } else if (this.args.length === 0) {
@@ -33,10 +43,11 @@ export class Branch extends Base<Options> {
       force: false,
       all: false,
       remotes: false,
+      track: false,
     };
   }
 
-  defineSpec() {
+  defineSpec(): arg.Spec {
     return {
       "--verbose": arg.flag(() => {
         this.options.verbose = true;
@@ -56,11 +67,21 @@ export class Branch extends Base<Options> {
       "-D": arg.flag(() => {
         this.options.delete = this.options.force = true;
       }),
+      "--set-upstream-to": (upstream) => {
+        this.options["upstream"] = upstream;
+      },
+      "--track": arg.flag(() => {
+        this.options["track"] = true;
+      }),
+      "--unset-upstream": arg.flag(() => {
+        this.options["upstream"] = UNSET;
+      }),
       "-v": "--verbose",
       "-d": "--delete",
       "-f": "--force",
       "-a": "--all",
       "-r": "--remotes",
+      "-u": "--set-upstream-to",
     };
   }
 
@@ -79,6 +100,9 @@ export class Branch extends Base<Options> {
         }
       }
       await this.repo.refs.createBranch(branchName, resolved);
+      if (this.options["track"]) {
+        await this.setUpstream(branchName, startPoint);
+      }
     } catch (e) {
       const err = e as Error;
       switch (err.constructor) {
@@ -182,5 +206,47 @@ export class Branch extends Base<Options> {
     const short = this.repo.database.shortOid(commit.oid);
     const space = " ".repeat(maxWidth - ref.shortName().length);
     return `${space} ${short} ${commit.titleLine()}`;
+  }
+
+  private async setUpstreamBranch() {
+    asserts(this.options["upstream"] !== undefined);
+    const branchName =
+      arrayUtil.first(this.args) ??
+      (await this.repo.refs.currentRef()).shortName();
+
+    if (this.options["upstream"] === UNSET) {
+      await this.repo.remotes.unsetUpstream(branchName);
+    } else {
+      await this.setUpstream(branchName, this.options["upstream"]);
+    }
+  }
+
+  private async setUpstream(
+    branchName: string,
+    upstream: string,
+  ): Promise<void> {
+    try {
+      console.error({ upstream });
+      const upstreamLong = await this.repo.refs.longName(upstream);
+      const [remote, ref] = await this.repo.remotes.setUpstream(
+        branchName,
+        upstreamLong,
+      );
+      const base = this.repo.refs.shortName(ref);
+
+      this.log(
+        `Branch '${branchName}' set up to track remote branch '${base}' from '${remote}'`,
+      );
+    } catch (e) {
+      if (e instanceof refs.InvalidBranch) {
+        this.logger.error(`error: ${e.message}`);
+        this.exit(1);
+      }
+
+      if (e instanceof remotes.InvalidBranch) {
+        this.logger.error(`fatal: ${e.message}`);
+        this.exit(1);
+      }
+    }
   }
 }

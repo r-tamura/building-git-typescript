@@ -8,6 +8,7 @@ import { Remote } from "./remote";
 export type RemoteName = string;
 
 export class InvalidRemote extends BaseError {}
+export class InvalidBranch extends BaseError {}
 
 export const DEFAULT_REMOTE = "origin";
 
@@ -62,5 +63,42 @@ export class Remotes {
     if (!success) {
       throw new InvalidRemote(`No such remote: ${name}`);
     }
+  }
+
+  async setUpstream(
+    branch: string,
+    upstream: string,
+  ): Promise<[name: string, ref: string]> {
+    const remotes = await this.listRemotes();
+
+    for (const name of remotes) {
+      const ref = await this.get(name).then((remote) =>
+        remote?.setUpstream(branch, upstream),
+      );
+      if (ref) {
+        return [name, ref];
+      }
+    }
+
+    throw new InvalidBranch(
+      `Cannot setup tracking information; starting point '${upstream}' is not a branch`,
+    );
+  }
+
+  async unsetUpstream(branch: string): Promise<void> {
+    await this.#config.openForUpdate();
+    this.#config.unset(["branch", branch, "remote"]);
+    this.#config.unset(["branch", branch, " merge"]);
+    await this.#config.save();
+  }
+
+  async getUpstream(branch: string): Promise<string | undefined> {
+    await this.#config.open();
+    const name = (await this.#config.get([
+      "branch",
+      branch,
+      "remote",
+    ])) as string;
+    return this.get(name).then((remote) => remote?.getUpstream(branch));
   }
 }

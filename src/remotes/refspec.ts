@@ -2,6 +2,7 @@ import * as path from "path";
 import * as refs from "../refs";
 import { Revision } from "../revision";
 import { asserts } from "../util";
+import * as arrayUtil from "../util/array";
 import { BaseError } from "../util/error";
 import * as fsUtil from "../util/fs";
 
@@ -16,7 +17,7 @@ class InvalidRefspec extends BaseError {}
 
 const REFSPEC_FORMAT = /^(\+?)([^:]*)(:([^:]*))?$/;
 export class Refspec {
-  static parse(spec: string) {
+  static parse(spec: string): Refspec {
     const match = REFSPEC_FORMAT.exec(spec);
     asserts(match !== null);
     const forceSign = match[1];
@@ -36,6 +37,21 @@ export class Refspec {
     return refspecs.reduce((mappings, refspec) => {
       return { ...mappings, ...refspec.matchRefs(refs) };
     }, {});
+  }
+
+  static invert(specs: string[], ref: string): string {
+    const refspecs = specs.map((spec) => this.parse(spec));
+
+    const map = refspecs.reduce((mappings, refspec) => {
+      asserts(refspec.source !== undefined);
+      const invertedRefspec = new this(
+        refspec.target,
+        refspec.source,
+        refspec.forced,
+      );
+      return { ...mappings, ...invertedRefspec.matchRefs([ref]) };
+    }, {});
+    return arrayUtil.first(Object.keys(map));
   }
 
   static canonical(

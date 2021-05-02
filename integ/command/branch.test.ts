@@ -1,8 +1,8 @@
 import * as fsCb from "fs";
 import * as path from "path";
-import * as T from "./helper";
 import * as assert from "power-assert";
-import { stripIndent } from "../../src/util";
+import { asserts, stripIndent } from "../../src/util";
+import * as T from "./helper";
 const fs = fsCb.promises;
 
 const t = T.create();
@@ -40,7 +40,10 @@ describe("branch", () => {
     it("creates a branch pointing at HEAD", async () => {
       await t.kitCmd("branch", "topic");
 
-      assert.equal(await t.repo.refs.readHead(), await t.repo.refs.readRef("topic"));
+      assert.equal(
+        await t.repo.refs.readHead(),
+        await t.repo.refs.readRef("topic"),
+      );
     });
 
     it("fails for invalid branch names", async () => {
@@ -179,9 +182,52 @@ describe("branch", () => {
       await t.kitCmd("branch", "-d", "-f", "fix/delete-branches");
 
       const branches = await t.repo.refs.listBranchs();
-      assert(!branches.map((b) => b.shortName()).includes("fix/delete-branches"));
-      const heads = await fs.readdir(path.join(t.repoPath, ".git", "refs", "heads"));
+      assert(
+        !branches.map((b) => b.shortName()).includes("fix/delete-branches"),
+      );
+      const heads = await fs.readdir(
+        path.join(t.repoPath, ".git", "refs", "heads"),
+      );
       assert(!heads.includes("fix"));
+    });
+  });
+
+  describe("tracking remote branches", () => {
+    let upstream: string;
+    let head: string;
+    let remote: string;
+    beforeEach(async () => {
+      await t.kitCmd("remote", "add", "origin", "ssh://example.com/repo");
+      upstream = "refs/remotes/origin/master";
+
+      for (const msg of ["first", "second", "remote"]) {
+        await writeCommit(msg);
+      }
+      await t.repo.refs.updateRef(upstream, await t.repo.refs.readHead());
+      for (const msg of ["third", "local"]) {
+        await writeCommit(msg);
+      }
+
+      const head_ = await t.repo.refs.readHead();
+      asserts(head_ !== null);
+      head = t.repo.database.shortOid(head_);
+
+      const remote_ = await t.repo.refs.readRef(upstream);
+      asserts(remote_ !== null);
+      remote = t.repo.database.shortOid(remote_);
+    });
+
+    it("displays no divergence for unlinked branches", async () => {
+      await t.kitCmd("branch", "--verbose");
+
+      t.assertInfo(`* master ${head} local`);
+    });
+
+    it.skip("displays divergence for linked branches", async () => {
+      await t.kitCmd("branch", "--set-upstream-to", "origin/master");
+      await t.kitCmd("branch", "--verbose");
+
+      t.assertInfo(`* master ${head} [ahead 2, behind 1] local`);
     });
   });
 });

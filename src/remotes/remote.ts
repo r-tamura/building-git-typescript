@@ -1,4 +1,6 @@
 import { Config } from "../config";
+import * as arrayUtil from "../util/array";
+import { Refspec } from "./refspec";
 import { RemoteName } from "./remotes";
 
 export class Remote {
@@ -62,6 +64,34 @@ export class Remote {
     ]);
     this.assertString(uploader);
     return uploader;
+  }
+
+  async setUpstream(
+    branch: string,
+    upstream: string,
+  ): Promise<string | undefined> {
+    const refname = Refspec.invert(await this.fetchSpecs(), upstream);
+    if (!refname) {
+      return undefined;
+    }
+
+    await this.#config.openForUpdate();
+    this.#config.set(["branch", branch, "remote"], this.#name);
+    this.#config.set(["branch", branch, " merge"], refname);
+    await this.#config.save();
+
+    return refname;
+  }
+
+  async getUpstream(branch: string): Promise<string> {
+    const merge = (await this.#config.get([
+      "branch",
+      branch,
+      "merge",
+    ])) as string;
+    const targets = Refspec.expand(await this.fetchSpecs(), [merge]);
+
+    return arrayUtil.first(Object.keys(targets));
   }
 
   private assertString(v: unknown): asserts v is string {

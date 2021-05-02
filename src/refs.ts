@@ -400,6 +400,17 @@ export class Refs {
     return path.relative(prefix, fullpath);
   }
 
+  async longName(ref: string): Promise<string> {
+    const pathname = await this.pathForName(ref);
+    if (pathname) {
+      return path.relative(this.#pathname, pathname);
+    }
+
+    throw new InvalidBranch(
+      `the requested upstream branch '${ref}' does not exist`,
+    );
+  }
+
   /**
    * HEADを含めた全てのrefのリストを取得します
    */
