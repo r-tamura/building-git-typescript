@@ -1,11 +1,11 @@
 import * as arg from "arg";
-import { Base } from "./base";
-import { Pathname } from "../types";
 import { Style } from "../color";
 import * as Repository from "../repository";
-import { shallowEqual } from "../util";
 import { ConflictStatus } from "../repository";
 import { MergeType } from "../repository/pending_commit";
+import { Pathname } from "../types";
+import { shallowEqual, stripIndent } from "../util";
+import { Base } from "./base";
 
 const SHORT_STATUS: Record<
   Exclude<Repository.ChangeType, null> | "nochange",
@@ -185,6 +185,7 @@ export class Status extends Base<Option> {
 
   private async printLongFormat() {
     await this.printBranchStatus();
+    await this.printUpstreamStatus();
     await this.printPendingCommitStatus();
 
     this.printChanges(
@@ -257,6 +258,34 @@ export class Status extends Base<Option> {
     this.log("");
   }
 
+  private async printUpstreamStatus() {
+    const divergence = await this.repo.divergence(
+      await this.repo.refs.currentRef(),
+    );
+    if (divergence?.upstream === undefined) {
+      return;
+    }
+
+    const base = this.repo.refs.shortName(divergence.upstream);
+    const { ahead, behind } = divergence;
+    if (ahead === 0 && behind === 0) {
+      this.log(`Your branch is up to date with '${base}'.`);
+    } else if (behind === 0) {
+      this.log(`Your branch is ahead of '${base}' by ${this.commits(ahead)}.`);
+    } else if (ahead === 0) {
+      this.log(
+        `Your branch is behind '${base}' by ${this.commits(
+          behind,
+        )}, and can be fast-forwared.`,
+      );
+    } else {
+      this.log(stripIndent`
+        Your branch and '${base}' have diverged,
+        and have ${ahead} and ${behind} different commits each, respectively.
+      `);
+    }
+  }
+
   private hint(message: string) {
     this.log(`  (${message})`);
   }
@@ -273,6 +302,10 @@ export class Status extends Base<Option> {
 
       return left + right;
     }
+  }
+
+  private commits(n: number): string {
+    return n === 1 ? "1 commit" : `${n} commits`;
   }
 }
 

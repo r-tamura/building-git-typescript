@@ -1,6 +1,6 @@
 import { Database } from "../database";
-import { OID, CompleteCommit } from "../types";
-import { insert, asserts, Hash, superset, merge, equal } from "../util";
+import { CompleteCommit, OID } from "../types";
+import { asserts, equal, Hash, insert, merge, superset } from "../util";
 
 /**
  * result: BCAの候補となったときセットされる
@@ -59,6 +59,20 @@ export class CommonAncestors {
     return this.#flags.get(oid).has(flag);
   }
 
+  counts(): [ones: number, twos: number] {
+    let ones = 0;
+    let twos = 0;
+    for (const [_oid, flags] of this.#flags.entries()) {
+      if (flags.size !== 1) {
+        continue;
+      }
+      ones += flags.has("parent1") ? 1 : 0;
+      twos += flags.has("parent2") ? 1 : 0;
+    }
+
+    return [ones, twos];
+  }
+
   /**
    * あるコミットの親コミットを全て処理キューへ追加する
    * @param commit
@@ -68,7 +82,6 @@ export class CommonAncestors {
     if (!commit.parent) {
       return;
     }
-    // const parents = commit.parents.map(this.#database.load);
     for (const parentOid of commit.parents) {
       const parent = await this.#database.load(parentOid);
       // あるcommitのparentはcommit

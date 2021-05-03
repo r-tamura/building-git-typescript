@@ -10,7 +10,7 @@ import { Base } from "./base";
 import * as fast_forward from "./shared/fast_forward";
 
 interface Options {
-  verbose: boolean;
+  verbose: number;
   delete: boolean;
   force: boolean;
   /** ローカル/リモートのブランチを出力します */
@@ -39,7 +39,7 @@ export class Branch extends Base<Options> {
 
   initOptions() {
     this.options = {
-      verbose: false,
+      verbose: 0,
       delete: false,
       force: false,
       all: false,
@@ -51,7 +51,7 @@ export class Branch extends Base<Options> {
   defineSpec(): arg.Spec {
     return {
       "--verbose": arg.flag(() => {
-        this.options.verbose = true;
+        this.options["verbose"] += 1;
       }),
       "--delete": arg.flag(() => {
         this.options.delete = true;
@@ -223,7 +223,7 @@ export class Branch extends Base<Options> {
   }
 
   private async extendedBranchInfo(ref: SymRef, maxWidth: number) {
-    if (!this.options.verbose) {
+    if (this.options["verbose"] === 0) {
       return "";
     }
     const oid = await ref.readOid();
@@ -232,7 +232,31 @@ export class Branch extends Base<Options> {
     asserts(commit.type === "commit");
     const short = this.repo.database.shortOid(commit.oid);
     const space = " ".repeat(maxWidth - ref.shortName().length);
-    return `${space} ${short} ${commit.titleLine()}`;
+    const upstream = await this.upstreamInfo(ref);
+    return `${space} ${short}${upstream} ${commit.titleLine()}`;
+  }
+
+  private async upstreamInfo(ref: SymRef): Promise<string> {
+    const divergence = await this.repo.divergence(ref);
+    if (divergence?.upstream === undefined) {
+      return "";
+    }
+
+    const ahead = divergence.ahead;
+    const behind = divergence.behind;
+    const info = [] as string[];
+    if (this.options["verbose"] > 1) {
+      info.push(
+        this.fmt("blue", this.repo.refs.shortName(divergence.upstream)),
+      );
+    }
+    if (ahead > 0) {
+      info.push(`ahead ${ahead.toString()}`);
+    }
+    if (behind > 0) {
+      info.push(`behind ${behind.toString()}`);
+    }
+    return arrayUtil.isempty(info) ? "" : ` [${info.join(", ")}]`;
   }
 
   private async setUpstreamBranch() {
@@ -253,7 +277,6 @@ export class Branch extends Base<Options> {
     upstream: string,
   ): Promise<void> {
     try {
-      console.error({ upstream });
       const upstreamLong = await this.repo.refs.longName(upstream);
       const [remote, ref] = await this.repo.remotes.setUpstream(
         branchName,
@@ -272,7 +295,7 @@ export class Branch extends Base<Options> {
 
       if (e instanceof remotes.InvalidBranch) {
         this.logger.error(`fatal: ${e.message}`);
-        this.exit(1);
+        this.exit(128);
       }
     }
   }

@@ -89,7 +89,7 @@ export class TestUtil {
   /** Assersion */
   async assertWorkspace(
     contents: Contents,
-    repository: Repository = this.repo
+    repository: Repository = this.repo,
   ) {
     const files: Contents = [];
     const pathnames = await repository.workspace.listFiles();
@@ -153,7 +153,7 @@ export class TestUtil {
   };
 
   afterHook = async () => {
-    await fs.rmdir(this.repoPath, { recursive: true });
+    await fs.rm(this.repoPath, { recursive: true });
   };
 
   /** path */
@@ -215,7 +215,7 @@ export class TestUtil {
    */
   makeStdin(
     text = "",
-    { isTTY = false }: MockTTYOptions = {}
+    { isTTY = false }: MockTTYOptions = {},
   ): NodeJS.Process["stdin"] {
     const readable = Readable.from(text);
     return this.mockStreamAsTTY(readable as any, { isTTY });
@@ -237,7 +237,7 @@ export class TestUtil {
 
   mockStreamAsTTY<T>(
     stream: T,
-    { isTTY }: { isTTY: boolean }
+    { isTTY }: { isTTY: boolean },
   ): T & MockTTYOptions {
     return { ...stream, isTTY };
   }
@@ -254,7 +254,7 @@ export class TestUtil {
 
   async commit(
     message: string,
-    { time = new Date(), author = true }: CommitOptions = {}
+    { time = new Date(), author = true }: CommitOptions = {},
   ) {
     if (author) {
       this.mockEnvvar("GIT_AUTHOR_NAME", "A. U. Thor");
@@ -270,7 +270,7 @@ export class TestUtil {
 
   async loadCommit(expression: string) {
     return this.resolveRevision(expression).then(
-      (oid) => this.repo.database.load(oid) as Promise<CompleteCommit>
+      (oid) => this.repo.database.load(oid) as Promise<CompleteCommit>,
     );
   }
 
@@ -312,7 +312,7 @@ export class TestUtil {
   async merge3(
     base: Dict<string | string[] | null>,
     left: Dict<string | string[] | null>,
-    right: Dict<string | string[] | null>
+    right: Dict<string | string[] | null>,
   ) {
     await this.commitTree("A", base);
     await this.commitTree("B", left);

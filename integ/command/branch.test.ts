@@ -120,7 +120,7 @@ describe("branch", () => {
       `);
     });
 
-    it("lists existing branchs with verbose info", async () => {
+    it("lists existing branchs", async () => {
       await t.kitCmd("branch", "new-feature");
       await t.kitCmd("branch");
       t.assertInfo(stripIndent`
@@ -241,6 +241,7 @@ describe("branch", () => {
         await writeCommit(msg);
       }
       await t.repo.refs.updateRef(upstream, await t.repo.refs.readHead());
+      await t.kitCmd("reset", "--hard", "@^");
       for (const msg of ["third", "local"]) {
         await writeCommit(msg);
       }
@@ -260,11 +261,109 @@ describe("branch", () => {
       t.assertInfo(`* master ${head} local`);
     });
 
-    it.skip("displays divergence for linked branches", async () => {
+    it("displays divergence for linked branches", async () => {
       await t.kitCmd("branch", "--set-upstream-to", "origin/master");
       await t.kitCmd("branch", "--verbose");
 
       t.assertInfo(`* master ${head} [ahead 2, behind 1] local`);
+    });
+
+    it("displays the branch ahead of its upstream", async () => {
+      await t.repo.refs.updateRef(
+        upstream,
+        await t.resolveRevision("master~2"),
+      );
+      await t.kitCmd("branch", "--set-upstream-to", "origin/master");
+      await t.kitCmd("branch", "--verbose");
+
+      t.assertInfo(`* master ${head} [ahead 2] local`);
+    });
+
+    it("displays the branch behind its upstream", async () => {
+      const master = await t.resolveRevision("@~2");
+      const oid = t.repo.database.shortOid(master);
+
+      await t.kitCmd("reset", master);
+      await t.kitCmd("branch", "--set-upstream-to", "origin/master");
+      await t.kitCmd("branch", "--verbose");
+
+      t.assertInfo(`* master ${oid} [behind 1] second`);
+    });
+
+    it("displays the upstream branch name", async () => {
+      await t.kitCmd("branch", "--set-upstream-to", "origin/master");
+      await t.kitCmd("branch", "-vv");
+
+      t.assertInfo(`* master ${head} [origin/master, ahead 2, behind 1] local`);
+    });
+
+    it("displays the upstream branch name with no divergence", async () => {
+      await t.kitCmd("reset", "--hard", "origin/master");
+
+      await t.kitCmd("branch", "--set-upstream-to", "origin/master");
+      await t.kitCmd("branch", "-vv");
+      t.assertInfo(`* master ${remote} [origin/master] remote`);
+    });
+
+    it("fails if the upstream ref does not exist", async () => {
+      await t.kitCmd("branch", "--set-upstream-to", "origin/nope");
+      t.assertStatus(1);
+      t.assertError(
+        `error: the requested upstream branch 'origin/nope' does not exist`,
+      );
+    });
+
+    it("fails if the upstream remote does not exist", async () => {
+      await t.repo.refs.updateRef(
+        "refs/remotes/nope/master",
+        await t.repo.refs.readHead(),
+      );
+      await t.kitCmd("branch", "--set-upstream-to", "nope/master");
+      t.assertStatus(128);
+      t.assertError(
+        `fatal: Cannot setup tracking information; starting point 'refs/remotes/nope/master' is not a branch`,
+      );
+    });
+
+    it("creates a branch tracking its start point", async () => {
+      await t.kitCmd("branch", "--track", "topic", "origin/master");
+      await t.kitCmd("checkout", "topic");
+
+      await writeCommit("topic");
+      const oid = t.repo.database.shortOid(
+        (await t.repo.refs.readHead()) as string,
+      );
+
+      await t.kitCmd("branch", "--verbose");
+      t.assertInfo(stripIndent`
+        master ${head} local
+      * topic  ${oid} [ahead 1] topic
+      `);
+    });
+
+    it("unlinks a branch from its upstream", async () => {
+      await t.kitCmd("branch", "--set-upstream-to", "origin/master");
+      await t.kitCmd("branch", "--unset-upstream");
+      await t.kitCmd("branch", "--verbose");
+
+      t.assertInfo(`* master ${head} local`);
+    });
+
+    it.skip("resolves the @{upstream} revision", async () => {
+      await t.kitCmd("branch", "--set-upstream-to", "origin/master");
+
+      assert.notEqual(
+        await t.resolveRevision("origin/master"),
+        await t.resolveRevision("master"),
+      );
+      assert.equal(
+        await t.resolveRevision("origin/master"),
+        await t.resolveRevision("@{U}"),
+      );
+      assert.equal(
+        await t.resolveRevision("origin/master"),
+        await t.resolveRevision("master@{upstream}"),
+      );
     });
   });
 });

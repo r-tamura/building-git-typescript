@@ -2,11 +2,12 @@ import * as path from "path";
 import { Stack } from "../config";
 import { Changes, Database } from "../database";
 import { Index } from "../gindex/index";
-import { Refs } from "../refs";
+import { Refs, SymRef } from "../refs";
 import { Remotes } from "../remotes";
 import { FileService, Process } from "../services";
 import { Nullable, OID, Pathname } from "../types";
 import { Workspace } from "../workspace";
+import { Divergence } from "./divergence";
 import { HardReset } from "./hard_reset";
 import { Migration } from "./migration";
 import { PendingCommit } from "./pending_commit";
@@ -76,5 +77,9 @@ export class Repository {
 
   get remotes() {
     return (this.#remotes ??= new Remotes(this.config.file("local")));
+  }
+
+  async divergence(ref: SymRef): Promise<Divergence | undefined> {
+    return await Divergence.of(this, ref);
   }
 }
