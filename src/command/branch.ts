@@ -7,6 +7,7 @@ import { asserts, BaseError } from "../util";
 import * as arrayUtil from "../util/array";
 import { shallowEqual } from "../util/object";
 import { Base } from "./base";
+import * as fast_forward from "./shared/fast_forward";
 
 interface Options {
   verbose: boolean;
@@ -134,7 +135,7 @@ export class Branch extends Base<Options> {
 
   private async deleteBranch(branchName: string) {
     if (!this.options.force) {
-      return;
+      await this.checkMergeStatus(branchName);
     }
 
     const oid = await this.repo.refs
@@ -151,7 +152,33 @@ export class Branch extends Base<Options> {
       });
     const short = this.repo.database.shortOid(oid);
 
-    this.log(`Deleted branch ${branchName} (was ${short})`);
+    this.log(`Deleted branch ${branchName} (was ${short}).`);
+  }
+
+  private async checkMergeStatus(
+    branchName: string,
+  ): Promise<never | undefined> {
+    const upstream = await this.repo.remotes.getUpstream(branchName);
+    const headOid = upstream
+      ? await this.repo.refs.readRef(upstream)
+      : await this.repo.refs.readHead();
+    const branchOid = await this.repo.refs.readRef(branchName);
+
+    // TODO: fix: null/undefined統合
+    if (
+      await fast_forward.fastForwardError(
+        this,
+        branchOid ?? undefined,
+        headOid ?? undefined,
+      )
+    ) {
+      this.logger.error(
+        `error: The branch '${branchName}' is not fully merged.`,
+      );
+      this.exit(1);
+    }
+
+    return undefined;
   }
 
   private async listBranches() {

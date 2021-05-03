@@ -163,8 +163,8 @@ describe("branch", () => {
       await t.kitCmd("branch", "bug-fix");
       await t.kitCmd("branch", "--force", "--delete", "bug-fix");
 
-      const short = await t.repo.database.shortOid(head);
-      t.assertInfo(`Deleted branch bug-fix (was ${short})`);
+      const short = t.repo.database.shortOid(head);
+      t.assertInfo(`Deleted branch bug-fix (was ${short}).`);
 
       const branches = await t.repo.refs.listBranchs();
       assert(!branches.map((b) => b.shortName()).includes("buf-fix"));
@@ -189,6 +189,43 @@ describe("branch", () => {
         path.join(t.repoPath, ".git", "refs", "heads"),
       );
       assert(!heads.includes("fix"));
+    });
+
+    describe("when the branch has diverged", () => {
+      beforeEach(async () => {
+        await t.kitCmd("branch", "topic");
+        await t.kitCmd("checkout", "topic");
+
+        await writeCommit("changed");
+
+        await t.kitCmd("checkout", "master");
+      });
+
+      it("deletes a merged branch", async () => {
+        const head = (await t.repo.refs.readHead()) as string;
+        await t.kitCmd("checkout", "topic");
+        await t.kitCmd("branch", "--delete", "master");
+        t.assertStatus(0);
+        t.assertInfo(
+          `Deleted branch master (was ${t.repo.database.shortOid(head)}).`,
+        );
+      });
+
+      it("refuses to delete the branch", async () => {
+        await t.kitCmd("branch", "--delete", "topic");
+        t.assertStatus(1);
+
+        t.assertError("error: The branch 'topic' is not fully merged.");
+      });
+
+      it("deletes the branch with force", async () => {
+        const head = (await t.repo.refs.readRef("topic")) as string;
+        await t.kitCmd("branch", "-D", "topic");
+        t.assertStatus(0);
+        t.assertInfo(
+          `Deleted branch topic (was ${t.repo.database.shortOid(head)}).`,
+        );
+      });
     });
   });
 
