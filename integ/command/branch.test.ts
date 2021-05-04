@@ -349,7 +349,7 @@ describe("branch", () => {
       t.assertInfo(`* master ${head} local`);
     });
 
-    it.skip("resolves the @{upstream} revision", async () => {
+    it("resolves the @{upstream} revision", async () => {
       await t.kitCmd("branch", "--set-upstream-to", "origin/master");
 
       assert.notEqual(

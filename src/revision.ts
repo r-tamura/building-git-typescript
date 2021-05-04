@@ -9,15 +9,18 @@ const INVALID_BRANCH_NAME = [
   /\/$/, // Unixのディレクトリ名の形式
   /\.lock$/, // .lockファイルの形式
   /@\{/, // Gitの形式の一つ
+  // eslint-disable-next-line
   /[\x00-\x20*~?:\[\\^~\x7f]+/, // ASCII制御文字
 ];
 
 const PARENT = /^(.+)\^(\d*)$/;
 const ANCESTOR = /^(.+)~(\d+)$/;
+const UPSTREAM = /^(.*)@\{u(pstream)?\}$/i;
 
 export const HEAD = "HEAD" as const;
 const REF_ALIASES: { [s: string]: string } = {
   "@": HEAD,
+  "": HEAD,
 };
 
 export const COMMIT = "commit" as const;
@@ -50,6 +53,10 @@ export class Revision {
     } else if ((match = ANCESTOR.exec(revision))) {
       const rev = Revision.parse(match[1]) as Ref;
       return rev ? Ancestor.of(rev, Number.parseInt(match[2])) : null;
+    } else if ((match = UPSTREAM.exec(revision))) {
+      const rev = Revision.parse(match[1]);
+      asserts(rev instanceof Ref);
+      return rev ? Upstream.of(rev) : null;
     } else if (Revision.validRef(revision)) {
       const name = REF_ALIASES[revision] ?? revision;
       return Ref.of(name);
@@ -75,6 +82,13 @@ export class Revision {
     return commit.parents[n - 1] ?? null;
   }
 
+  async upstream(branch: string): Promise<string | undefined> {
+    if (branch === HEAD) {
+      branch = (await this.#repo.refs.currentRef()).shortName();
+    }
+    return this.#repo.remotes.getUpstream(branch);
+  }
+
   async resolve(type: "commit" | null = null) {
     let oid = (await this.#query?.resolve(this)) ?? null;
 
@@ -89,7 +103,7 @@ export class Revision {
     return oid;
   }
 
-  async readRef(name: string) {
+  async readRef(name: string): Promise<ResolveedRevision | null> {
     const oid = await this.#repo.refs.readRef(name);
 
     // オブジェクトIDが見つかった場合
@@ -147,7 +161,7 @@ export class Revision {
   }
 }
 
-export type Rev = Ref | Parent | Ancestor;
+export type Rev = Ref | Parent | Ancestor | Upstream;
 
 type ResolveedRevision = string | null;
 export class Ref {
@@ -188,5 +202,18 @@ export class Ancestor {
       oid = await context.commitParent(oid);
     }
     return oid;
+  }
+}
+
+export class Upstream {
+  constructor(public rev: Ref) {}
+  static of(rev: Ref): Upstream {
+    return new this(rev);
+  }
+
+  async resolve(context: Revision): Promise<ResolveedRevision> {
+    const name = await context.upstream(this.rev.name);
+    asserts(name !== undefined);
+    return await context.readRef(name);
   }
 }
