@@ -96,7 +96,14 @@ export class Fetch extends Base<Options> implements remote_client.RemoteClient {
   }
 
   private async configure(): Promise<void> {
-    const name = this.args[0] ?? remotes.DEFAULT_REMOTE;
+    const currentBranch = (await this.repo.refs.currentRef()).shortName();
+    const buranchRemote = await this.repo.config.get([
+      "branch",
+      currentBranch,
+      "remote",
+    ]);
+
+    const name = this.args[0] ?? buranchRemote ?? remotes.DEFAULT_REMOTE;
     const remote = await this.repo.remotes.get(name);
 
     if (remote === undefined) {

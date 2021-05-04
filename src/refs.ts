@@ -22,6 +22,7 @@ const INVALID_BRANCH_NAME = [
   /\/$/, // Unixのディレクトリ名の形式
   /\.lock$/, // .lockファイルの形式
   /@\{/, // Gitの形式の一つ
+  // eslint-disable-next-line
   /[\x00-\x20*~?:\[\\^~\x7f]+/, // ASCII制御文字
 ];
 

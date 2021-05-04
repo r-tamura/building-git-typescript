@@ -70,12 +70,12 @@ export async function readdirRecursive(
   pathname: Pathname,
 ): Promise<string[]> {
   const parent = pathname;
-  const envtries = await fs.readdir(parent);
+  const entries = await fs.readdir(parent);
 
   const files: string[] = [];
-  for (const entry of envtries) {
+  for (const entry of entries) {
     const entryPath = path.join(parent, entry);
-    const stat = await fs.stat(entry);
+    const stat = await fs.stat(entryPath);
     if (stat.isDirectory()) {
       const childs = await readdirRecursive(fs, entryPath);
       files.push(...childs);

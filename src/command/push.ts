@@ -1,5 +1,6 @@
 import * as arg from "arg";
 import * as remotes from "../remotes";
+import { Refspec } from "../remotes";
 import { Revision } from "../revision";
 import { OID } from "../types";
 import { asserts, BaseError } from "../util";
@@ -62,12 +63,11 @@ export class Push extends Base<Options> {
     await this.sendUpdateRequests();
     await this.sendObjects();
 
-    // Note: 子プロセスのstdinへの入力の終了を明示的に伝えないと、子プロセスがハングする
-    this.conn?.output.end();
-
     this.printSummary();
     await this.recvReportStatus();
 
+    // Note: 子プロセスのstdinへの入力の終了を明示的に伝えないと、子プロセスがハングする
+    this.conn?.output.end();
     this.exit(array.isempty(this.#errors) ? 0 : 1);
   }
 
@@ -90,17 +90,33 @@ export class Push extends Base<Options> {
   }
 
   private async configure(): Promise<void> {
-    const name = this.args[0] ?? remotes.DEFAULT_REMOTE;
+    const currentBranch = (await this.repo.refs.currentRef()).shortName();
+    const branchRemote = (await this.repo.config.get([
+      "branch",
+      currentBranch,
+      "remote",
+    ])) as string;
+    const branchMerge = (await this.repo.config.get([
+      "branch",
+      currentBranch,
+      "merge",
+    ])) as string;
+    const name = this.args[0] ?? branchRemote ?? remotes.DEFAULT_REMOTE;
     const remote = await this.repo.remotes.get(name);
 
     this.#pushUrl = (await remote?.pushUrl()) ?? this.args[0];
     this.#fetchSpecs = (await remote?.fetchSpecs()) ?? [];
     this.#receiver =
       this.options["receiver"] ?? (await remote?.receiver()) ?? RECEIVE_PACK;
-    this.#pushSpecs =
-      this.args.length > 1
-        ? array.drop(this.args, 1)
-        : (await remote?.pushSpecs()) ?? [];
+
+    if (this.args.length > 1) {
+      this.#pushSpecs = array.drop(this.args, 1);
+    } else if (branchMerge) {
+      const spec = new Refspec(currentBranch, branchMerge, false);
+      this.#pushSpecs = [spec.toString()];
+    } else {
+      this.#pushSpecs = (await remote?.pushSpecs()) ?? [];
+    }
   }
 
   private async sendUpdateRequests() {

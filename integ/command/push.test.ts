@@ -34,7 +34,7 @@ describe("push", () => {
   async function commits(
     repo: Repository,
     revs: string[],
-    options: Partial<revlist.Options> = {}
+    options: Partial<revlist.Options> = {},
   ): Promise<string[]> {
     const list = await revlist.RevList.fromRevs(repo, revs, options);
     const _commits: string[] = [];
@@ -47,12 +47,12 @@ describe("push", () => {
   async function assertObjectCount(expectedCount: number) {
     const actual = await FileService.readdirRecursive(
       fs,
-      path.join(t.repoPath, ".git", "objects")
+      path.join(remote.repoPath, ".git", "objects"),
     ).then((files) =>
       files.reduce(
         (acc, file) => (fsCb.statSync(file).isFile() ? acc + 1 : acc),
-        0
-      )
+        0,
+      ),
     );
     assert.equal(actual, expectedCount);
   }
@@ -64,7 +64,7 @@ describe("push", () => {
         await repo.refs
           .listAllRefs()
           .then((refs) => refs.map((ref) => ref.path))
-      ).sort()
+      ).sort(),
     );
   }
 
@@ -88,12 +88,12 @@ describe("push", () => {
       await t.kitCmd(
         "config",
         "remote.origin.receivepack",
-        `${kitPath()} receive-pack`
+        `${kitPath()} receive-pack`,
       );
       await t.kitCmd(
         "config",
         "remote.origin.uploadpack",
-        `${kitPath()} upload-pack`
+        `${kitPath()} upload-pack`,
       );
     });
 
@@ -114,7 +114,7 @@ describe("push", () => {
       await t.kitCmd("push", "origin", "master");
       assert.equal(
         await t.repo.refs.readRef("refs/heads/master"),
-        await remote.repo.refs.readRef("refs/heads/master")
+        await remote.repo.refs.readRef("refs/heads/master"),
       );
     });
 
@@ -122,7 +122,7 @@ describe("push", () => {
       await t.kitCmd("push", "origin", "master:refs/heads/other");
       assert.equal(
         await t.repo.refs.readRef("refs/heads/master"),
-        await remote.repo.refs.readRef("refs/heads/other")
+        await remote.repo.refs.readRef("refs/heads/other"),
       );
     });
 
@@ -136,7 +136,7 @@ describe("push", () => {
 
       assert.deepEqual(
         await commits(t.repo, ["master"]),
-        await commits(remote.repo, ["master"])
+        await commits(remote.repo, ["master"]),
       );
     });
 
@@ -171,7 +171,7 @@ describe("push", () => {
 
       assert.deepEqual(
         await commits(t.repo, ["master^"]),
-        await commits(remote.repo, ["master"])
+        await commits(remote.repo, ["master"]),
       );
     });
 
@@ -190,7 +190,7 @@ describe("push", () => {
 
         assert.equal(
           await t.repo.refs.readRef("refs/heads/master"),
-          await remote.repo.refs.readRef("refs/heads/master")
+          await remote.repo.refs.readRef("refs/heads/master"),
         );
       });
 
@@ -318,7 +318,7 @@ describe("push", () => {
           assert.notEqual(remoteHead, localHead);
           assert.equal(
             localHead,
-            (await commits(t.repo, ["origin/master"]))[0]
+            (await commits(t.repo, ["origin/master"]))[0],
           );
         });
       });
@@ -368,7 +368,7 @@ describe("push", () => {
 
         assert.equal(
           await t.repo.refs.readRef("refs/remotes/origin/master"),
-          null
+          null,
         );
       });
     });
@@ -400,7 +400,7 @@ describe("push", () => {
 
         assert.notEqual(
           await t.repo.refs.readRef("refs/remotes/origin/master"),
-          null
+          null,
         );
       });
     });
@@ -432,13 +432,13 @@ describe("push", () => {
 
         assert.notEqual(
           await t.repo.refs.readRef("refs/remotes/origin/master"),
-          null
+          null,
         );
       });
     });
   });
 
-  describe.skip("with a configured upstream branch", () => {
+  describe("with a configured upstream branch", () => {
     beforeEach(async () => {
       remote = await createRemoteRepo("push-remote");
 
@@ -446,7 +446,7 @@ describe("push", () => {
       await t.kitCmd(
         "config",
         "remote.origin.receivepack",
-        `${kitPath()} receive-pack`
+        `${kitPath()} receive-pack`,
       );
 
       for (const msg of ["one", "dir/two"]) {
@@ -471,6 +471,189 @@ describe("push", () => {
       To file://${remote.repoPath}
     \    ${oldOid}..${newOid} master -> master
       `);
+    });
+  });
+
+  describe("with multiple branches in the local repository", () => {
+    beforeEach(async () => {
+      remote = await createRemoteRepo("push-remote");
+
+      for (const msg of ["one", "dir/two", "three"]) {
+        await writeCommit(msg);
+      }
+
+      await t.kitCmd("branch", "topic", "@^");
+      await t.kitCmd("checkout", "topic");
+      await writeCommit("four");
+
+      await t.kitCmd("remote", "add", "origin", `file://${remote.repoPath}`);
+      await t.kitCmd(
+        "config",
+        "remote.origin.receivepack",
+        `${kitPath()} receive-pack`,
+      );
+    });
+
+    afterEach(async () => {
+      await FileService.rmrf(fs, remote.repoPath);
+    });
+
+    it("displays the new branches being pushed", async () => {
+      await t.kitCmd("push", "origin", "refs/heads/*");
+      t.assertStatus(0);
+
+      t.assertError(stripIndent`
+        To file://${remote.repoPath}
+       \ * [new branch] master -> master
+       \ * [new branch] topic -> topic
+      `);
+    });
+
+    it("maps the local's heads/* to the remotes's heads/*", async () => {
+      await t.kitCmd("push", "origin", "refs/heads/*");
+
+      const local_master = await t.repo.refs.readRef("refs/heads/master");
+      const local_topic = await t.repo.refs.readRef("refs/heads/topic");
+
+      assert.notEqual(local_master, local_topic);
+      assert.equal(
+        local_master,
+        await remote.repo.refs.readRef("refs/heads/master"),
+      );
+      assert.equal(
+        local_topic,
+        await remote.repo.refs.readRef("refs/heads/topic"),
+      );
+    });
+
+    it("maps the local's heads/* to a different remote ref", async () => {
+      await t.kitCmd("push", "origin", "refs/heads/*:refs/other/*");
+
+      const local_master = await t.repo.refs.readRef("refs/heads/master");
+      const local_topic = await t.repo.refs.readRef("refs/heads/topic");
+
+      assert.equal(
+        local_master,
+        await remote.repo.refs.readRef("refs/other/master"),
+      );
+      assert.equal(
+        local_topic,
+        await remote.repo.refs.readRef("refs/other/topic"),
+      );
+    });
+
+    it("does not create any other remote refs", async () => {
+      await t.kitCmd("push", "origin", "refs/heads/*");
+      await assertRefs(remote.repo, [
+        "HEAD",
+        "refs/heads/master",
+        "refs/heads/topic",
+      ]);
+    });
+
+    it("sends all the commits from the local's history", async () => {
+      await t.kitCmd("push", "origin", "refs/heads/*");
+      await assertObjectCount(13);
+
+      const localCommits = await commits(t.repo, ["master", "topic"]);
+      assert.equal(4, localCommits.length);
+
+      assert.deepEqual(
+        localCommits,
+        await commits(remote.repo, ["master", "topic"]),
+      );
+    });
+
+    it("sends enough information to check out the local's commits", async () => {
+      await t.kitCmd("push", "origin", "refs/heads/*");
+
+      await remote.kitCmd("reset", "--hard");
+      await remote.kitCmd("checkout", "master");
+      await assertWorkspace([
+        ["dir/two.txt", "dir/two"],
+        ["one.txt", "one"],
+        ["three.txt", "three"],
+      ]);
+
+      await remote.kitCmd("checkout", "topic");
+      await assertWorkspace([
+        ["dir/two.txt", "dir/two"],
+        ["four.txt", "four"],
+        ["one.txt", "one"],
+      ]);
+    });
+
+    describe("when a specific branch is pushed", () => {
+      beforeEach(async () => {
+        await t.kitCmd("push", "origin", "refs/heads/*ic:refs/heads/*");
+      });
+
+      it("displays the branch being pushed", async () => {
+        t.assertError(stripIndent`
+          To file://${remote.repoPath}
+         \ * [new branch] topic -> top
+        `);
+      });
+
+      it("does not create any other local refs", async () => {
+        await assertRefs(remote.repo, ["HEAD", "refs/heads/top"]);
+      });
+
+      it("retrieves only the commits from the fetched branched", async () => {
+        await assertObjectCount(10);
+
+        const localCommits = await commits(t.repo, ["topic"]);
+        assert.equal(localCommits.length, 3);
+        assert.deepEqual(
+          await commits(remote.repo, [], { all: true }),
+          localCommits,
+        );
+      });
+    });
+  });
+
+  describe("when the receiver has stored a pack", () => {
+    let alice: RemoteRepo;
+    let bob: RemoteRepo;
+    beforeEach(async () => {
+      alice = await createRemoteRepo("push-remote-alice");
+      bob = await createRemoteRepo("push-remote-bob");
+
+      await alice.kitCmd("config", "receive.unpackLimit", "5");
+
+      for (const msg of ["one", "dir/two", "three"]) {
+        await writeCommit(msg);
+      }
+
+      await t.kitCmd("remote", "add", "alice", `file://${alice.repoPath}`);
+      await t.kitCmd(
+        "config",
+        "remote.alice.receivepack",
+        `${kitPath()} receive-pack`,
+      );
+
+      await t.kitCmd("push", "alice", "refs/heads/*");
+    });
+
+    afterEach(async () => {
+      await FileService.rmrf(fs, alice.repoPath);
+      await FileService.rmrf(fs, bob.repoPath);
+    });
+
+    it.skip("can push packed objects to another repository", async () => {
+      await alice.kitCmd("remote", "add", "bob", `file://${bob.repoPath}`);
+      await alice.kitCmd(
+        "config",
+        "remote.bob.receivepack",
+        `${kitPath()} receive-pack`,
+      );
+
+      await alice.kitCmd("push", "bob", "refs/heads/*");
+
+      assert.deepEqual(
+        await commits(bob.repo, ["master"]),
+        await commits(t.repo, ["master"]),
+      );
     });
   });
 });

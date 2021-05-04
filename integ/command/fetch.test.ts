@@ -26,7 +26,7 @@ describe("fetch", () => {
   async function commits(
     repo: Repository,
     revs: string[],
-    options: Partial<revlist.Options> = {}
+    options: Partial<revlist.Options> = {},
   ): Promise<string[]> {
     const list = await revlist.RevList.fromRevs(repo, revs, options);
     const _commits: string[] = [];
@@ -39,18 +39,24 @@ describe("fetch", () => {
   async function assertObjectCount(expectedCount: number) {
     const actual = await FileService.readdirRecursive(
       fs,
-      path.join(t.repoPath, ".git", "objects")
+      path.join(t.repoPath, ".git", "objects"),
     ).then((files) =>
       files.reduce(
         (acc, file) => (fsCb.statSync(file).isFile() ? acc + 1 : acc),
-        0
-      )
+        0,
+      ),
     );
     assert.equal(actual, expectedCount);
   }
 
   function kitPath() {
     return path.join(__dirname, "../../bin/kit");
+  }
+
+  async function allRefs(repo: Repository) {
+    return repo.refs
+      .listAllRefs()
+      .then((refs) => refs.map((ref) => ref.path).sort());
   }
 
   describe("with a single branch in the remote repository", () => {
@@ -66,7 +72,7 @@ describe("fetch", () => {
       await t.kitCmd(
         "config",
         "remote.origin.uploadpack",
-        `${kitPath()} upload-pack`
+        `${kitPath()} upload-pack`,
       );
     });
 
@@ -88,7 +94,7 @@ describe("fetch", () => {
       await t.kitCmd("fetch");
       assert.equal(
         await remote.repo.refs.readRef("refs/heads/master"),
-        await t.repo.refs.readRef("refs/remotes/origin/master")
+        await t.repo.refs.readRef("refs/remotes/origin/master"),
       );
     });
 
@@ -96,12 +102,12 @@ describe("fetch", () => {
       await t.kitCmd(
         "fetch",
         "origin",
-        "refs/heads/*:refs/remotes/other/prefix-*"
+        "refs/heads/*:refs/remotes/other/prefix-*",
       );
 
       assert.equal(
         await remote.repo.refs.readRef("refs/heads/master"),
-        await t.repo.refs.readRef("refs/remotes/other/prefix-master")
+        await t.repo.refs.readRef("refs/remotes/other/prefix-master"),
       );
     });
 
@@ -110,7 +116,7 @@ describe("fetch", () => {
 
       assert.equal(
         await remote.repo.refs.readRef("refs/heads/master"),
-        await t.repo.refs.readRef("refs/heads/topic")
+        await t.repo.refs.readRef("refs/heads/topic"),
       );
     });
 
@@ -119,7 +125,7 @@ describe("fetch", () => {
 
       assert.equal(
         await remote.repo.refs.readRef("refs/heads/master"),
-        await t.repo.refs.readRef("refs/heads/topic")
+        await t.repo.refs.readRef("refs/heads/topic"),
       );
     });
 
@@ -128,7 +134,7 @@ describe("fetch", () => {
 
       assert.equal(
         await remote.repo.refs.readRef("refs/heads/master"),
-        await t.repo.refs.readRef("refs/remotes/topic")
+        await t.repo.refs.readRef("refs/remotes/topic"),
       );
     });
 
@@ -141,7 +147,7 @@ describe("fetch", () => {
           await t.repo.refs
             .listAllRefs()
             .then((refs) => refs.map((ref) => ref.path))
-        ).sort()
+        ).sort(),
       );
     });
 
@@ -150,7 +156,7 @@ describe("fetch", () => {
 
       assert.deepEqual(
         await commits(remote.repo, ["master"]),
-        await commits(t.repo, ["origin/master"])
+        await commits(t.repo, ["origin/master"]),
       );
     });
 
@@ -190,7 +196,7 @@ describe("fetch", () => {
         await t.kitCmd("fetch");
         assert.deepEqual(
           await commits(remote.repo, ["master"]),
-          await commits(t.repo, ["origin/master"])
+          await commits(t.repo, ["origin/master"]),
         );
       });
     });
@@ -249,7 +255,7 @@ describe("fetch", () => {
           "fetch",
           "-f",
           "origin",
-          "refs/heads/*:refs/remotes/origin/*"
+          "refs/heads/*:refs/remotes/origin/*",
         );
         t.assertStatus(0);
 
@@ -271,7 +277,7 @@ describe("fetch", () => {
           await t.kitCmd(
             "fetch",
             "origin",
-            "refs/heads/*:refs/remotes/origin/*"
+            "refs/heads/*:refs/remotes/origin/*",
           );
         });
 
@@ -290,9 +296,146 @@ describe("fetch", () => {
           assert.notEqual(remoteHead, localHead);
           assert.equal(
             localHead,
-            (await commits(t.repo, ["origin/master"]))[0]
+            (await commits(t.repo, ["origin/master"]))[0],
           );
         });
+      });
+    });
+  });
+
+  describe("with multiple branches in the remote repository", () => {
+    afterEach(async () => {
+      await FileService.rmrf(fs, remote.repoPath);
+    });
+    beforeEach(async () => {
+      remote = new RemoteRepo("fetch-remote");
+      await remote.kitCmd("init", remote.repoPath);
+
+      for (const msg of ["one", "dir/two", "three"]) {
+        await writeCommit(msg);
+      }
+
+      await remote.kitCmd("branch", "topic", "@^");
+      await remote.kitCmd("checkout", "topic");
+      await writeCommit("four");
+
+      await t.kitCmd("remote", "add", "origin", `file://${remote.repoPath}`);
+      await t.kitCmd(
+        "config",
+        "remote.origin.uploadpack",
+        `${kitPath()} upload-pack`,
+      );
+    });
+
+    it("displays the new branches being fetched", async () => {
+      await t.kitCmd("fetch");
+      t.assertStatus(0);
+
+      t.assertError(stripIndent`
+        From file://${remote.repoPath}
+       \ * [new branch] master -> origin/master
+       \ * [new branch] topic -> origin/topic
+      `);
+    });
+
+    it("maps the remote's heads/* to the local's remotes/origin/*", async () => {
+      await t.kitCmd("fetch");
+
+      const remote_master = await remote.repo.refs.readRef("refs/heads/master");
+      const remote_topic = await remote.repo.refs.readRef("refs/heads/topic");
+
+      assert.notEqual(remote_master, remote_topic);
+      assert.equal(
+        remote_master,
+        await t.repo.refs.readRef("refs/remotes/origin/master"),
+      );
+      assert.equal(
+        remote_topic,
+        await t.repo.refs.readRef("refs/remotes/origin/topic"),
+      );
+    });
+    it("maps the remote's heads/* to a different local ref", async () => {
+      await t.kitCmd(
+        "fetch",
+        "origin",
+        "refs/heads/*:refs/remotes/other/prefix-*",
+      );
+
+      const remote_master = await remote.repo.refs.readRef("refs/heads/master");
+      const remote_topic = await remote.repo.refs.readRef("refs/heads/topic");
+
+      assert.notEqual(remote_master, remote_topic);
+      assert.equal(
+        remote_master,
+        await t.repo.refs.readRef("refs/remotes/other/prefix-master"),
+      );
+      assert.equal(
+        remote_topic,
+        await t.repo.refs.readRef("refs/remotes/other/prefix-topic"),
+      );
+    });
+
+    it("does not create any other local refs", async () => {
+      await t.kitCmd("fetch");
+
+      assert.deepEqual(
+        ["HEAD", "refs/remotes/origin/master", "refs/remotes/origin/topic"],
+        await t.repo.refs
+          .listAllRefs()
+          .then((refs) => refs.map((ref) => ref.path).sort()),
+      );
+    });
+
+    it("retrieves all the commits from the remote's history", async () => {
+      await t.kitCmd("fetch");
+
+      await t.kitCmd("checkout", "origin/master");
+      await t.assertWorkspace([
+        ["dir/two.txt", "dir/two"],
+        ["one.txt", "one"],
+        ["three.txt", "three"],
+      ]);
+      await t.kitCmd("checkout", "origin/topic");
+      await t.assertWorkspace([
+        ["dir/two.txt", "dir/two"],
+        ["four.txt", "four"],
+        ["one.txt", "one"],
+      ]);
+    });
+
+    describe("when a specific branch is requested", () => {
+      beforeEach(async () => {
+        await t.kitCmd(
+          "fetch",
+          "origin",
+          "+refs/heads/*ic:refs/remotes/origin/*",
+        );
+      });
+
+      it("displays the branch being fetched", () => {
+        t.assertError(stripIndent`
+        From file://${remote.repoPath}
+       \ * [new branch] topic -> origin/top
+        `);
+      });
+
+      it("does not create any other local refs", async () => {
+        assert.deepEqual(
+          ["HEAD", "refs/remotes/origin/top"],
+          await allRefs(t.repo),
+        );
+      });
+
+      it("retrieves only the commits from the fetched branch", async () => {
+        await assertObjectCount(10);
+
+        const remoteCommits = await commits(remote.repo, ["topic"]);
+        assert.equal(3, remoteCommits.length);
+
+        assert.deepEqual(
+          remoteCommits,
+          await commits(t.repo, [], { all: true }),
+        );
       });
     });
   });

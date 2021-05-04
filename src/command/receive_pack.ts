@@ -24,19 +24,14 @@ export class ReceivePack extends Base {
   }
 
   async run(): Promise<void> {
-    // console.warn({ remote: "--- acceptClient ---" });
     remote_agent.acceptClient(this, {
       name: "receive-pack",
       capabilities: CAPABILITIES,
     });
 
-    // console.warn({ remote: "--- sendReferences ---" });
     await remote_agent.sendReferences(this, this.env);
-    // console.warn({ remote: "--- recvUpdateRequests ---" });
     await this.recvUpdateRequests();
-    // console.warn({ remote: "--- recvObjects ---" });
     await this.recvObjects();
-    // console.warn({ remote: "--- updateRefs ---" });
     await this.updateRefs();
 
     this.conn?.output.end();

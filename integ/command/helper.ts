@@ -180,7 +180,7 @@ export class TestUtil {
     }
 
     if (stat.isDirectory()) {
-      await fs.rmdir(pathname, { recursive: true });
+      await fs.rm(pathname, { recursive: true });
     } else {
       await fs.unlink(pathname);
     }
