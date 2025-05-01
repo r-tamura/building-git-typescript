@@ -1,4 +1,11 @@
+import { asserts } from "./assert";
+
+export function isObject(obj: unknown): obj is Record<string, unknown> {
+  return obj !== null && typeof obj === "object";
+}
+
 export function shallowEqual<T>(o1: T, o2: T) {
+  asserts(isObject(o1) && isObject(o2), "Both arguments must be objects.");
   return Object.entries(o1).every(([k, v]) => {
     return v === o2[k as keyof T];
   });

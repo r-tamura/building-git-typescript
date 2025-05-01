@@ -1,13 +1,13 @@
+import { O_CREAT, O_EXCL, O_WRONLY } from "constants";
 import { Stats } from "fs";
 import * as path from "path";
-import { O_WRONLY, O_CREAT, O_EXCL } from "constants";
-import { FileService, defaultFs, rmrf, mkdirp } from "./services";
+import { ModeNumber } from "./entry";
+import { Changes, Migration } from "./repository";
+import { FileService, defaultFs, mkdirp, rmrf } from "./services";
 import { Pathname } from "./types";
 import { asserts } from "./util/assert";
-import { BaseError } from "./util/error";
+import { BaseError, isNodeError } from "./util/error";
 import { ascend } from "./util/fs";
-import { Migration, Changes } from "./repository";
-import { ModeNumber } from "./entry";
 
 export type Environment = {
   fs?: FileService;
@@ -181,6 +181,8 @@ export class Workspace {
     try {
       return (await this.#fs.stat(pathname)).isDirectory();
     } catch (e) {
+      asserts(e instanceof Error, "e is not an instance of Error");
+      asserts(isNodeError(e), "e is not a NodeJS error");
       switch (e.code) {
         case "ENOENT":
           throw new MissingFile(

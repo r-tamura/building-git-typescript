@@ -51,7 +51,7 @@ const fakeIndex = Buffer.of(
 
 // fs.promises.FileHandle["read"] の モック関数を返す
 export function createFakeRead(data: Buffer = fakeIndex) {
-  function* fakeRead(data: Buffer) {
+  function* fakeRead(data: Buffer): Generator<Promise<any>, Promise<null>, number> {
     const length = data.length;
     let point = 0;
     let size = yield Promise.resolve({ bytesRead: 0, buffer: Buffer.alloc(0) });

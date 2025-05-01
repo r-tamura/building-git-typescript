@@ -157,7 +157,7 @@ export class PackedInt56LE {
         continue;
       }
       const byte = await input.readByte();
-      asserts(typeof byte !== null);
+      asserts(byte !== null);
       value |= BigInt(byte) << BigInt(8 * i);
     }
     return value;

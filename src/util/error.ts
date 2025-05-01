@@ -25,9 +25,12 @@ export class Runtime extends BaseError {}
 
 export class Invalid extends BaseError {}
 
-export function isNodeError(e: any): e is NodeJS.ErrnoException {
+export function isNodeError(e: unknown): e is NodeJS.ErrnoException {
   // TODO: 厳格な型判定
-  if (e.code) {
+  if (!(e instanceof Error)) {
+    return false;
+  }
+  if ("code" in e) {
     return true;
   }
   return false;

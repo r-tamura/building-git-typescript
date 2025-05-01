@@ -1,8 +1,8 @@
 import { Inspector } from "../repository/inspector";
 import { OID, Pathname } from "../types";
-import { Runtime } from "../util/error";
 import { isempty } from "../util/array";
 import { asserts } from "../util/assert";
+import { Runtime } from "../util/error";
 import { Base, Exit } from "./base";
 import arg = require("arg");
 
@@ -51,9 +51,10 @@ export class Rm extends Base<Options> {
       }
       await this.repo.index.writeUpdates();
     } catch (e) {
-      if (e.constructor === Exit) {
+      if (e instanceof Exit) {
         throw e;
       }
+      asserts(e instanceof Error, "unknown error");
       await this.repo.index.releaseLock();
       this.logger.error(`fatal: ${e.message}`);
       this.exit(128);

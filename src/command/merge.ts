@@ -1,21 +1,21 @@
 import * as arg from "arg";
-import { Base } from "./base";
-import { HEAD } from "../revision";
 import { Inputs, Resolve } from "../merge";
 import {
-  writeCommit,
-  pendingCommit,
-  resumeMerge,
-  CONFLICT_MESSAGE,
-  readMessage,
-  CommitOptions,
-  defineWriteCommitOptions,
-} from "./shared/write_commit";
-import {
-  PendingCommit,
   Error as NotInProgressError,
+  PendingCommit,
 } from "../repository/pending_commit";
+import { HEAD } from "../revision";
 import { asserts } from "../util";
+import { Base } from "./base";
+import {
+  CommitOptions,
+  CONFLICT_MESSAGE,
+  defineWriteCommitOptions,
+  pendingCommit,
+  readMessage,
+  resumeMerge,
+  writeCommit,
+} from "./shared/write_commit";
 
 interface Options extends CommitOptions {
   mode: "run" | "continue" | "abort";
@@ -143,10 +143,12 @@ export class Merge extends Base<Options> {
       await this.repo.index.load();
       await resumeMerge("merge", this);
     } catch (e) {
+      asserts(e instanceof Error, "unknown error");
       switch (e.constructor) {
         case NotInProgressError:
           this.logger.error(`fatal: ${e.message}`);
           this.exit(128);
+          break;
         default:
           throw e;
       }
@@ -169,10 +171,12 @@ export class Merge extends Base<Options> {
       await this.repo.hardReset(headOid);
       await this.repo.index.writeUpdates();
     } catch (e) {
+      asserts(e instanceof Error, "unknown error");
       switch (e.constructor) {
         case NotInProgressError:
           this.logger.error(`fatal: ${e.message}`);
           this.exit(128);
+          break;
         default:
           throw e;
       }

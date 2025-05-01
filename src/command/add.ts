@@ -1,7 +1,7 @@
-import { Environment, Pathname } from "../types";
 import * as Database from "../database";
-import { asserts, stripIndent, asyncForEach } from "../util";
 import { LockDenied } from "../refs";
+import { Environment, Pathname } from "../types";
+import { asserts, asyncForEach, stripIndent } from "../util";
 import { MissingFile, NoPermission } from "../workspace";
 import { Base } from "./base";
 
@@ -24,12 +24,15 @@ export class Add extends Base {
     } catch (e) {
       switch ((e as Error).constructor) {
         case LockDenied:
+          asserts(e instanceof LockDenied);
           await this.handleLockedIndex(e);
           break;
         case NoPermission:
+          asserts(e instanceof NoPermission);
           await this.handleUnreadableFile(e);
           break;
         case MissingFile:
+          asserts(e instanceof MissingFile);
           await this.handleMissingFile(e);
           break;
         default:

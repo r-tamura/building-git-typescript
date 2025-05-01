@@ -1,11 +1,12 @@
 import * as arg from "arg";
-import { assertsNumber, Value } from "../../config";
+import { assertsNumber } from "../../config";
 import { Commit } from "../../database";
 import { Resolvable, Resolve } from "../../merge";
 import { MergeType } from "../../repository/pending_commit";
 import { Command, Sequencer } from "../../repository/sequencer";
 import { CompleteCommit, Nullable } from "../../types";
-import { assertsComplete } from "../../util/assert";
+import { asserts, assertsComplete } from "../../util/assert";
+import { isObject } from "../../util/object";
 import { Base } from "../base";
 import * as WriteCommit from "./write_commit";
 
@@ -32,10 +33,13 @@ export async function run(cmd: SequenceCmmand & WriteCommit.CommitPendable) {
   switch (cmd.options["mode"]) {
     case "continue":
       await handleContinue(cmd);
+      break;
     case "quit":
       await handleQuit(cmd);
+      break;
     case "abort":
       await handleAbort(cmd);
+      break;
   }
 
   await cmd.sequencer.start(cmd.options);
@@ -180,10 +184,14 @@ export async function handleContinue(
     await cmd.sequencer.dropCommand();
     await resumeSequencer(cmd);
   } catch (e) {
+    asserts(isObject(e), "unknown error");
     switch (e.constructor) {
-      case WriteCommit:
+      // TODO: なんのエラーをちゃっちしているかわからないので、正しいエラーを指定する
+    // case WriteCommit:
+      case Error:
         cmd.logger.error(`fatal: ${e.message}`);
         cmd.exit(128);
+        break;
       default:
         throw e;
     }
@@ -219,6 +227,7 @@ export async function handleAbort(
   try {
     await cmd.sequencer.abort();
   } catch (e) {
+    asserts(e instanceof Error, "unknown error");
     cmd.logger.warn(`warning: ${e.message}`);
   }
   await cmd.repo.index.writeUpdates();

@@ -282,6 +282,7 @@ export class Refs {
         await lockfile.rollback();
       }
     } catch (e) {
+      asserts(e instanceof Error);
       switch (e.constructor) {
         case MissingParent:
           // リトライ回数: 1

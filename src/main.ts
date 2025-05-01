@@ -1,6 +1,7 @@
 import { execute, Unknown } from "./command";
 import { defaultFs, defaultLogger, defaultProcess } from "./services";
 import { Environment } from "./types";
+import { asserts } from "./util/assert";
 
 export function createMain() {
   const env: Environment = {
@@ -21,6 +22,7 @@ export async function main(argv: string[], env: Environment) {
   try {
     await execute(argv, env);
   } catch (e) {
+    asserts(e instanceof Error, "unknown error");
     if (e instanceof Unknown) {
       console.error(`kit: ${e.message}`);
     } else {

@@ -17,8 +17,8 @@ export type BaseConstructor<O extends Options> = {
 };
 
 // TODO: 型定義見直し
-export type Options = object;
-export type NoOptions = any;
+export type NoOptions = object; // eslint-disable-line @typescript-eslint/ban-types
+export type Options = NoOptions;
 
 export interface GitCommand {
   /** コマンド引数 */
@@ -102,12 +102,10 @@ export abstract class Base<O extends Options = NoOptions>
         this.stdout.end();
       }
     } catch (e) {
-      switch (e.constructor) {
-        case Exit:
-          return;
-        default:
-          throw e;
+      if (e instanceof Exit) {
+        return;
       }
+      throw e;
     }
   }
 

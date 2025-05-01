@@ -1,6 +1,6 @@
 import * as assert from "power-assert";
-import * as TextUtil from "../../src/util/text";
 import { CompleteCommit, Dict } from "../../src/types";
+import * as TextUtil from "../../src/util/text";
 import * as T from "./helper";
 
 const t = T.create("revert");
@@ -8,7 +8,13 @@ const t = T.create("revert");
 beforeEach(t.beforeHook);
 afterEach(t.afterHook);
 
-const getTitle = (c: CompleteCommit) => TextUtil.strip(c.titleLine());
+const getTitle = (c: CompleteCommit) => {
+  const title = c.titleLine();
+  if (!title) {
+    throw new Error(`title is '${title}'`);
+  }
+  return TextUtil.strip(title);
+}
 
 describe("revert", () => {
   let time: Date;

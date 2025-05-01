@@ -54,6 +54,7 @@ export class Checkout extends Base {
     try {
       await migration.applyChanges();
     } catch (e) {
+      asserts(e instanceof Error, "unknown error");
       switch (e.constructor) {
         case Conflict:
           await this.handleMigrationConflict(migration);
