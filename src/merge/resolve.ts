@@ -1,11 +1,11 @@
 import * as path from "path";
-import { Changes, Entry, Blob } from "../database";
+import { Blob, ChangeMap, Entry } from "../database";
 import { ModeNumber } from "../entry";
 import { Repository } from "../repository";
-import { CherryPick, Inputs } from "./inputs";
-import { first, asserts, ascend } from "../util";
-import { Pathname, OID } from "../types";
+import { OID, Pathname } from "../types";
+import { ascend, asserts, first } from "../util";
 import { Diff3 } from "./diff3";
+import { CherryPick, Inputs } from "./inputs";
 
 export type Conflict = readonly [Entry | null, Entry | null, Entry | null];
 type OnProgress = (message: string) => void;
@@ -17,10 +17,10 @@ export type Resolvable = Inputs | CherryPick;
 export class Resolve {
   #repo: Repository;
   #inputs: Resolvable;
-  #leftDiff!: Changes;
-  #rightDiff!: Changes;
+  #leftDiff!: ChangeMap;
+  #rightDiff!: ChangeMap;
   /** left(HEAD)とマージ結果の差分。Repository#migrationによりworkspace/indexへ適用される。 */
-  #cleanDiff!: Changes;
+  #cleanDiff!: ChangeMap;
   #conflicts!: Map<Pathname, Conflict>;
   #untracked!: Map<Pathname, Entry>;
   onprogress: OnProgress | null = null;
@@ -227,7 +227,7 @@ export class Resolve {
    */
   private fileDirConflict(
     pathname: Pathname,
-    diff: Changes,
+    diff: ChangeMap,
     branchName: string,
   ) {
     for (const parent of ascend(path.dirname(pathname))) {

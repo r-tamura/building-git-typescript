@@ -14,6 +14,7 @@ import {
   insert,
   isempty,
   last,
+  posixPath,
 } from "./util";
 
 type Flag = "seen" | "added" | "uninteresting" | "treesame";
@@ -46,7 +47,7 @@ export class RevList {
   #limited = false;
   #prune: Pathname[] = [];
   #filter!: PathFilter;
-  #diffs: Map<OidPair, Database.Changes> = new Map();
+  #diffs: Map<OidPair, Database.ChangeMap> = new Map();
   #walk: boolean;
   #objects: boolean;
   #missing: boolean;
@@ -94,9 +95,8 @@ export class RevList {
       await list.handleRevision(rev);
     }
     if (isempty(list.#queue)) {
-      await list.handleRevision(HEAD);
-    }
-    list.#filter = PathFilter.build(list.#prune);
+      await list.handleRevision(HEAD);    }
+    list.#filter = PathFilter.build(list.#prune.map(p => posixPath(p)));
     return list;
   }
 
@@ -382,13 +382,12 @@ export class RevList {
 
     for (const [name, item] of Object.entries(tree.entries)) {
       // databaseから読み込まれたtreeオブジェクトのエントリ
-      asserts(item.type === "database");
-      yield* this.traverseTree(
+      asserts(item.type === "database");      yield* this.traverseTree(
         item,
         (object) => {
           return Boolean(object);
         },
-        path.join(pathname, name),
+        path.posix.join(pathname, name),
       );
     }
   }

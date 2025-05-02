@@ -1,12 +1,18 @@
 import * as path from "path";
-import { Dict, Pathname } from "./types";
-import { isempty, eachFile } from "./util";
 import { EntryMap } from "./database";
+import { Pathname } from "./types";
+import { isempty } from "./util";
+import { type PosixPath, posixPath, toPathComponentsPosix } from "./util/fs";
 
 export class PathFilter {
-  constructor(public routes = new Trie(true, {}), public pathname = "") {}
+  routes: Trie;;
+  pathname: PosixPath;
+  constructor(routes = new Trie(true, {}), pathname: Pathname = "") {
+    this.routes = routes;
+    this.pathname = posixPath(pathname);
+  }
 
-  static build(paths: Pathname[]) {
+  static build(paths: PosixPath[]) {
     return new PathFilter(Trie.fromPaths(paths));
   }
 
@@ -23,22 +29,28 @@ export class PathFilter {
     const nextRoutes = this.routes.matched
       ? this.routes
       : this.routes.children[name];
-    return new PathFilter(nextRoutes, path.join(this.pathname, name));
+    return new PathFilter(nextRoutes, path.posix.join(this.pathname, name));
   }
 }
 
-type TrieDict = Dict<Trie>;
+type TrieMap = Record<string, Trie>;
 export class Trie {
-  constructor(public matched: boolean, public children: TrieDict) {}
+  matched: boolean;
+  children: TrieMap;
 
-  static fromPaths(paths: string[]) {
+  constructor(matched: boolean, children: TrieMap) {
+    this.matched = matched;
+    this.children = children;
+  }
+
+  static fromPaths(paths: PosixPath[]) {
     const root = Trie.node();
     if (isempty(paths)) {
       root.matched = true;
     }
     for (const pathname of paths) {
       let trie = root;
-      for (const component of eachFile(pathname)) {
+      for (const component of toPathComponentsPosix(pathname)) {
         if (!trie.children[component]) {
           // 各パスの指定範囲が重複するとき、範囲の最も広いパスが選ばれるように
           // すでに存在するときは新しいTrie#nodeを作らない

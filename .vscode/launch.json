@@ -10,11 +10,10 @@
       "name": "vscode-jest-tests",
       "request": "launch",
       // https://medium.com/@jakubsynowiec/debugging-typescript-jest-unit-tests-with-visual-studio-code-36cd16865bb0
-      "args": ["--runInBand", "--config", "${workspaceRoot}/jest.config.integ.js"],
+      "args": ["--runInBand", "--config", "${workspaceRoot}/jest.config.js"],
       "cwd": "${workspaceFolder}",
       "console": "integratedTerminal",
       "internalConsoleOptions": "neverOpen",
-      "disableOptimisticBPs": true,
       "program": "${workspaceFolder}/node_modules/jest/bin/jest",
       // https://stackoverflow.com/questions/37771097/how-to-debug-async-await-in-visual-studio-code
       "skipFiles": ["inspector_async_hook.js", "async_hooks.js"]

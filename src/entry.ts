@@ -1,9 +1,9 @@
-import * as path from "path";
-import { OID, Pathname } from "./types";
 import { Stats } from "fs";
-import { isExecutable } from "./util/fs";
+import * as path from "path";
 import * as Database from "./database";
 import * as Index from "./gindex";
+import { OID, Pathname } from "./types";
+import { isExecutable } from "./util/fs";
 
 type ValueOf<T> = T[keyof T];
 
@@ -54,14 +54,13 @@ export class Entry {
     // > path.dirname("c.txt")
     // '.'
     // ```
-    return path
-      .dirname(this.name)
-      .split(path.sep)
-      .filter((s) => s !== ".");
+    const dirPath = path.dirname(this.name);
+    const directoryComponents = dirPath.split("/");
+    return directoryComponents.filter((s) => s !== ".");
   }
 
   get basename() {
-    return path.basename(this.name);
+    return path.posix.basename(this.name);
   }
 
   statMatch(stat: Stats) {

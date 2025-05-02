@@ -192,7 +192,7 @@ export class Config {
       this.updateVariable(first(lines), varname, value);
     } else {
       throw new Conflict(
-        "connot overwrite multiple values with a single value",
+        "cannot overwrite multiple values with a single value",
       );
     }
   }

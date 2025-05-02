@@ -3,6 +3,7 @@ import { OID, Pathname } from "../types";
 import { isempty } from "../util/array";
 import { asserts } from "../util/assert";
 import { Runtime } from "../util/error";
+import { posixPath } from "../util/fs";
 import { Base, Exit } from "./base";
 import arg = require("arg");
 
@@ -96,11 +97,9 @@ export class Rm extends Base<Options> {
     const stat = await this.repo.workspace.statFile(pathname);
     if (stat?.isDirectory()) {
       throw new Runtime(`kit rm: '${pathname}': Operation not permitted`);
-    }
-
-    const item = await this.repo.database.loadTreeEntry(
+    }    const item = await this.repo.database.loadTreeEntry(
       this.#headOid,
-      pathname,
+      posixPath(pathname),
     );
     const entry = this.repo.index.entryForPath(pathname);
 

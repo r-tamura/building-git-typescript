@@ -1,6 +1,7 @@
-import { Commit } from "./commit";
-import { Author } from "./author";
 import * as assert from "power-assert";
+import { toLF } from "../util";
+import { Author } from "./author";
+import { Commit } from "./commit";
 
 describe("Commit#toString", () => {
   it("parentが存在しないとき、tree,author,commiter,messageが指定されたフォーマットで返される", () => {
@@ -18,7 +19,7 @@ describe("Commit#toString", () => {
 
     // Assert
     assert.equal(
-      actual,
+      toLF(actual),
       `tree ${treeOId}
 author JohnDoe <johndoe@test.local> 1585666800 +0900
 committer JohnDoe <johndoe@test.local> 1585666800 +0900
@@ -49,7 +50,7 @@ test commit`,
 
     // Assert
     assert.equal(
-      actual,
+      toLF(actual),
       `tree ${treeOId}
 parent ${parentOId}
 author JohnDoe <johndoe@test.local> 1585666800 +0900

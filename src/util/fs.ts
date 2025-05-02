@@ -5,6 +5,7 @@ import { constants, Stats } from "fs";
 import { FileHandle, open } from "fs/promises";
 import * as path from "path";
 import { Pathname } from "../types";
+import { asserts } from "./assert";
 
 export function isExecutable(stat: Stats) {
   const modeBin = stat.mode.toString(2);
@@ -13,6 +14,49 @@ export function isExecutable(stat: Stats) {
   return isExecutable === 1;
 }
 
+function guessPathSeparator(pathname: Pathname): typeof path.sep {
+  const includesWindowsPathSep = pathname.includes("\\");
+  const includesUnixPathSep = pathname.includes("/");
+  if (includesWindowsPathSep && includesUnixPathSep) {
+    throw new Error("path separator is ambiguous");
+  }
+  if (includesWindowsPathSep) {
+    return "\\";
+  }
+  if (includesUnixPathSep) {
+    return "/";
+  }
+  return "/"
+}
+
+/**
+ * 実行環境によらずUnix形式のパスを取得します
+ *
+ * refファイルではOSに依存せずUnix形式のパスを扱います
+ *
+ * 例: HEADファイルは ref: refs/heads/master という形式で保存されます
+ */
+export function descendUnix(pathname: Pathname): string[] {
+  const UNIX_PATH_SEP = "/";
+  const sep = guessPathSeparator(pathname);
+  if (sep === "\\") {
+    throw new Error("Windows形式のパスはUnix形式に変換できません");
+  }
+  const eachDirname = pathname.split(sep).filter((s) => s !== ".");
+  const initial = path.isAbsolute(pathname) ? "/" : "";
+  return eachDirname.reduce((acc, dirname) => {
+    const prev = acc[acc.length - 1] ?? initial;
+    if (prev === "") {
+      acc.push(dirname);
+      return acc;
+    } else {
+      acc.push([prev, dirname].join(UNIX_PATH_SEP));
+      return acc;
+    }
+  }, [] as string[]);
+}
+
+
 /**
  * パスを親から子供へ辿っていったときの各パス名一覧を取得します。ファイルシステムへはアクセスしません。
  * Rubyの Pathname#descend相当
@@ -20,18 +64,31 @@ export function isExecutable(stat: Stats) {
  *
  * @param pathname ファイルパス
  *
- * @example ディレクトリの深さ2以上のパス
+ * @example ディレクトリの深さ2以上のパス(Unix形式)
  * > descend("/home/username/a.txt")
  * ["/home", "/home/username", "/home/username/a.txt"]
+ *
+ * @example ディレクトリの深さ2以上のパス(Windows形式)
+ * > descend("C:\\home\\username\\a.txt")
+ * ["C:\\home", "C:\\home\\username", "C:\\home\\username\\a.txt"]
  */
 export function descend(pathname: Pathname) {
   const eachDirname = pathname.split(path.sep).filter((s) => s !== ".");
-  const initial = path.isAbsolute(pathname) ? "/" : "";
+  const initial = path.isAbsolute(pathname) ? path.sep : "";
   return eachDirname.reduce((acc, dirname) => {
     const prev = acc[acc.length - 1] ?? initial;
     acc.push(path.join(prev, dirname));
     return acc;
   }, [] as string[]);
+}
+
+/**
+ * ascendと同じですが、Unix形式のパスを返します
+ * Windows形式のパスは変換できません
+ * @returns Unix形式のパス名一覧
+ */
+export function ascendUnix(pathname: Pathname): string[] {
+  return descendUnix(pathname).reverse();
 }
 
 /**
@@ -56,8 +113,50 @@ export function ascend(pathname: Pathname) {
  * > eachFile("/usr/bin/ruby")
  * ["usr", "bin", "ruby"]
  */
-export function eachFile(pathname: Pathname) {
-  return pathname.split(path.sep);
+export function toPathComponentsPosix(pathname: PosixPath) {
+  return pathname.split("/");
+}
+
+const posixPathSymbol = Symbol("Posix path branded type symbol");
+export type PosixPath = string & { [posixPathSymbol]: unknown }
+
+/**
+ * POSIX形式のファイルパスを作成します
+ * Windows形式のパスが渡されたときはPOSIX形式に変換されます
+ * @param pathname ファイルパス
+ * @returns POSIX形式のファイルパス
+ */
+export function posixPath(pathname: Pathname): PosixPath {
+
+  const guessedSep = guessPathSeparator(pathname);
+
+  switch (guessedSep) {
+    case "/":
+      // Unix形式のパスはそのまま返す
+      return pathname as PosixPath;
+    case "\\": {
+      // Windows形式のパスはUnix形式に変換する
+      const unixPath = pathname.split("\\").join("/");
+      return unixPath as PosixPath;
+    }
+    default:
+      throw new Error(`path separator is ambiguous, got '${pathname}'`);
+  }
+}
+
+const osPathSymbol = Symbol("OsPath");
+export type OsPath = string & { [osPathSymbol]: unknown };
+
+/**
+ *
+ * @param pathname
+ */
+export function osPath(pathname: Pathname): OsPath {
+  const guessedSep = guessPathSeparator(pathname);
+  asserts(guessedSep !== "\\", "アプリケーション内部ではPosix形式パスを利用してください");
+
+  const osPath = pathname.replace("/", path.sep);
+  return osPath as OsPath;
 }
 
 const whence = ["SEEK_CUR", "SEEK_SET"] as const;

@@ -2,6 +2,8 @@
  * アプリケーション内のエラーで利用されるベースエラー
  */
 
+import { asserts } from "./assert";
+
 export interface ErrorConstructor {
   new (message?: string): BaseError;
 }
@@ -27,9 +29,7 @@ export class Invalid extends BaseError {}
 
 export function isNodeError(e: unknown): e is NodeJS.ErrnoException {
   // TODO: 厳格な型判定
-  if (!(e instanceof Error)) {
-    return false;
-  }
+  asserts(typeof e === "object" && e != null, "unknown error");
   if ("code" in e) {
     return true;
   }

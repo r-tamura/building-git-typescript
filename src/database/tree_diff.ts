@@ -1,17 +1,17 @@
-import { Entry } from "./entry";
-import { Database } from "./database";
-import { OID } from "../types";
-import { Tree, EntryMap, ReadEntry } from "./tree";
-import { asserts } from "../util";
 import { PathFilter } from "../path_filter";
+import { OID } from "../types";
+import { asserts } from "../util";
+import { Database } from "./database";
+import { Entry } from "./entry";
+import { EntryMap } from "./tree";
 
 type A = Entry | null;
 type B = A;
 export type Change = [A, B];
-export type Changes = Map<string, Change>;
+export type ChangeMap = Map<string, Change>;
 export class TreeDiff {
   #database: Database;
-  changes: Changes = new Map();
+  changes: ChangeMap = new Map();
   constructor(database: Database) {
     this.#database = database;
   }
@@ -33,7 +33,8 @@ export class TreeDiff {
     switch (object.type) {
       case "commit": {
         const tree = await this.#database.load(object.tree);
-        return tree as Tree;
+        asserts(tree.type === "tree", "Commitオブジェクトが持つGitオブジェクトは/treeです");
+        return tree;
       }
       case "tree":
         return object;
@@ -66,10 +67,12 @@ export class TreeDiff {
       await this.compareOids(tree_a, tree_b, subFilter);
 
       // Blobの場合
-      const blobs = [entry, other].map((e: Entry | null) =>
-        e?.tree() ? null : e,
-      ) as Change;
-      if (blobs.some((e) => e !== null)) {
+      const blobs = [
+        entry?.tree() ? null : entry,
+        other?.tree() ? null : other,
+      ] as Change;
+
+      if (blobs[0] || blobs[1]) {
         this.changes.set(subFilter.pathname, blobs);
       }
     }

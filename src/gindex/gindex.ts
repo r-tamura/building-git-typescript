@@ -1,15 +1,15 @@
 /**
  * Note: index.jsはNodeJSでは特別な扱いをされるためgitのindexを扱う機能のファイル名はgindex.js (git index) とする
  */
-import { Stats, constants } from "fs";
 import * as assert from "assert";
-import { Pathname, OID } from "../types";
-import { Lockfile, LockfileEnvironment } from "../lockfile";
-import { Invalid, times, ObjectKeyHash, ObjectSet, some } from "../util";
-import { Entry, Key, Stage, STAGES, LEFT, RIGHT, BASE } from "./entry";
-import { Checksum } from "./checksum";
-import { FileService, defaultFs } from "../services";
+import { Stats, constants } from "fs";
 import * as Database from "../database";
+import { Lockfile, LockfileEnvironment } from "../lockfile";
+import { FileService, defaultFs } from "../services";
+import { OID, Pathname } from "../types";
+import { Invalid, ObjectKeyHash, ObjectSet, some, times } from "../util";
+import { Checksum } from "./checksum";
+import { BASE, Entry, Key, LEFT, RIGHT, STAGES, Stage } from "./entry";
 
 type IndexEntryMap = ObjectKeyHash<Key, Entry>;
 
@@ -33,9 +33,10 @@ export class Index {
   }
 
   add(pathname: Pathname, oid: OID, stat: Stats) {
-    ([BASE, LEFT, RIGHT] as const).forEach((stage) =>
-      this.removeEntryWithStage(pathname, stage),
-    );
+
+    for (const stage of [BASE, LEFT, RIGHT] as const) {
+      this.removeEntryWithStage(pathname, stage)
+    }
     const entry = Entry.create(pathname, oid, stat);
     this.discardConflicts(entry);
     this.storeEntry(entry);

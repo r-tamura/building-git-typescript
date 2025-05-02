@@ -1,12 +1,11 @@
 import { Stats } from "fs";
 import * as path from "path";
-import { Dict, Nullable, OID, Pathname } from "../types";
-import { Repository } from "./repository";
 import * as Database from "../database";
 import * as Index from "../gindex";
-import { Inspector, IndexStatus, WorkspaceStatus } from "./inspector";
 import { Stage } from "../gindex";
-import { asserts } from "../util";
+import { Dict, OID, Pathname } from "../types";
+import { IndexStatus, Inspector, WorkspaceStatus } from "./inspector";
+import { Repository } from "./repository";
 
 export type ChangeType = IndexStatus | WorkspaceStatus;
 export type ConflictStatus = Stage[];
@@ -26,7 +25,7 @@ export class Status {
     this.#inspector = new Inspector(repo);
   }
 
-  static async of(repo: Repository, commitOid: Nullable<OID> = null) {
+  static async of(repo: Repository, commitOid: OID | null = null) {
     const self = new this(repo);
 
     commitOid ??= await self.repo.refs.readHead();

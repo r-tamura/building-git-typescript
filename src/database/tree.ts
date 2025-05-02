@@ -1,16 +1,16 @@
-import * as path from "path";
+import * as path from "node:path";
 import * as Database from "../database";
 import { Entry } from "../entry";
-import { asserts, packHex, scanUntil, unpackHex } from "../util";
-import { OID, Pathname, Dict } from "../types";
 import { Entry as IndexEntry } from "../gindex";
+import { OID, Pathname } from "../types";
+import { asserts, packHex, posixPath, PosixPath, scanUntil, unpackHex } from "../util";
 
 export type TraverseCallbackFn = (t: Tree) => Promise<void>;
 
 type CommitEntry = Entry | Tree;
 export type WriteEntry = Entry | IndexEntry;
 export type ReadEntry = Database.Entry;
-export type EntryMap = Dict<ReadEntry | IndexEntry | CommitEntry>;
+export type EntryMap = Record<Pathname, ReadEntry | IndexEntry | CommitEntry>;
 export class Tree {
   static readonly TREE_MODE = 0o040000;
 
@@ -23,7 +23,7 @@ export class Tree {
     const root = new this();
 
     for (const entry of entries) {
-      root.addEntry(entry.parentDirectories, entry);
+      root.addEntry(entry.parentDirectories.map(posixPath), entry);
     }
 
     return root;
@@ -49,11 +49,11 @@ export class Tree {
     return root;
   }
 
-  addEntry(parents: Pathname[], entry: WriteEntry) {
+  addEntry(parents: PosixPath[], entry: WriteEntry) {
     if (parents.length === 0) {
       this.entries[entry.basename] = entry;
     } else {
-      const treeName = path.basename(parents[0]);
+      const treeName = path.posix.basename(parents[0]);
       const tree = (this.entries[treeName] =
         this.entries[treeName] ?? new Tree());
       asserts(tree instanceof Tree);

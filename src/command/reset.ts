@@ -1,9 +1,10 @@
 import * as arg from "arg";
-import { HEAD, InvalidObject, Revision } from "../revision";
 import { ORIG_HEAD } from "../refs";
+import { HEAD, InvalidObject, Revision } from "../revision";
 import { OID, Pathname } from "../types";
-import { asserts } from "../util/assert";
 import { isempty } from "../util/array";
+import { asserts } from "../util/assert";
+import { posixPath } from "../util/fs";
 import { Base } from "./base";
 
 /** resetモード */
@@ -68,11 +69,10 @@ export class Reset extends Base<Options> {
       }
     }
   }
-
   private async resetPath(pathname?: Pathname) {
     const listing = await this.repo.database.loadTreeList(
       this.#commitOid,
-      pathname,
+      pathname ? posixPath(pathname) : undefined,
     );
     if (pathname) {
       await this.repo.index.remove(pathname);

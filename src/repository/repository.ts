@@ -1,6 +1,6 @@
 import * as path from "path";
 import { Stack } from "../config";
-import { Changes, Database } from "../database";
+import { ChangeMap, Database } from "../database";
 import { Index } from "../gindex/index";
 import { Refs, SymRef } from "../refs";
 import { Remotes } from "../remotes";
@@ -29,17 +29,15 @@ export class Repository {
   #config!: Stack;
   #remotes!: Remotes;
   constructor(public gitPath: Pathname, public env: RepositoryEnv) {}
-
   get database() {
     return (this.#database ??= new Database(
-      path.join(this.gitPath, "objects"),
+      path.posix.join(this.gitPath, "objects"),
       this.env,
     ));
   }
-
   get index() {
     return (this.#index ??= new Index(
-      path.join(this.gitPath, "index"),
+      path.posix.join(this.gitPath, "index"),
       this.env,
     ));
   }
@@ -51,15 +49,14 @@ export class Repository {
   status(commitOid: Nullable<OID> = null) {
     return Status.of(this, commitOid);
   }
-
   get workspace() {
     return (this.#workspace ??= new Workspace(
-      path.dirname(this.gitPath),
+      path.posix.dirname(this.gitPath),
       this.env,
     ));
   }
 
-  migration(treeDiff: Changes) {
+  migration(treeDiff: ChangeMap) {
     return new Migration(this, treeDiff);
   }
 

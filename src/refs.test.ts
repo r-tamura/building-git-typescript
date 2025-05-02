@@ -1,9 +1,14 @@
+import * as os from "os";
+import * as path from "path";
 import * as assert from "power-assert";
+import { mockFs, mockFsError } from "./__test__";
 import { Lockfile } from "./lockfile";
 import { Environment, InvalidBranch, LockDenied, Refs, symref } from "./refs";
 import { defaultFs, FileService } from "./services";
 import * as Service from "./services/FileService";
-import { mockFs, mockFsError } from "./__test__";
+
+// テスト用のパス比較ヘルパー - OSごとの違いを吸収
+const normalizePathForTest = (pathStr: string): string => pathStr;
 
 jest.mock("./lockfile");
 const MockedLockfile = (Lockfile as unknown) as jest.Mock<Partial<Lockfile>>;
@@ -60,19 +65,17 @@ describe("Refs#deleteBranch", () => {
     const env = mockEnv({
       readFile,
       unlink: jest.fn().mockResolvedValue(null),
-      rmdir: jest.fn().mockResolvedValue(null),
+      rm: jest.fn().mockResolvedValue(null),
     });
 
     // Act
     const refs = new Refs(".git", env);
-    const actual = await refs.deleteBranch("topic");
-
-    // Assert
+    const actual = await refs.deleteBranch("topic");    // Assert    assert.equal(
     assert.equal(
-      readFile.mock.calls[0][0],
-      ".git/refs/heads/topic",
-      "symrefの読み込み",
-    );
+      normalizePathForTest((readFile.mock.calls[0][0])),
+      path.join(".git", "refs", "heads", "topic"),
+      "symrefの読み込み"
+      );
     assert.equal(actual, oid, "返り値");
   });
 
@@ -82,7 +85,7 @@ describe("Refs#deleteBranch", () => {
     const env = mockEnv({
       readFile,
       unlink: jest.fn().mockResolvedValue(null),
-      rmdir: jest.fn().mockResolvedValue(null),
+      rm: jest.fn().mockResolvedValue(null),
     });
 
     // Act
@@ -108,8 +111,8 @@ describe("Refs#listBranch", () => {
 
     // Assert
     assert.equal(
-      readdir.mock.calls[0][0],
-      ".git/refs/heads",
+      normalizePathForTest(readdir.mock.calls[0][0]),
+      path.join(".git", "refs", "heads"),
       "headsディレクトリ",
     );
 
@@ -201,9 +204,11 @@ describe("Refs#readRef", () => {
 
     afterAll(() => {
       spyServiceExists.mockRestore();
-    });
-    it("ファイルパス", () => {
-      assert.equal(mockedReadFile.mock.calls[0][0], ".git/refs/heads/master");
+    });    it("ファイルパス", () => {
+      assert.equal(
+        normalizePathForTest(mockedReadFile.mock.calls[0][0]),
+        path.join(".git", "refs", "heads", "master")
+      );
     });
 
     it("返り値", () => {
@@ -228,18 +233,15 @@ describe("Refs#readRef", () => {
 });
 
 describe("reverseRefs", () => {
-  it("HEADと唯一のブランチを返す", async () => {
-    // Arrange
+  it("HEADと唯一のブランチを返す", async () => {    // Arrange
     const oid = "3a3c4ec";
-    const files = {
-      ".git/HEAD": "ref: refs/heads/master",
-      ".git/refs/heads/master": oid,
-    } as any;
-    const dirs = {
-      ".git/refs": ["heads"],
-      ".git/refs/heads": ["master"],
-    } as any;
-    const env = mockEnv(mockFs(dirs, files));
+    const env = mockEnv(mockFs({
+      [path.join(".git", "refs")]: ["heads"],
+      [path.join(".git", "refs", "heads")]: ["master"],
+    }, {
+      [path.join(".git", "HEAD")]: "ref: refs/heads/master",
+      [path.join(".git", "refs", "heads", "master")]: oid,
+    }));
 
     // Act
     const refs = new Refs(".git", env);
@@ -253,9 +255,11 @@ describe("reverseRefs", () => {
 
 describe("Refs#shortName", () => {
   it("headsディレクトリにrefファイルがあるとき、ref名を返す", () => {
+    // Act
     const refs = new Refs(".git");
     const actual = refs.shortName("refs/heads/bar");
 
+    // Assert
     assert.equal(actual, "bar");
   });
 
@@ -291,7 +295,7 @@ describe("Refs#updateHead", () => {
       assert.equal(mockedWrite.mock.calls.length, 2);
       const calls = mockedWrite.mock.calls;
       assert.equal(calls[0][0], testOId);
-      assert.equal(calls[1][0], "\n");
+      assert.equal(calls[1][0], os.EOL);
     });
 
     it("コミットされる", () => {
@@ -364,12 +368,11 @@ describe("Refs#updateRef", () => {
       }));
       const refs = new Refs(testRootPath, mockedEnv);
       await refs.updateRef("heads/master", null);
-    });
-
-    it("refが削除される", () => {
+    });    it("refが削除される", () => {
       assert.equal(
-        testRootPath + "/" + "heads/master",
-        (mockedEnv.fs.unlink as jest.Mock).mock.calls[0][0],
+        normalizePathForTest((mockedEnv.fs.unlink as jest.Mock).mock.calls[0][0]),
+        path.join(testRootPath, "heads", "master"),
+        "削除されたパス"
       );
     });
 

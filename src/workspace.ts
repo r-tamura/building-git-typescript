@@ -55,22 +55,20 @@ export class Workspace {
     await this.applyChangeList(migration, "update");
     await this.applyChangeList(migration, "create");
   }
-
   async listDir(dirname: Pathname = "") {
-    const pathname = path.join(this.#pathname, dirname);
+    const pathname = path.posix.join(this.#pathname, dirname);
     const entries = await this.#fs
       .readdir(pathname)
       .then((names) => names.filter((name) => !this.#IGNORE.includes(name)));
 
     const stats: { [s: string]: Stats } = {};
     for (const name of entries) {
-      const absPath = path.join(pathname, name);
+      const absPath = path.posix.join(pathname, name);
       const relativeFromRoot = path.relative(this.#pathname, absPath);
       stats[relativeFromRoot] = await this.#fs.stat(absPath);
     }
     return stats;
   }
-
   async listFiles(pathname: Pathname = this.#pathname): Promise<string[]> {
     if (await this.isDirectory(pathname)) {
       const names = await this.#fs
@@ -79,18 +77,18 @@ export class Workspace {
 
       // TODO: flatMapで置き換えられないか?
       const promises: Promise<string[]>[] = names.map(async (name) => {
-        const pathFromRoot = path.join(pathname, name);
+        const pathFromRoot = path.posix.join(pathname, name);
         const isDir = await this.isDirectory(pathFromRoot);
         if (isDir) {
           const names = await this.listFiles(pathFromRoot);
           return names;
         }
-        return [path.relative(this.#pathname, pathFromRoot)];
+        return [path.posix.relative(this.#pathname, pathFromRoot)];
       });
       const all = await Promise.all(promises);
       return all.flat();
     } else {
-      return [path.relative(this.#pathname, pathname)];
+      return [path.posix.relative(this.#pathname, pathname)];
     }
   }
 
@@ -112,7 +110,7 @@ export class Workspace {
   ) {
     const fullPath = this.join(pathname);
     if (mkdir) {
-      await mkdirp(this.#fs, path.dirname(fullPath));
+      await mkdirp(this.#fs, path.posix.dirname(fullPath));
     }
     // 100644, 100755をファイルシステムのモード0o644, 0o755へ落とし込む
     return this.#fs.writeFile(fullPath, data, { mode: mode ? mode : mode });
@@ -143,12 +141,12 @@ export class Workspace {
   async remove(pathname: Pathname) {
     try {
       await rmrf(this.#fs, this.join(pathname));
-      for (const dirpath of ascend(path.dirname(pathname))) {
+      for (const dirpath of ascend(path.posix.dirname(pathname))) {
         await this.removeDirectory(dirpath);
       }
     } catch (e) {
-      const nodeErr = e as NodeJS.ErrnoException;
-      if (nodeErr.code === "ENOENT") {
+      asserts(isNodeError(e), "e is not a NodeJS error, got: " + e);
+      if (e.code === "ENOENT") {
         return;
       }
       throw e;
@@ -171,18 +169,16 @@ export class Workspace {
       await this.#fs.chmod(pathname, entry.mode);
     }
   }
-
   private join(rpath: string) {
-    return path.join(this.#pathname, rpath);
+    return path.posix.join(this.#pathname, rpath);
   }
 
   private async isDirectory(pathname: Pathname) {
-    const relavtive = path.relative(this.#pathname, pathname);
+    const relavtive = path.posix.relative(this.#pathname, pathname);
     try {
       return (await this.#fs.stat(pathname)).isDirectory();
     } catch (e) {
-      asserts(e instanceof Error, "e is not an instance of Error");
-      asserts(isNodeError(e), "e is not a NodeJS error");
+      asserts(isNodeError(e), "e is not a NodeJS error, got: " + e);
       switch (e.code) {
         case "ENOENT":
           throw new MissingFile(
@@ -210,9 +206,8 @@ export class Workspace {
         }
       });
   }
-
   private async makeDirectory(dirname: Pathname) {
-    const pathname = path.join(this.#pathname, dirname);
+    const pathname = path.posix.join(this.#pathname, dirname);
     const stat = await this.statFile(dirname);
 
     // ファイルからディレクトリへ変更されたエントリは

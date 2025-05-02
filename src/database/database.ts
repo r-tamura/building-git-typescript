@@ -12,7 +12,7 @@ import {
   Pathname,
 } from "../types";
 import { asserts } from "../util";
-import { eachFile } from "../util/fs";
+import { PosixPath, toPathComponentsPosix } from "../util/fs";
 import { Backends } from "./backends";
 import { Blob } from "./blob";
 import { Commit } from "./commit";
@@ -102,7 +102,7 @@ export class Database {
    * @param oid - コミットID
    * @param pathname - ファイルパス
    */
-  async loadTreeEntry(oid: OID, pathname: Nullable<Pathname> = null) {
+  async loadTreeEntry(oid: OID, pathname: PosixPath | null = null) {
     const commit = await this.load(oid);
     asserts(
       commit.type === "commit",
@@ -110,12 +110,12 @@ export class Database {
     );
     const root = new Entry(commit.tree, Tree.TREE_MODE);
 
-    if (!pathname) {
+    if (pathname === null) {
       return root;
     }
 
     let item: Entry | null = root;
-    for (const name of eachFile(pathname)) {
+    for (const name of toPathComponentsPosix(pathname)) {
       // データベースからロードされたオブジェクトはOIDを持つことが保証されている
       // データベースからロードされたTreeのentriesはDict<Database.Entry>。Tree#parse参照
       item = item
@@ -136,8 +136,8 @@ export class Database {
    * @param pathname
    */
   async loadTreeList(
-    oid: Nullable<OID> = null,
-    pathname: Nullable<Pathname> = null,
+    oid: OID | null = null,
+    pathname: PosixPath | null = null,
   ) {
     if (!oid) {
       return {};

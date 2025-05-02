@@ -1,7 +1,7 @@
 import * as fsCallback from "fs";
 import * as path from "path";
 import { Options } from "../command/shared/sequencing";
-import { Config, SectionName, Value } from "../config";
+import { Config } from "../config";
 import { Lockfile } from "../lockfile";
 import { ORIG_HEAD } from "../refs";
 import { FileService, rmrf } from "../services";
@@ -30,14 +30,13 @@ export class Sequencer {
   /** 未反映のコミットリスト */
   #commands: Command[] = [];
   #config: Config;
-  #fs: FileService;
-  constructor(repo: Repository, env: Environment = {}) {
+  #fs: FileService;  constructor(repo: Repository, env: Environment = {}) {
     this.#repo = repo;
-    this.#pathname = path.join(repo.gitPath, "sequencer");
-    this.#abortPath = path.join(this.#pathname, "abort-safety");
-    this.#headPath = path.join(this.#pathname, "head");
-    this.#todoPath = path.join(this.#pathname, "todo");
-    this.#config = new Config(path.join(this.#pathname, "opts"));
+    this.#pathname = path.posix.join(repo.gitPath, "sequencer");
+    this.#abortPath = path.posix.join(this.#pathname, "abort-safety");
+    this.#headPath = path.posix.join(this.#pathname, "head");
+    this.#todoPath = path.posix.join(this.#pathname, "todo");
+    this.#config = new Config(path.posix.join(this.#pathname, "opts"));
     this.#fs = env.fs ?? fs;
   }
 

@@ -1,11 +1,10 @@
 import { promises as fs } from "fs";
 import * as path from "path";
 import * as assert from "power-assert";
-import { Config, SectionName } from "./config";
-import { Conflict } from "./config";
 import { rmrf } from "../services";
 import { Pathname } from "../types";
 import { stripIndent } from "../util";
+import { Config, Conflict, SectionName } from "./config";
 
 const testDir = "./test-config";
 beforeEach(async () => {
@@ -33,34 +32,34 @@ describe("Config", () => {
   });
 
   describe("in memory", () => {
-    it("returns null for unknown key", () => {
-      const actual = config.get(["core", "editor"]);
+    it("returns null for unknown key", async () => {
+      const actual = await config.get(["core", "editor"]);
       assert.equal(actual, null);
     });
 
-    it("returns the value for a known key", () => {
+    it("returns the value for a known key", async () => {
       config.set(["core", "editor"], "ed");
-      assert.equal(config.get(["core", "editor"]), "ed");
+      assert.equal(await config.get(["core", "editor"]), "ed");
     });
 
-    it("treats section names as case-insensitive", () => {
+    it("treats section names as case-insensitive", async () => {
       config.set(["core", "editor"], "ed");
-      assert.equal(config.get(["Core", "editor"]), "ed");
+      assert.equal(await config.get(["Core", "editor"]), "ed");
     });
 
-    it("treats variable names as case-insensitive", () => {
+    it("treats variable names as case-insensitive", async () => {
       config.set(["core", "editor"], "ed");
-      assert.equal(config.get(["core", "Editor"]), "ed");
+      assert.equal(await config.get(["core", "Editor"]), "ed");
     });
 
-    it("retrieves values from subsections", () => {
+    it("retrieves values from subsections", async () => {
       config.set(["branch", "master", "remote"], "origin");
-      assert.equal(config.get(["branch", "master", "remote"]), "origin");
+      assert.equal(await config.get(["branch", "master", "remote"]), "origin");
     });
 
-    it("treats subsection names as case-sensitive", () => {
+    it("treats subsection names as case-sensitive", async () => {
       config.set(["branch", "master", "remote"], "origin");
-      assert.equal(config.get(["branch", "Master", "remote"]), null);
+      assert.equal(await config.get(["branch", "Master", "remote"]), null);
     });
 
     describe("with multi-valued keys", () => {
@@ -71,27 +70,27 @@ describe("Config", () => {
         config.add(key, "topic");
       });
 
-      it("adds multiple values for a key", () => {
-        assert.equal(config.get(key), "topic");
-        assert.deepEqual(config.getAll(key), ["master", "topic"]);
+      it("adds multiple values for a key", async () => {
+        assert.equal(await config.get(key), "topic");
+        assert.deepEqual(await config.getAll(key), ["master", "topic"]);
       });
 
       it("refuses to set a value", () => {
         assert.throws(() => config.set(key, "new-value"), Conflict);
       });
 
-      it("replaces all the values", () => {
+      it("replaces all the values", async () => {
         config.replaceAll(key, "new-value");
-        assert.deepEqual(config.getAll(key), ["new-value"]);
+        assert.deepEqual(await config.getAll(key), ["new-value"]);
       });
 
       it("refuses to unset a value", () => {
         assert.throws(() => config.unset(key), Conflict);
       });
 
-      it("unsets all the values", () => {
+      it("unsets all the values", async () => {
         config.unsetAll(key);
-        assert.deepEqual(config.getAll(key), []);
+        assert.deepEqual(await config.getAll(key), []);
       });
     });
   });

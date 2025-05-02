@@ -1,10 +1,11 @@
 import * as assert from "power-assert";
-import { TreeDiff } from "./tree_diff";
-import { Tree } from "./tree";
-import { Entry } from "./entry";
 import { PathFilter, Trie } from "../path_filter";
-import { Commit } from "./commit";
 import { GitObject } from "../types";
+import { posixPath } from "../util";
+import { Commit } from "./commit";
+import { Entry } from "./entry";
+import { Tree } from "./tree";
+import { TreeDiff } from "./tree_diff";
 
 function mockDatabase(objects: { [s: string]: GitObject }) {
   return {
@@ -189,14 +190,14 @@ describe("TreeDiff#compareOids", () => {
       ],
       [
         "ディレクトリが指定されたとき、指定されたディレクトリ内のファイルの差分のみを検出する",
-        PathFilter.build(["test/nested"]),
+        PathFilter.build(["test/nested"].map(posixPath)),
         {
           "test/nested/three.txt": [three_a, null],
         },
       ],
       [
         "ディレクトリが指定されたとき、指定されたディレクトリ内のファイルの差分のみを検出する(複数)",
-        PathFilter.build(["test/nested", "one.txt"]),
+        PathFilter.build(["test/nested", "one.txt"].map(posixPath)),
         {
           "test/nested/three.txt": [three_a, null],
           "one.txt": [one_a, one_b],
@@ -204,7 +205,7 @@ describe("TreeDiff#compareOids", () => {
       ],
       [
         "範囲が重複するパスが指定されたとき、最も範囲が広いパスが適用される",
-        PathFilter.build(["test", "test/nested/three.txt"]),
+        PathFilter.build(["test", "test/nested/three.txt"].map(posixPath)),
         {
           "test/nested/three.txt": [three_a, null],
           "test/two.txt": [two_a, two_b],

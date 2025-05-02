@@ -1,12 +1,12 @@
 import * as assert from "power-assert";
-import * as FileService from "../services/FileService";
-import { Repository } from "./repository";
-import { Migration } from "./migration";
-import * as Index from "../gindex";
-import { Entry, Changes, Blob } from "../database";
-import { makeTestStats } from "../__test__";
+import { makeDummyFileStats } from "../__test__";
 import { setOid } from "../__test__/util";
+import { Blob, ChangeMap, Entry } from "../database";
+import * as Index from "../gindex";
+import * as FileService from "../services/FileService";
 import { Dict } from "../types";
+import { Migration } from "./migration";
+import { Repository } from "./repository";
 
 describe("Migration#applyChanges", () => {
   let spyRmrf: jest.SpyInstance;
@@ -21,7 +21,7 @@ describe("Migration#applyChanges", () => {
     const writeFile = jest.fn().mockResolvedValue(undefined);
     const chmod = jest.fn().mockResolvedValue(undefined);
 
-    const testStat = makeTestStats();
+    const testStat = makeDummyFileStats();
     const env = {
       fs: {
         rmdir,
@@ -43,7 +43,7 @@ describe("Migration#applyChanges", () => {
       "dir/updated.txt":     Index.Entry.create("dir/updated.txt", "abcdef4", testStat)
     }
     const mockedEntryForPath = (p: string) => index[p];
-    const diff: Changes = new Map([
+    const diff: ChangeMap = new Map([
       // 削除されるファイル
       ["del/ete/deleted.txt", [new Entry("abcdef0", 0o0100644), null]],
       // 追加されるファイル
@@ -90,7 +90,7 @@ describe("Migration#applyChanges", () => {
         assert.deepEqual(writeFile.mock.calls[0], [
           "/tmp/dir/updated.txt",
           "hello",
-          { flag: 2561 },
+          { flag: 1281 },
         ]);
       });
 
@@ -98,7 +98,7 @@ describe("Migration#applyChanges", () => {
         assert.deepEqual(writeFile.mock.calls[1], [
           "/tmp/added.txt",
           "hello",
-          { flag: 2561 },
+          { flag: 1281 },
         ]);
       });
     });

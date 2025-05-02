@@ -22,6 +22,7 @@ export type FileService = Pick<
   | "unlink"
   | "write"
   | "writeFile"
+  | "rm"
   | "rmdir"
 >;
 
@@ -51,7 +52,7 @@ export async function rmrf(fs: FileService, pathname: Pathname) {
     switch (nodeErr.code) {
       case "EISDIR":
       case "EPERM":
-        await fs.rmdir(pathname, { recursive: true });
+        await fs.rm(pathname, { recursive: true });
         return;
       case "ENOENT":
         return;
@@ -71,14 +72,13 @@ export async function readdirRecursive(
 ): Promise<string[]> {
   const parent = pathname;
   const entries = await fs.readdir(parent);
-
   const files: string[] = [];
   for (const entry of entries) {
     const entryPath = path.join(parent, entry);
     const stat = await fs.stat(entryPath);
     if (stat.isDirectory()) {
-      const childs = await readdirRecursive(fs, entryPath);
-      files.push(...childs);
+      const children = await readdirRecursive(fs, entryPath);
+      files.push(...children);
     } else {
       files.push(entryPath);
     }

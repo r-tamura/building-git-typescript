@@ -1,15 +1,15 @@
-import * as assert from "power-assert";
-import * as path from "path";
 import * as crypto from "crypto";
-import { Index } from "./gindex";
-import { Lockfile } from "../lockfile";
-import { defaultFs } from "../services";
-import { makeTestStats } from "../__test__";
 import { Stats, promises } from "fs";
-import { createFakeRead } from "./__test__/fakeIndex";
-import { LockDenied } from "../refs";
-import { Entry } from "./entry";
+import * as path from "path";
+import * as assert from "power-assert";
+import { makeDummyFileStats } from "../__test__";
 import * as Database from "../database";
+import { Lockfile } from "../lockfile";
+import { LockDenied } from "../refs";
+import { defaultFs } from "../services";
+import { createFakeRead } from "./__test__/fakeIndex";
+import { Entry } from "./entry";
+import { Index } from "./gindex";
 
 jest.mock("../lockfile");
 const testIndexPath = ".git/index";
@@ -26,9 +26,9 @@ const randOid = () =>
 describe("Index#add", () => {
   // Arrange
   const tmpPath = path.resolve("../tmp", __filename);
-  const indexPath = path.join(tmpPath, "index");
+  const indexPath = path.posix.join(tmpPath, "index");
 
-  const stat = makeTestStats();
+  const stat = makeDummyFileStats();
   const oid = crypto.randomBytes(20).toString("hex");
   const extractName = (e: Entry) => e.name;
 
@@ -71,13 +71,16 @@ describe("Index#add", () => {
   });
 
   it("recursively replaces a directory with a file", () => {
-    // Act
+    // Arrange
     const index = new Index(testIndexPath);
     index.add("alice.txt", oid, stat);
     index.add("nested/bob.txt", oid, stat);
     index.add("nested/inner/claire.txt", oid, stat);
 
+    // Act
     index.add("nested", oid, stat);
+
+    // Assert
     assert.deepEqual(index.eachEntry().map(extractName), [
       "alice.txt",
       "nested",
@@ -89,7 +92,7 @@ describe("Index#remove", () => {
   it("インデックスから削除される", async () => {
     // Arrange
     const index = new Index(".git");
-    index.add("path/to/some/a.txt", "abcdef1", makeTestStats());
+    index.add("path/to/some/a.txt", "abcdef1", makeDummyFileStats());
     assert.equal(index.tracked("path/to/some/a.txt"), true);
 
     // Act
@@ -113,7 +116,7 @@ describe("Index#writeUpdates", () => {
       }));
       // Act
       const index = new Index(testObjectPath);
-      index.add(testObjectPath, testOid, makeTestStats());
+      index.add(testObjectPath, testOid, makeDummyFileStats());
       actual = await index.writeUpdates();
     });
 
@@ -202,12 +205,12 @@ describe("Index#writeUpdates", () => {
         [
           "bin/jit",
           "1eeef788efe4e91fe5780a77679444772f5b9253",
-          makeTestStats({ ino: 8641899915, mode: 33261 }),
+          makeDummyFileStats({ ino: 8641899915, mode: 33261 }),
         ],
         [
           ".gitignore",
           "81876f206950dc4d9c0f7d20aa43fe68ee8f9113",
-          makeTestStats({
+          makeDummyFileStats({
             ctimeMs: 1586222433163.7546,
             mtimeMs: 1586222433163.7546,
             ino: 8641636618,
@@ -217,7 +220,7 @@ describe("Index#writeUpdates", () => {
         [
           "README.md",
           "78e6cf75f4a8afa5a46741523101393381913dd4",
-          makeTestStats(),
+          makeDummyFileStats(),
         ],
       ] as [string, string, Stats][];
       entries.forEach((e) => index.add(...e));
@@ -294,7 +297,7 @@ describe("Index#loadForUpdate", () => {
       // Act
       const index = new Index(testIndexPath, env);
       await index.loadForUpdate();
-      index.add(testObjectPath, testOid, makeTestStats());
+      index.add(testObjectPath, testOid, makeDummyFileStats());
       await index.writeUpdates();
     });
 
@@ -322,7 +325,7 @@ describe("Index#conflict", () => {
     // Arrange
     const env = {} as any;
     const index = new Index(".git", env);
-    index.add("file.txt", testOid, makeTestStats());
+    index.add("file.txt", testOid, makeDummyFileStats());
 
     // Act
     const actual = index.conflict();

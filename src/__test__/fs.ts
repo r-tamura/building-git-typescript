@@ -1,7 +1,7 @@
-import { Stats, Dirent } from "fs";
+import { Stats } from "fs";
 import { FS_ERROR } from "./error";
 
-export const makeTestStats = (props: Partial<Stats> = {}): Stats => {
+export function makeDummyFileStats(props: Partial<Stats> = {}): Stats  {
   const isFile = jest.fn().mockReturnValue(props.isFile ?? false);
   const isDirectory = jest.fn().mockReturnValue(props.isDirectory ?? false);
 
@@ -29,17 +29,26 @@ export const makeTestStats = (props: Partial<Stats> = {}): Stats => {
   return { ...stats, ...defaultProps, ...props, isFile, isDirectory };
 };
 
-type Dict<T = string> = { [s: string]: T };
-
 /**
  * ディレクトリとファイルを指定することでfsモジュールのmockを作成します
  * @param dirs
  * @param files
  */
-export function mockFs(dirs: Dict, files: Dict) {
+export function mockFs(dirs: Record<string, string[]>, files: Record<string, string>) {
   return {
-    readdir: jest.fn().mockImplementation(async (p: string) => dirs[p]),
-    readFile: jest.fn().mockImplementation(async (p: string) => files[p]),
+    readdir: jest.fn().mockImplementation(async (p: string) => {
+      if (!(p in dirs)) {
+        console.warn("mocked readdir: ENOENT", p, dirs);
+        throw mockFsError("ENOENT")();
+      }
+      return dirs[p];
+    }),
+    readFile: jest.fn().mockImplementation(async (p: string) => {
+      if (!(p in files)) {
+        throw mockFsError("ENOENT")();
+      }
+      return files[p]
+    }),
     stat: jest.fn().mockImplementation(async (p: string) => {
       return files[p]
         ? { isFile: () => true, isDirectory: () => false }

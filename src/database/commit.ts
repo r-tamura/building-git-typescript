@@ -1,4 +1,3 @@
-import * as os from "os";
 import { OID } from "../types";
 import { Hash, scanUntil, splitByLine } from "../util";
 import { Author } from "./author";
@@ -28,12 +27,12 @@ export class Commit {
       }
       const match = /^(?<key>[^ ]+) (?<value>.+)$/.exec(line);
       if (match === null) {
-        throw TypeError(`'${line}' doesn't match commit header format.`);
+        throw TypeError(`line: '${line.trim()}' doesn't match commit header format.`);
       }
       const key = match.groups?.key;
       const value = match.groups?.value;
       if (!key || !value) {
-        throw TypeError(`'${line}' doesn't match commit header format.`);
+        throw TypeError(`line: '${line.trim()}' doesn't match commit header format.`);
       }
 
       headers.get(key).push(value);
@@ -75,6 +74,6 @@ export class Commit {
     lines.push("");
     lines.push(this.message);
 
-    return lines.join(os.EOL);
+    return lines.join("\n");
   }
 }

@@ -1,4 +1,3 @@
-import { EOL } from "os";
 
 /**
  * 文字列の最初と最後にある空白文字を取り除いた文字列を返します
@@ -38,16 +37,25 @@ function minIndent(str: string) {
  * @param args
  */
 export function stripIndent(strings: TemplateStringsArray, ...args: any[]) {
+  // EOLにWindowsの改行コードを含む場合はテストデータに誤りがあるのでエラーを投げる
+  if (strings.join("").includes("\r")) {
+    throw new Error("EOLにWindowsの改行コードを含む場合はテストデータに誤りがあります。");
+  }
   const notIsEmptyFirstLastLine = (line: string, i: number, lines: string[]) =>
     !((i === 0 || i === lines.length - 1) && line.trim() === "");
 
+  // テストデータはLFで改行さているため、LFで分割する
   const lines = strings
     .map((s, i) => s + (args[i] ?? ""))
     .join("")
-    .split(EOL)
+    .split("\n")
     .filter(notIsEmptyFirstLastLine);
-  const str = lines.join(EOL);
+  const str = lines.join("\n");
   const min = minIndent(str);
   const indent = new RegExp(`^[ \\t]{${min}}`, "gm");
   return str.replace(indent, "");
+}
+
+export function toLF(str: string) {
+  return str.replace(/\r\n/g, "\n");
 }

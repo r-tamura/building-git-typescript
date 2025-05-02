@@ -1,10 +1,11 @@
-import { join } from "path";
-import * as assert from "power-assert";
-import { Workspace, MissingFile, NoPermission, Environment } from "./workspace";
-import { defaultFs } from "./services";
 import { Stats } from "fs";
-import { ENOENT, mockFsError, assertAsyncError } from "./__test__";
+import * as path from "node:path";
+import * as assert from "power-assert";
+import { assertAsyncError, ENOENT, mockFsError } from "./__test__";
+import { defaultFs } from "./services";
 import { Pathname } from "./types";
+import { posixPath, PosixPath, toPathComponentsPosix } from "./util";
+import { Environment, MissingFile, NoPermission, Workspace } from "./workspace";
 
 jest.mock("fs");
 jest.mock("./repository/repository");
@@ -61,10 +62,10 @@ const fakeDirectory: FakeDir = {
   ],
 };
 
-const retrieve = (pathname: string): FakeEntry => {
+const retrieve = (pathname: PosixPath): FakeEntry => {
   let entry: FakeEntry = fakeDirectory;
   let seen = "";
-  for (const name of pathname.split("/").filter((name) => name !== "")) {
+  for (const name of toPathComponentsPosix(pathname).filter((name) => name !== "")) {
     if (entry.type === "f") {
       return entry;
     }
@@ -76,7 +77,7 @@ const retrieve = (pathname: string): FakeEntry => {
     }
 
     entry = item[0];
-    seen = join(seen, item[0].name);
+    seen = path.posix.join(seen, item[0].name);
   }
   return entry;
 };
@@ -84,7 +85,7 @@ const retrieve = (pathname: string): FakeEntry => {
 const fakeReaddir = jest
   .fn<Promise<string[]>, [Pathname]>()
   .mockImplementation(async (pathname: string) => {
-    const entry = retrieve(pathname);
+    const entry = retrieve(posixPath(pathname));
     if (entry.type === "f") {
       throw new TypeError(`${pathname} is not a directory.`);
     }
@@ -96,9 +97,10 @@ const fakeStat = jest
   .fn<Promise<Stats>, [string]>()
   .mockImplementation(async (pathname) => {
     MockedStat.mockImplementation(() => ({
-      isDirectory: jest.fn().mockReturnValue(retrieve(pathname).type === "d"),
+      isDirectory: jest.fn().mockReturnValue(retrieve(posixPath(pathname)).type === "d"),
     }));
-    return new Stats();
+    const stats = new Stats();
+    return stats;
   });
 
 describe("WorkSpace#listFiles", () => {
@@ -111,29 +113,26 @@ describe("WorkSpace#listFiles", () => {
       access: jest.fn().mockResolvedValue(undefined),
     },
   } as unknown) as Environment;
-
   it("ファイルが指定されたとき、そのファイルのみを要素とするリストを返す", async () => {
     // Arrange
 
     // Act
     const ws = new Workspace(testPath, env);
-    const actual = await ws.listFiles("test/world.txt");
+    const actual = await ws.listFiles(path.posix.join("test", "world.txt"));
 
     // Assert
     const expected = ["world.txt"];
     assert.deepEqual(actual, expected);
   });
-
   it("'.', '..', '.git'以外のファイルを全て返す", async () => {
     // Act
     const ws = new Workspace(testPath, env);
-    const actual = await ws.listFiles("test/dir_a");
+    const actual = await ws.listFiles(path.posix.join("test", "dir_a"));
 
     // Assert
-    const expected = ["dir_a/world_a.txt", "dir_a/hello_a.txt"];
+    const expected = [path.posix.join("dir_a", "world_a.txt"), path.posix.join("dir_a", "hello_a.txt")];
     assert.deepStrictEqual(actual, expected);
   });
-
   it("ディレクトリが階層構造になっているとき、全てのファイルパスを階層構造のないリストで返す", async () => {
     // Act
     const ws = new Workspace(testPath, env);
@@ -143,13 +142,12 @@ describe("WorkSpace#listFiles", () => {
     const expected = [
       "world.txt",
       "hello.txt",
-      "dir_a/world_a.txt",
-      "dir_a/hello_a.txt",
-      "dir_b/hello_b.txt",
+      path.posix.join("dir_a", "world_a.txt"),
+      path.posix.join("dir_a", "hello_a.txt"),
+      path.posix.join("dir_b", "hello_b.txt"),
     ];
     assert.deepStrictEqual(actual, expected);
   });
-
   it("存在しないファイルが含まれているとき、例外を発生させる", async () => {
     // Arrange
     const env = ({
@@ -163,7 +161,7 @@ describe("WorkSpace#listFiles", () => {
     } as unknown) as Environment;
 
     // Act
-    const ws = new Workspace("test/noent.txt", env);
+    const ws = new Workspace(path.posix.join("test", "noent.txt"), env);
 
     // Assert
     await expect(ws.listFiles()).rejects.toThrow(MissingFile);
@@ -177,19 +175,17 @@ describe("Workspace#readFile", () => {
     "when an unknown printer took a galley of type and scrambled it to make a type specimen book.",
   ].join("\n");
   const mockedReadFile = jest.fn().mockResolvedValue(testContent);
-  let actual: string | null = null;
-  beforeAll(async () => {
+  let actual: string | null = null;  beforeAll(async () => {
     // Arrange
 
     // Act
     const ws = new Workspace("/test/jit", {
       fs: { ...defaultFs, readFile: mockedReadFile },
     });
-    actual = await ws.readFile("src/index.js");
-  });
+    actual = await ws.readFile(path.posix.join("src", "index.js"));  });
   // Assert
   it("ファイルパス", () => {
-    assert.equal(mockedReadFile.mock.calls[0][0], "/test/jit/src/index.js");
+    assert.equal(mockedReadFile.mock.calls[0][0], path.posix.join("/test/jit", "src/index.js"));
   });
   it("ファイルの全データを返す", () => {
     const expected = testContent;

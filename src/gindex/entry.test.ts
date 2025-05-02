@@ -1,7 +1,8 @@
-import { Entry } from "./entry";
+import * as path from "path";
 import * as assert from "power-assert";
-import { makeTestStats } from "../__test__";
+import { makeDummyFileStats } from "../__test__";
 import { createFakeRead, fakeFiles } from "./__test__/fakeIndex";
+import { Entry } from "./entry";
 
 const testPath = "README.md";
 const testOid = "ba78afac62556e840341715936909cc36fe83a77"; // sha1 of 'jit'
@@ -17,7 +18,7 @@ describe("Entry.create", () => {
   const testOid = "ba78afac62556e840341715936909cc36fe83a77"; // sha1 of 'jit'
   describe("Git index向けのファイル情報を返す", () => {
     // Arrange
-    const testStats = makeTestStats();
+    const testStats = makeDummyFileStats();
 
     // Act
     const actual = Entry.create(testPath, testOid, testStats);
@@ -53,7 +54,7 @@ describe("Entry.create", () => {
 
   it("実行件のあるファイルのとき、modeを100755とする", () => {
     // Arrange
-    const testStats = makeTestStats({ mode: 33261 });
+    const testStats = makeDummyFileStats({ mode: 33261 });
 
     // Act
     const actual = Entry.create(testPath, testOid, testStats);
@@ -79,7 +80,7 @@ describe("Entry.parse", () => {
       Entry.create(
         "b.txt",
         "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391",
-        makeTestStats(fakeFiles["b.txt"].stat),
+        makeDummyFileStats(fakeFiles["b.txt"].stat),
       ),
     );
   });
@@ -88,7 +89,7 @@ describe("Entry.parse", () => {
 describe("Entry#toString", () => {
   it("Git indexエントリフォーマットに変換された文字列を返す", () => {
     // Arrange
-    const testStats = makeTestStats();
+    const testStats = makeDummyFileStats();
 
     // Act
     const entry = Entry.create(testPath, testOid, testStats);
@@ -117,21 +118,25 @@ describe("Entry#toString", () => {
 
 describe("Entry#parentDirectories", () => {
   it("全ての親ディレクトリパスを返す", () => {
+    // Arrange
+    const testPath = path.posix.join("test", "nested", "nested2", "file.txt");
+
     // Act
-    const entry = Entry.create(
-      "test/nested/nested2/file.txt",
-      testOid,
-      makeTestStats(),
-    );
+    const entry = Entry.create(testPath, testOid, makeDummyFileStats());
     const actual = entry.parentDirectories;
 
     // Assert
-    assert.deepEqual(actual, ["test", "test/nested", "test/nested/nested2"]);
+    const expected = [
+      path.posix.join("test"),
+      path.posix.join("test", "nested"),
+      path.posix.join("test", "nested", "nested2"),
+    ];
+    assert.deepEqual(actual, expected);
   });
 
   it("パスがファイル名のとき、空リストを返す", () => {
     // Act
-    const entry = Entry.create("file.txt", testOid, makeTestStats());
+    const entry = Entry.create("file.txt", testOid, makeDummyFileStats());
     const actual = entry.parentDirectories;
 
     // Assert

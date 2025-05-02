@@ -1,12 +1,12 @@
-import * as path from "path";
+import { Stats } from "fs";
 import * as os from "os";
-import { Repository } from "./repository";
+import * as path from "path";
 import * as Database from "../database";
 import * as Index from "../gindex";
-import { Pathname, OID } from "../types";
-import { descend, asserts, BaseError, ascend } from "../util";
+import { OID, Pathname } from "../types";
+import { ascend, asserts, BaseError, descendUnix } from "../util";
 import { Inspector } from "./inspector";
-import { Stats } from "fs";
+import { Repository } from "./repository";
 
 export type DeleteChange = [Pathname, null];
 export type CreateChange = [Pathname, Database.Entry];
@@ -45,7 +45,7 @@ const MESSAGES: Record<keyof Conflicts, [string, string]> = {
   ],
 };
 export class Migration {
-  #diff: Database.Changes;
+  #diff: Database.ChangeMap;
   #repo: Repository;
   changes: Changes = { create: [], update: [], delete: [] };
   mkdirs: Set<Pathname> = new Set();
@@ -59,14 +59,14 @@ export class Migration {
     untracked_overwritten: new Set(),
     untracked_removed: new Set(),
   };
-  constructor(repo: Repository, diff: Database.Changes) {
+  constructor(repo: Repository, diff: Database.ChangeMap) {
     this.#repo = repo;
     this.#diff = diff;
     this.#inspector = new Inspector(repo);
   }
 
   async applyChanges() {
-    await this.planChenges();
+    await this.planChanges();
     await this.updateWorkspace();
     await this.updateIndex();
   }
@@ -160,7 +160,7 @@ export class Migration {
     return "untracked_removed";
   }
 
-  private async planChenges() {
+  private async planChanges() {
     for (const [pathname, [oldItem, newItem]] of this.#diff) {
       await this.checkForConflict(pathname, oldItem, newItem);
       this.recordChange(pathname, oldItem, newItem);
@@ -169,7 +169,7 @@ export class Migration {
   }
 
   private async untrackedParent(pathname: Pathname) {
-    for (const parent of ascend(path.dirname(pathname))) {
+    for (const parent of ascend(path.posix.dirname(pathname))) {
       if (parent === ".") {
         continue;
       }
@@ -210,7 +210,7 @@ export class Migration {
     oldItem: Database.Entry | null,
     newItem: Database.Entry | null,
   ) {
-    const parentDirs = descend(path.dirname(pathname));
+    const parentDirs = descendUnix(path.posix.dirname(pathname));
 
     const merge = <T>(set: Set<T>, items: T[]) => items.forEach(set.add, set);
 

@@ -1,9 +1,9 @@
-import * as path from "path";
-import { OID, Pathname } from "../types";
 import { Stats } from "fs";
-import { isExecutable, descend, asserts } from "../util";
+import * as path from "path";
 import * as Database from "../database";
 import { MODE } from "../entry";
+import { OID, Pathname } from "../types";
+import { asserts, descendUnix, isExecutable } from "../util";
 
 // Git indexファイルのフォーマット仕様
 // https://github.com/git/git/blob/master/Documentation/technical/index-format.txt
@@ -165,7 +165,7 @@ export class Entry {
   }
 
   get basename() {
-    return path.basename(this.name);
+    return path.posix.basename(this.name);
   }
 
   get mode() {
@@ -173,7 +173,7 @@ export class Entry {
   }
 
   get parentDirectories() {
-    return descend(path.dirname(this.name));
+    return descendUnix(path.posix.dirname(this.name));
   }
 
   get key(): Key {

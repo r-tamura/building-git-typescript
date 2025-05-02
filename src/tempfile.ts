@@ -42,11 +42,10 @@ export class TempFile {
   #file?: FileHandle;
   #rand: Rand;
   #fs: FileService.FileService;
-  constructor(dirname: Pathname, prefix: string, env: Environment = {}) {
-    this.#dirname = dirname;
+  constructor(dirname: Pathname, prefix: string, env: Environment = {}) {    this.#dirname = dirname;
     this.#rand = env.rand ?? { sample };
     this.#fs = env.fs ?? FileService.defaultFs;
-    this.#pathname = path.join(dirname, this.generateTempName(prefix));
+    this.#pathname = path.posix.join(dirname, this.generateTempName(prefix));
   }
 
   async write(data: Buffer): Promise<void> {
@@ -56,11 +55,10 @@ export class TempFile {
     this.assertOpened(this.#file);
     await this.#file.write(data);
   }
-
   async move(name: string): Promise<void> {
     this.assertOpened(this.#file);
     await this.#file.close();
-    await this.#fs.rename(this.#pathname, path.join(this.#dirname, name));
+    await this.#fs.rename(this.#pathname, path.posix.join(this.#dirname, name));
   }
 
   private async openFile(): Promise<void> {

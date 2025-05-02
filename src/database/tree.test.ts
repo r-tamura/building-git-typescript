@@ -1,10 +1,10 @@
 import { Stats } from "fs";
 import * as assert from "power-assert";
-import { Entry, MODE } from "../entry";
-import { scanUntil } from "../util";
 import * as Database from ".";
+import { makeDummyFileStats } from "../__test__/fs";
+import { Entry, MODE } from "../entry";
+import { posixPath, scanUntil } from "../util";
 import { Tree } from "./tree";
-import { makeTestStats } from "../__test__";
 
 const testStats = (mode: keyof typeof MODE) => {
   const stats = new Stats();
@@ -41,85 +41,90 @@ const unpackEntries = (serializedEntry: string) => {
 
 describe("Tree#traverse", () => {
   describe("Treeオブジェクトを含むTreeのとき、深さ優先でコールバック関数が呼び出される", () => {
+    const ANY_OID = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
+
+    const middleEntry = new Entry(
+      "test/hello.txt",
+      "ce013625030ba8dba906f756967f9e9ca394464a",
+      testStats("readable"),
+    )
+    const deepestEntry = new Entry(
+      "test/test2/world.txt",
+      "cc628ccd10742baea8241c5924df992b5c019f71",
+      testStats("readable"),
+    )
     // Arrange
-    const mockedCallback = jest
+    const traverseCallback = jest
       .fn()
       .mockImplementation((tree: Database.Tree) => {
-        tree.oid = Array(40).fill("a").join("");
+        tree.oid = ANY_OID;
         const strtree = tree.toString();
         return unpackEntries(strtree);
       });
     const entries = [
-      new Entry(
-        "test/hello.txt",
-        "ce013625030ba8dba906f756967f9e9ca394464a",
-        testStats("readable"),
-      ),
-      new Entry(
-        "test/test2/world.txt",
-        "cc628ccd10742baea8241c5924df992b5c019f71",
-        testStats("readable"),
-      ),
+      middleEntry,
+      deepestEntry,
     ];
 
     // Act
-    beforeAll(async () => {
+    let root: Database.Tree;
+    let deepest: Database.Tree;
+    let middle: Database.Tree;
+    beforeEach(async () => {
+      traverseCallback.mockClear();
+      deepest = new Database.Tree({
+        "world.txt": deepestEntry,
+      });
+      deepest.oid = ANY_OID;
+      middle = new Database.Tree({
+        "hello.txt": middleEntry,
+        test2: deepest,
+      });
+      middle.oid = ANY_OID;
+
+      root = new Database.Tree({
+        test: middle,
+      });
+      root.oid = ANY_OID;
+    });
+
+
+    it("should be called 3 times", async () => {
       const tree = Database.Tree.build(entries);
-      await tree.traverse(mockedCallback);
+      await tree.traverse(traverseCallback);
+      assert.equal(traverseCallback.mock.calls.length, 3);
     });
 
-    // Assert
-    const test2 = new Database.Tree({
-      "world.txt": new Entry(
-        "test/test2/world.txt",
-        "cc628ccd10742baea8241c5924df992b5c019f71",
-        testStats("readable"),
-      ),
-    });
-    test2.oid = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
-    const test = new Database.Tree({
-      "hello.txt": new Entry(
-        "test/hello.txt",
-        "ce013625030ba8dba906f756967f9e9ca394464a",
-        testStats("readable"),
-      ),
-      test2,
-    });
-    test.oid = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
+    it("ディレクトリ構造上深い順にコールバックが呼ばれる", async () => {
+      // Arrange
+      const tree = Database.Tree.build(entries);
 
-    const root = new Database.Tree({
-      test,
-    });
-    root.oid = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
-    it("should call 3 times", () => {
-      assert.equal(mockedCallback.mock.calls.length, 3);
-    });
+      // Act
+      await tree.traverse(traverseCallback);
 
-    it("'test2' dir", () => {
-      assert.deepStrictEqual(mockedCallback.mock.calls[0][0], test2);
-      assert.equal(
-        mockedCallback.mock.results[0].value,
-        "100644 world.txt cc628ccd10742baea8241c5924df992b5c019f71",
-      );
-    });
-
-    it("'test' dir", () => {
-      assert.deepStrictEqual(mockedCallback.mock.calls[1][0], test);
-      assert.equal(
-        mockedCallback.mock.results[1].value,
-        [
+      // Assert
+      const callbackCalls = traverseCallback.mock.calls.map((args) => args[0])
+      const expectedCalls = [{
+        arg: deepest,
+        return: "100644 world.txt cc628ccd10742baea8241c5924df992b5c019f71"
+      }, {
+        arg: middle,
+        return: [
           "100644 hello.txt ce013625030ba8dba906f756967f9e9ca394464a",
           "40000 test2 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
         ].join("\n"),
-      );
-    });
+        }, {
+        arg: root,
+        return: ["40000 test aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"].join("\n"),
+        }] as const;
 
-    it("'root' dir", () => {
-      assert.deepStrictEqual(mockedCallback.mock.calls[2][0], root);
-      assert.equal(
-        mockedCallback.mock.results[2].value,
-        ["40000 test aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"].join("\n"),
-      );
+      for (let i = 0; i < callbackCalls.length; i++) {
+        assert.deepStrictEqual(callbackCalls[i], expectedCalls[i].arg, "コールバックの引数");
+        assert.deepStrictEqual(
+          traverseCallback.mock.results[i].value,
+          expectedCalls[i].return,
+        "コールバックの返り値");
+      }
     });
   });
 });
@@ -266,15 +271,15 @@ describe("Tree#addEntry", () => {
     // Act
     const tree = new Tree();
     tree.addEntry(
-      ["dir", "dir/nested"],
-      new Entry("hello.txt", "oid", makeTestStats()),
+      ["dir", "dir/nested"].map(posixPath),
+      new Entry("hello.txt", "oid", makeDummyFileStats()),
     );
 
     // Assert
     assert.deepEqual(tree.entries, {
       dir: new Tree({
         nested: new Tree({
-          "hello.txt": new Entry("hello.txt", "oid", makeTestStats()),
+          "hello.txt": new Entry("hello.txt", "oid", makeDummyFileStats()),
         }),
       }),
     });
