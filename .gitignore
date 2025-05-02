@@ -11,3 +11,5 @@ puth-test
 # direnv
 .envrc
 
+# GitHub Copilot
+.github/copilot-instructions.md
