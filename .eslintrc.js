@@ -23,5 +23,6 @@ module.exports = {
   rules: {
     "@typescript-eslint/no-floating-promises": 2,
     "@typescript-eslint/explicit-module-boundary-types": 0,
+    "no-console": ["warn", { allow: ["warn", "error"] }],
   },
 };
