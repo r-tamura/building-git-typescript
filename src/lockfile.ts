@@ -3,7 +3,7 @@ import * as path from "path";
 import { LockDenied } from "./refs";
 import { defaultFs, FileService } from "./services";
 import { IOHandle } from "./types";
-import { BaseError, osPath, posixPath, PosixPath } from "./util";
+import { BaseError, posixPath, PosixPath, toOsPath } from "./util";
 export type LockfileEnvironment = {
   fs?: FileService;
 };
@@ -46,7 +46,7 @@ export class Lockfile implements IOHandle {
     const flags = constants.O_RDWR | constants.O_CREAT | constants.O_EXCL;
     try {
       if (this.#lock === null) {
-        this.#lock = await this.#fs.open(osPath(this.#lockPath), flags);
+        this.#lock = await this.#fs.open(toOsPath(this.#lockPath), flags);
       }
     } catch (e) {
       const nodeErr = e as NodeJS.ErrnoException;
@@ -68,7 +68,7 @@ export class Lockfile implements IOHandle {
     this.throwOnStaleLock(this.#lock);
 
     await this.#lock.close();
-    await this.#fs.unlink(osPath(this.#lockPath));
+    await this.#fs.unlink(toOsPath(this.#lockPath));
     this.#lock = null;
   }
 
@@ -91,7 +91,7 @@ export class Lockfile implements IOHandle {
   async commit() {
     this.throwOnStaleLock(this.#lock);
     await this.#lock.close();
-    await this.#fs.rename(osPath(this.#lockPath), osPath(this.#filePath));
+    await this.#fs.rename(toOsPath(this.#lockPath), toOsPath(this.#filePath));
     this.#lock = null;
   }
 

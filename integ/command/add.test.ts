@@ -3,11 +3,15 @@ import * as T from "./helper";
 
 const t = T.create();
 
+const itOnlyUnix = process.platform === "win32" ? it.skip : it;
+
 describe("add", () => {
   async function assertIndex(expected: [number, string][]) {
     const repo = t.repo;
     await repo.index.load();
-    const actual: [number, string][] = repo.index.eachEntry().map((e) => [e.mode, e.name]);
+    const actual: [number, string][] = repo.index
+      .eachEntry()
+      .map((e) => [e.mode, e.name]);
     expect(actual).toStrictEqual(expected);
   }
 
@@ -22,7 +26,8 @@ describe("add", () => {
     await assertIndex([[0o0100644, "hello.txt"]]);
   });
 
-  it("adds an executable file to the index", async () => {
+  // Note: Windowsでは、実行可能ファイルは、実行権限を持たない
+  itOnlyUnix("adds an executable file to the index", async () => {
     await t.writeFile("hello.txt", "hello");
     await t.makeExecutable("hello.txt");
 
@@ -91,7 +96,8 @@ describe("add", () => {
     await assertIndex([]);
   });
 
-  it("fails for unreadable files", async () => {
+  // Note: Windowsでは、実行可能ファイルは、読み込み不可権限を持たない
+  itOnlyUnix("fails for unreadable files", async () => {
     // Arrange
     await t.writeFile("secret.txt", "");
     await t.makeUnreadable("secret.txt");

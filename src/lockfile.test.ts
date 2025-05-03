@@ -5,7 +5,7 @@ import { EACCES, EEXIST, ENOENT } from "./__test__";
 import { Lockfile, MissingParent, NoPermission } from "./lockfile";
 import { LockDenied } from "./refs";
 import { defaultFs } from "./services";
-import { osPath, posixPath } from "./util/fs";
+import { posixPath, toOsPath } from "./util/fs";
 
 const TEST_TARGET_PATH = posixPath("/test/file.txt");
 
@@ -98,7 +98,7 @@ describe("Lockfile#commit", () => {
 
     // Assert
     assert.equal(mockedRename.mock.calls[0][0], path.join("/test", "file.lock"));
-    assert.equal(mockedRename.mock.calls[0][1], osPath(TEST_TARGET_PATH));
+    assert.equal(mockedRename.mock.calls[0][1], toOsPath(TEST_TARGET_PATH));
   });
 });
 

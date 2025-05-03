@@ -7,7 +7,14 @@ import * as Database from "../database";
 import { Lockfile, LockfileEnvironment } from "../lockfile";
 import { FileService, defaultFs } from "../services";
 import { OID, Pathname } from "../types";
-import { Invalid, ObjectKeyHash, ObjectSet, PosixPath, some, times } from "../util";
+import {
+  Invalid,
+  ObjectKeyHash,
+  ObjectSet,
+  PosixPath,
+  some,
+  times,
+} from "../util";
 import { Checksum } from "./checksum";
 import { BASE, Entry, Key, LEFT, RIGHT, STAGES, Stage } from "./entry";
 
@@ -33,9 +40,8 @@ export class Index {
   }
 
   add(pathname: PosixPath, oid: OID, stat: Stats) {
-
     for (const stage of [BASE, LEFT, RIGHT] as const) {
-      this.removeEntryWithStage(pathname, stage)
+      this.removeEntryWithStage(pathname, stage);
     }
     const entry = Entry.create(pathname, oid, stat);
     this.discardConflicts(entry);

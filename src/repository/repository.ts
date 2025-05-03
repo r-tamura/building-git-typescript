@@ -6,7 +6,7 @@ import { Refs, SymRef } from "../refs";
 import { Remotes } from "../remotes";
 import { FileService, Process } from "../services";
 import { Nullable, OID, Pathname } from "../types";
-import { posixJoin } from "../util/fs";
+import { posixJoin, PosixPath, posixPath } from "../util/fs";
 import { Workspace } from "../workspace";
 import { Divergence } from "./divergence";
 import { HardReset } from "./hard_reset";
@@ -29,7 +29,12 @@ export class Repository {
   #refs!: Refs;
   #config!: Stack;
   #remotes!: Remotes;
-  constructor(public gitPath: Pathname, public env: RepositoryEnv) {}
+  gitPath: PosixPath;
+  env: RepositoryEnv;
+  constructor(gitPath: Pathname, env: RepositoryEnv) {
+    this.gitPath = posixPath(gitPath);
+    this.env = env;
+  }
   get database() {
     return (this.#database ??= new Database(
       posixJoin(this.gitPath, "objects"),
@@ -51,6 +56,7 @@ export class Repository {
     return Status.of(this, commitOid);
   }
   get workspace() {
+    const gitPath = this.gitPath;
     return (this.#workspace ??= new Workspace(
       path.posix.dirname(this.gitPath),
       this.env,

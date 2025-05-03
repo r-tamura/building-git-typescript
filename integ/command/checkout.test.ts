@@ -1,6 +1,6 @@
 import * as assert from "power-assert";
-import * as T from "./helper";
 import { stripIndent } from "../../src/util";
+import * as T from "./helper";
 const t = T.create();
 
 describe("checkout", () => {
@@ -258,7 +258,7 @@ describe("checkout", () => {
       await commitAndCheckout("@^");
 
       await t.assertWorkspace(basefiles);
-      await t.assertNoent("new");
+      await t.assertNoEnt("new");
       await assertStatus("");
     });
 
@@ -267,7 +267,7 @@ describe("checkout", () => {
       await commitAndCheckout("@^");
 
       await t.assertWorkspace(basefiles);
-      await t.assertNoent("new");
+      await t.assertNoEnt("new");
       await assertStatus("");
     });
 

@@ -18,7 +18,7 @@ function guessPathSeparator(pathname: Pathname): typeof path.sep {
   const includesWindowsPathSep = pathname.includes("\\");
   const includesUnixPathSep = pathname.includes("/");
   if (includesWindowsPathSep && includesUnixPathSep) {
-    throw new Error(`path separator is ambiguous: '${pathname}'` );
+    throw new Error(`path separator is ambiguous: '${pathname}'`);
   }
   if (includesWindowsPathSep) {
     return "\\";
@@ -26,15 +26,23 @@ function guessPathSeparator(pathname: Pathname): typeof path.sep {
   if (includesUnixPathSep) {
     return "/";
   }
-  return "/"
+  return "/";
 }
 
 /**
  * 実行環境によらずUnix形式のパスを取得します
  *
  * refファイルではOSに依存せずUnix形式のパスを扱います
+ * Windows形式のパスが渡されたとき、エラーを投げます
  *
  * 例: HEADファイルは ref: refs/heads/master という形式で保存されます
+ *
+ * @example
+ * ```ts
+ * import { descendUnix } from "./fs";
+ * descendUnix("/home/username/a.txt")
+ * // => ["/home", "/home/username", "/home/username/a.txt"]
+ * ```
  */
 export function descendUnix(pathname: Pathname): string[] {
   const UNIX_PATH_SEP = "/";
@@ -42,20 +50,28 @@ export function descendUnix(pathname: Pathname): string[] {
   if (sep === "\\") {
     throw new Error("Windows形式のパスはUnix形式に変換できません");
   }
-  const eachDirname = pathname.split(sep).filter((s) => s !== ".");
-  const initial = path.isAbsolute(pathname) ? "/" : "";
-  return eachDirname.reduce((acc, dirname) => {
-    const prev = acc[acc.length - 1] ?? initial;
-    if (prev === "") {
-      acc.push(dirname);
-      return acc;
-    } else {
-      acc.push([prev, dirname].join(UNIX_PATH_SEP));
-      return acc;
-    }
-  }, [] as string[]);
-}
+  // const eachDirname = pathname.split(UNIX_PATH_SEP).filter((s) => s !== ".");
+  // const initial = path.isAbsolute(pathname) ? UNIX_PATH_SEP : "";
+  // const allDirs = eachDirname.reduce((acc, dirname) => {
+  //   const prev = acc[acc.length - 1] ?? initial;
+  //   acc.push(path.posix.join(prev, dirname));
+  //   return acc;
+  // }, [] as string[]);
+  // // ルートディレクトリは含めない
+  // return allDirs.filter((s) => s !== UNIX_PATH_SEP);
 
+  // ルートディレクトリになるまで、path.posix.dirnameを適用した結果を配列に詰める
+  // 前回値と変化がなくなったら終了
+  const allDirs = [pathname];
+  let current = pathname;
+  let prev = null;
+  while (current !== prev) {
+    prev = current;
+    current = path.posix.dirname(current);
+    allDirs.push(current);
+  }
+  return allDirs.filter((s) => s !== UNIX_PATH_SEP && s !== ".").reverse();
+}
 
 /**
  * パスを親から子供へ辿っていったときの各パス名一覧を取得します。ファイルシステムへはアクセスしません。
@@ -73,6 +89,8 @@ export function descendUnix(pathname: Pathname): string[] {
  * ["C:\\home", "C:\\home\\username", "C:\\home\\username\\a.txt"]
  */
 export function descend(pathname: Pathname) {
+  const sep = guessPathSeparator(pathname);
+  asserts(path.sep === sep, "実行環境のOSに対応したパス形式を利用してください");
   const eachDirname = pathname.split(path.sep).filter((s) => s !== ".");
   const initial = path.isAbsolute(pathname) ? path.sep : "";
   return eachDirname.reduce((acc, dirname) => {
@@ -125,11 +143,65 @@ export function toPathComponentsPosix(pathname: PosixPath) {
 }
 
 const posixPathSymbol = Symbol("Posix path branded type symbol");
-export type PosixPath = string & { [posixPathSymbol]: unknown }
+export type PosixPath = string & { [posixPathSymbol]: unknown };
 
 export function posixJoin(...paths: Pathname[]): PosixPath {
-  const p = path.posix.join(...paths);
+  const posixPaths = paths.map(posixPath);
+  const p = path.posix.join(...posixPaths);
   return posixPath(p);
+}
+
+/**
+ * PosixPathを受け取り、PosixPathで返すpath.posix.resolveのラッパー
+ */
+export function posixResolve(...paths: PosixPath[]): PosixPath {
+  const resolved = path.posix.resolve(...paths);
+  return resolved as PosixPath;
+}
+
+/**
+ * PosixPathを受け取り、PosixPathで返すpath.posix.relativeのラッパー
+ */
+export function posixRelative(from: PosixPath, to: PosixPath): PosixPath {
+  const rel = path.posix.relative(from, to);
+  return rel as PosixPath;
+}
+
+/**
+ * PosixPathを受け取り、PosixPathで返すpath.posix.dirnameのラッパー
+ */
+export function posixDirname(p: PosixPath): PosixPath {
+  const dir = path.posix.dirname(p);
+  return dir as PosixPath;
+}
+
+/**
+ * PosixPathを受け取り、PosixPathで返すpath.posix.basenameのラッパー
+ */
+export function posixBasename(p: PosixPath, ext?: string): PosixPath {
+  const base = path.posix.basename(p, ext);
+  return base as PosixPath;
+}
+
+/**
+ * PosixPathを受け取り、拡張子(string)を返すpath.posix.extnameのラッパー
+ */
+export function posixExtname(p: PosixPath): string {
+  return path.posix.extname(p);
+}
+
+function removeWin32PathDrive(pathname: Pathname): Pathname {
+  const drive = pathname.slice(0, 2);
+  if (drive[0].match(/^[A-Z]$/) && drive[1] === ":") {
+    // ドライブ名付き絶対パス
+    // 例: C:\path\to\file.txt => path\to\file.txt
+    return pathname.slice(2);
+  } else {
+    // ドライブ名なし絶対パスまたは相対パス
+    // 例: \path\to\file.txt => \path\to\file.txt
+    //     .\path\to\file.txt => .\path\to\file.txt
+    return pathname;
+  }
 }
 
 /**
@@ -139,7 +211,6 @@ export function posixJoin(...paths: Pathname[]): PosixPath {
  * @returns POSIX形式のファイルパス
  */
 export function posixPath(pathname: Pathname): PosixPath {
-
   const guessedSep = guessPathSeparator(pathname);
 
   switch (guessedSep) {
@@ -147,8 +218,9 @@ export function posixPath(pathname: Pathname): PosixPath {
       // Unix形式のパスはそのまま返す
       return pathname as PosixPath;
     case "\\": {
-      // Windows形式のパスはUnix形式に変換する
-      const unixPath = pathname.replaceAll("\\", "/");
+      // Windows形式のパスはPosix形式に変換する
+      const win32PathWithoutDrive = removeWin32PathDrive(pathname);
+      const unixPath = win32PathWithoutDrive.replaceAll("\\", "/");
       return unixPath as PosixPath;
     }
     default:
@@ -162,7 +234,7 @@ const osPathSymbol = Symbol("OsPath");
 export type OsPath = string & { [osPathSymbol]: unknown };
 
 /**
- * Posix形式のパスをOS形式のファイルパスを作成します
+ * アプリケーション内部で利用するPosix形式のパスをOS形式のファイルパスへ変換します
  * 実行環境と同一形式のパスが渡されたときパスは変換されません
  *
  * @param pathname ファイルパス
@@ -172,20 +244,59 @@ export type OsPath = string & { [osPathSymbol]: unknown };
  * ```ts
  * import { osPath } from "./util/fs";
  * const path = osPath(posixPath("/home/username/a.txt"));
- * // => "C:\\home\\username\\a.txt"
+ * // => "\\home\\username\\a.txt"
+ * ```
+ *
+ * Note: Windows環境でドライブをしていない場合の絶対パスの扱い
+ *
+ * 下記のようなパスをファイルシステムのAPIに渡すと、プロセスのcwdのドライブのパスとして解釈される。
+ * このアプリケーションではWindows環境でプロセスのcwd以外のドライブを扱うことは想定しない。
+ *
+ * ```ts
+ * import * as fs from "node:fs";
+ *
+ * async function f() {
+ *    const res = await fs.promises.readdir("\\path\\to\\your\\dir")
+ *    console.dir(res, { depth: null })
+ * }
+ *
+ * f();
  * ```
  *
  */
-export function osPath(pathname: Pathname): OsPath {
+export function toOsPath(pathname: Pathname): OsPath {
   const guessedSep = guessPathSeparator(pathname);
-  asserts(guessedSep !== "\\", "アプリケーション内部ではPosix形式パスを利用してください");
+  asserts(
+    guessedSep !== "\\",
+    "アプリケーション内部ではPosix形式パスを利用してください",
+  );
 
-  const osPath = pathname.replaceAll("/", path.sep);
-  return osPath as OsPath;
+  const parsed = path.posix.parse(pathname);
+  const osPathStr = path.format({
+    ...parsed,
+    root: path.sep,
+    base: parsed.base.replaceAll("/", path.sep),
+    dir: parsed.dir.replaceAll("/", path.sep),
+  });
+  return osPathStr as OsPath;
+}
+
+/**
+ * OS形式のパスであることを保証します
+ * `toOsPath`関数とは異なり、パス形式の変換は行いません
+ */
+export function asOsPath(pathname: Pathname): OsPath {
+  const guessedSep = guessPathSeparator(pathname);
+  if (guessedSep !== path.sep) {
+    throw new TypeError(
+      `OS形式のパスを利用してください。OSのパスセパレータ: ${path.sep}, 受け取ったパス: ${pathname}`,
+    );
+  }
+  return pathname as OsPath;
 }
 
 const whence = ["SEEK_CUR", "SEEK_SET"] as const;
-export type Whence = typeof whence[number];
+export type Whence = (typeof whence)[number];
 export interface Seekable {
   seek(pos: number, whence?: Whence): void;
   read(size: number): Promise<Buffer>;

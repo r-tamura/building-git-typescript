@@ -3,11 +3,11 @@ import { Stats } from "fs";
 import * as path from "path";
 import { ModeNumber } from "./entry";
 import { Changes, Migration } from "./repository";
-import { FileService, defaultFs, mkdirp, rmrf } from "./services";
+import { defaultFs, FileService, mkdirp, rmrf } from "./services";
 import { Pathname } from "./types";
 import { asserts } from "./util/assert";
 import { BaseError, isNodeError } from "./util/error";
-import { ascend } from "./util/fs";
+import { ascend, posixJoin, posixPath, PosixPath, toOsPath } from "./util/fs";
 
 export type Environment = {
   fs?: FileService;
@@ -24,11 +24,11 @@ export class NoPermission extends BaseError {}
 
 export class Workspace {
   #IGNORE = [".", "..", ".git"];
-  #pathname: string;
+  #pathname: PosixPath;
   #fs: FileService;
 
-  constructor(pathname: string, env: Environment = {}) {
-    this.#pathname = pathname;
+  constructor(pathname: Pathname, env: Environment = {}) {
+    this.#pathname = posixPath(pathname);
     this.#fs = env.fs ?? defaultFs;
   }
 
@@ -69,26 +69,26 @@ export class Workspace {
     }
     return stats;
   }
-  async listFiles(pathname: Pathname = this.#pathname): Promise<string[]> {
-    if (await this.isDirectory(pathname)) {
+  async listFiles(absPath: PosixPath = this.#pathname): Promise<PosixPath[]> {
+    if (await this.isDirectory(absPath)) {
       const names = await this.#fs
-        .readdir(pathname)
+        .readdir(toOsPath(absPath))
         .then((names) => names.filter((name) => !this.#IGNORE.includes(name)));
 
       // TODO: flatMapで置き換えられないか?
-      const promises: Promise<string[]>[] = names.map(async (name) => {
-        const pathFromRoot = path.posix.join(pathname, name);
+      const promises = names.map(async (name) => {
+        const pathFromRoot = posixJoin(absPath, name);
         const isDir = await this.isDirectory(pathFromRoot);
         if (isDir) {
           const names = await this.listFiles(pathFromRoot);
           return names;
         }
-        return [path.posix.relative(this.#pathname, pathFromRoot)];
+        return [posixPath(path.posix.relative(this.#pathname, pathFromRoot))];
       });
       const all = await Promise.all(promises);
       return all.flat();
     } else {
-      return [path.posix.relative(this.#pathname, pathname)];
+      return [posixPath(path.posix.relative(this.#pathname, absPath))];
     }
   }
 
@@ -110,7 +110,7 @@ export class Workspace {
   ) {
     const fullPath = this.join(pathname);
     if (mkdir) {
-      await mkdirp(this.#fs, path.posix.dirname(fullPath));
+      await mkdirp(this.#fs, toOsPath(path.posix.dirname(fullPath)));
     }
     // 100644, 100755をファイルシステムのモード0o644, 0o755へ落とし込む
     return this.#fs.writeFile(fullPath, data, { mode: mode ? mode : mode });
@@ -169,20 +169,20 @@ export class Workspace {
       await this.#fs.chmod(pathname, entry.mode);
     }
   }
-  private join(rpath: string) {
-    return path.posix.join(this.#pathname, rpath);
+  private join(relativePath: string) {
+    return posixJoin(this.#pathname, relativePath);
   }
 
-  private async isDirectory(pathname: Pathname) {
-    const relavtive = path.posix.relative(this.#pathname, pathname);
+  private async isDirectory(pathname: PosixPath) {
+    const relative = path.posix.relative(this.#pathname, pathname);
     try {
-      return (await this.#fs.stat(pathname)).isDirectory();
+      return (await this.#fs.stat(toOsPath(pathname))).isDirectory();
     } catch (e) {
       asserts(isNodeError(e), "e is not a NodeJS error, got: " + e);
       switch (e.code) {
         case "ENOENT":
           throw new MissingFile(
-            `pathspec '${relavtive}' did not match any files`,
+            `pathspec '${relative}' did not match any files`,
           );
         default:
           throw e;

@@ -4,7 +4,7 @@ import { Lockfile, MissingParent } from "./lockfile";
 import { defaultFs, directory, exists, FileService } from "./services";
 import { Nullable, OID, Pathname } from "./types";
 import { ascendUnix, asserts, BaseError, find, PosixPath } from "./util";
-import { osPath, posixJoin, posixPath } from "./util/fs";
+import { posixJoin, posixPath, toOsPath } from "./util/fs";
 import { nullify } from "./util/logic";
 
 export interface Environment {
@@ -140,7 +140,7 @@ export class Refs {
       throw new InvalidBranch(`'${branchName}' is not a valid branch name.`);
     }
 
-    if (await exists(this.#fs, osPath(pathname))) {
+    if (await exists(this.#fs, toOsPath(pathname))) {
       throw new InvalidBranch(`A branch named '${branchName}' already exists.`);
     }
 
@@ -174,7 +174,7 @@ export class Refs {
       if (oid === null) {
         throw new InvalidBranch(`branch '${branchName}' not found.`);
       }
-      await this.#fs.unlink(osPath(pathname));
+      await this.#fs.unlink(toOsPath(pathname));
     } finally {
       await lockfile.rollback();
     }
@@ -204,7 +204,7 @@ export class Refs {
     const head = posixJoin(this.#pathname, HEAD);
     const headpath = posixJoin(this.#headsPath, revision);
 
-    if (await exists(this.#fs, osPath(headpath))) {
+    if (await exists(this.#fs, toOsPath(headpath))) {
       const relative = posixPath(path.relative(this.#pathname, headpath));
       await this.updateRefFile(head, `ref: ${relative}`);
     } else {
@@ -285,7 +285,7 @@ export class Refs {
       if (oid !== undefined) {
         await this.writeLockfile(lockfile, oid);
       } else {
-        await this.#fs.unlink(osPath(pathname)).catch((e: NodeJS.ErrnoException) => {
+        await this.#fs.unlink(toOsPath(pathname)).catch((e: NodeJS.ErrnoException) => {
           if (e.code === "ENOENT") {
             return;
           }
@@ -302,7 +302,7 @@ export class Refs {
             await lockfile?.rollback();
             throw e;
           }
-          const dirPath = osPath(path.dirname(pathname));
+          const dirPath = toOsPath(path.dirname(pathname));
           await this.#fs.mkdir(dirPath, { recursive: true });
           await this.updateRefFile(pathname, oid, {
             retry: retry ? retry - 1 : 1,
@@ -323,7 +323,7 @@ export class Refs {
       }
 
       const e = await this.#fs
-        .rm(osPath(dirname))
+        .rm(toOsPath(dirname))
         .catch((e: NodeJS.ErrnoException) => e);
 
       if (e && e.code === "ENOTEMPTY") {
@@ -373,7 +373,7 @@ export class Refs {
   async readOidOrSymRef(pathname: PosixPath): Promise<SymRef | Ref | null> {
     let data: string;
     try {
-      data = await this.#fs.readFile(osPath(pathname), "utf-8").then((s) => s.trim());
+      data = await this.#fs.readFile(toOsPath(pathname), "utf-8").then((s) => s.trim());
     } catch (e) {
       const nodeErr = e as NodeJS.ErrnoException;
       switch (nodeErr.code) {
@@ -457,7 +457,7 @@ export class Refs {
     let names;
     try {
       names = await this.#fs
-        .readdir(osPath(dirname))
+        .readdir(toOsPath(dirname))
         .then((names) => names.filter((name) => !EXCLUDE_DIRS.includes(name)));
     } catch (e) {
       const nodeErr = e as NodeJS.ErrnoException;
@@ -473,7 +473,7 @@ export class Refs {
 
     const symrefs: (SymRef | SymRef[])[] = [];
     for (const pathname of pathnames) {
-      if (await directory(this.#fs, osPath(pathname))) {
+      if (await directory(this.#fs, toOsPath(pathname))) {
         symrefs.push(await this.listRefs(pathname));
       } else {
         const relative = posixPath(path.relative(this.#pathname, pathname));
@@ -493,7 +493,7 @@ export class Refs {
     let prefix = null;
     for (const candidatePrefix of prefixies) {
       const candidate = posixJoin(candidatePrefix, name);
-      const exist = await exists(this.#fs, osPath(candidate));
+      const exist = await exists(this.#fs, toOsPath(candidate));
       if (exist) {
         prefix = candidate;
         break;

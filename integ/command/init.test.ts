@@ -1,5 +1,6 @@
-import * as fsCb from "fs";
-import * as path from "path";
+import * as fsCb from "node:fs";
+import * as os from "node:os";
+import * as path from "node:path";
 import * as assert from "power-assert";
 import * as T from "./helper";
 const fs = fsCb.promises;
@@ -20,7 +21,7 @@ describe("init", () => {
     const gitPath = path.join(t.repoPath, ".git");
     assert.equal(
       await fs.readFile(path.join(gitPath, "HEAD"), "utf-8"),
-      "ref: refs/heads/master\n",
+      `ref: refs/heads/master${os.EOL}`,
       "HEADファイル作成"
     );
 

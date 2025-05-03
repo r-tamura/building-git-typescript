@@ -1,8 +1,8 @@
 import * as Database from "../database";
 import { LockDenied } from "../refs";
 import { Environment } from "../types";
-import { asserts, asyncForEach, stripIndent } from "../util";
-import { PosixPath } from "../util/fs";
+import { asserts, stripIndent } from "../util";
+import { posixPath, PosixPath } from "../util/fs";
 import { MissingFile, NoPermission } from "../workspace";
 import { BaseCommand } from "./base";
 
@@ -20,7 +20,9 @@ export class Add extends BaseCommand {
     try {
       await this.repo.index.loadForUpdate();
       const pathnames = await this.expandedPaths();
-      await asyncForEach(this.addToIndex.bind(this), pathnames);
+      for (const pathname of pathnames) {
+        await this.addToIndex(pathname);
+      }
       await this.repo.index.writeUpdates();
     } catch (e) {
       switch ((e as Error).constructor) {
@@ -43,6 +45,7 @@ export class Add extends BaseCommand {
   }
 
   private async addToIndex(pathname: PosixPath) {
+    console.warn(`add ${pathname}`);
     const data = await this.repo.workspace.readFile(pathname);
     const stat = await this.repo.workspace.statFile(pathname);
 
@@ -54,15 +57,14 @@ export class Add extends BaseCommand {
   }
 
   private async expandedPaths(): Promise<PosixPath[]> {
-    const entryPaths = this.args;
-    const pathnameslist = await Promise.all(
+    const entryPaths = this.args.map(posixPath);
+    const pathNames = await Promise.all(
       entryPaths.map((entryPath) => {
-        const absPath = this.expandPathname(entryPath);
+        const absPath = this.expandPathnamePosix(entryPath);
         return this.repo.workspace.listFiles(absPath);
       }),
     );
-    // すべてPosixPathに変換
-    const pathnames = pathnameslist.flat().map((p) => p as PosixPath);
+    const pathnames = pathNames.flat().map((p) => posixPath(p));
     return pathnames;
   }
 

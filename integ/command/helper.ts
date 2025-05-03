@@ -86,7 +86,7 @@ export class TestUtil {
     };
   }
 
-  /** Assersion */
+  /** Assertion */
   async assertWorkspace(
     contents: Contents,
     repository: Repository = this.repo,
@@ -116,7 +116,7 @@ export class TestUtil {
     return await FileService.exists(fs, path.join(this.repoPath, filename));
   }
 
-  async assertNoent(filename: string) {
+  async assertNoEnt(filename: string) {
     assert.equal(await exists(fs, path.join(this.repoPath, filename)), false);
   }
 

@@ -6,8 +6,8 @@ import { Pager } from "../pager";
 import { Repository } from "../repository";
 import { createLogger, Logger } from "../services";
 import { Environment, EnvVars, Pathname } from "../types";
+import { posixPath, PosixPath } from "../util";
 import { asserts } from "../util/assert";
-import { osPath, type OsPath } from "../util/fs";
 import { Runnable } from "./types";
 
 /** process.exit 代替え */
@@ -38,7 +38,7 @@ export interface GitCommand {
 export abstract class BaseCommand<O extends Options = NoOptions>
   implements Runnable, GitCommand {
   /** 作業ディレクトリ */
-  protected dir: string;
+  protected workDir: PosixPath;
   /** ページャ-  */
   private pager: Pager | null = null;
   /** プロセスの出力がTTYか */
@@ -56,7 +56,7 @@ export abstract class BaseCommand<O extends Options = NoOptions>
 
   _repo!: Repository;
   constructor(public args: string[], public env: Environment) {
-    this.dir = env.process.cwd();
+    this.workDir = posixPath(env.process.cwd());
     this.envvars = env.process.env;
     this.isatty = env.process.stdout.isTTY;
     this.stdout = env.process.stdout;
@@ -66,8 +66,12 @@ export abstract class BaseCommand<O extends Options = NoOptions>
 
   abstract run(...args: string[]): Promise<void>;
 
-  expandPathname(pathname: Pathname): OsPath {
-    return osPath(path.resolve(this.dir, pathname));
+  expandPathnameOs(pathname: Pathname): Pathname {
+    return path.resolve(this.workDir, pathname);
+  }
+
+  expandPathnamePosix(pathname: PosixPath): PosixPath {
+    return posixPath(path.posix.resolve(this.workDir, pathname));
   }
 
   async editFile(pathname: Pathname, callback: EditCallback) {
@@ -112,7 +116,7 @@ export abstract class BaseCommand<O extends Options = NoOptions>
 
   get repo() {
     return (this._repo ??= new Repository(
-      path.join(this.dir, ".git"),
+      path.join(this.workDir, ".git"),
       this.env,
     ));
   }
