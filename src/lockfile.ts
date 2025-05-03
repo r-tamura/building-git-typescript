@@ -3,7 +3,7 @@ import * as path from "path";
 import { LockDenied } from "./refs";
 import { defaultFs, FileService } from "./services";
 import { IOHandle } from "./types";
-import { BaseError } from "./util";
+import { BaseError, osPath, posixPath, PosixPath } from "./util";
 export type LockfileEnvironment = {
   fs?: FileService;
 };
@@ -24,15 +24,15 @@ export class NoPermission extends BaseError {}
 export class StaleLock extends BaseError {}
 
 export class Lockfile implements IOHandle {
-  #filePath: string;
-  #lockPath: string;
+  #filePath: PosixPath;
+  #lockPath: PosixPath;
   #lock: promises.FileHandle | null;
   #fs: FileService;
-  constructor(path: string, env: LockfileEnvironment = {}) {
+  constructor(path: PosixPath, env: LockfileEnvironment = {}) {
     this.#filePath = path;
 
     const [basepath, _ext] = splitExt(path);
-    this.#lockPath = basepath + ".lock";
+    this.#lockPath = posixPath(basepath + ".lock");
 
     this.#lock = null;
 
@@ -46,7 +46,7 @@ export class Lockfile implements IOHandle {
     const flags = constants.O_RDWR | constants.O_CREAT | constants.O_EXCL;
     try {
       if (this.#lock === null) {
-        this.#lock = await this.#fs.open(this.#lockPath, flags);
+        this.#lock = await this.#fs.open(osPath(this.#lockPath), flags);
       }
     } catch (e) {
       const nodeErr = e as NodeJS.ErrnoException;
@@ -68,7 +68,7 @@ export class Lockfile implements IOHandle {
     this.throwOnStaleLock(this.#lock);
 
     await this.#lock.close();
-    await this.#fs.unlink(this.#lockPath);
+    await this.#fs.unlink(osPath(this.#lockPath));
     this.#lock = null;
   }
 
@@ -91,7 +91,7 @@ export class Lockfile implements IOHandle {
   async commit() {
     this.throwOnStaleLock(this.#lock);
     await this.#lock.close();
-    await this.#fs.rename(this.#lockPath, this.#filePath);
+    await this.#fs.rename(osPath(this.#lockPath), osPath(this.#filePath));
     this.#lock = null;
   }
 

@@ -1,7 +1,7 @@
 import * as assert from "power-assert";
 import { PathFilter, Trie } from "../path_filter";
 import { GitObject } from "../types";
-import { posixPath } from "../util";
+import { posixPath } from "../util/fs";
 import { Commit } from "./commit";
 import { Entry } from "./entry";
 import { Tree } from "./tree";
@@ -87,7 +87,7 @@ describe("TreeDiff#compareOids", () => {
       await diff.compareOids(a_oid, b_oid, filter);
 
       // Assert
-      assert.deepEqual(diff.changes.get("hello.txt"), expected);
+      assert.deepEqual(diff.changes.get(posixPath("hello.txt")), expected);
     });
   });
 
@@ -107,7 +107,7 @@ describe("TreeDiff#compareOids", () => {
     await diff.compareOids("3a3c4ec", null, filter);
 
     // Assert
-    assert.deepEqual(diff.changes.get("hello.txt"), [
+    assert.deepEqual(diff.changes.get(posixPath("hello.txt")), [
       new Entry("3a3c4ecaaa", 33188),
       null,
     ]);
@@ -128,7 +128,7 @@ describe("TreeDiff#compareOids", () => {
     await diff.compareOids(null, "3a3c4ecbbb", filter);
 
     // Assert
-    assert.deepEqual(diff.changes.get("hello.txt"), [
+    assert.deepEqual(diff.changes.get(posixPath("hello.txt")), [
       null,
       new Entry("3a3c4ecaaa", 33188),
     ]);

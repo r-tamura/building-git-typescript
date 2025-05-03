@@ -8,11 +8,10 @@ import {
   Dict,
   GitObjectParser,
   Nullable,
-  OID,
-  Pathname,
+  OID
 } from "../types";
 import { asserts } from "../util";
-import { PosixPath, toPathComponentsPosix } from "../util/fs";
+import { POSIX_PATH_ZERO, posixJoin, PosixPath, toPathComponentsPosix } from "../util/fs";
 import { Backends } from "./backends";
 import { Blob } from "./blob";
 import { Commit } from "./commit";
@@ -144,14 +143,14 @@ export class Database {
     }
     const entry = await this.loadTreeEntry(oid, pathname);
     const list: Dict<Entry> = {};
-    await this.buildList(list, entry, pathname ?? "");
+    await this.buildList(list, entry, pathname ?? POSIX_PATH_ZERO);
     return list;
   }
 
   private async buildList(
     list: Dict<Entry>,
     entry: Nullable<Entry>,
-    prefix: Pathname,
+    prefix: PosixPath,
   ) {
     if (!entry) {
       return;
@@ -167,7 +166,7 @@ export class Database {
     for (const [name, item] of Object.entries(tree.entries)) {
       // loadされたTreeはDict<Entry>
       const childEntry = item as Entry;
-      await this.buildList(list, childEntry, path.join(prefix, name));
+      await this.buildList(list, childEntry, posixJoin(prefix, name));
     }
   }
 

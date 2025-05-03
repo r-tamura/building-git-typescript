@@ -1,7 +1,7 @@
 import { Lockfile } from "../lockfile";
 import { readByLine } from "../services";
-import { Nullable, Pathname } from "../types";
-import { asserts, BaseError } from "../util";
+import { Nullable } from "../types";
+import { asserts, BaseError, PosixPath } from "../util";
 import { clone, first, isempty, last } from "../util/array";
 import { ObjectKeyHash } from "../util/collection";
 
@@ -24,11 +24,11 @@ export function validKey(key: SectionName) {
 }
 
 export class Config {
-  #pathname: Pathname;
+  #pathname: PosixPath;
   #lockfile: Lockfile;
   #lines: Nullable<ObjectKeyHash<NormalizedSection, Line[]>> = null;
 
-  constructor(pathname: Pathname) {
+  constructor(pathname: PosixPath) {
     this.#pathname = pathname;
     this.#lockfile = new Lockfile(pathname);
   }

@@ -1,6 +1,7 @@
-import { Stats } from "fs";
 import * as assert from "assert";
+import { Stats } from "fs";
 import { Entry } from "./entry";
+import { posixPath } from "./util/fs";
 
 describe("Entry#mode", () => {
   it.each([
@@ -13,7 +14,7 @@ describe("Entry#mode", () => {
     stats.mode = Number.parseInt(osMode, 8);
     // Act
     const entry = new Entry(
-      "/test/repo",
+      posixPath("/test/repo"),
       "cc628ccd10742baea8241c5924df992b5c019f71",
       stats,
     );

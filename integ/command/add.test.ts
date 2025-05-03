@@ -1,6 +1,5 @@
-import * as assert from "assert";
-import * as T from "./helper";
 import { stripIndent } from "../../src/util";
+import * as T from "./helper";
 
 const t = T.create();
 
@@ -9,7 +8,7 @@ describe("add", () => {
     const repo = t.repo;
     await repo.index.load();
     const actual: [number, string][] = repo.index.eachEntry().map((e) => [e.mode, e.name]);
-    assert.deepEqual(actual, expected);
+    expect(actual).toStrictEqual(expected);
   }
 
   beforeEach(t.beforeHook);

@@ -1,7 +1,7 @@
 import * as remotes from "../remotes";
 import { Environment, OID } from "../types";
 import { asserts, BaseError } from "../util";
-import { Base } from "./base";
+import { BaseCommand } from "./base";
 import * as fast_forward from "./shared/fast_forward";
 import * as receive_objects from "./shared/receive_objects";
 import * as remote_agent from "./shared/remote_agent";
@@ -11,7 +11,7 @@ const CAPABILITIES = ["no-thin", "report-status", "delete-refs"];
 
 type OldNewOidPair = [oldOid: OID | undefined, newOid: OID | undefined];
 
-export class ReceivePack extends Base {
+export class ReceivePack extends BaseCommand {
   stdin: NodeJS.Process["stdin"];
   #requests: Record<remotes.TargetRef, OldNewOidPair> = {};
   conn!: remotes.Protocol;

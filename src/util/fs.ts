@@ -18,7 +18,7 @@ function guessPathSeparator(pathname: Pathname): typeof path.sep {
   const includesWindowsPathSep = pathname.includes("\\");
   const includesUnixPathSep = pathname.includes("/");
   if (includesWindowsPathSep && includesUnixPathSep) {
-    throw new Error("path separator is ambiguous");
+    throw new Error(`path separator is ambiguous: '${pathname}'` );
   }
   if (includesWindowsPathSep) {
     return "\\";
@@ -86,6 +86,13 @@ export function descend(pathname: Pathname) {
  * ascendと同じですが、Unix形式のパスを返します
  * Windows形式のパスは変換できません
  * @returns Unix形式のパス名一覧
+ *
+ * @example ディレクトリの深さ2以上のパス(Unix形式)
+ *
+ * ```ts
+ * > ascendUnix("/home/username/a.txt")
+ * ["/home", "/home/username", "/home/username/a.txt"]
+ * ```
  */
 export function ascendUnix(pathname: Pathname): string[] {
   return descendUnix(pathname).reverse();
@@ -120,6 +127,11 @@ export function toPathComponentsPosix(pathname: PosixPath) {
 const posixPathSymbol = Symbol("Posix path branded type symbol");
 export type PosixPath = string & { [posixPathSymbol]: unknown }
 
+export function posixJoin(...paths: Pathname[]): PosixPath {
+  const p = path.posix.join(...paths);
+  return posixPath(p);
+}
+
 /**
  * POSIX形式のファイルパスを作成します
  * Windows形式のパスが渡されたときはPOSIX形式に変換されます
@@ -136,7 +148,7 @@ export function posixPath(pathname: Pathname): PosixPath {
       return pathname as PosixPath;
     case "\\": {
       // Windows形式のパスはUnix形式に変換する
-      const unixPath = pathname.split("\\").join("/");
+      const unixPath = pathname.replaceAll("\\", "/");
       return unixPath as PosixPath;
     }
     default:
@@ -144,18 +156,31 @@ export function posixPath(pathname: Pathname): PosixPath {
   }
 }
 
+export const POSIX_PATH_ZERO = posixPath("");
+
 const osPathSymbol = Symbol("OsPath");
 export type OsPath = string & { [osPathSymbol]: unknown };
 
 /**
+ * Posix形式のパスをOS形式のファイルパスを作成します
+ * 実行環境と同一形式のパスが渡されたときパスは変換されません
  *
- * @param pathname
+ * @param pathname ファイルパス
+ *
+ * @example Windows環境でPosix形式のパスを引数へ渡したとき
+ *
+ * ```ts
+ * import { osPath } from "./util/fs";
+ * const path = osPath(posixPath("/home/username/a.txt"));
+ * // => "C:\\home\\username\\a.txt"
+ * ```
+ *
  */
 export function osPath(pathname: Pathname): OsPath {
   const guessedSep = guessPathSeparator(pathname);
   asserts(guessedSep !== "\\", "アプリケーション内部ではPosix形式パスを利用してください");
 
-  const osPath = pathname.replace("/", path.sep);
+  const osPath = pathname.replaceAll("/", path.sep);
   return osPath as OsPath;
 }
 

@@ -1,14 +1,14 @@
 import arg = require("arg");
 import { InvalidRemote, RemoteName } from "../remotes";
 import { asserts } from "../util";
-import { Base } from "./base";
+import { BaseCommand } from "./base";
 
 interface Options {
   verbose: boolean;
   tracked: string[];
 }
 
-export class Remote extends Base<Options> {
+export class Remote extends BaseCommand<Options> {
   async run() {
     const subcommand = this.args.shift();
 

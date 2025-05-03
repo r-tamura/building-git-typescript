@@ -6,7 +6,7 @@ import { InvalidObject, Revision } from "../revision";
 import { asserts, BaseError } from "../util";
 import * as arrayUtil from "../util/array";
 import { shallowEqual } from "../util/object";
-import { Base } from "./base";
+import { BaseCommand } from "./base";
 import * as fast_forward from "./shared/fast_forward";
 
 interface Options {
@@ -23,7 +23,7 @@ interface Options {
 
 const UNSET = ":unset";
 
-export class Branch extends Base<Options> {
+export class Branch extends BaseCommand<Options> {
   async run() {
     if (this.options["upstream"]) {
       await this.setUpstreamBranch();
@@ -200,7 +200,7 @@ export class Branch extends Base<Options> {
   }
 
   private async branchRefs(): Promise<SymRef[]> {
-    const branches = await this.repo.refs.listBranchs();
+    const branches = await this.repo.refs.listBranches();
     const remotes = await this.repo.refs.listRemotes();
 
     if (this.options["all"]) {

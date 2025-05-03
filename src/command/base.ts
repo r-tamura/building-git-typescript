@@ -6,14 +6,15 @@ import { Pager } from "../pager";
 import { Repository } from "../repository";
 import { createLogger, Logger } from "../services";
 import { Environment, EnvVars, Pathname } from "../types";
-import { asserts } from "../util";
+import { asserts } from "../util/assert";
+import { osPath, type OsPath } from "../util/fs";
 import { Runnable } from "./types";
 
 /** process.exit 代替え */
 export class Exit {}
 
 export type BaseConstructor<O extends Options> = {
-  new (args: string[], env: Environment): Base<O>;
+  new (args: string[], env: Environment): BaseCommand<O>;
 };
 
 // TODO: 型定義見直し
@@ -34,7 +35,7 @@ export interface GitCommand {
   /** ロガー */
   logger: Logger;
 }
-export abstract class Base<O extends Options = NoOptions>
+export abstract class BaseCommand<O extends Options = NoOptions>
   implements Runnable, GitCommand {
   /** 作業ディレクトリ */
   protected dir: string;
@@ -65,8 +66,8 @@ export abstract class Base<O extends Options = NoOptions>
 
   abstract run(...args: string[]): Promise<void>;
 
-  expeandedPathname(pathname: Pathname) {
-    return path.resolve(this.dir, pathname);
+  expandPathname(pathname: Pathname): OsPath {
+    return osPath(path.resolve(this.dir, pathname));
   }
 
   async editFile(pathname: Pathname, callback: EditCallback) {

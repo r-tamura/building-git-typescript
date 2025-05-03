@@ -2,8 +2,7 @@ import { promises as fs } from "fs";
 import * as path from "path";
 import * as assert from "power-assert";
 import { rmrf } from "../services";
-import { Pathname } from "../types";
-import { stripIndent } from "../util";
+import { posixJoin, PosixPath, stripIndent } from "../util";
 import { Config, Conflict, SectionName } from "./config";
 
 const testDir = "./test-config";
@@ -18,7 +17,7 @@ afterEach(async () => {
 });
 
 describe("Config", () => {
-  let pathname: Pathname;
+  let pathname: PosixPath;
   let config: Config;
   async function openConfig() {
     const config = new Config(pathname);
@@ -27,7 +26,7 @@ describe("Config", () => {
   }
 
   beforeEach(async () => {
-    pathname = path.join(testDir, path.basename("config"));
+    pathname = posixJoin(testDir, path.basename("config"));
     config = await openConfig();
   });
 

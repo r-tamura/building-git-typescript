@@ -7,7 +7,7 @@ import { asserts, BaseError } from "../util";
 import * as array from "../util/array";
 import { nullify } from "../util/logic";
 import * as objectUtil from "../util/object";
-import { Base } from "./base";
+import { BaseCommand } from "./base";
 import * as fast_forward from "./shared/fast_forward";
 import * as remote_client from "./shared/remote_client";
 import { checkConnected } from "./shared/remote_common";
@@ -37,7 +37,7 @@ type Update = [
   new: OID | undefined,
 ];
 
-export class Push extends Base<Options> {
+export class Push extends BaseCommand<Options> {
   #pushUrl?: string;
   #fetchSpecs: string[] = [];
   #receiver?: string;

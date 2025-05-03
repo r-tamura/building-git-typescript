@@ -1,20 +1,20 @@
 import * as arg from "arg";
 import { Inputs, Resolve } from "../merge";
 import {
-  Error as NotInProgressError,
-  PendingCommit,
+    Error as NotInProgressError,
+    PendingCommit,
 } from "../repository/pending_commit";
 import { HEAD } from "../revision";
 import { asserts } from "../util";
-import { Base } from "./base";
+import { BaseCommand } from "./base";
 import {
-  CommitOptions,
-  CONFLICT_MESSAGE,
-  defineWriteCommitOptions,
-  pendingCommit,
-  readMessage,
-  resumeMerge,
-  writeCommit,
+    CommitOptions,
+    CONFLICT_MESSAGE,
+    defineWriteCommitOptions,
+    pendingCommit,
+    readMessage,
+    resumeMerge,
+    writeCommit,
 } from "./shared/write_commit";
 
 interface Options extends CommitOptions {
@@ -28,7 +28,7 @@ const COMMIT_NOTES = `
   Lines starting with '#' will be ignored, and an empty message aborts
   the commit.
 `;
-export class Merge extends Base<Options> {
+export class Merge extends BaseCommand<Options> {
   #inputs!: Inputs;
 
   pendingCommit!: PendingCommit;

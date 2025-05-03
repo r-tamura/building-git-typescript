@@ -7,13 +7,13 @@ import { RevList } from "../rev_list";
 import { CompleteCommit, Pathname } from "../types";
 import { asserts, includes, partition } from "../util";
 import { shallowEqual } from "../util/object";
-import { Base } from "./base";
+import { BaseCommand } from "./base";
 import {
-  definePrintDiffOptions,
-  NULL_OID,
-  printCombinedDiff,
-  printDiff,
-  Target,
+    definePrintDiffOptions,
+    NULL_OID,
+    printCombinedDiff,
+    printDiff,
+    Target,
 } from "./shared/print_diff";
 import arg = require("arg");
 
@@ -35,7 +35,7 @@ interface Options {
   remotes: boolean;
 }
 
-export class Log extends Base<Options> {
+export class Log extends BaseCommand<Options> {
   #blankLine = false;
   #reverseRefs!: Map<string, SymRef[]>;
   #currentRef!: SymRef;

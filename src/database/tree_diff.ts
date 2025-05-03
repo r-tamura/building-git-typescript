@@ -1,6 +1,6 @@
 import { PathFilter } from "../path_filter";
 import { OID } from "../types";
-import { asserts } from "../util";
+import { asserts, PosixPath } from "../util";
 import { Database } from "./database";
 import { Entry } from "./entry";
 import { EntryMap } from "./tree";
@@ -8,7 +8,7 @@ import { EntryMap } from "./tree";
 type A = Entry | null;
 type B = A;
 export type Change = [A, B];
-export type ChangeMap = Map<string, Change>;
+export type ChangeMap = Map<PosixPath, Change>;
 export class TreeDiff {
   #database: Database;
   changes: ChangeMap = new Map();

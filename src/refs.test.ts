@@ -7,9 +7,6 @@ import { Environment, InvalidBranch, LockDenied, Refs, symref } from "./refs";
 import { defaultFs, FileService } from "./services";
 import * as Service from "./services/FileService";
 
-// テスト用のパス比較ヘルパー - OSごとの違いを吸収
-const normalizePathForTest = (pathStr: string): string => pathStr;
-
 jest.mock("./lockfile");
 const MockedLockfile = (Lockfile as unknown) as jest.Mock<Partial<Lockfile>>;
 
@@ -61,20 +58,28 @@ describe("Refs#deleteBranch", () => {
   it("削除したファイルのOIDを返す", async () => {
     // Arrange
     const oid = "3a3c4ec0ae9589c881029c161dd129bcc318dc08";
-    const readFile = jest.fn().mockResolvedValueOnce(oid);
+    const unlink = jest.fn().mockResolvedValue(null);
+    const rm = jest.fn().mockResolvedValue(null);
     const env = mockEnv({
-      readFile,
-      unlink: jest.fn().mockResolvedValue(null),
-      rm: jest.fn().mockResolvedValue(null),
+      readFile: jest.fn().mockResolvedValueOnce(oid),
+      unlink,
+      rm,
     });
 
     // Act
     const refs = new Refs(".git", env);
-    const actual = await refs.deleteBranch("topic");    // Assert    assert.equal(
+    const actual = await refs.deleteBranch("topic");
+
+    // Assert
     assert.equal(
-      normalizePathForTest((readFile.mock.calls[0][0])),
+      unlink.mock.calls[0][0],
       path.join(".git", "refs", "heads", "topic"),
-      "symrefの読み込み"
+      "ブランチRefファイルの削除",
+    );
+    assert.equal(
+      rm.mock.calls[0][0],
+      path.join(".git", "refs", "heads"),
+      "ブランチが無くなったとき、/refs/headsディレクトリを削除",
       );
     assert.equal(actual, oid, "返り値");
   });
@@ -107,11 +112,11 @@ describe("Refs#listBranch", () => {
     const env: Environment = mockEnv({ readdir });
     // Act
     const refs = new Refs(".git", env);
-    const actual = await refs.listBranchs();
+    const actual = await refs.listBranches();
 
     // Assert
     assert.equal(
-      normalizePathForTest(readdir.mock.calls[0][0]),
+      readdir.mock.calls[0][0],
       path.join(".git", "refs", "heads"),
       "headsディレクトリ",
     );
@@ -136,7 +141,7 @@ describe("Refs#listBranch", () => {
 
     // Act
     const refs = new Refs(".git", env);
-    const actual = await refs.listBranchs();
+    const actual = await refs.listBranches();
 
     // Assert
     assert.deepEqual(actual, []);
@@ -205,8 +210,9 @@ describe("Refs#readRef", () => {
     afterAll(() => {
       spyServiceExists.mockRestore();
     });    it("ファイルパス", () => {
+      // OS依存パスでOK
       assert.equal(
-        normalizePathForTest(mockedReadFile.mock.calls[0][0]),
+        mockedReadFile.mock.calls[0][0],
         path.join(".git", "refs", "heads", "master")
       );
     });
@@ -370,7 +376,7 @@ describe("Refs#updateRef", () => {
       await refs.updateRef("heads/master", null);
     });    it("refが削除される", () => {
       assert.equal(
-        normalizePathForTest((mockedEnv.fs.unlink as jest.Mock).mock.calls[0][0]),
+        (mockedEnv.fs.unlink as jest.Mock).mock.calls[0][0],
         path.join(testRootPath, "heads", "master"),
         "削除されたパス"
       );

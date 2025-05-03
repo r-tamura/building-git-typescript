@@ -4,7 +4,7 @@ import { InvalidObject, Revision } from "../revision";
 import { OID } from "../types";
 import { asserts, BaseError } from "../util";
 import { shallowEqual } from "../util/object";
-import { Base } from "./base";
+import { BaseCommand } from "./base";
 
 const DETACHED_HEAD_MESSAGE = `You are in 'detached HEAD' state. You can look around, make experimental
 changes and commit them, and you can discard any commits you make in this
@@ -15,7 +15,7 @@ do so (now or later) by using the branch command. Example:
 
   jit branch <new-branch-name>
 `;
-export class Checkout extends Base {
+export class Checkout extends BaseCommand {
   #target!: string;
   #currentOid: OID | null = null;
   #targetOid!: OID;

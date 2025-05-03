@@ -1,15 +1,11 @@
-// filepath: d:\code\github.com\r-tamura\building-git-typescript\src\refs.ts
 import * as os from "os";
 import * as path from "path";
 import { Lockfile, MissingParent } from "./lockfile";
 import { defaultFs, directory, exists, FileService } from "./services";
 import { Nullable, OID, Pathname } from "./types";
-import { ascendUnix, asserts, BaseError, find } from "./util";
+import { ascendUnix, asserts, BaseError, find, PosixPath } from "./util";
+import { osPath, posixJoin, posixPath } from "./util/fs";
 import { nullify } from "./util/logic";
-
-// Path utility functions for Unix/OS path conversions
-const toUnixPath = (p: string): string => p.split(path.sep).join('/');
-const toOsPath = (p: string): string => p.split('/').join(path.sep);
 
 export interface Environment {
   fs?: FileService;
@@ -114,37 +110,37 @@ export class Ref {
 }
 
 // Gitリファレンスのパターン
-const SYMREF = /^ref: (.+)$/;
+const SYMREF_PATTERN = /^ref: (.+)$/;
 
 export const REFS_DIR = "refs";
-export const HEADS_DIR = path.join(REFS_DIR, "heads");
-export const REMOTES_DIR = path.join(REFS_DIR, "remotes");
+export const HEADS_DIR = posixJoin(REFS_DIR, "heads");
+export const REMOTES_DIR = posixJoin(REFS_DIR, "remotes");
 
 export class LockDenied extends BaseError {}
 export class InvalidBranch extends BaseError {}
 export class StaleValue extends BaseError {}
 export class Refs {
-  #pathname: Pathname;
-  #refspath: Pathname;
-  #headspath: Pathname;
-  #remotesPath: Pathname;
+  #pathname: PosixPath;
+  #refsPath: PosixPath;
+  #headsPath: PosixPath;
+  #remotesPath: PosixPath;
   #fs: FileService;
-  constructor(pathname: string, env: Environment = {}) {
-    this.#pathname = toUnixPath(pathname);
-    this.#refspath = toUnixPath(path.join(pathname, REFS_DIR));
-    this.#headspath = toUnixPath(path.join(pathname, HEADS_DIR));
-    this.#remotesPath = toUnixPath(path.join(pathname, REMOTES_DIR));
+  constructor(pathname: Pathname, env: Environment = {}) {
+    this.#pathname = posixPath(pathname);
+    this.#refsPath = posixJoin(this.#pathname, REFS_DIR);
+    this.#headsPath = posixJoin(this.#pathname, HEADS_DIR);
+    this.#remotesPath = posixJoin(this.#pathname, REMOTES_DIR);
     this.#fs = env.fs ?? defaultFs;
   }
 
   async createBranch(branchName: string, startOid: string) {
-    const pathname = toUnixPath(path.join(this.#headspath, branchName));
+    const pathname = posixJoin(this.#headsPath, branchName);
 
     if (INVALID_BRANCH_NAME_PATTERNS.some((r) => r.test(branchName))) {
       throw new InvalidBranch(`'${branchName}' is not a valid branch name.`);
     }
 
-    if (await exists(this.#fs, toOsPath(pathname))) {
+    if (await exists(this.#fs, osPath(pathname))) {
       throw new InvalidBranch(`A branch named '${branchName}' already exists.`);
     }
 
@@ -156,7 +152,7 @@ export class Refs {
    * ソースが指定されないときはHEADが参照しているrefを取得します。
    */
   async currentRef(source: string = HEAD): Promise<SymRef> {
-    const ref = await this.readOidOrSymRef(toUnixPath(path.join(this.#pathname, source)));
+    const ref = await this.readOidOrSymRef(posixJoin(this.#pathname, source));
 
     switch (ref?.type) {
       case "symref":
@@ -168,8 +164,8 @@ export class Refs {
   }
 
   async deleteBranch(branchName: string) {
-    const pathname = toUnixPath(path.join(this.#headspath, branchName));
-    const lockfile = new Lockfile(toOsPath(pathname));
+    const pathname = posixJoin(this.#headsPath, branchName);
+    const lockfile = new Lockfile(pathname);
     await lockfile.holdForUpdate();
 
     let oid;
@@ -178,16 +174,12 @@ export class Refs {
       if (oid === null) {
         throw new InvalidBranch(`branch '${branchName}' not found.`);
       }
-      await this.#fs.unlink(toOsPath(pathname));
+      await this.#fs.unlink(osPath(pathname));
     } finally {
       await lockfile.rollback();
     }
     await this.deleteParentDirectories(pathname);
     return oid;
-  }
-
-  async listBranchs() {
-    return this.listRefs(this.#headspath);
   }
 
   async reverseRefs() {
@@ -209,11 +201,11 @@ export class Refs {
   }
 
   async setHead(revision: string, oid: OID) {
-    const head = toUnixPath(path.join(this.#pathname, HEAD));
-    const headpath = toUnixPath(path.join(this.#headspath, revision));
+    const head = posixJoin(this.#pathname, HEAD);
+    const headpath = posixJoin(this.#headsPath, revision);
 
-    if (await exists(this.#fs, toOsPath(headpath))) {
-      const relative = toUnixPath(path.relative(this.#pathname, headpath));
+    if (await exists(this.#fs, osPath(headpath))) {
+      const relative = posixPath(path.relative(this.#pathname, headpath));
       await this.updateRefFile(head, `ref: ${relative}`);
     } else {
       await this.updateRefFile(head, oid);
@@ -230,13 +222,25 @@ export class Refs {
   }
 
   /**
+   * HEADをSymbolic Refで更新します
+   * @param ref
+   * @example
+   * ```ts
+   * const refs = new Refs("/path/to/repo/.git");
+   */
+  async setHeadSymRef(ref: PosixPath) {
+    const headContent = `ref: ${ref}`;
+    return this.updateHead(headContent);
+  }
+
+  /**
    * 指定された名前のrefのオブジェクトIDを更新します
    * @param name ref名
    * @param oid オブジェクトID
    */
   async updateRef(name: string, oid: Nullable<OID>): Promise<void> {
     return this.updateRefFile(
-      toUnixPath(path.join(this.#pathname, name)),
+      posixJoin(this.#pathname, name),
       oid === null ? undefined : oid,
     );
   }
@@ -253,7 +257,7 @@ export class Refs {
     oldOid: OID | undefined,
     newOid: OID | undefined,
   ): Promise<void> {
-    const refpath = toUnixPath(path.join(this.#pathname, name));
+    const refpath = posixJoin(this.#pathname, name);
     await this.updateRefFile(refpath, newOid, {
       onLockfileCreated: async () => {
         const currentOid = await this.readSymRef(refpath);
@@ -265,13 +269,13 @@ export class Refs {
   }
 
   private async updateRefFile(
-    pathname: Pathname,
+    pathname: PosixPath,
     oid: OID | undefined,
     { retry = null, onLockfileCreated }: UpdateReFileOptions = {},
   ): Promise<void> {
     let lockfile;
     try {
-      lockfile = new Lockfile(toOsPath(pathname), { fs: this.#fs });
+      lockfile = new Lockfile(pathname, { fs: this.#fs });
       await lockfile.holdForUpdate();
 
       if (onLockfileCreated) {
@@ -281,7 +285,7 @@ export class Refs {
       if (oid !== undefined) {
         await this.writeLockfile(lockfile, oid);
       } else {
-        await this.#fs.unlink(toOsPath(pathname)).catch((e: NodeJS.ErrnoException) => {
+        await this.#fs.unlink(osPath(pathname)).catch((e: NodeJS.ErrnoException) => {
           if (e.code === "ENOENT") {
             return;
           }
@@ -298,7 +302,7 @@ export class Refs {
             await lockfile?.rollback();
             throw e;
           }
-          const dirPath = toOsPath(path.dirname(pathname));
+          const dirPath = osPath(path.dirname(pathname));
           await this.#fs.mkdir(dirPath, { recursive: true });
           await this.updateRefFile(pathname, oid, {
             retry: retry ? retry - 1 : 1,
@@ -312,14 +316,14 @@ export class Refs {
     }
   }
 
-  private async deleteParentDirectories(pathname: Pathname) {
-    for (const dirname of ascendUnix(path.dirname(pathname))) {
+  private async deleteParentDirectories(pathname: PosixPath) {
+    for (const dirname of ascendUnix(path.posix.dirname(pathname))) {
       if (dirname === this.headPath) {
         break;
       }
 
       const e = await this.#fs
-        .rm(toOsPath(dirname))
+        .rm(osPath(dirname))
         .catch((e: NodeJS.ErrnoException) => e);
 
       if (e && e.code === "ENOTEMPTY") {
@@ -329,10 +333,10 @@ export class Refs {
   }
 
   private async updateSymRef(
-    pathname: Pathname,
+    pathname: PosixPath,
     oid: OID,
-  ): Promise<Nullable<string>> {
-    const lockfile = new Lockfile(toOsPath(pathname));
+  ): Promise<string | null> {
+    const lockfile = new Lockfile(pathname);
     await lockfile.holdForUpdate();
     const ref = await this.readOidOrSymRef(pathname);
 
@@ -342,7 +346,7 @@ export class Refs {
     }
 
     try {
-      return this.updateSymRef(toUnixPath(path.join(this.#pathname, ref.path)), oid);
+      return this.updateSymRef(posixJoin(this.#pathname, ref.path), oid);
     } finally {
       await lockfile.rollback();
     }
@@ -357,8 +361,8 @@ export class Refs {
   /**
    * HEADのデータを読み込みます。HEADファイルが存在しない場合はnullを返します。
    */
-  async readHead() {
-    return this.readSymRef(toUnixPath(path.join(this.#pathname, HEAD)));
+  async readHead(): Promise<string | null> {
+    return this.readSymRef(posixJoin(this.#pathname, HEAD));
   }
 
   /**
@@ -366,10 +370,10 @@ export class Refs {
    *  ファイルが存在しない時は、nullを返します。
    *  @pathname refファイルパス
    */
-  async readOidOrSymRef(pathname: Pathname): Promise<SymRef | Ref | null> {
+  async readOidOrSymRef(pathname: PosixPath): Promise<SymRef | Ref | null> {
     let data: string;
     try {
-      data = await this.#fs.readFile(toOsPath(pathname), "utf-8").then((s) => s.trim());
+      data = await this.#fs.readFile(osPath(pathname), "utf-8").then((s) => s.trim());
     } catch (e) {
       const nodeErr = e as NodeJS.ErrnoException;
       switch (nodeErr.code) {
@@ -379,7 +383,7 @@ export class Refs {
           throw e;
       }
     }
-    const match = SYMREF.exec(data);
+    const match = SYMREF_PATTERN.exec(data);
     return match ? symref(this, match[1]) : ref(data);
   }
 
@@ -389,10 +393,10 @@ export class Refs {
   }
 
   async readSymRef(name: string): Promise<OID | null> {
-    const ref = await this.readOidOrSymRef(name);
+    const ref = await this.readOidOrSymRef(posixPath(name));
     switch (ref?.type) {
       case "symref":
-        return this.readSymRef(toUnixPath(path.join(this.#pathname, ref.path)));
+        return this.readSymRef(posixJoin(this.#pathname, ref.path));
       case "ref":
         return ref.oid;
       default:
@@ -400,22 +404,22 @@ export class Refs {
     }
   }
 
-  shortName(pathname: Pathname): string {
-    const fullPath = toUnixPath(path.join(this.#pathname, pathname));
+  shortName(pathname: string): string {
+    const fullPath = posixJoin(this.#pathname, pathname);
     const prefix = find(
-      [this.#remotesPath, this.#headspath, this.#pathname],
+      [this.#remotesPath, this.#headsPath, this.#pathname],
       (dir) => {
         return ascendUnix(path.dirname(fullPath)).some((parent) => parent === dir);
       },
     );
     asserts(prefix != null, "nullありあえない");
-    return toUnixPath(path.relative(prefix, fullPath));
+    return posixPath(path.relative(prefix, fullPath));
   }
 
   async longName(ref: string): Promise<string> {
     const pathname = await this.pathForName(ref);
     if (pathname) {
-      return toUnixPath(path.relative(this.#pathname, pathname));
+      return posixPath(path.relative(this.#pathname, pathname));
     }
 
     throw new InvalidBranch(
@@ -428,12 +432,12 @@ export class Refs {
    */
   async listAllRefs(): Promise<SymRef[]> {
     const head = symref(this, HEAD);
-    const result = [head, ...(await this.listRefs(this.#refspath))];
+    const result = [head, ...(await this.listRefs(this.#refsPath))];
     return result;
   }
 
   async listBranches(): Promise<SymRef[]> {
-    return await this.listRefs(this.#headspath);
+    return await this.listRefs(this.#headsPath);
   }
 
   async listRemotes(): Promise<SymRef[]> {
@@ -441,19 +445,19 @@ export class Refs {
   }
 
   private get headPath() {
-    return toUnixPath(path.join(this.#pathname, HEAD));
+    return posixJoin(this.#pathname, HEAD);
   }
 
   /**
    * 指定されたディレクトリないの全てのrefのリストを取得します
    * @param dirname refsディレクトリ
    */
-  private async listRefs(dirname: Pathname): Promise<SymRef[]> {
+  private async listRefs(dirname: PosixPath): Promise<SymRef[]> {
     const EXCLUDE_DIRS = [".", ".."];
     let names;
     try {
       names = await this.#fs
-        .readdir(toOsPath(dirname))
+        .readdir(osPath(dirname))
         .then((names) => names.filter((name) => !EXCLUDE_DIRS.includes(name)));
     } catch (e) {
       const nodeErr = e as NodeJS.ErrnoException;
@@ -465,14 +469,14 @@ export class Refs {
       }
     }
 
-    const pathnames = names.map((name) => toUnixPath(path.join(dirname, name)));
+    const pathnames = names.map((name) => posixPath(path.join(dirname, name)));
 
     const symrefs: (SymRef | SymRef[])[] = [];
     for (const pathname of pathnames) {
-      if (await directory(this.#fs, toOsPath(pathname))) {
+      if (await directory(this.#fs, osPath(pathname))) {
         symrefs.push(await this.listRefs(pathname));
       } else {
-        const relative = toUnixPath(path.relative(this.#pathname, pathname));
+        const relative = posixPath(path.relative(this.#pathname, pathname));
         symrefs.push(symref(this, relative));
       }
     }
@@ -482,14 +486,14 @@ export class Refs {
   private async pathForName(name: string) {
     const prefixies = [
       this.#pathname,
-      this.#refspath,
-      this.#headspath,
+      this.#refsPath,
+      this.#headsPath,
       this.#remotesPath,
     ];
     let prefix = null;
     for (const candidatePrefix of prefixies) {
-      const candidate = toUnixPath(path.join(candidatePrefix, name));
-      const exist = await exists(this.#fs, toOsPath(candidate));
+      const candidate = posixJoin(candidatePrefix, name);
+      const exist = await exists(this.#fs, osPath(candidate));
       if (exist) {
         prefix = candidate;
         break;

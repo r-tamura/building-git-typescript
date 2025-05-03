@@ -3,7 +3,7 @@ import * as ConfigLib from "../config";
 import { SectionName } from "../config";
 import { Pathname } from "../types";
 import { asserts, compact, isempty } from "../util";
-import { Base } from "./base";
+import { BaseCommand } from "./base";
 
 interface Options {
   /** ファイル環境名かファイルパス */
@@ -15,7 +15,7 @@ interface Options {
   unset_all?: string;
   remove_section?: string;
 }
-export class Config extends Base<Options> {
+export class Config extends BaseCommand<Options> {
   async run() {
     if (this.options["add"]) {
       await this.addVariable(this.options["add"]);

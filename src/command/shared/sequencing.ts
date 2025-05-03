@@ -7,7 +7,7 @@ import { Command, Sequencer } from "../../repository/sequencer";
 import { CompleteCommit, Nullable } from "../../types";
 import { asserts, assertsComplete } from "../../util/assert";
 import { isObject } from "../../util/object";
-import { Base } from "../base";
+import { BaseCommand } from "../base";
 import * as WriteCommit from "./write_commit";
 
 const CONFLICT_NOTES = `  after resolving the conflicts, mark the corrected paths
@@ -27,7 +27,7 @@ export interface Sequence {
   revert?: (commit: CompleteCommit) => Promise<void>;
 }
 
-export type SequenceCmmand = Base<Options> & Sequence;
+export type SequenceCmmand = BaseCommand<Options> & Sequence;
 
 export async function run(cmd: SequenceCmmand & WriteCommit.CommitPendable) {
   switch (cmd.options["mode"]) {
@@ -100,7 +100,7 @@ export async function resolveMerge(inputs: Resolvable, cmd: SequenceCmmand) {
   await cmd.repo.index.writeUpdates();
 }
 
-export async function finishCommit(commit: Commit, cmd: Base) {
+export async function finishCommit(commit: Commit, cmd: BaseCommand) {
   await cmd.repo.database.store(commit);
   assertsComplete(commit, "objectsへ保存されたコミットはOIDを持つ");
   await cmd.repo.refs.updateHead(commit.oid);

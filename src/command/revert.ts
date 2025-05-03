@@ -1,23 +1,23 @@
 import * as arg from "arg";
+import { Commit } from "../database";
+import { CherryPick } from "../merge";
+import { MergeType, PendingCommit } from "../repository/pending_commit";
 import { Sequencer } from "../repository/sequencer";
 import { RevList } from "../rev_list";
-import { CompleteCommit, Nullable } from "../types";
-import { Base } from "./base";
-import * as Sequencing from "./shared/sequencing";
 import { HEAD } from "../revision";
-import { asserts } from "../util/assert";
-import { CherryPick } from "../merge";
+import { CompleteCommit, Nullable } from "../types";
 import { stripIndent } from "../util";
-import {
-  commitMessagePath,
-  currentAuthor,
-  writeTree,
-} from "./shared/write_commit";
+import { asserts } from "../util/assert";
+import { BaseCommand } from "./base";
 import { COMMIT_NOTES } from "./commit";
-import { MergeType, PendingCommit } from "../repository/pending_commit";
-import { Commit } from "../database";
+import * as Sequencing from "./shared/sequencing";
+import {
+    commitMessagePath,
+    currentAuthor,
+    writeTree,
+} from "./shared/write_commit";
 
-export class Revert extends Base<Sequencing.Options> {
+export class Revert extends BaseCommand<Sequencing.Options> {
   pendingCommit!: PendingCommit;
   #sequencer!: Sequencer;
   async run() {

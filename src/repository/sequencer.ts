@@ -7,6 +7,7 @@ import { ORIG_HEAD } from "../refs";
 import { FileService, rmrf } from "../services";
 import { CompleteCommit, Nullable, Pathname } from "../types";
 import { asserts, BaseError, splitByLine, strip } from "../util";
+import { posixPath } from "../util/fs";
 import { Repository } from "./repository";
 const fs = fsCallback.promises;
 
@@ -36,7 +37,7 @@ export class Sequencer {
     this.#abortPath = path.posix.join(this.#pathname, "abort-safety");
     this.#headPath = path.posix.join(this.#pathname, "head");
     this.#todoPath = path.posix.join(this.#pathname, "todo");
-    this.#config = new Config(path.posix.join(this.#pathname, "opts"));
+    this.#config = new Config(posixPath(path.posix.join(this.#pathname, "opts")));
     this.#fs = env.fs ?? fs;
   }
 
@@ -80,7 +81,7 @@ export class Sequencer {
     if (!stat.isDirectory()) {
       return;
     }
-    this.#todoFile = new Lockfile(this.#todoPath);
+    this.#todoFile = new Lockfile(posixPath(this.#todoPath));
     await this.#todoFile.holdForUpdate();
   }
 
@@ -144,7 +145,7 @@ export class Sequencer {
   }
 
   private async writeFile(pathname: Pathname, content: string) {
-    const lockfile = new Lockfile(pathname);
+    const lockfile = new Lockfile(posixPath(pathname));
     await lockfile.holdForUpdate();
     await lockfile.write(content);
     await lockfile.write("\n");

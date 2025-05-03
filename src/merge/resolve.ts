@@ -4,6 +4,7 @@ import { ModeNumber } from "../entry";
 import { Repository } from "../repository";
 import { OID, Pathname } from "../types";
 import { ascend, asserts, first } from "../util";
+import { posixPath } from "../util/fs";
 import { Diff3 } from "./diff3";
 import { CherryPick, Inputs } from "./inputs";
 
@@ -101,12 +102,13 @@ export class Resolve {
     }
 
     // (1)
-    if (!this.#leftDiff.has(pathname)) {
-      this.#cleanDiff.set(pathname, [base, right]);
+    const pPath = posixPath(pathname);
+    if (!this.#leftDiff.has(pPath)) {
+      this.#cleanDiff.set(pPath, [base, right]);
       return;
     }
 
-    const left = this.#leftDiff.get(pathname)![1];
+    const left = this.#leftDiff.get(pPath)![1];
     // (2)
     const areBothDeleted = left === right;
     const areBothChangedSameWay = right !== null && left?.euqals(right);
@@ -131,14 +133,14 @@ export class Resolve {
     );
 
     // (4)
-    this.#cleanDiff.set(pathname, [left, new Entry(oid, mode)]);
+    this.#cleanDiff.set(pPath, [left, new Entry(oid, mode)]);
 
     // (5)
     if (oidOk && modeOk) {
       return;
     }
-    this.#conflicts.set(pathname, [base, left, right]);
-    this.logConflict(pathname);
+    this.#conflicts.set(pPath, [base, left, right]);
+    this.logConflict(pPath);
   }
 
   private merge3<T extends number | string>(
@@ -231,7 +233,8 @@ export class Resolve {
     branchName: string,
   ) {
     for (const parent of ascend(path.dirname(pathname))) {
-      const [oldItem, newItem] = diff.get(parent) ?? [null, null];
+      const pParent = posixPath(parent);
+      const [oldItem, newItem] = diff.get(pParent) ?? [null, null];
       if (!newItem) {
         return;
       }
@@ -247,16 +250,16 @@ export class Resolve {
         default:
           throw new Error(`invalid branch name: '${branchName}'`);
       }
-      this.#conflicts.set(parent, conflict);
+      this.#conflicts.set(pParent, conflict);
 
-      this.#cleanDiff.delete(parent);
-      const rename = `${parent}~${branchName}`;
+      this.#cleanDiff.delete(pParent);
+      const rename = `${pParent}~${branchName}`;
       this.#untracked.set(rename, newItem);
 
-      if (!diff.get(pathname)) {
+      if (!diff.get(posixPath(pathname))) {
         this.log(`Adding ${pathname}`);
       }
-      this.logConflict(parent, rename);
+      this.logConflict(pParent, rename);
     }
   }
 

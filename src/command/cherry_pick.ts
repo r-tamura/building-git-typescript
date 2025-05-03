@@ -1,18 +1,18 @@
 import * as arg from "arg";
-import { Base } from ".";
+import { BaseCommand } from ".";
 import { Commit } from "../database";
 import * as Merge from "../merge";
 import { PendingCommit } from "../repository/pending_commit";
 import { Sequencer } from "../repository/sequencer";
-import { HEAD } from "../revision";
 import { RevList } from "../rev_list";
+import { HEAD } from "../revision";
 import { CompleteCommit } from "../types";
 import { asserts } from "../util/assert";
 import { reverse } from "../util/asynciter";
 import * as Sequencing from "./shared/sequencing";
 import { currentAuthor, writeTree } from "./shared/write_commit";
 
-export class CherryPick extends Base<Sequencing.Options> {
+export class CherryPick extends BaseCommand<Sequencing.Options> {
   pendingCommit!: PendingCommit;
   #sequencer!: Sequencer;
   async run() {

@@ -6,6 +6,7 @@ import { Refs, SymRef } from "../refs";
 import { Remotes } from "../remotes";
 import { FileService, Process } from "../services";
 import { Nullable, OID, Pathname } from "../types";
+import { posixJoin } from "../util/fs";
 import { Workspace } from "../workspace";
 import { Divergence } from "./divergence";
 import { HardReset } from "./hard_reset";
@@ -31,13 +32,13 @@ export class Repository {
   constructor(public gitPath: Pathname, public env: RepositoryEnv) {}
   get database() {
     return (this.#database ??= new Database(
-      path.posix.join(this.gitPath, "objects"),
+      posixJoin(this.gitPath, "objects"),
       this.env,
     ));
   }
   get index() {
     return (this.#index ??= new Index(
-      path.posix.join(this.gitPath, "index"),
+      posixJoin(this.gitPath, "index"),
       this.env,
     ));
   }

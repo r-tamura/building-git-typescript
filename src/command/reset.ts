@@ -5,7 +5,7 @@ import { OID, Pathname } from "../types";
 import { isempty } from "../util/array";
 import { asserts } from "../util/assert";
 import { posixPath } from "../util/fs";
-import { Base } from "./base";
+import { BaseCommand } from "./base";
 
 /** resetモード */
 type Mode = "soft" | "mixed" | "hard";
@@ -14,7 +14,7 @@ interface Options {
   mode: Mode;
 }
 
-export class Reset extends Base<Options> {
+export class Reset extends BaseCommand<Options> {
   #commitOid!: OID;
 
   async run() {
@@ -75,11 +75,11 @@ export class Reset extends Base<Options> {
       pathname ? posixPath(pathname) : undefined,
     );
     if (pathname) {
-      await this.repo.index.remove(pathname);
+      await this.repo.index.remove(posixPath(pathname));
     }
 
-    for (const [pathname, entry] of Object.entries(listing)) {
-      this.repo.index.addFromDb(pathname, entry);
+    for (const [p, entry] of Object.entries(listing)) {
+      this.repo.index.addFromDb(posixPath(p), entry);
     }
   }
 

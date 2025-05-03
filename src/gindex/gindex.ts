@@ -7,7 +7,7 @@ import * as Database from "../database";
 import { Lockfile, LockfileEnvironment } from "../lockfile";
 import { FileService, defaultFs } from "../services";
 import { OID, Pathname } from "../types";
-import { Invalid, ObjectKeyHash, ObjectSet, some, times } from "../util";
+import { Invalid, ObjectKeyHash, ObjectSet, PosixPath, some, times } from "../util";
 import { Checksum } from "./checksum";
 import { BASE, Entry, Key, LEFT, RIGHT, STAGES, Stage } from "./entry";
 
@@ -18,21 +18,21 @@ export class Index {
   static readonly SIGNATURE = "DIRC";
   static readonly VERSION = 2;
 
-  #pathname: Pathname;
+  #pathname: PosixPath;
   #entries: IndexEntryMap = new ObjectKeyHash(serialize, deserialize);
   #keys: ObjectSet<Key> = new ObjectSet(serialize, deserialize);
   #parents: Map<string, Set<string>> = new Map();
   #lockfile: Lockfile;
   #changed = false;
   #fs: FileService;
-  constructor(pathname: Pathname, env: LockfileEnvironment = {}) {
+  constructor(pathname: PosixPath, env: LockfileEnvironment = {}) {
     this.#pathname = pathname;
     this.clear();
     this.#lockfile = new Lockfile(pathname, env);
     this.#fs = env.fs ?? defaultFs;
   }
 
-  add(pathname: Pathname, oid: OID, stat: Stats) {
+  add(pathname: PosixPath, oid: OID, stat: Stats) {
 
     for (const stage of [BASE, LEFT, RIGHT] as const) {
       this.removeEntryWithStage(pathname, stage)
@@ -43,7 +43,7 @@ export class Index {
     this.#changed = true;
   }
 
-  addFromDb(pathname: Pathname, item: Database.Entry) {
+  addFromDb(pathname: PosixPath, item: Database.Entry) {
     this.storeEntry(Entry.createFromDb(pathname, item, 0));
     this.#changed = true;
   }
@@ -93,12 +93,12 @@ export class Index {
    * 指定されたディレクトリパスの子要素を配列で返します
    * @param pathname 親ディレクトリパス
    */
-  childPaths(pathname: Pathname) {
+  childPaths(pathname: PosixPath) {
     const childs = this.#parents.get(pathname);
     return childs ? Array.from(childs) : [];
   }
 
-  entryForPath(pathname: Pathname, stage: Stage = 0): Entry | null {
+  entryForPath(pathname: PosixPath, stage: Stage = 0): Entry | null {
     return this.#entries.get([pathname, stage]) ?? null;
   }
 

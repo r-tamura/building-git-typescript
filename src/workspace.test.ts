@@ -4,7 +4,9 @@ import * as assert from "power-assert";
 import { assertAsyncError, ENOENT, mockFsError } from "./__test__";
 import { defaultFs } from "./services";
 import { Pathname } from "./types";
-import { posixPath, PosixPath, toPathComponentsPosix } from "./util";
+import { toPathComponentsPosix } from "./util";
+import { posixJoin, posixPath, PosixPath } from "./util/fs";
+// (重複import削除)
 import { Environment, MissingFile, NoPermission, Workspace } from "./workspace";
 
 jest.mock("fs");
@@ -104,7 +106,7 @@ const fakeStat = jest
   });
 
 describe("WorkSpace#listFiles", () => {
-  const testPath = "test";
+  const testPath = posixPath("test");
   const env = ({
     fs: {
       ...defaultFs,
@@ -118,19 +120,19 @@ describe("WorkSpace#listFiles", () => {
 
     // Act
     const ws = new Workspace(testPath, env);
-    const actual = await ws.listFiles(path.posix.join("test", "world.txt"));
+    const actual = await ws.listFiles(posixJoin("test", "world.txt"));
 
     // Assert
-    const expected = ["world.txt"];
+    const expected = [posixPath("world.txt")];
     assert.deepEqual(actual, expected);
   });
   it("'.', '..', '.git'以外のファイルを全て返す", async () => {
     // Act
     const ws = new Workspace(testPath, env);
-    const actual = await ws.listFiles(path.posix.join("test", "dir_a"));
+    const actual = await ws.listFiles(posixJoin("test", "dir_a"));
 
     // Assert
-    const expected = [path.posix.join("dir_a", "world_a.txt"), path.posix.join("dir_a", "hello_a.txt")];
+    const expected = [posixJoin("dir_a", "world_a.txt"), posixJoin("dir_a", "hello_a.txt")];
     assert.deepStrictEqual(actual, expected);
   });
   it("ディレクトリが階層構造になっているとき、全てのファイルパスを階層構造のないリストで返す", async () => {
@@ -140,11 +142,11 @@ describe("WorkSpace#listFiles", () => {
 
     // Assert
     const expected = [
-      "world.txt",
-      "hello.txt",
-      path.posix.join("dir_a", "world_a.txt"),
-      path.posix.join("dir_a", "hello_a.txt"),
-      path.posix.join("dir_b", "hello_b.txt"),
+      posixPath("world.txt"),
+      posixPath("hello.txt"),
+      posixJoin("dir_a", "world_a.txt"),
+      posixJoin("dir_a", "hello_a.txt"),
+      posixJoin("dir_b", "hello_b.txt"),
     ];
     assert.deepStrictEqual(actual, expected);
   });
@@ -161,7 +163,7 @@ describe("WorkSpace#listFiles", () => {
     } as unknown) as Environment;
 
     // Act
-    const ws = new Workspace(path.posix.join("test", "noent.txt"), env);
+    const ws = new Workspace(posixJoin("test", "noent.txt"), env);
 
     // Assert
     await expect(ws.listFiles()).rejects.toThrow(MissingFile);
@@ -179,13 +181,13 @@ describe("Workspace#readFile", () => {
     // Arrange
 
     // Act
-    const ws = new Workspace("/test/jit", {
+    const ws = new Workspace(posixPath("/test/jit"), {
       fs: { ...defaultFs, readFile: mockedReadFile },
     });
-    actual = await ws.readFile(path.posix.join("src", "index.js"));  });
+    actual = await ws.readFile(posixJoin("src", "index.js"));  });
   // Assert
   it("ファイルパス", () => {
-    assert.equal(mockedReadFile.mock.calls[0][0], path.posix.join("/test/jit", "src/index.js"));
+    assert.equal(mockedReadFile.mock.calls[0][0], posixJoin("/test/jit", "src/index.js"));
   });
   it("ファイルの全データを返す", () => {
     const expected = testContent;

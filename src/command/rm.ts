@@ -4,7 +4,7 @@ import { isempty } from "../util/array";
 import { asserts } from "../util/assert";
 import { Runtime } from "../util/error";
 import { posixPath } from "../util/fs";
-import { Base, Exit } from "./base";
+import { BaseCommand, Exit } from "./base";
 import arg = require("arg");
 
 interface Options {
@@ -17,7 +17,7 @@ const BOTH_CHANGED = "staged content different from both the file and the HEAD";
 const INDEX_CHANGED = "changes staged in the index";
 const WORKSPACE_CHANGED = "local modifications";
 
-export class Rm extends Base<Options> {
+export class Rm extends BaseCommand<Options> {
   #headOid!: OID;
   #inspector!: Inspector;
   /** 未コミットファイルリスト。未コミットのファイルが存在する場合は削除を実行しない。 */
@@ -101,7 +101,7 @@ export class Rm extends Base<Options> {
       this.#headOid,
       posixPath(pathname),
     );
-    const entry = this.repo.index.entryForPath(pathname);
+    const entry = this.repo.index.entryForPath(posixPath(pathname));
 
     const stagedChange = this.#inspector.compareTreeToIndex(item, entry);
     const unstagedChange = stat
@@ -122,15 +122,16 @@ export class Rm extends Base<Options> {
   }
 
   private expandPath(pathname: Pathname) {
-    if (this.repo.index.trackedDirectory(pathname)) {
+    const pPath = posixPath(pathname);
+    if (this.repo.index.trackedDirectory(pPath)) {
       if (this.options["recursive"]) {
-        return this.repo.index.childPaths(pathname);
+        return this.repo.index.childPaths(pPath);
       }
       throw new Runtime(`not removing '${pathname}' recursively without -r`);
     }
 
-    if (this.repo.index.trackedFile(pathname)) {
-      return [pathname];
+    if (this.repo.index.trackedFile(pPath)) {
+      return [pPath];
     }
     throw new Runtime(`pathspec '${pathname}' did not match any files`);
   }

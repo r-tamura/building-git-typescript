@@ -166,7 +166,7 @@ describe("branch", () => {
       const short = t.repo.database.shortOid(head);
       t.assertInfo(`Deleted branch bug-fix (was ${short}).`);
 
-      const branches = await t.repo.refs.listBranchs();
+      const branches = await t.repo.refs.listBranches();
       assert(!branches.map((b) => b.shortName()).includes("buf-fix"));
     });
 
@@ -181,7 +181,7 @@ describe("branch", () => {
       await t.kitCmd("branch", "fix/delete-branches");
       await t.kitCmd("branch", "-d", "-f", "fix/delete-branches");
 
-      const branches = await t.repo.refs.listBranchs();
+      const branches = await t.repo.refs.listBranches();
       assert(
         !branches.map((b) => b.shortName()).includes("fix/delete-branches"),
       );

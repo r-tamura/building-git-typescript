@@ -1,18 +1,18 @@
-import { Base } from "./base";
-import * as Repository from "../repository";
-import { Pathname } from "../types";
-import * as Database from "../database";
 import * as arg from "arg";
+import * as Database from "../database";
 import * as Index from "../gindex";
+import { Stage, STAGES } from "../gindex";
+import * as Repository from "../repository";
 import { asserts } from "../util";
+import { PosixPath } from "../util/fs";
+import { BaseCommand } from "./base";
 import {
   definePrintDiffOptions,
-  Target,
-  printDiff,
   NULL_OID,
   printCombinedDiff,
+  printDiff,
+  Target,
 } from "./shared/print_diff";
-import { Stage, STAGES } from "../gindex";
 
 interface Options {
   cached: boolean;
@@ -20,7 +20,7 @@ interface Options {
   stage?: Stage;
 }
 
-export class Diff extends Base<Options> {
+export class Diff extends BaseCommand<Options> {
   #status!: Repository.Status;
   async run(): Promise<void> {
     await this.repo.index.load();
@@ -70,29 +70,30 @@ export class Diff extends Base<Options> {
       return;
     }
     for (const [pathname, state] of this.#status.indexChanges.entries()) {
+      const posixPathname = pathname as PosixPath;
       switch (state) {
         case "added": {
-          const targetFromIndex = await this.fromIndex(pathname);
+          const targetFromIndex = await this.fromIndex(posixPathname);
           asserts(
             targetFromIndex !== null,
-            `ファイル '${pathname}' は存在する`,
+            `ファイル '${posixPathname}' は存在する`,
           );
-          await printDiff(this.fromNothing(pathname), targetFromIndex, this);
+          await printDiff(this.fromNothing(posixPathname), targetFromIndex, this);
           break;
         }
         case "modified": {
-          const targetFromIndex = await this.fromIndex(pathname);
+          const targetFromIndex = await this.fromIndex(posixPathname);
           asserts(
             targetFromIndex !== null,
-            `ファイル '${pathname}' は存在する`,
+            `ファイル '${posixPathname}' は存在する`,
           );
-          await printDiff(await this.fromHead(pathname), targetFromIndex, this);
+          await printDiff(await this.fromHead(posixPathname), targetFromIndex, this);
           break;
         }
         case "deleted": {
           await printDiff(
-            await this.fromHead(pathname),
-            this.fromNothing(pathname),
+            await this.fromHead(posixPathname),
+            this.fromNothing(posixPathname),
             this,
           );
           break;
@@ -112,15 +113,16 @@ export class Diff extends Base<Options> {
     ];
 
     for (const pathname of paths.sort()) {
+      const posixPathname = pathname as PosixPath;
       if (this.#status.conflicts.has(pathname)) {
-        await this.printConflictDiff(pathname);
+        await this.printConflictDiff(posixPathname);
       } else {
-        await this.printWorkspaceDiff(pathname);
+        await this.printWorkspaceDiff(posixPathname);
       }
     }
   }
 
-  private async fromHead(pathname: Pathname) {
+  private async fromHead(pathname: PosixPath) {
     const entry = this.#status.headTree[pathname];
     const blob = await this.repo.database.load(entry.oid);
     asserts(blob instanceof Database.Blob);
@@ -132,7 +134,7 @@ export class Diff extends Base<Options> {
     );
   }
 
-  private async fromIndex(pathname: Pathname, stage: Stage = 0) {
+  private async fromIndex(pathname: PosixPath, stage: Stage = 0) {
     const entry = this.repo.index.entryForPath(pathname, stage);
     if (!entry) {
       return null;
@@ -147,7 +149,7 @@ export class Diff extends Base<Options> {
     );
   }
 
-  private async fromFile(pathname: Pathname) {
+  private async fromFile(pathname: PosixPath) {
     const content = await this.repo.workspace.readFile(pathname);
     const blob = new Database.Blob(content);
     const oid = this.repo.database.hashObject(blob);
@@ -155,11 +157,11 @@ export class Diff extends Base<Options> {
     return Target.of(pathname, oid, mode.toString(8), blob.data.toString());
   }
 
-  private fromNothing(pathname: Pathname) {
+  private fromNothing(pathname: PosixPath) {
     return Target.of(pathname, NULL_OID, null, "");
   }
 
-  private async printConflictDiff(pathname: Pathname) {
+  private async printConflictDiff(pathname: PosixPath) {
     const targets = [];
     for await (const target of STAGES.map((stage) =>
       this.fromIndex(pathname, stage),
@@ -184,7 +186,7 @@ export class Diff extends Base<Options> {
     }
   }
 
-  private async printWorkspaceDiff(pathname: Pathname) {
+  private async printWorkspaceDiff(pathname: PosixPath) {
     switch (this.#status.workspaceChanges.get(pathname)) {
       case "modified": {
         const targetFromIndex = await this.fromIndex(pathname);

@@ -10,7 +10,10 @@ describe("init", () => {
   afterEach(t.afterHook);
 
   it("creates HEAD file", async () => {
+    // Arrange
     await fs.mkdir(t.repoPath);
+
+    // Act
     await t.kitCmd("init", t.repoPath);
 
     // Assert

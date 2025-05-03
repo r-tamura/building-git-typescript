@@ -1,6 +1,7 @@
 import * as path from "path";
 import { Pathname } from "../types";
 import { includes, last } from "../util/array";
+import { posixPath } from "../util/fs";
 import { Config, SectionName } from "./config";
 
 // Note: NodeJSではビルトインで'~'を解決する方法は提供されていない
@@ -18,9 +19,9 @@ export class Stack {
   #configs: Configs;
   constructor(gitPath: Pathname) {
     this.#configs = {
-      local: new Config(path.join(gitPath, "config")),
-      global: new Config(GLOBAL_CONFIG),
-      system: new Config(SYSTEM_CONFIG),
+      local: new Config(posixPath(path.posix.join(gitPath, "config"))),
+      global: new Config(posixPath(GLOBAL_CONFIG)),
+      system: new Config(posixPath(SYSTEM_CONFIG)),
     };
   }
 
@@ -52,7 +53,7 @@ export class Stack {
       return this.#configs[nameOrPath];
     } else {
       // file path
-      return new Config(nameOrPath);
+      return new Config(posixPath(nameOrPath));
     }
   }
 }

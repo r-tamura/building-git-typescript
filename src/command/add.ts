@@ -1,16 +1,17 @@
 import * as Database from "../database";
 import { LockDenied } from "../refs";
-import { Environment, Pathname } from "../types";
+import { Environment } from "../types";
 import { asserts, asyncForEach, stripIndent } from "../util";
+import { PosixPath } from "../util/fs";
 import { MissingFile, NoPermission } from "../workspace";
-import { Base } from "./base";
+import { BaseCommand } from "./base";
 
 const LOCKED_INDEX_MESSAGE = `Another jit process seems to be running in this repository.
 Please make sure all processes are terminated then try again.
 If it still fails, a jit process may have crached in this
 repository earlier: remove the file manually to continue.`;
 
-export class Add extends Base {
+export class Add extends BaseCommand {
   constructor(args: string[], env: Environment) {
     super(args, env);
   }
@@ -41,7 +42,7 @@ export class Add extends Base {
     }
   }
 
-  private async addToIndex(pathname: Pathname) {
+  private async addToIndex(pathname: PosixPath) {
     const data = await this.repo.workspace.readFile(pathname);
     const stat = await this.repo.workspace.statFile(pathname);
 
@@ -52,15 +53,16 @@ export class Add extends Base {
     this.repo.index.add(pathname, blob.oid, stat);
   }
 
-  private async expandedPaths() {
+  private async expandedPaths(): Promise<PosixPath[]> {
     const entryPaths = this.args;
     const pathnameslist = await Promise.all(
       entryPaths.map((entryPath) => {
-        const absPath = this.expeandedPathname(entryPath);
+        const absPath = this.expandPathname(entryPath);
         return this.repo.workspace.listFiles(absPath);
       }),
     );
-    const pathnames = pathnameslist.flat();
+    // すべてPosixPathに変換
+    const pathnames = pathnameslist.flat().map((p) => p as PosixPath);
     return pathnames;
   }
 

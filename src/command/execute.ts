@@ -9,7 +9,7 @@ import { Commit } from "./commit";
 import { Config } from "./config";
 import { Diff } from "./diff";
 import { Fetch } from "./fetch";
-import { Init } from "./init";
+import { InitCommand } from "./init";
 import { Log } from "./log";
 import { Merge } from "./merge";
 import { Push } from "./push";
@@ -28,7 +28,7 @@ type CommandMap<O extends Options = NoOptions> = {
 };
 
 const COMMANDS: CommandMap = {
-  init: Init,
+  init: InitCommand,
   add: Add,
   branch: Branch,
   checkout: Checkout,

@@ -2,21 +2,21 @@ import { promises } from "fs";
 import * as path from "path";
 import * as assert from "power-assert";
 import { Readable, Writable } from "stream";
+import { makeLogger } from "../../src/__test__/util";
 import * as Command from "../../src/command";
 import { Blob } from "../../src/database";
 import { Editor } from "../../src/editor";
 import { Repository } from "../../src/repository";
-import { Revision } from "../../src/revision";
 import { RevList } from "../../src/rev_list";
+import { Revision } from "../../src/revision";
 import * as FileService from "../../src/services";
 import { defaultFs, exists, Logger, Process } from "../../src/services";
 import { CompleteCommit, Dict, Environment, Pathname } from "../../src/types";
 import { asserts } from "../../src/util";
-import { makeLogger } from "../../src/__test__/util";
 
 export interface TestUtil {
   suffix: Pathname;
-  cmd: Command.Base;
+  cmd: Command.BaseCommand;
 }
 
 export function create(name?: string) {

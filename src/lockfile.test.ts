@@ -1,12 +1,13 @@
-import { Lockfile, MissingParent, NoPermission } from "./lockfile";
-import { defaultFs } from "./services";
 import { constants } from "fs";
+import * as path from "path";
 import * as assert from "power-assert";
 import { EACCES, EEXIST, ENOENT } from "./__test__";
-import { execPath } from "process";
+import { Lockfile, MissingParent, NoPermission } from "./lockfile";
 import { LockDenied } from "./refs";
+import { defaultFs } from "./services";
+import { osPath, posixPath } from "./util/fs";
 
-const testTargetPath = "/test/file.txt";
+const TEST_TARGET_PATH = posixPath("/test/file.txt");
 
 const mockedClose = jest.fn();
 const mockedOpen = jest.fn().mockResolvedValue({ close: mockedClose });
@@ -26,14 +27,14 @@ describe("Lockfile#holdForUpdate", () => {
     let actual: boolean;
     beforeAll(async () => {
       // Act
-      const lockfile = new Lockfile(testTargetPath, env);
+      const lockfile = new Lockfile(TEST_TARGET_PATH, env);
       await lockfile.holdForUpdate();
     });
 
     // Assert
     it("ロック取得", () => {
       const flags = constants.O_RDWR | constants.O_CREAT | constants.O_EXCL;
-      assert.equal(mockedOpen.mock.calls[0][0], "/test/file.lock");
+      assert.equal(mockedOpen.mock.calls[0][0], path.join("/test", "file.lock"));
       assert.equal(mockedOpen.mock.calls[0][1], flags);
     });
   });
@@ -48,7 +49,7 @@ describe("Lockfile#holdForUpdate", () => {
     };
 
     // Act
-    const lockfile = new Lockfile(testTargetPath, env);
+    const lockfile = new Lockfile(TEST_TARGET_PATH, env);
     const actual = lockfile.holdForUpdate();
 
     // Assert
@@ -78,7 +79,7 @@ describe("Lockfile#holdForUpdate", () => {
       fs: { ...defaultFs, open: mockedOpen },
     };
     // Act
-    const lockfile = new Lockfile(testTargetPath, env);
+    const lockfile = new Lockfile(TEST_TARGET_PATH, env);
 
     // Assert
     await expect(lockfile.holdForUpdate()).rejects.toThrow(ExpectedError);
@@ -91,13 +92,13 @@ describe("Lockfile#commit", () => {
     jest.clearAllMocks();
 
     // Act
-    const lockfile = new Lockfile(testTargetPath, env);
+    const lockfile = new Lockfile(TEST_TARGET_PATH, env);
     await lockfile.holdForUpdate();
     await lockfile.commit();
 
     // Assert
-    assert.equal(mockedRename.mock.calls[0][0], "/test/file.lock");
-    assert.equal(mockedRename.mock.calls[0][1], testTargetPath);
+    assert.equal(mockedRename.mock.calls[0][0], path.join("/test", "file.lock"));
+    assert.equal(mockedRename.mock.calls[0][1], osPath(TEST_TARGET_PATH));
   });
 });
 
@@ -107,11 +108,11 @@ describe("Lockfile#rollback", () => {
     jest.clearAllMocks();
 
     // Act
-    const lockfile = new Lockfile(testTargetPath, env);
+    const lockfile = new Lockfile(TEST_TARGET_PATH, env);
     await lockfile.holdForUpdate();
     await lockfile.rollback();
 
     // Assert
-    assert.equal(mockedUnlink.mock.calls[0][0], "/test/file.lock");
+    assert.equal(mockedUnlink.mock.calls[0][0], path.join("/test", "file.lock"));
   });
 });

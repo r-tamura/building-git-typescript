@@ -6,7 +6,7 @@ import * as rev_list from "../rev_list";
 import { OID } from "../types";
 import { asserts, BaseError } from "../util";
 import * as array from "../util/array";
-import { Base } from "./base";
+import { BaseCommand } from "./base";
 import * as fast_forward from "./shared/fast_forward";
 import * as receive_objects from "./shared/receive_objects";
 import * as remote_client from "./shared/remote_client";
@@ -27,7 +27,7 @@ interface Options {
 
 const UPLOAD_PACK = "git-upload-pack";
 
-export class Fetch extends Base<Options> implements remote_client.RemoteClient {
+export class Fetch extends BaseCommand<Options> implements remote_client.RemoteClient {
   #fetchUrl?: string;
   #errors: Record<remotes.TargetRef, fast_forward.FastForwardError> = {};
   #uploader?: string;

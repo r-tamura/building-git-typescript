@@ -1,22 +1,22 @@
 import * as arg from "arg";
-import { Base } from "./base";
-import { CompleteCommit, Environment, Nullable } from "../types";
-import {
-  writeCommit,
-  pendingCommit,
-  resumeMerge,
-  CommitOptions,
-  defineWriteCommitOptions,
-  readMessage,
-  printCommit,
-  commitMessagePath,
-  writeTree,
-  currentAuthor,
-} from "./shared/write_commit";
+import * as Database from "../database";
 import { Error, PendingCommit } from "../repository/pending_commit";
 import { Revision } from "../revision";
+import { CompleteCommit, Environment, Nullable } from "../types";
 import { asserts } from "../util";
-import * as Database from "../database";
+import { BaseCommand } from "./base";
+import {
+    commitMessagePath,
+    CommitOptions,
+    currentAuthor,
+    defineWriteCommitOptions,
+    pendingCommit,
+    printCommit,
+    readMessage,
+    resumeMerge,
+    writeCommit,
+    writeTree,
+} from "./shared/write_commit";
 
 export const COMMIT_NOTES = `Please Enter the commit message for your changes. Lines starting
 with '#' will be ignored, and an empty message aborts the commit.
@@ -28,7 +28,7 @@ interface Options extends CommitOptions {
   amend: boolean;
 }
 
-export class Commit extends Base<Options> {
+export class Commit extends BaseCommand<Options> {
   pendingCommit: PendingCommit | null = null;
   constructor(args: string[], env: Environment) {
     super(args, env);

@@ -1,6 +1,7 @@
 import { Stats } from "fs";
 import { Blob } from "../database";
 import { OID, Pathname } from "../types";
+import { posixPath } from "../util/fs";
 import { Repository } from "./repository";
 import { Status } from "./status";
 
@@ -23,10 +24,11 @@ export class HardReset {
   }
 
   async resetPath(pathname: Pathname) {
-    await this.#repo.index.remove(pathname);
-    await this.#repo.workspace.remove(pathname);
+    const pPath = posixPath(pathname);
+    await this.#repo.index.remove(pPath);
+    await this.#repo.workspace.remove(pPath);
 
-    const entry = this.#status.headTree[pathname];
+    const entry = this.#status.headTree[pPath];
 
     if (!entry) {
       return;
@@ -34,13 +36,13 @@ export class HardReset {
 
     // ファイルパスから読み込んだオブジェクトは全てファイル(blob)のみ
     const blob = (await this.#repo.database.load(entry.oid)) as Blob;
-    await this.#repo.workspace.writeFile(pathname, blob.data.toString(), {
+    await this.#repo.workspace.writeFile(pPath, blob.data.toString(), {
       mode: entry.mode,
       mkdir: true,
     });
 
     // エントリが存在するので、ファイルも存在する
-    const stat = (await this.#repo.workspace.statFile(pathname)) as Stats;
-    this.#repo.index.add(pathname, entry.oid, stat);
+    const stat = (await this.#repo.workspace.statFile(pPath)) as Stats;
+    this.#repo.index.add(pPath, entry.oid, stat);
   }
 }

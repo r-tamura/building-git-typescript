@@ -3,7 +3,8 @@ import * as assert from "power-assert";
 import * as Database from ".";
 import { makeDummyFileStats } from "../__test__/fs";
 import { Entry, MODE } from "../entry";
-import { posixPath, scanUntil } from "../util";
+import { scanUntil } from "../util";
+import { posixPath } from "../util/fs";
 import { Tree } from "./tree";
 
 const testStats = (mode: keyof typeof MODE) => {

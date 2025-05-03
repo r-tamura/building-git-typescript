@@ -5,7 +5,7 @@ import { ConflictStatus } from "../repository";
 import { MergeType } from "../repository/pending_commit";
 import { Pathname } from "../types";
 import { shallowEqual, stripIndent } from "../util";
-import { Base } from "./base";
+import { BaseCommand } from "./base";
 
 const SHORT_STATUS: Record<
   Exclude<Repository.ChangeType, null> | "nochange",
@@ -78,7 +78,7 @@ interface Option {
   format: "long" | "porcelain";
 }
 
-export class Status extends Base<Option> {
+export class Status extends BaseCommand<Option> {
   #status!: Repository.Status;
 
   async run() {

@@ -4,12 +4,12 @@ import * as path from "path";
 import * as Database from "../database";
 import * as Index from "../gindex";
 import { OID, Pathname } from "../types";
-import { ascend, asserts, BaseError, descendUnix } from "../util";
+import { ascend, asserts, BaseError, descendUnix, PosixPath } from "../util";
 import { Inspector } from "./inspector";
 import { Repository } from "./repository";
 
-export type DeleteChange = [Pathname, null];
-export type CreateChange = [Pathname, Database.Entry];
+export type DeleteChange = [PosixPath, null];
+export type CreateChange = [PosixPath, Database.Entry];
 export type Changes = {
   delete: DeleteChange[];
   update: CreateChange[];
@@ -78,7 +78,7 @@ export class Migration {
   }
 
   private async checkForConflict(
-    pathname: Pathname,
+    pathname: PosixPath,
     oldItem: Database.Entry | null,
     newItem: Database.Entry | null,
   ) {
@@ -206,7 +206,7 @@ export class Migration {
   }
 
   private recordChange(
-    pathname: Pathname,
+    pathname: PosixPath,
     oldItem: Database.Entry | null,
     newItem: Database.Entry | null,
   ) {
