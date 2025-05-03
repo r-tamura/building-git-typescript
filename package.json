@@ -15,7 +15,8 @@
     "build": "tsc",
     "watch": "tsc -w",
     "format": "prettier-eslint --write \"$PWD/src/**/*.ts\"",
-    "test": "jest --config jest.config.js",
+    "test:all": "jest",
+    "test:unit": "jest --config jest.config.js",
     "test:integ": "jest --config jest.config.integ.js",
     "pre-commit": "yarn format"
   },

@@ -25,9 +25,10 @@ kit config
 
 ```sh
 # build
-yarn watch
+pnpm watch
 
 # test (unit & integ)
-yarn test
-yarn integ
+yarn test:unit
+yarn test:integ
+yarn test:all
 ```

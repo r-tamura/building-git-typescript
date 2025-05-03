@@ -1,6 +1,6 @@
-const unitConfig = require("./jest.config");
+const baseConfig = require("./jest.config");
 
 module.exports = {
-  ...unitConfig,
+  ...baseConfig,
   roots: ["<rootDir>/integ"],
 };
