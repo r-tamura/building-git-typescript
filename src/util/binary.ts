@@ -7,7 +7,8 @@ export function packHex(unpacked: string): Buffer {
 }
 
 export function unpackHex(packed: Buffer | string): string {
-  const p = packed instanceof Buffer ? packed : Buffer.from(packed, "binary");
+  const p = Buffer.isBuffer(packed) ? packed : Buffer.from(packed, "binary");
+  //                                                                                              ^?
   return p.toString("hex");
 }
 

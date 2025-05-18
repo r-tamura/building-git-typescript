@@ -19,7 +19,6 @@ import { Checksum } from "./checksum";
 import { BASE, Entry, Key, LEFT, RIGHT, STAGES, Stage } from "./entry";
 
 type IndexEntryMap = ObjectKeyHash<Key, Entry>;
-
 export class Index {
   static readonly HEADER_SIZE = 12;
   static readonly SIGNATURE = "DIRC";
@@ -252,7 +251,7 @@ export class Index {
 
   private async readEntries(reader: Checksum, count: number) {
     for (const _ of times(count)) {
-      // ファイルメタ情報の読み込み
+      // ファイル名までのメタ情報の読み込み
       let entry = await reader.read(Entry.MIN_SIZE);
 
       // ファイル名の読み込み

@@ -19,9 +19,21 @@ const splitExt = (pathname: string): [string, string | undefined] => {
   return [split.join("."), ext];
 };
 
-export class MissingParent extends BaseError {}
-export class NoPermission extends BaseError {}
-export class StaleLock extends BaseError {}
+export class MissingParent extends BaseError {
+  static {
+    this.prototype.name = "MissingParent";
+  }
+}
+export class NoPermission extends BaseError {
+  static {
+    this.prototype.name = "NoPermission";
+  }
+}
+export class StaleLock extends BaseError {
+  static {
+    this.prototype.name = "StaleLock";
+  }
+}
 
 export class Lockfile implements IOHandle {
   #filePath: PosixPath;
@@ -39,6 +51,14 @@ export class Lockfile implements IOHandle {
     this.#fs = env.fs ?? defaultFs;
   }
 
+  private async lock(flags: number): Promise<void> {
+    this.#lock = await this.#fs.open(toOsPath(this.#lockPath), flags);
+  }
+
+  private async unlock() {
+    this.#lock = null;
+  }
+
   /**
    * ロックされていない場合はロックを取得し、ロックされているときは例外LockDeniedを発生させる
    */
@@ -46,7 +66,7 @@ export class Lockfile implements IOHandle {
     const flags = constants.O_RDWR | constants.O_CREAT | constants.O_EXCL;
     try {
       if (this.#lock === null) {
-        this.#lock = await this.#fs.open(toOsPath(this.#lockPath), flags);
+        await this.lock(flags);
       }
     } catch (e) {
       const nodeErr = e as NodeJS.ErrnoException;
@@ -55,11 +75,19 @@ export class Lockfile implements IOHandle {
           // すでにロックされている場合
           throw new LockDenied(
             `Unable to create ${this.#lockPath}: File exists.`,
+            { cause: nodeErr },
           );
         case "ENOENT":
-          throw new MissingParent(nodeErr.message);
+          throw new MissingParent(
+            `parent directory for lockfile '${this.#lockPath}' not found`,
+            {
+              cause: nodeErr,
+            },
+          );
         case "EACCES":
-          throw new NoPermission(nodeErr.message);
+          throw new NoPermission("lockfile is not writable", {
+            cause: nodeErr,
+          });
       }
     }
   }
@@ -69,7 +97,7 @@ export class Lockfile implements IOHandle {
 
     await this.#lock.close();
     await this.#fs.unlink(toOsPath(this.#lockPath));
-    this.#lock = null;
+    this.unlock();
   }
 
   write(data: Buffer): Promise<{ bytesWritten: number; buffer: Buffer }>;
@@ -92,12 +120,12 @@ export class Lockfile implements IOHandle {
     this.throwOnStaleLock(this.#lock);
     await this.#lock.close();
     await this.#fs.rename(toOsPath(this.#lockPath), toOsPath(this.#filePath));
-    this.#lock = null;
+    this.unlock();
   }
 
   private throwOnStaleLock(lock: promises.FileHandle | null): asserts lock {
     if (lock === null) {
-      throw new StaleLock();
+      throw new StaleLock(`Lock file ${this.#lockPath} is stale`);
     }
   }
 }

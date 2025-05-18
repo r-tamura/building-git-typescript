@@ -271,10 +271,12 @@ export function toOsPath(pathname: Pathname): OsPath {
     "アプリケーション内部ではPosix形式パスを利用してください",
   );
 
+  const isAbsolute = path.isAbsolute(pathname);
+
   const parsed = path.posix.parse(pathname);
   const osPathStr = path.format({
     ...parsed,
-    root: path.sep,
+    root: isAbsolute ? path.sep : "",
     base: parsed.base.replaceAll("/", path.sep),
     dir: parsed.dir.replaceAll("/", path.sep),
   });

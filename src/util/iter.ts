@@ -10,17 +10,50 @@ export function some<T>(iter: Iterable<T>, pred: (t: T) => boolean) {
   return false;
 }
 
+type RightClosedInterval = [start: IntervalEndpoint, end: IntervalEndpoint];
+
+interface InclusiveIntervalEndpoint {
+  value: number;
+  inclusive: true;
+}
+
+interface ExclusiveIntervalEndpoint {
+  value: number;
+  inclusive: false;
+}
+type IntervalEndpoint = InclusiveIntervalEndpoint | ExclusiveIntervalEndpoint;
+
 /**
- * startからendまでの数字列を生成するイテレータを返します
+ * startからendまでの数字列を生成するイテレータを返します。終了点は含まれません。
  * @param start
  * @param end
  * @param step
  */
-export function* range(start = 0, end = 0, step = 1) {
-  for (let i = start; i < end; i += step) {
+export function* range(start: number, end: number, step = 1) {
+  const rightClosedInterval = range.rightClosedInterval(start, end);
+  const [startEndpoint, endEndpoint] = rightClosedInterval;
+  for (let i = startEndpoint.value; i < endEndpoint.value; i += step) {
     yield i;
   }
 }
+
+range.rightClosedInterval = function (
+  start: number,
+  end: number,
+): RightClosedInterval {
+  if (start > end) {
+    throw new Error("start must be less than or equal to end");
+  }
+  return [range.including(start), range.excluding(end)];
+};
+
+range.including = function (start: number): InclusiveIntervalEndpoint {
+  return { value: start, inclusive: true };
+};
+
+range.excluding = function (start: number): ExclusiveIntervalEndpoint {
+  return { value: start, inclusive: false };
+};
 
 export function* times(count: number) {
   for (let i = 0; i < count; i++) {

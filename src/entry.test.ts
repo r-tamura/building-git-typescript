@@ -1,6 +1,6 @@
 import * as assert from "assert";
-import { Stats } from "fs";
-import { Entry } from "./entry";
+import { mockFsStats } from "./__test__/fs.ts";
+import { Entry } from "./entry.ts";
 import { posixPath } from "./util/fs";
 
 describe("Entry#mode", () => {
@@ -10,7 +10,7 @@ describe("Entry#mode", () => {
     ["100655", Entry.REGULAR_MODE],
   ])("ファイルモード: %s", (osMode: string, expectedGitMode: string) => {
     // Arrange
-    const stats = new Stats();
+    const stats = mockFsStats();
     stats.mode = Number.parseInt(osMode, 8);
     // Act
     const entry = new Entry(

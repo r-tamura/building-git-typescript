@@ -46,8 +46,38 @@ export const BASE = 1;
 export const LEFT = 2;
 export const RIGHT = 3;
 export const STAGES = [NORMAL, BASE, LEFT, RIGHT] as const;
-export type Stage = typeof STAGES[number];
+export type Stage = (typeof STAGES)[number];
 export type Key = readonly [Pathname, Stage];
+
+interface FileStats {
+  ctime: number;
+  ctimeNsec: number;
+  mtime: number;
+  mtimeNsec: number;
+  dev: number;
+  ino: number;
+  mod: 0o0100644 | 0o0100755;
+  uid: number;
+  gid: number;
+  size: number;
+  flags: number;
+}
+
+function fileStats(stats: FileStats): FileStats {
+  return {
+    ctime: stats.ctime,
+    ctimeNsec: stats.ctimeNsec,
+    mtime: stats.mtime,
+    mtimeNsec: stats.mtimeNsec,
+    dev: stats.dev,
+    ino: stats.ino,
+    mod: stats.mod,
+    uid: stats.uid,
+    gid: stats.gid,
+    size: stats.size,
+    flags: stats.flags,
+  };
+}
 
 export class Entry {
   static readonly REGULAR_MODE = 0o0100644;

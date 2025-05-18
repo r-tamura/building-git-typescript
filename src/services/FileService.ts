@@ -1,11 +1,11 @@
-import * as CallbackFs from "fs";
-import * as path from "path";
-import * as readline from "readline";
-import { Readable } from "stream";
-import { promisify } from "util";
-import * as zlib from "zlib";
-import { Pathname } from "../types";
-import { BaseError } from "../util";
+import * as CallbackFs from "node:fs";
+import * as path from "node:path";
+import * as readline from "node:readline";
+import { Readable } from "node:stream";
+import { promisify } from "node:util";
+import * as zlib from "node:zlib";
+import { Pathname } from "../types.ts";
+import { BaseError } from "../util/index.ts";
 const fs = CallbackFs.promises;
 
 export type FileService = Pick<
@@ -14,19 +14,17 @@ export type FileService = Pick<
   | "chmod"
   | "mkdir"
   | "open"
-  | "read"
   | "readdir"
   | "readFile"
   | "rename"
   | "stat"
   | "unlink"
-  | "write"
   | "writeFile"
   | "rm"
   | "rmdir"
 >;
 
-export const defaultFs: FileService = fs;
+export const defaultFs = createPassthroughFileService();
 
 export async function exists(fs: FileService, pathname: Pathname) {
   try {
@@ -246,4 +244,21 @@ export async function readChunk(
     }
   }
   return raw;
+}
+
+export function createPassthroughFileService(): FileService {
+  return {
+    access: fs.access,
+    chmod: fs.chmod,
+    mkdir: fs.mkdir,
+    open: fs.open,
+    readdir: fs.readdir,
+    readFile: fs.readFile,
+    rename: fs.rename,
+    stat: fs.stat,
+    unlink: fs.unlink,
+    writeFile: fs.writeFile,
+    rm: fs.rm,
+    rmdir: fs.rmdir,
+  };
 }

@@ -1,2 +1,2 @@
-export * from "./gindex";
-export * from "./entry";
+export * from "./entry.ts";
+export * from "./gindex.ts";

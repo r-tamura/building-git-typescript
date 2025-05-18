@@ -1,11 +1,13 @@
 import { constants } from "fs";
+import * as fs from "fs/promises";
 import * as path from "path";
 import * as assert from "power-assert";
 import { EACCES, EEXIST, ENOENT } from "./__test__";
 import { Lockfile, MissingParent, NoPermission } from "./lockfile";
 import { LockDenied } from "./refs";
 import { defaultFs } from "./services";
-import { posixPath, toOsPath } from "./util/fs";
+import { posixPath } from "./util/fs";
+import mock = require("mock-fs");
 
 const TEST_TARGET_PATH = posixPath("/test/file.txt");
 
@@ -34,7 +36,10 @@ describe("Lockfile#holdForUpdate", () => {
     // Assert
     it("ロック取得", () => {
       const flags = constants.O_RDWR | constants.O_CREAT | constants.O_EXCL;
-      assert.equal(mockedOpen.mock.calls[0][0], path.join("/test", "file.lock"));
+      assert.equal(
+        mockedOpen.mock.calls[0][0],
+        path.join("/test", "file.lock"),
+      );
       assert.equal(mockedOpen.mock.calls[0][1], flags);
     });
   });
@@ -86,26 +91,30 @@ describe("Lockfile#holdForUpdate", () => {
   });
 });
 
+afterEach(() => {
+  mock.restore();
+});
+
 describe("Lockfile#commit", () => {
   it("ロックファイルを対象のファイルへ反映する", async () => {
     // Arrange
-    jest.clearAllMocks();
+    mock({});
 
     // Act
-    const lockfile = new Lockfile(TEST_TARGET_PATH, env);
+    const lockfile = new Lockfile(posixPath("file.txt"));
     await lockfile.holdForUpdate();
     await lockfile.commit();
 
     // Assert
-    assert.equal(mockedRename.mock.calls[0][0], path.join("/test", "file.lock"));
-    assert.equal(mockedRename.mock.calls[0][1], toOsPath(TEST_TARGET_PATH));
+    const actual = await fs.readFile("file.txt", "utf-8");
+    assert.equal(actual, "");
   });
 });
 
 describe("Lockfile#rollback", () => {
   it("ロックファイルを削除する", async () => {
     // Arrange
-    jest.clearAllMocks();
+    mock({});
 
     // Act
     const lockfile = new Lockfile(TEST_TARGET_PATH, env);
@@ -113,6 +122,9 @@ describe("Lockfile#rollback", () => {
     await lockfile.rollback();
 
     // Assert
-    assert.equal(mockedUnlink.mock.calls[0][0], path.join("/test", "file.lock"));
+    assert.equal(
+      mockedUnlink.mock.calls[0][0],
+      path.join("/test", "file.lock"),
+    );
   });
 });

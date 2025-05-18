@@ -1,19 +1,22 @@
-import { constants } from "fs";
-import { FileHandle } from "fs/promises";
-import * as path from "path";
-import * as FileService from "./services/FileService";
-import { Pathname, Rand } from "./types";
-import { asserts } from "./util/assert";
-import * as iter from "./util/iter";
+import { constants } from "node:fs";
+import { FileHandle } from "node:fs/promises";
+import * as path from "node:path";
+import * as FileService from "./services/FileService.ts";
+import { Pathname, Rand } from "./types.ts";
+import { asserts } from "./util/assert.ts";
+import * as iter from "./util/iter.ts";
 
-function charsFromRange(start: string, end: string): string[] {
-  asserts(start.length === 1);
-  asserts(end.length === 1);
+export function charsFromRange(start: string, end: string): string[] {
+  asserts(
+    start.length === 1,
+    `Expected a single character, but got "${start}"`,
+  );
+  asserts(end.length === 1, `Expected a single character, but got "${end}"`);
 
   const startCharCode = start.charCodeAt(0);
-  const endCharCode = end.charCodeAt(0);
+  const endCharCode = end.charCodeAt(0) + 1;
 
-  return Array.from(iter.range(startCharCode, endCharCode)).map((code) =>
+  return Array.from(iter.range(startCharCode, endCharCode, 1)).map((code) =>
     String.fromCharCode(code),
   );
 }
@@ -25,11 +28,12 @@ function sample(str: string) {
   return char;
 }
 
-const TEMP_CHARS = [
-  ...charsFromRange("A", "z"),
-  ...charsFromRange("0", "9"),
-].join("");
-// "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+// const TEMP_CHARS = [
+//   ...charsFromRange("A", "z"),
+//   ...charsFromRange("0", "9"),
+// ].join("");
+const TEMP_CHARS =
+  "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
 
 interface Environment {
   rand?: Rand;
@@ -42,7 +46,8 @@ export class TempFile {
   #file?: FileHandle;
   #rand: Rand;
   #fs: FileService.FileService;
-  constructor(dirname: Pathname, prefix: string, env: Environment = {}) {    this.#dirname = dirname;
+  constructor(dirname: Pathname, prefix: string, env: Environment = {}) {
+    this.#dirname = dirname;
     this.#rand = env.rand ?? { sample };
     this.#fs = env.fs ?? FileService.defaultFs;
     this.#pathname = path.posix.join(dirname, this.generateTempName(prefix));

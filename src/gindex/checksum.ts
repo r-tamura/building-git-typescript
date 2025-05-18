@@ -1,8 +1,12 @@
-import { BaseError, Invalid } from "../util";
 import { Hash, createHash } from "crypto";
 import { IOHandle } from "../types";
+import { BaseError, Invalid } from "../util";
 
-export class EndOfFile extends BaseError {}
+export class EndOfFile extends BaseError {
+  static {
+    this.prototype.name = "EndOfFile";
+  }
+}
 
 export class Checksum {
   /** チェックサムバイトサイズ */
@@ -18,7 +22,9 @@ export class Checksum {
   async read(size: number) {
     const [buf, bytesRead] = await this._read(this.#file, size);
     if (bytesRead < size) {
-      throw new EndOfFile("Unexpected end-of-file while reading index");
+      throw new EndOfFile(
+        `Unexpected end-of-file while reading index. the file may be corrupted. want ${size} bytes, but read only ${bytesRead} bytes`,
+      );
     }
     this.#digest.update(buf);
     return buf;

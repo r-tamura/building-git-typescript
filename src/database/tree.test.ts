@@ -1,14 +1,14 @@
-import { Stats } from "fs";
+import type { Stats } from "fs";
 import * as assert from "power-assert";
 import * as Database from ".";
-import { makeDummyFileStats } from "../__test__/fs";
-import { Entry, MODE } from "../entry";
+import { makeDummyFileStats, mockFsStats } from "../__test__/fs.ts";
+import { Entry, MODE } from "../entry.ts";
 import { scanUntil } from "../util";
 import { posixPath } from "../util/fs";
 import { Tree } from "./tree";
 
-const testStats = (mode: keyof typeof MODE) => {
-  const stats = new Stats();
+const testStats = (mode: keyof typeof MODE): Stats => {
+  const stats = mockFsStats();
   stats.mode = mode === "readable" ? 0o0100644 : 0o0100755;
   return stats;
 };
@@ -48,12 +48,12 @@ describe("Tree#traverse", () => {
       "test/hello.txt",
       "ce013625030ba8dba906f756967f9e9ca394464a",
       testStats("readable"),
-    )
+    );
     const deepestEntry = new Entry(
       "test/test2/world.txt",
       "cc628ccd10742baea8241c5924df992b5c019f71",
       testStats("readable"),
-    )
+    );
     // Arrange
     const traverseCallback = jest
       .fn()
@@ -62,10 +62,7 @@ describe("Tree#traverse", () => {
         const strtree = tree.toString();
         return unpackEntries(strtree);
       });
-    const entries = [
-      middleEntry,
-      deepestEntry,
-    ];
+    const entries = [middleEntry, deepestEntry];
 
     // Act
     let root: Database.Tree;
@@ -89,7 +86,6 @@ describe("Tree#traverse", () => {
       root.oid = ANY_OID;
     });
 
-
     it("should be called 3 times", async () => {
       const tree = Database.Tree.build(entries);
       await tree.traverse(traverseCallback);
@@ -104,27 +100,38 @@ describe("Tree#traverse", () => {
       await tree.traverse(traverseCallback);
 
       // Assert
-      const callbackCalls = traverseCallback.mock.calls.map((args) => args[0])
-      const expectedCalls = [{
-        arg: deepest,
-        return: "100644 world.txt cc628ccd10742baea8241c5924df992b5c019f71"
-      }, {
-        arg: middle,
-        return: [
-          "100644 hello.txt ce013625030ba8dba906f756967f9e9ca394464a",
-          "40000 test2 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
-        ].join("\n"),
-        }, {
-        arg: root,
-        return: ["40000 test aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"].join("\n"),
-        }] as const;
+      const callbackCalls = traverseCallback.mock.calls.map((args) => args[0]);
+      const expectedCalls = [
+        {
+          arg: deepest,
+          return: "100644 world.txt cc628ccd10742baea8241c5924df992b5c019f71",
+        },
+        {
+          arg: middle,
+          return: [
+            "100644 hello.txt ce013625030ba8dba906f756967f9e9ca394464a",
+            "40000 test2 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          ].join("\n"),
+        },
+        {
+          arg: root,
+          return: ["40000 test aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"].join(
+            "\n",
+          ),
+        },
+      ] as const;
 
       for (let i = 0; i < callbackCalls.length; i++) {
-        assert.deepStrictEqual(callbackCalls[i], expectedCalls[i].arg, "コールバックの引数");
+        assert.deepStrictEqual(
+          callbackCalls[i],
+          expectedCalls[i].arg,
+          "コールバックの引数",
+        );
         assert.deepStrictEqual(
           traverseCallback.mock.results[i].value,
           expectedCalls[i].return,
-        "コールバックの返り値");
+          "コールバックの返り値",
+        );
       }
     });
   });

@@ -305,6 +305,15 @@ describe("toOsPath", () => {
       /アプリケーション内部ではPosix形式パスを利用してください/,
     );
   });
+
+  itOnlyWindows("should not add root separator for relative paths", () => {
+    // Arrange
+    const relativePath = "user/documents/file.txt";
+    // Act
+    const result = toOsPath(relativePath);
+    // Assert
+    assert.strictEqual(result, "user\\documents\\file.txt");
+  });
 });
 
 describe("asOsPath", () => {

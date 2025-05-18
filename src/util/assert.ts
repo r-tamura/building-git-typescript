@@ -1,5 +1,5 @@
-import { AssertionError } from "assert";
-import { GitObject, NonNullProps } from "../types";
+import { AssertionError } from "node:assert";
+import { GitObject, NonNullProps } from "../types.ts";
 
 /**
  * アサーション関数 - 条件がtrueの場合、その関数実行後に保証する

@@ -9,14 +9,8 @@ export interface ErrorConstructor {
 }
 
 export class BaseError extends Error {
-  name: string;
-
-  constructor(message?: string | undefined) {
-    super(message);
-    // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/new.target
-    this.name = new.target.name;
-    const actualProto = new.target.prototype;
-    Object.setPrototypeOf(this, actualProto);
+  static {
+    this.prototype.name = "KitBaseError";
   }
 }
 

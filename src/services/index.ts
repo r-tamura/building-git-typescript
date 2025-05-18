@@ -1,3 +1,3 @@
-export * from "./FileService";
-export * from "./Process";
-export * from "./Logger";
+export * from "./FileService.ts";
+export * from "./Logger.ts";
+export * from "./Process.ts";

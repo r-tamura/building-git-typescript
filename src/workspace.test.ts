@@ -12,7 +12,7 @@ import { Environment, MissingFile, NoPermission, Workspace } from "./workspace";
 jest.mock("fs");
 jest.mock("./repository/repository");
 
-const MockedStat = (Stats as unknown) as jest.Mock<Partial<Stats>>;
+const MockedStat = Stats as unknown as jest.Mock<Partial<Stats>>;
 
 type FakeFile = {
   type: "f";
@@ -67,7 +67,9 @@ const fakeDirectory: FakeDir = {
 const retrieve = (pathname: PosixPath): FakeEntry => {
   let entry: FakeEntry = fakeDirectory;
   let seen = "";
-  for (const name of toPathComponentsPosix(pathname).filter((name) => name !== "")) {
+  for (const name of toPathComponentsPosix(pathname).filter(
+    (name) => name !== "",
+  )) {
     if (entry.type === "f") {
       return entry;
     }
@@ -99,22 +101,25 @@ const fakeStat = jest
   .fn<Promise<Stats>, [string]>()
   .mockImplementation(async (pathname) => {
     MockedStat.mockImplementation(() => ({
-      isDirectory: jest.fn().mockReturnValue(retrieve(posixPath(pathname)).type === "d"),
+      isDirectory: jest
+        .fn()
+        .mockReturnValue(retrieve(posixPath(pathname)).type === "d"),
     }));
+    // @ts-expect-error Statsコンストラクタは非推奨だが、代替えができていない mockFsStatsではテストに失敗する
     const stats = new Stats();
     return stats;
   });
 
 describe("WorkSpace#listFiles", () => {
   const testPath = posixPath("test");
-  const env = ({
+  const env = {
     fs: {
       ...defaultFs,
       readdir: fakeReaddir,
       stat: fakeStat,
       access: jest.fn().mockResolvedValue(undefined),
     },
-  } as unknown) as Environment;
+  } as unknown as Environment;
   it("ファイルが指定されたとき、そのファイルのみを要素とするリストを返す", async () => {
     // Arrange
 
@@ -132,7 +137,10 @@ describe("WorkSpace#listFiles", () => {
     const actual = await ws.listFiles(posixJoin("test", "dir_a"));
 
     // Assert
-    const expected = [posixJoin("dir_a", "world_a.txt"), posixJoin("dir_a", "hello_a.txt")];
+    const expected = [
+      posixJoin("dir_a", "world_a.txt"),
+      posixJoin("dir_a", "hello_a.txt"),
+    ];
     assert.deepStrictEqual(actual, expected);
   });
   it("ディレクトリが階層構造になっているとき、全てのファイルパスを階層構造のないリストで返す", async () => {
@@ -152,7 +160,7 @@ describe("WorkSpace#listFiles", () => {
   });
   it("存在しないファイルが含まれているとき、例外を発生させる", async () => {
     // Arrange
-    const env = ({
+    const env = {
       fs: {
         ...defaultFs,
         readdir: fakeReaddir,
@@ -160,7 +168,7 @@ describe("WorkSpace#listFiles", () => {
           throw ENOENT;
         }),
       },
-    } as unknown) as Environment;
+    } as unknown as Environment;
 
     // Act
     const ws = new Workspace(posixJoin("test", "noent.txt"), env);
@@ -177,17 +185,22 @@ describe("Workspace#readFile", () => {
     "when an unknown printer took a galley of type and scrambled it to make a type specimen book.",
   ].join("\n");
   const mockedReadFile = jest.fn().mockResolvedValue(testContent);
-  let actual: string | null = null;  beforeAll(async () => {
+  let actual: string | null = null;
+  beforeAll(async () => {
     // Arrange
 
     // Act
     const ws = new Workspace(posixPath("/test/jit"), {
       fs: { ...defaultFs, readFile: mockedReadFile },
     });
-    actual = await ws.readFile(posixJoin("src", "index.js"));  });
+    actual = await ws.readFile(posixJoin("src", "index.js"));
+  });
   // Assert
   it("ファイルパス", () => {
-    assert.equal(mockedReadFile.mock.calls[0][0], posixJoin("/test/jit", "src/index.js"));
+    assert.equal(
+      mockedReadFile.mock.calls[0][0],
+      posixJoin("/test/jit", "src/index.js"),
+    );
   });
   it("ファイルの全データを返す", () => {
     const expected = testContent;
@@ -198,9 +211,9 @@ describe("Workspace#readFile", () => {
 describe("Workspace#statFile", () => {
   it("エントリが存在しないとき、nullを返す", async () => {
     // Arrange
-    const env = ({
+    const env = {
       fs: { stat: mockFsError("ENOENT", "async") },
-    } as unknown) as Environment;
+    } as unknown as Environment;
 
     // Act
     const ws = new Workspace("/tmp", env);
@@ -212,9 +225,9 @@ describe("Workspace#statFile", () => {
 
   it("エントリへのアクセス権限がないとき、例外を発生させる", () => {
     // Arrange
-    const env = ({
+    const env = {
       fs: { stat: mockFsError("EACCES", "async") },
-    } as unknown) as Environment;
+    } as unknown as Environment;
     // Act
     const ws = new Workspace("/tmp", env);
     const actual = ws.statFile("path/to/nopermission");

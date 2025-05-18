@@ -4,7 +4,13 @@
     "module": "CommonJS",
     "noEmit": true,
     "strict": true,
+    "allowImportingTsExtensions": true,
     "lib": ["ES2024"]
   },
-  "include": ["src/**/*.ts", "integ/**/*.ts", "scripts/debug.ts"]
+  "include": [
+    "src/**/*.ts",
+    "integ/**/*.ts",
+    "scripts/debug.ts",
+    "src/tempfile.test.mts"
+  ]
 }

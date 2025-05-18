@@ -16,12 +16,13 @@
     "watch": "tsc -w",
     "format": "prettier-eslint --write \"$PWD/src/**/*.ts\"",
     "test:all": "jest",
-    "test:unit": "jest --config jest.config.js",
+    "test:unit": "jest --config jest.config.unit.js",
     "test:integ": "jest --config jest.config.integ.js",
     "pre-commit": "yarn format"
   },
   "devDependencies": {
     "@types/jest": "^29.5.14",
+    "@types/mock-fs": "^4.13.4",
     "@types/node": "^22.15.17",
     "@types/power-assert": "^1.5.3",
     "@typescript-eslint/eslint-plugin": "^8.31.1",
@@ -43,6 +44,7 @@
   "dependencies": {
     "arg": "^5.0.0",
     "crc-32": "^1.2.0",
+    "mock-fs": "^5.5.0",
     "shlex": "^2.0.2"
   }
 }

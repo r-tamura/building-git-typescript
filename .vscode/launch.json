@@ -16,7 +16,12 @@
       "internalConsoleOptions": "neverOpen",
       "program": "${workspaceFolder}/node_modules/jest/bin/jest",
       // https://stackoverflow.com/questions/37771097/how-to-debug-async-await-in-visual-studio-code
-      "skipFiles": ["inspector_async_hook.js", "async_hooks.js"]
+      "skipFiles": ["inspector_async_hook.js", "async_hooks.js"],
+      "env": {
+        // デバッグ時はtimeoutを長くする
+        // https://stackoverflow.com/questions/69137737/what-is-the-best-way-to-automatically-set-jest-timeout-when-debugging-tests
+        "DEBUG": "jest"
+      }
     },
     {
       "type": "node",
