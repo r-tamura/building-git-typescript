@@ -14,6 +14,34 @@ export function asserts(cond: boolean, msg?: string): asserts cond {
 }
 
 /**
+ * 「ここには到達しないはず」をプログラマが表明したときに throw されるエラー。
+ * ビジネスロジック由来のエラー (BaseError 派生) とは区別して、
+ * 「コードの不変条件が壊れている」ことを伝える。
+ */
+export class Unreachable extends Error {
+  static {
+    this.prototype.name = "Unreachable";
+  }
+  constructor(message = "unreachable code path") {
+    super(message);
+  }
+}
+
+/**
+ * 到達しないはずのコード経路で呼び出すと Unreachable を投げる。
+ * 戻り値が never なので、呼び出し以降は型レベルで「到達しない」と扱われる。
+ *
+ * @example
+ *   for await (const line of conn.recvUntil(null)) {
+ *     if (line === null) unreachable("recvUntil(null) は null を yield しない");
+ *     // 以降 line は string に narrow される
+ *   }
+ */
+export function unreachable(msg?: string): never {
+  throw new Unreachable(msg);
+}
+
+/**
  * Git objectがoidを持っていることを保証する
  * @param obj Git object
  * @param msg 条件を満たさない場合のエラーに含まれるメッセージ

@@ -1,6 +1,6 @@
 import * as remotes from "../remotes";
 import { Environment, OID } from "../types";
-import { asserts, BaseError } from "../util";
+import { asserts, BaseError, unreachable } from "../util";
 import { BaseCommand } from "./base";
 import * as fast_forward from "./shared/fast_forward";
 import * as receive_objects from "./shared/receive_objects";
@@ -43,10 +43,8 @@ export class ReceivePack extends BaseCommand {
     this.#requests = {};
 
     for await (const line of this.conn.recvUntil(null)) {
-      if (line === null) {
-        throw new BaseError(`line is invalid`);
-      }
-      const [oldOid, newOid, ref] = line?.split(/ +/);
+      if (line === null) unreachable("recvUntil(null) は null を yield しない");
+      const [oldOid, newOid, ref] = line.split(/ +/);
       this.#requests[ref] = [oldOid, newOid].map(
         this.zeroToUndefined,
       ) as OldNewOidPair;
