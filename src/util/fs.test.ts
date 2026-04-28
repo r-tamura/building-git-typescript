@@ -27,7 +27,7 @@ describe("descend", () => {
     // Skip entire describe block if not on Windows
     beforeAll(() => {
       if (!isWindows) {
-        console.warn("Skipping Windows-specific tests on non-Windows platform");
+        console.info("Skipping Windows-specific tests on non-Windows platform");
       }
     });
 
@@ -61,7 +61,7 @@ describe("descend", () => {
 
     beforeAll(() => {
       if (!isPosix) {
-        console.warn("Skipping POSIX-specific tests on Windows platform");
+        console.info("Skipping POSIX-specific tests on Windows platform");
       }
     });
 
