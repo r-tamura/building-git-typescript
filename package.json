@@ -17,6 +17,7 @@
     "format": "prettier-eslint --write \"$PWD/src/**/*.ts\"",
     "test:all": "jest",
     "test:unit": "jest --config jest.config.unit.js",
+    "pretest:integ": "pnpm build:release",
     "test:integ": "jest --config jest.config.integ.js",
     "pre-commit": "yarn format"
   },

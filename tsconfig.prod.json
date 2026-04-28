@@ -1,7 +1,10 @@
 {
   "extends": "./tsconfig",
   "compilerOptions": {
-    "declaration": true
+    "declaration": true,
+    "noEmit": false,
+    "outDir": "dist",
+    "rewriteRelativeImportExtensions": true
   },
   "include": ["src/**/*.ts"],
   "exclude": ["src/**.test.ts", "src/__test__"]
