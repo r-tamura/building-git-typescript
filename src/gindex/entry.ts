@@ -304,7 +304,10 @@ export class Entry {
     ];
     for (const [i, name] of orderToWrite.entries()) {
       const v = this[name];
-      buffer.writeUInt32BE(v & 0xffffffff, i * Entry.META_SIZE);
+      // `v & 0xffffffff` は JS の bitwise op で 32bit signed になるため、
+      // Windows などで負値が writeUInt32BE のレンジ外として弾かれる。
+      // `>>> 0` で unsigned 32bit に正規化する。
+      buffer.writeUInt32BE((v & 0xffffffff) >>> 0, i * Entry.META_SIZE);
     }
 
     // OID
