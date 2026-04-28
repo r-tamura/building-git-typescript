@@ -460,14 +460,18 @@ export class Refs {
       }
     }
 
-    const pathnames = names.map((name) => posixPath(path.posix.join(dirname, name)));
+    const pathnames = names.map((name) =>
+      posixPath(path.posix.join(dirname, name)),
+    );
 
     const symrefs: (SymRef | SymRef[])[] = [];
     for (const pathname of pathnames) {
       if (await directory(this.#fs, toOsPath(pathname))) {
         symrefs.push(await this.listRefs(pathname));
       } else {
-        const relative = posixPath(path.posix.relative(this.#pathname, pathname));
+        const relative = posixPath(
+          path.posix.relative(this.#pathname, pathname),
+        );
         symrefs.push(symref(this, relative));
       }
     }
