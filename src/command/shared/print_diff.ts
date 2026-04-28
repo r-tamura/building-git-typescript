@@ -1,4 +1,3 @@
-import * as path from "path";
 import { assertsStyle } from "../../color";
 import { assertsString, SectionName } from "../../config";
 import {
