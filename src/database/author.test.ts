@@ -28,7 +28,8 @@ describe("Author#toString", () => {
       const spy = mockTimezone(tzname);
 
       // Act
-      const date20200401 = new Date(2020, 3, 1);
+      // 1585666800 = 2020-04-01T00:00:00+09:00 (= 2020-03-31T15:00:00Z)
+      const date20200401 = new Date(1585666800 * 1000);
       const author = new Author("John Doe", "johndoe@test.local", date20200401);
       const actual = author.toString();
 

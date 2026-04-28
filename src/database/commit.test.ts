@@ -4,13 +4,21 @@ import { Author } from "./author";
 import { Commit } from "./commit";
 
 describe("Commit#toString", () => {
+  // toString が getTimezoneOffset() で TZ 文字列を作るため、CI の TZ に依存しないよう JST 固定
+  beforeEach(() => {
+    jest.spyOn(Date.prototype, "getTimezoneOffset").mockReturnValue(-540);
+  });
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
   it("parentが存在しないとき、tree,author,commiter,messageが指定されたフォーマットで返される", () => {
     // Arrange
     const treeOId = "123456789abcdeffedcba98765abcdef12345678";
     const author = new Author(
       "JohnDoe",
       "johndoe@test.local",
-      new Date(2020, 3, 1),
+      new Date(1585666800 * 1000),
     );
 
     // Act
@@ -35,7 +43,7 @@ test commit`,
     const author = new Author(
       "JohnDoe",
       "johndoe@test.local",
-      new Date(2020, 3, 1),
+      new Date(1585666800 * 1000),
     );
 
     // Act
@@ -67,7 +75,7 @@ describe("Commit.parse", () => {
     const author = new Author(
       "JohnDoe",
       "johndoe@test.local",
-      new Date(2020, 3, 1),
+      new Date(1585666800 * 1000),
     );
     const rawCommit = Buffer.from(
       new Commit(
@@ -92,7 +100,7 @@ describe("Commit.parse", () => {
     const author = new Author(
       "JohnDoe",
       "johndoe@test.local",
-      new Date(2020, 3, 1),
+      new Date(1585666800 * 1000),
     );
     const rawCommit = Buffer.from(
       new Commit(
