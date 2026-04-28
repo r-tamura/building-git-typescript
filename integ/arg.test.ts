@@ -1,5 +1,5 @@
-import * as arg from "arg";
-import * as assert from "power-assert";
+import arg from "arg";
+import assert from "node:assert";
 
 describe("arg", () => {
   it.each([

@@ -1,4 +1,4 @@
-import * as assert from "assert";
+import assert from "node:assert";
 import { mockFsStats } from "./__test__/fs.ts";
 import { Entry } from "./entry.ts";
 import { posixPath } from "./util/fs";

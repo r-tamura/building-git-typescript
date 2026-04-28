@@ -1,4 +1,4 @@
-import * as arg from "arg";
+import arg from "arg";
 import { BaseCommand } from ".";
 import { Commit } from "../database";
 import * as Merge from "../merge";

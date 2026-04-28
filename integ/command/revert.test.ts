@@ -1,4 +1,4 @@
-import * as assert from "power-assert";
+import assert from "node:assert";
 import { CompleteCommit, Dict } from "../../src/types";
 import * as TextUtil from "../../src/util/text";
 import * as T from "./helper";

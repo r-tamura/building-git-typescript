@@ -15,7 +15,7 @@ import {
     printDiff,
     Target,
 } from "./shared/print_diff";
-import arg = require("arg");
+import arg from "arg";
 
 const FORMAT = ["medium", "oneline"] as const;
 const DECORATE = ["auto", "short", "full", "no"] as const;

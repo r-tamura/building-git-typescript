@@ -1,4 +1,4 @@
-import * as arg from "arg";
+import arg from "arg";
 import * as path from "path";
 import * as Color from "../color";
 import { EditCallback, Editor } from "../editor";

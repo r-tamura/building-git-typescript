@@ -1,7 +1,7 @@
 import * as crypto from "crypto";
 import { promises as fsPromises } from "fs";
 import * as path from "path";
-import * as assert from "power-assert";
+import assert from "node:assert";
 import { makeDummyFileStats } from "../__test__";
 import * as Database from "../database";
 import { LockDenied } from "../refs";
@@ -12,7 +12,7 @@ import { Index } from "./gindex";
 
 import mock = require("mock-fs");
 
-const mockedWrite = jest.fn();
+const mockedWrite = vi.fn();
 const TEST_OBJECT_PATH = "README.md";
 const testOid = "ba78afac62556e840341715936909cc36fe83a77"; // sha1 of 'jit\n'
 
@@ -113,7 +113,7 @@ describe("Index#writeUpdates", () => {
     it("1ファイルをIndexファイルへ書き込むことができる", async () => {
       // Arrange
       // mockした後にconsoleを使うのを禁止
-      // jestが適用したconsoleのラッパーが動かなくなる
+      // viが適用したconsoleのラッパーが動かなくなる
       mock({
         "file.txt": mock.file({
           content: "", // ファイル内容は空
@@ -329,17 +329,17 @@ describe("Index#writeUpdates", () => {
 
 describe("Index#loadForUpdate", () => {
   // Arrange
-  // const mockedRead = jest
+  // const mockedRead = vi
   //   .fn<
   //     ReturnType<fsPromises.FileHandle["read"]>,
   //     Parameters<fsPromises.FileHandle["read"]>
   //   >()
   //   .mockImplementation(fakeFileHandleRead() as any);
-  // const mockedOpen = jest
+  // const mockedOpen = vi
   //   .fn<Promise<Partial<fsPromises.FileHandle>>, any>()
   //   .mockResolvedValue({
   //     read: mockedRead as any,
-  //     close: jest.fn(),
+  //     close: vi.fn(),
   //   });
   // const env = {
   //   fs: { ...defaultFs, open: mockedOpen as any },

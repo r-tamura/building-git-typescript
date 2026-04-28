@@ -1,6 +1,6 @@
 import * as fsCb from "fs";
 import * as path from "path";
-import * as assert from "power-assert";
+import assert from "node:assert";
 import { asserts, stripIndent } from "../../src/util";
 import * as T from "./helper";
 const fs = fsCb.promises;

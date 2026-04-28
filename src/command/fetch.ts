@@ -1,4 +1,4 @@
-import * as arg from "arg";
+import arg from "arg";
 import * as pack from "../pack";
 import * as remotes from "../remotes";
 import { SourceRef } from "../remotes";

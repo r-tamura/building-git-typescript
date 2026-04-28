@@ -1,4 +1,4 @@
-import * as arg from "arg";
+import arg from "arg";
 import * as Database from "../database";
 import { Error, PendingCommit } from "../repository/pending_commit";
 import { Revision } from "../revision";

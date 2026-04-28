@@ -1,5 +1,5 @@
 import type { Stats } from "fs";
-import * as assert from "power-assert";
+import assert from "node:assert";
 import * as Database from ".";
 import { makeDummyFileStats, mockFsStats } from "../__test__/fs.ts";
 import { Entry, MODE } from "../entry.ts";
@@ -55,7 +55,7 @@ describe("Tree#traverse", () => {
       testStats("readable"),
     );
     // Arrange
-    const traverseCallback = jest
+    const traverseCallback = vi
       .fn()
       .mockImplementation((tree: Database.Tree) => {
         tree.oid = ANY_OID;

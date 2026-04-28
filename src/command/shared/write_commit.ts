@@ -1,4 +1,4 @@
-import * as arg from "arg";
+import arg from "arg";
 import * as path from "path";
 import { Author, Commit, Tree } from "../../database";
 import {

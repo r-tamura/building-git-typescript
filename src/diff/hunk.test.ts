@@ -1,7 +1,7 @@
 import { lines, TextDocument, Line, combinedHunk } from "./diff";
 import { Myers, Edit } from "./myers";
 import { Hunk } from "./hunk";
-import * as assert from "power-assert";
+import assert from "node:assert";
 import { Row } from "./combined";
 
 describe("Hunk.filter", () => {

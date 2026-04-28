@@ -1,4 +1,4 @@
-import * as arg from "arg";
+import arg from "arg";
 import { Commit } from "../database";
 import { CherryPick } from "../merge";
 import { MergeType, PendingCommit } from "../repository/pending_commit";

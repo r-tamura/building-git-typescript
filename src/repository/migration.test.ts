@@ -1,5 +1,6 @@
+import type { Mock, MockInstance } from "vitest";
 import { constants } from "fs";
-import * as assert from "power-assert";
+import assert from "node:assert";
 import { makeDummyFileStats } from "../__test__";
 import { setOid } from "../__test__/util";
 import { Blob, ChangeMap, Entry } from "../database";
@@ -11,17 +12,17 @@ import { Migration } from "./migration";
 import { Repository } from "./repository";
 
 describe("Migration#applyChanges", () => {
-  let spyRmrf: jest.SpyInstance;
+  let spyRmrf: MockInstance<any>;
   beforeAll(() => {
-    spyRmrf = jest.spyOn(FileService, "rmrf").mockResolvedValue(undefined);
+    spyRmrf = vi.spyOn(FileService, "rmrf").mockResolvedValue(undefined);
   });
 
   describe("削除されるエントリがあるとき、そのエントリを削除する", () => {
-    const rmdir = jest.fn().mockResolvedValue(undefined);
-    const unlink = jest.fn().mockResolvedValue(undefined);
-    const mkdir = jest.fn().mockResolvedValue(undefined);
-    const writeFile = jest.fn().mockResolvedValue(undefined);
-    const chmod = jest.fn().mockResolvedValue(undefined);
+    const rmdir = vi.fn().mockResolvedValue(undefined);
+    const unlink = vi.fn().mockResolvedValue(undefined);
+    const mkdir = vi.fn().mockResolvedValue(undefined);
+    const writeFile = vi.fn().mockResolvedValue(undefined);
+    const chmod = vi.fn().mockResolvedValue(undefined);
 
     const testStat = makeDummyFileStats();
     const env = {
@@ -31,11 +32,11 @@ describe("Migration#applyChanges", () => {
         mkdir,
         writeFile,
         chmod,
-        stat: jest.fn().mockResolvedValue(testStat),
+        stat: vi.fn().mockResolvedValue(testStat),
       },
     };
-    let remove: jest.SpyInstance;
-    let add: jest.SpyInstance;
+    let remove: MockInstance<any>;
+    let add: MockInstance<any>;
 
     // mocked index
     // prettier-ignore
@@ -59,10 +60,10 @@ describe("Migration#applyChanges", () => {
       // Arrange
       const repo = new Repository("/tmp/.git", env as any);
       // prettier-ignore
-      jest.spyOn(repo.database, "load").mockResolvedValue(setOid(new Blob("hello")));
-      remove = jest.spyOn(repo.index, "remove").mockResolvedValue(undefined);
-      add = jest.spyOn(repo.index, "add");
-      jest
+      vi.spyOn(repo.database, "load").mockResolvedValue(setOid(new Blob("hello")));
+      remove = vi.spyOn(repo.index, "remove").mockResolvedValue(undefined);
+      add = vi.spyOn(repo.index, "add");
+      vi
         .spyOn(repo.index, "entryForPath")
         .mockImplementation(mockedEntryForPath);
 
@@ -71,7 +72,7 @@ describe("Migration#applyChanges", () => {
       await mgr.applyChanges();
     });
     afterAll(() => {
-      jest.resetAllMocks();
+      vi.resetAllMocks();
     });
 
     // Assert

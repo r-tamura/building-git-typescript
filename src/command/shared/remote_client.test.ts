@@ -1,4 +1,4 @@
-import * as assert from "power-assert";
+import assert from "node:assert";
 import { buildAgentCommand } from "./remote_client";
 
 describe("buildAgentCommand", () => {

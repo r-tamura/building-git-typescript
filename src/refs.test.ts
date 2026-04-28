@@ -1,14 +1,15 @@
+import type { Mock, MockInstance } from "vitest";
 import * as os from "os";
 import * as path from "path";
-import * as assert from "power-assert";
+import assert from "node:assert";
 import { mockFs, mockFsError } from "./__test__";
 import { Lockfile } from "./lockfile";
 import { Environment, InvalidBranch, LockDenied, Refs, symref } from "./refs";
 import { defaultFs, FileService } from "./services";
 import * as Service from "./services/FileService";
 
-jest.mock("./lockfile");
-const MockedLockfile = (Lockfile as unknown) as jest.Mock<Partial<Lockfile>>;
+vi.mock("./lockfile");
+const MockedLockfile = (Lockfile as unknown) as Mock;
 
 const mockEnv = (mock: Partial<FileService> = {}) => ({
   fs: {
@@ -41,7 +42,7 @@ describe("Refs#createBranch", () => {
 
   it("ブランチがすでに存在するとき、例外を発生させる", async () => {
     // Arrange
-    const alreadyExists = jest.spyOn(Service, "exists").mockResolvedValue(true);
+    const alreadyExists = vi.spyOn(Service, "exists").mockResolvedValue(true);
 
     // Act
     const refs = new Refs(".git");
@@ -58,10 +59,10 @@ describe("Refs#deleteBranch", () => {
   it("削除したファイルのOIDを返す", async () => {
     // Arrange
     const oid = "3a3c4ec0ae9589c881029c161dd129bcc318dc08";
-    const unlink = jest.fn().mockResolvedValue(null);
-    const rmdir = jest.fn().mockResolvedValue(null);
+    const unlink = vi.fn().mockResolvedValue(null);
+    const rmdir = vi.fn().mockResolvedValue(null);
     const env = mockEnv({
-      readFile: jest.fn().mockResolvedValueOnce(oid),
+      readFile: vi.fn().mockResolvedValueOnce(oid),
       unlink,
       rmdir,
     });
@@ -86,11 +87,11 @@ describe("Refs#deleteBranch", () => {
 
   it("symrefが解決できなかったとき、例外を発生させる", async () => {
     // Arrange
-    const readFile = jest.fn().mockImplementation(mockFsError("ENOENT"));
+    const readFile = vi.fn().mockImplementation(mockFsError("ENOENT"));
     const env = mockEnv({
       readFile,
-      unlink: jest.fn().mockResolvedValue(null),
-      rm: jest.fn().mockResolvedValue(null),
+      unlink: vi.fn().mockResolvedValue(null),
+      rm: vi.fn().mockResolvedValue(null),
     });
 
     // Act
@@ -105,10 +106,10 @@ describe("Refs#deleteBranch", () => {
 describe("Refs#listBranch", () => {
   it("headsディレクトリ内のブランチを取得する", async () => {
     // Arrange
-    const spyDirectory = jest
+    const spyDirectory = vi
       .spyOn(Service, "directory")
       .mockResolvedValue(false);
-    const readdir = jest.fn().mockResolvedValueOnce(["foo", "bar", "qux"]);
+    const readdir = vi.fn().mockResolvedValueOnce(["foo", "bar", "qux"]);
     const env: Environment = mockEnv({ readdir });
     // Act
     const refs = new Refs(".git", env);
@@ -136,7 +137,7 @@ describe("Refs#listBranch", () => {
 
   it("headsディレクトリが存在しないとき、空のリストを返す", async () => {
     // Arrange
-    const readdir = jest.fn().mockImplementationOnce(mockFsError("ENOENT"));
+    const readdir = vi.fn().mockImplementationOnce(mockFsError("ENOENT"));
     const env: Environment = mockEnv({ readdir });
 
     // Act
@@ -152,7 +153,7 @@ describe("Refs#readHead", () => {
   const testRootPath = "/test/project";
   it("HEADファイルが存在するとき、HEADファイルのデータを返す", async () => {
     // Arrange
-    const mockedReadFile = jest
+    const mockedReadFile = vi
       .fn()
       .mockResolvedValueOnce("ref: refs/heads/master\n")
       .mockResolvedValueOnce("3a3c4ec\n");
@@ -170,7 +171,7 @@ describe("Refs#readHead", () => {
 
   it("HEADファイルが存在しないとき、nullを返す", async () => {
     // Arrange
-    const mockedReadFile = jest.fn().mockImplementation(() => {
+    const mockedReadFile = vi.fn().mockImplementation(() => {
       throw { code: "ENOENT" } as NodeJS.ErrnoException;
     });
     const env = {
@@ -188,14 +189,14 @@ describe("Refs#readHead", () => {
 
 describe("Refs#readRef", () => {
   describe("refファイルが存在するとき、Ref IDを返す", () => {
-    const mockedReadFile = jest
+    const mockedReadFile = vi
       .fn()
       .mockResolvedValue("3a3c4ec0ae9589c881029c161dd129bcc318dc08\n");
-    let spyServiceExists: jest.SpyInstance;
+    let spyServiceExists: MockInstance<any>;
     let actual: string | null;
     beforeAll(async () => {
       // Arrange
-      spyServiceExists = jest
+      spyServiceExists = vi
         .spyOn(Service, "exists")
         .mockImplementation(async (_fs, pathname) =>
           pathname.includes("heads"),
@@ -224,7 +225,7 @@ describe("Refs#readRef", () => {
 
   it("refファイルが存在しないとき、nullを返す", async () => {
     // Arrange
-    const spyServiceExists = jest
+    const spyServiceExists = vi
       .spyOn(Service, "exists")
       .mockImplementation(async (_fs, pathname) => false);
     // Act
@@ -282,15 +283,15 @@ describe("Refs#updateHead", () => {
   const testOId = "123456789abcdeffedcba98765abcdef12345678";
   describe("ロックファイルがロックされていないとき、HEADを更新する", () => {
     // Arrange
-    const mockedWrite = jest.fn();
-    const mockedCommit = jest.fn();
+    const mockedWrite = vi.fn();
+    const mockedCommit = vi.fn();
     beforeAll(async () => {
       MockedLockfile.mockRestore();
-      MockedLockfile.mockImplementationOnce((pathname: string) => ({
-        holdForUpdate: jest.fn().mockResolvedValue(undefined),
+      MockedLockfile.mockImplementationOnce(function(pathname: string) { return {
+        holdForUpdate: vi.fn().mockResolvedValue(undefined),
         write: mockedWrite,
         commit: mockedCommit,
-      }));
+      }; });
       // Act
       const refs = new Refs(testRootPath);
       await refs.updateHead(testOId);
@@ -311,18 +312,18 @@ describe("Refs#updateHead", () => {
 
   describe("ロックファイルがロックされているとき、HEADファイルを更新しない", () => {
     // Arrange
-    const mockedWrite = jest.fn();
-    const mockedCommit = jest.fn();
-    const throwLockDenied = jest.fn().mockImplementation(() => {
+    const mockedWrite = vi.fn();
+    const mockedCommit = vi.fn();
+    const throwLockDenied = vi.fn().mockImplementation(() => {
       throw new LockDenied();
     });
     beforeAll(async () => {
       MockedLockfile.mockRestore();
-      MockedLockfile.mockImplementationOnce((pathname: string) => ({
+      MockedLockfile.mockImplementationOnce(function(pathname: string) { return {
         holdForUpdate: throwLockDenied,
         write: mockedWrite,
         commit: mockedCommit,
-      }));
+      }; });
       // Act & Assert
       const refs = new Refs(testRootPath);
       const actual = refs.updateHead(testOId);
@@ -339,18 +340,18 @@ describe("Refs#updateHead", () => {
 describe("Refs#updateRef", () => {
   const testRootPath = "/test/project";
   const testOId = "123456789abcdeffedcba98765abcdef12345678";
-  const mockedWrite = jest.fn();
-  const mockedCommit = jest.fn();
-  const mockedRollback = jest.fn();
+  const mockedWrite = vi.fn();
+  const mockedCommit = vi.fn();
+  const mockedRollback = vi.fn();
   describe("refを更新する", () => {
     beforeAll(async () => {
       MockedLockfile.mockRestore();
-      MockedLockfile.mockImplementationOnce((pathname: string) => ({
+      MockedLockfile.mockImplementationOnce(function(pathname: string) { return {
         holdForUpdate: () => Promise.resolve(),
         write: mockedWrite,
         commit: mockedCommit,
         rollback: mockedRollback,
-      }));
+      }; });
       const refs = new Refs(testRootPath);
       await refs.updateRef("/heads/master", testOId);
     });
@@ -362,21 +363,21 @@ describe("Refs#updateRef", () => {
 
   describe("refを削除する", () => {
     const mockedEnv = mockEnv({
-      unlink: jest.fn().mockResolvedValueOnce(null),
+      unlink: vi.fn().mockResolvedValueOnce(null),
     });
     beforeAll(async () => {
       MockedLockfile.mockRestore();
-      MockedLockfile.mockImplementationOnce(() => ({
-        holdForUpdate: jest.fn().mockResolvedValueOnce(null),
+      MockedLockfile.mockImplementationOnce(function() { return {
+        holdForUpdate: vi.fn().mockResolvedValueOnce(null),
         write: mockedWrite,
         commit: mockedCommit,
         rollback: mockedRollback,
-      }));
+      }; });
       const refs = new Refs(testRootPath, mockedEnv);
       await refs.updateRef("heads/master", null);
     });    it("refが削除される", () => {
       assert.equal(
-        (mockedEnv.fs.unlink as jest.Mock).mock.calls[0][0],
+        (mockedEnv.fs.unlink as Mock).mock.calls[0][0],
         path.join(testRootPath, "heads", "master"),
         "削除されたパス"
       );

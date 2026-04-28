@@ -1,4 +1,4 @@
-import * as arg from "arg";
+import arg from "arg";
 import { ORIG_HEAD } from "../refs";
 import { HEAD, InvalidObject, Revision } from "../revision";
 import { OID, Pathname } from "../types";

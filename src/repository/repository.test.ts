@@ -1,12 +1,13 @@
+import type { Mock, MockInstance } from "vitest";
 import { Refs } from "../refs";
 import { Environment } from "../types";
 import { Repository } from "../repository";
 import { defaultFs, defaultProcess } from "../services";
-import * as assert from "assert";
+import assert from "node:assert";
 import { makeLogger } from "../__test__/util";
 
-jest.mock("../refs");
-const MockedRefs = (Refs as unknown) as jest.Mock<Partial<Refs>>;
+vi.mock("../refs");
+const MockedRefs = (Refs as unknown) as Mock;
 
 const testEnvGlobal: Environment = {
   fs: { ...defaultFs },

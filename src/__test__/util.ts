@@ -1,20 +1,21 @@
+import type { Mock, MockInstance } from "vitest";
 import { Logger } from "../services";
 import { GitObject, CompleteGitObject, OID } from "../types";
 
 export function getMockedMethod<T>(Cls: T, method: keyof T, index = 0) {
-  const Mocked = (Cls as unknown) as jest.Mock<T>;
-  const instance = Mocked.mock.instances[index];
+  const Mocked = (Cls as unknown) as Mock;
+  const instance = Mocked.mock.instances[index] as T;
   const _method = instance[method];
-  return (_method as unknown) as jest.Mock<typeof _method>;
+  return (_method as unknown) as Mock;
 }
 
 export function makeLogger(): Logger {
   return {
     level: "debug",
-    debug: jest.fn(),
-    info: jest.fn(),
-    warn: jest.fn(),
-    error: jest.fn(),
+    debug: vi.fn(),
+    info: vi.fn(),
+    warn: vi.fn(),
+    error: vi.fn(),
   };
 }
 

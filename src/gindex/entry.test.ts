@@ -1,5 +1,5 @@
 import * as path from "path";
-import * as assert from "power-assert";
+import assert from "node:assert";
 import { makeDummyFileStats } from "../__test__";
 import { Entry } from "./entry";
 

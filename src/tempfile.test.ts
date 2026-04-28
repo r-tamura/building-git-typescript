@@ -1,5 +1,5 @@
+import assert from "node:assert";
 import { charsFromRange } from "./tempfile.ts";
-import assert = require("power-assert");
 
 it("アルファベットがすべて列挙できる", () => {
   // Act

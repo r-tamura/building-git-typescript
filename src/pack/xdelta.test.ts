@@ -1,4 +1,4 @@
-import * as assert from "power-assert";
+import assert from "node:assert";
 import { Copy, Insert } from "./delta";
 import { Operation, Xdelta } from "./xdelta";
 

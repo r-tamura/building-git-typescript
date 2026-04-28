@@ -1,3 +1,4 @@
+import type { Mock, MockInstance } from "vitest";
 import { Stats } from "node:fs";
 import { FileHandle } from "node:fs/promises";
 import { FileService } from "../services/FileService.ts";
@@ -5,7 +6,7 @@ import { FS_ERROR } from "./error";
 
 function makeNotExpectedCalledFileService() {
   const errorMock = (apiName: string) =>
-    jest.fn(() => {
+    vi.fn(() => {
       throw new Error(
         `UnexpectedCall: モックされていないFileService API '${apiName}'が実行されました. モックを実装するようにしてください。`,
       );
@@ -46,20 +47,20 @@ export function mockFsStats(): Stats {
   return stats;
 }
 
-export function mockOpen(data: Buffer): jest.Mock<FileHandle> {
+export function mockOpen(data: Buffer): Mock {
   const fileHandle = {
-    write: jest
+    write: vi
       .fn()
       .mockResolvedValue({ bytesWritten: data.length, buffer: data }),
-    read: jest.fn().mockResolvedValue({ bytesRead: data.length, buffer: data }),
-    close: jest.fn(),
+    read: vi.fn().mockResolvedValue({ bytesRead: data.length, buffer: data }),
+    close: vi.fn(),
   } as unknown as FileHandle;
-  return jest.fn().mockResolvedValue(fileHandle);
+  return vi.fn().mockResolvedValue(fileHandle);
 }
 
 export function makeDummyFileStats(props: Partial<Stats> = {}): Stats {
-  const isFile = jest.fn().mockReturnValue(props.isFile ?? false);
-  const isDirectory = jest.fn().mockReturnValue(props.isDirectory ?? false);
+  const isFile = vi.fn().mockReturnValue(props.isFile ?? false);
+  const isDirectory = vi.fn().mockReturnValue(props.isDirectory ?? false);
 
   const defaultProps = {
     dev: 16777221,
@@ -96,27 +97,27 @@ export function mockFs(
   files: Record<string, string>,
 ) {
   return {
-    readdir: jest.fn().mockImplementation(async (p: string) => {
+    readdir: vi.fn().mockImplementation(async (p: string) => {
       if (!(p in dirs)) {
         console.warn("mocked readdir: ENOENT", p, dirs);
         throw mockFsError("ENOENT")();
       }
       return dirs[p];
     }),
-    readFile: jest.fn().mockImplementation(async (p: string) => {
+    readFile: vi.fn().mockImplementation(async (p: string) => {
       if (!(p in files)) {
         throw mockFsError("ENOENT")();
       }
       return files[p];
     }),
-    stat: jest.fn().mockImplementation(async (p: string) => {
+    stat: vi.fn().mockImplementation(async (p: string) => {
       return files[p]
         ? { isFile: () => true, isDirectory: () => false }
         : dirs[p]
         ? { isFile: () => false, isDirectory: () => true }
         : null;
     }),
-    access: jest.fn().mockImplementation(async (p: string) => {
+    access: vi.fn().mockImplementation(async (p: string) => {
       if (dirs[p] || files[p]) {
         return;
       }
@@ -135,7 +136,7 @@ type MockError = "EEXIST" | "ENOENT" | "EACCES";
  * @param async
  */
 export const mockFsError = (err: MockError, async: "sync" | "async" = "sync") =>
-  jest.fn().mockImplementation(() => {
+  vi.fn().mockImplementation(() => {
     if (async === "async") {
       return Promise.reject(FS_ERROR[err]);
     } else {

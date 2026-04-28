@@ -5,7 +5,7 @@ import { asserts } from "../util/assert";
 import { Runtime } from "../util/error";
 import { posixPath } from "../util/fs";
 import { BaseCommand, Exit } from "./base";
-import arg = require("arg");
+import arg from "arg";
 
 interface Options {
   cached: boolean;

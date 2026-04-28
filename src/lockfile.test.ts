@@ -1,7 +1,7 @@
 import { constants } from "fs";
 import * as fs from "fs/promises";
 import * as path from "path";
-import * as assert from "power-assert";
+import assert from "node:assert";
 import { EACCES, EEXIST, ENOENT } from "./__test__";
 import { Lockfile, MissingParent, NoPermission } from "./lockfile";
 import { LockDenied } from "./refs";
@@ -11,10 +11,10 @@ import mock = require("mock-fs");
 
 const TEST_TARGET_PATH = posixPath("/test/file.txt");
 
-const mockedClose = jest.fn();
-const mockedOpen = jest.fn().mockResolvedValue({ close: mockedClose });
-const mockedUnlink = jest.fn().mockResolvedValue(undefined);
-const mockedRename = jest.fn();
+const mockedClose = vi.fn();
+const mockedOpen = vi.fn().mockResolvedValue({ close: mockedClose });
+const mockedUnlink = vi.fn().mockResolvedValue(undefined);
+const mockedRename = vi.fn();
 const env = {
   fs: {
     ...defaultFs,
@@ -46,7 +46,7 @@ describe("Lockfile#holdForUpdate", () => {
 
   it("ロックファイルがすでに存在するとき、例外を発生させる", async () => {
     // Arrange
-    const mockedOpen = jest.fn().mockImplementation(() => {
+    const mockedOpen = vi.fn().mockImplementation(() => {
       throw EEXIST;
     });
     const env = {
@@ -65,7 +65,7 @@ describe("Lockfile#holdForUpdate", () => {
     [
       "ロックファイルの親ディレクリパスが存在しないとき",
       "例外を発生させる",
-      jest.fn().mockImplementation(() => {
+      vi.fn().mockImplementation(() => {
         throw ENOENT;
       }),
       MissingParent,
@@ -73,7 +73,7 @@ describe("Lockfile#holdForUpdate", () => {
     [
       "ロックファイル作成権限がないときが存在しないとき",
       "例外を発生させる",
-      jest.fn().mockImplementation(() => {
+      vi.fn().mockImplementation(() => {
         throw EACCES;
       }),
       NoPermission,

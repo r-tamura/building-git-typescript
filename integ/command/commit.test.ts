@@ -1,5 +1,5 @@
 import * as path from "path";
-import * as assert from "power-assert";
+import assert from "node:assert";
 import { Editor } from "../../src/editor";
 import { RevList } from "../../src/rev_list";
 import * as T from "./helper";
@@ -121,7 +121,7 @@ describe("commit", () => {
     });
 
     it("replaces the last commit;s message", async () => {
-      const editorSpy = jest
+      const editorSpy = vi
         .spyOn(Editor, "edit")
         .mockResolvedValue("third [amended]");
       await t.kitCmd("commit", "--amend");

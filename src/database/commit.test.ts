@@ -1,4 +1,4 @@
-import * as assert from "power-assert";
+import assert from "node:assert";
 import { toLF } from "../util";
 import { Author } from "./author";
 import { Commit } from "./commit";
@@ -6,10 +6,10 @@ import { Commit } from "./commit";
 describe("Commit#toString", () => {
   // toString が getTimezoneOffset() で TZ 文字列を作るため、CI の TZ に依存しないよう JST 固定
   beforeEach(() => {
-    jest.spyOn(Date.prototype, "getTimezoneOffset").mockReturnValue(-540);
+    vi.spyOn(Date.prototype, "getTimezoneOffset").mockReturnValue(-540);
   });
   afterEach(() => {
-    jest.restoreAllMocks();
+    vi.restoreAllMocks();
   });
 
   it("parentが存在しないとき、tree,author,commiter,messageが指定されたフォーマットで返される", () => {

@@ -1,4 +1,4 @@
-import * as assert from "assert";
+import assert from "node:assert";
 import { createHash } from "crypto";
 import { PathFilter } from "../path_filter";
 import { defaultFs, defaultZlib, FileService, Zlib } from "../services";

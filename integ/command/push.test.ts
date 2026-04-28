@@ -1,7 +1,7 @@
 import * as fsCb from "fs";
 import * as fs from "fs/promises";
 import * as path from "path";
-import * as assert from "power-assert";
+import assert from "node:assert";
 import { Repository } from "../../src/repository";
 import * as revlist from "../../src/rev_list";
 import * as FileService from "../../src/services/FileService";
@@ -15,7 +15,7 @@ const t = T.create();
 // kit のサブプロセスとの stream のやり取りで race condition があり、
 // "stream has emmited 'error' or 'end' already" で稀に落ちる。
 // 根本原因の修正は別チケットとし、CI 安定化のために再試行を許可する。
-jest.retryTimes(2);
+// retry はvitest.config.ts側で設定
 
 describe("push", () => {
   let remote: RemoteRepo;

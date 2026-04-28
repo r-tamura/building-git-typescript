@@ -1,4 +1,4 @@
-import * as assert from "power-assert";
+import assert from "node:assert";
 import { Expander } from "./expander";
 import { VarIntLE } from "./numbers";
 import { Xdelta } from "./xdelta";

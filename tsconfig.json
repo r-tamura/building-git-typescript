@@ -5,7 +5,10 @@
     "noEmit": true,
     "strict": true,
     "allowImportingTsExtensions": true,
-    "lib": ["ES2024"]
+    "lib": ["ES2024"],
+    "types": ["node", "vitest/globals"],
+    "esModuleInterop": true,
+    "skipLibCheck": true
   },
   "include": [
     "src/**/*.ts",

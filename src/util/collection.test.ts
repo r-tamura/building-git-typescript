@@ -1,4 +1,4 @@
-import * as assert from "power-assert";
+import assert from "node:assert";
 import { ObjectKeyHash } from "./collection";
 
 type Key = readonly [string, number];

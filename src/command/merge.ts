@@ -1,4 +1,4 @@
-import * as arg from "arg";
+import arg from "arg";
 import { Inputs, Resolve } from "../merge";
 import {
     Error as NotInProgressError,

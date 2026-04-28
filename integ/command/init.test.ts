@@ -1,7 +1,7 @@
 import * as fsCb from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
-import * as assert from "power-assert";
+import assert from "node:assert";
 import * as T from "./helper";
 const fs = fsCb.promises;
 

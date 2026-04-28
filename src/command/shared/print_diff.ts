@@ -11,7 +11,7 @@ import {
 import { OID, Pathname } from "../../types";
 import { prop } from "../../util/object";
 import { BaseCommand } from "../base";
-import arg = require("arg");
+import arg from "arg";
 
 export const NULL_OID = "0".repeat(40);
 export const NULL_PATH = "/dev/null";

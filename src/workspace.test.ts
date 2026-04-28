@@ -1,6 +1,7 @@
+import type { Mock, MockInstance } from "vitest";
 import { Stats } from "fs";
 import * as path from "node:path";
-import * as assert from "power-assert";
+import assert from "node:assert";
 import { assertAsyncError, ENOENT, mockFsError } from "./__test__";
 import { defaultFs } from "./services";
 import { Pathname } from "./types";
@@ -9,10 +10,10 @@ import { posixJoin, posixPath, PosixPath } from "./util/fs";
 // (重複import削除)
 import { Environment, MissingFile, NoPermission, Workspace } from "./workspace";
 
-jest.mock("fs");
-jest.mock("./repository/repository");
+vi.mock("fs");
+vi.mock("./repository/repository");
 
-const MockedStat = Stats as unknown as jest.Mock<Partial<Stats>>;
+const MockedStat = Stats as unknown as Mock;
 
 type FakeFile = {
   type: "f";
@@ -86,8 +87,8 @@ const retrieve = (pathname: PosixPath): FakeEntry => {
   return entry;
 };
 
-const fakeReaddir = jest
-  .fn<Promise<string[]>, [Pathname]>()
+const fakeReaddir = vi
+  .fn()
   .mockImplementation(async (pathname: string) => {
     const entry = retrieve(posixPath(pathname));
     if (entry.type === "f") {
@@ -97,14 +98,14 @@ const fakeReaddir = jest
     return names;
   });
 
-const fakeStat = jest
-  .fn<Promise<Stats>, [string]>()
-  .mockImplementation(async (pathname) => {
-    MockedStat.mockImplementation(() => ({
-      isDirectory: jest
+const fakeStat = vi
+  .fn()
+  .mockImplementation(async (pathname: string) => {
+    MockedStat.mockImplementation(function() { return {
+      isDirectory: vi
         .fn()
         .mockReturnValue(retrieve(posixPath(pathname)).type === "d"),
-    }));
+    }; });
     // @ts-expect-error Statsコンストラクタは非推奨だが、代替えができていない mockFsStatsではテストに失敗する
     const stats = new Stats();
     return stats;
@@ -117,7 +118,7 @@ describe("WorkSpace#listFiles", () => {
       ...defaultFs,
       readdir: fakeReaddir,
       stat: fakeStat,
-      access: jest.fn().mockResolvedValue(undefined),
+      access: vi.fn().mockResolvedValue(undefined),
     },
   } as unknown as Environment;
   it("ファイルが指定されたとき、そのファイルのみを要素とするリストを返す", async () => {
@@ -164,7 +165,7 @@ describe("WorkSpace#listFiles", () => {
       fs: {
         ...defaultFs,
         readdir: fakeReaddir,
-        stat: jest.fn().mockImplementation(() => {
+        stat: vi.fn().mockImplementation(() => {
           throw ENOENT;
         }),
       },
@@ -184,7 +185,7 @@ describe("Workspace#readFile", () => {
     "Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, ",
     "when an unknown printer took a galley of type and scrambled it to make a type specimen book.",
   ].join("\n");
-  const mockedReadFile = jest.fn().mockResolvedValue(testContent);
+  const mockedReadFile = vi.fn().mockResolvedValue(testContent);
   let actual: string | null = null;
   beforeAll(async () => {
     // Arrange

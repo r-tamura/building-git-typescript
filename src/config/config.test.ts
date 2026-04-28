@@ -1,6 +1,6 @@
 import { promises as fs } from "fs";
 import * as path from "path";
-import * as assert from "power-assert";
+import assert from "node:assert";
 import { rmrf } from "../services";
 import { posixJoin, PosixPath, stripIndent } from "../util";
 import { Config, Conflict, SectionName } from "./config";

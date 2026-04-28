@@ -1,4 +1,4 @@
-import * as arg from "arg";
+import arg from "arg";
 import * as remotes from "../remotes";
 import { Refspec } from "../remotes";
 import { Revision } from "../revision";

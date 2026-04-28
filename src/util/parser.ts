@@ -1,3 +1,3 @@
-import * as arg from "arg";
+import arg from "arg";
 
 export class OptionParser {}

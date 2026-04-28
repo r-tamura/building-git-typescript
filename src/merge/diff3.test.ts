@@ -1,5 +1,5 @@
 import { Diff3 } from "./diff3";
-import * as assert from "power-assert";
+import assert from "node:assert";
 import { stripIndent } from "../util";
 
 describe("Diff3.merge", () => {

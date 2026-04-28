@@ -1,6 +1,7 @@
+import type { Mock, MockInstance } from "vitest";
 import { promises } from "fs";
 import * as path from "path";
-import * as assert from "power-assert";
+import assert from "node:assert";
 import { Readable, Writable } from "stream";
 import { makeLogger } from "../../src/__test__/util";
 import * as Command from "../../src/command";
@@ -53,7 +54,7 @@ export class TestUtil {
         stdout: this.makeStdout(),
         stderr: this.makeStderr(),
         env: this.envvars,
-        cwd: jest.fn().mockReturnValue(this.repoPath),
+        cwd: vi.fn().mockReturnValue(this.repoPath),
       },
       date: {
         now: () => new Date(2020, 3, 1),
@@ -123,7 +124,7 @@ export class TestUtil {
   /** Logger assertion */
   assertLog(level: Exclude<keyof Logger, "level">, expected: string) {
     const env = this.getEnv();
-    const log = env.logger[level] as jest.Mock;
+    const log = env.logger[level] as Mock;
 
     const eachOut = log.mock.calls.map((call) => call.join(""));
     assert.equal(eachOut?.join("\n") ?? "", expected);
@@ -358,7 +359,7 @@ export async function getRevListMessages(revs: RevList) {
 }
 
 export function spyEditor(content: string) {
-  const spy = jest.spyOn(Editor, "edit").mockResolvedValue(content);
+  const spy = vi.spyOn(Editor, "edit").mockResolvedValue(content);
   return {
     restore: () => spy.mockRestore(),
   };

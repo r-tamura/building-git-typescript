@@ -1,4 +1,4 @@
-import * as arg from "arg";
+import arg from "arg";
 import * as refs from "../refs";
 import { InvalidBranch, SymRef } from "../refs";
 import * as remotes from "../remotes";

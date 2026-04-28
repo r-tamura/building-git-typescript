@@ -1,7 +1,7 @@
 import * as fsCb from "fs";
 import * as fs from "fs/promises";
 import * as path from "path";
-import * as assert from "power-assert";
+import assert from "node:assert";
 import { Repository } from "../../src/repository";
 import * as revlist from "../../src/rev_list";
 import * as FileService from "../../src/services/FileService";

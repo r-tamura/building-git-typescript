@@ -1,4 +1,4 @@
-import * as assert from "power-assert";
+import assert from "node:assert";
 import { RevList } from "../../src/rev_list";
 import { CompleteCommit, Dict } from "../../src/types";
 import { stripIndent } from "../../src/util";

@@ -1,5 +1,5 @@
 import { CompleteCommit, OID } from "../../src/types";
-import * as assert from "power-assert";
+import assert from "node:assert";
 import * as T from "./helper";
 
 const t = T.create("reset");

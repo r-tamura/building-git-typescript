@@ -7,7 +7,7 @@ import {
   InvalidObject,
   HintedError,
 } from "./revision";
-import * as assert from "power-assert";
+import assert from "node:assert";
 import { Database, Commit, Author, Blob } from "./database";
 import { Refs } from "./refs";
 import { Repository } from "./repository";
@@ -51,12 +51,12 @@ describe("Revision.parse", () => {
 
 describe("Revision#readRef", () => {
   afterEach(() => {
-    jest.resetAllMocks();
+    vi.resetAllMocks();
   });
 
   it("revesionに対応するOIDが存在するとき、OIDを返す", async () => {
     // Arrange
-    const spyReadRef = jest
+    const spyReadRef = vi
       .spyOn(Refs.prototype, "readRef")
       .mockResolvedValue("3a3c4ec0ae9589c881029c161dd129bcc318dc08");
 
@@ -71,8 +71,8 @@ describe("Revision#readRef", () => {
 
   it("prefixに該当するOIDが1つのみ存在するとき、OIDを返す", async () => {
     // Arrange
-    jest.spyOn(Refs.prototype, "readRef").mockResolvedValue(null);
-    const spyPrefixMatch = jest
+    vi.spyOn(Refs.prototype, "readRef").mockResolvedValue(null);
+    const spyPrefixMatch = vi
       .spyOn(Database.prototype, "prefixMatch")
       .mockResolvedValue(["3a3c4ec0ae9589c881029c161dd129bcc318dc08"]);
 
@@ -105,16 +105,16 @@ describe("Revision#readRef", () => {
 
     const testPrefix = "3a3c4ec";
     const spys = [
-      jest.spyOn(Refs.prototype, "readRef").mockResolvedValue(null),
-      jest
+      vi.spyOn(Refs.prototype, "readRef").mockResolvedValue(null),
+      vi
         .spyOn(Database.prototype, "prefixMatch")
         .mockResolvedValue(Object.keys(testObjects)),
-      jest
+      vi
         .spyOn(Database.prototype, "load")
         .mockImplementation((oid: string) =>
           Promise.resolve(testObjects[oid as keyof typeof testObjects]),
         ),
-      jest.spyOn(Database.prototype, "shortOid").mockReturnValue(testPrefix),
+      vi.spyOn(Database.prototype, "shortOid").mockReturnValue(testPrefix),
     ];
 
     // Act
@@ -140,12 +140,12 @@ describe("Revision#readRef", () => {
 
 describe("Revision#resolve", () => {
   afterEach(() => {
-    jest.resetAllMocks();
+    vi.resetAllMocks();
   });
 
   it("該当するオブジェクトが存在するとき、OIDを返す", async () => {
     // Arrange
-    jest
+    vi
       .spyOn(Parent.prototype, "resolve")
       .mockResolvedValue("3a3c4ec0ae9589c881029c161dd129bcc318dc08");
 
@@ -159,7 +159,7 @@ describe("Revision#resolve", () => {
 
   it("該当するオブジェクトが存在しないとき、例外を発生させる", async () => {
     // Arrange
-    jest.spyOn(Parent.prototype, "resolve").mockResolvedValue(null);
+    vi.spyOn(Parent.prototype, "resolve").mockResolvedValue(null);
 
     // Act
     const rev = new Revision(mockRepo(), "aaaaaaa^");
@@ -172,10 +172,10 @@ describe("Revision#resolve", () => {
   it("オブジェクトのタイプが指定され、存在したオブエクとが該当するタイプのオブジェクトでないとき、例外を発生させる", async () => {
     // Arrange
     const blob = mockBlob("3a3c4ec0ae9589c881029c161dd129bcc318dc08");
-    jest
+    vi
       .spyOn(Parent.prototype, "resolve")
       .mockResolvedValue("3a3c4ec0ae9589c881029c161dd129bcc318dc08");
-    jest.spyOn(Database.prototype, "load").mockResolvedValue(blob);
+    vi.spyOn(Database.prototype, "load").mockResolvedValue(blob);
 
     // Act
     const rev = new Revision(mockRepo(), "aaaaaaa^");

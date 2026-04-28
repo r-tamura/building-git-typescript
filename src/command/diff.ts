@@ -1,4 +1,4 @@
-import * as arg from "arg";
+import arg from "arg";
 import * as Database from "../database";
 import * as Index from "../gindex";
 import { Stage, STAGES } from "../gindex";

@@ -1,5 +1,5 @@
+import assert from "node:assert";
 import { Author } from "./author";
-import * as assert from "power-assert";
 
 const timezones = {
   JST: -540,
@@ -8,10 +8,10 @@ const timezones = {
 };
 type TimezoneName = keyof typeof timezones;
 const mockTimezone = (timezone: TimezoneName) => {
-  const mockedGetTimezoneOffset = jest
+  const mockedGetTimezoneOffset = vi
     .fn()
     .mockReturnValue(timezones[timezone]);
-  return jest
+  return vi
     .spyOn(Date.prototype, "getTimezoneOffset")
     .mockImplementation(mockedGetTimezoneOffset);
 };

@@ -1,4 +1,4 @@
-import * as arg from "arg";
+import arg from "arg";
 import { assertsNumber } from "../../config";
 import { Commit } from "../../database";
 import { Resolvable, Resolve } from "../../merge";

@@ -1,4 +1,4 @@
-import * as assert from "power-assert";
+import assert from "node:assert";
 import { TextDocument, lines } from "./diff";
 import { Myers } from "./myers";
 const tests: [string, TextDocument, TextDocument, number, string[]][] = [

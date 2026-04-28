@@ -4,8 +4,9 @@
     "declaration": true,
     "noEmit": false,
     "outDir": "dist",
-    "rewriteRelativeImportExtensions": true
+    "rewriteRelativeImportExtensions": true,
+    "types": ["node"]
   },
   "include": ["src/**/*.ts"],
-  "exclude": ["src/**.test.ts", "src/__test__"]
+  "exclude": ["src/**/*.test.ts", "src/**/*.test.mts", "src/__test__/**"]
 }

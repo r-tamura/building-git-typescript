@@ -1,5 +1,5 @@
 import * as T from "./helper";
-import * as assert from "power-assert";
+import assert from "node:assert";
 import { Pathname } from "../../src/types";
 import { stripIndent } from "../../src/util";
 import { Stage } from "../../src/gindex";

@@ -1,4 +1,4 @@
-import * as assert from "power-assert";
+import assert from "node:assert";
 import { PathFilter, Trie } from "../path_filter";
 import { GitObject } from "../types";
 import { posixPath } from "../util/fs";
@@ -9,7 +9,7 @@ import { TreeDiff } from "./tree_diff";
 
 function mockDatabase(objects: { [s: string]: GitObject }) {
   return {
-    load: jest.fn().mockImplementation(async (oid: string) => {
+    load: vi.fn().mockImplementation(async (oid: string) => {
       return objects[oid];
     }),
   } as any;
@@ -20,7 +20,7 @@ const commit = (treeOid: string) =>
 
 describe("TreeDiff#compareOids", () => {
   afterEach(() => {
-    jest.resetAllMocks();
+    vi.resetAllMocks();
   });
 
   describe("a/bが同じOIDのとき、変更点はない", () => {
@@ -73,7 +73,7 @@ describe("TreeDiff#compareOids", () => {
       ],
     ])("%s", async (_title, a_oid, a_tree, b_oid, b_tree, expected) => {
       // Arrange
-      const mockedLoad = jest
+      const mockedLoad = vi
         .fn()
         .mockResolvedValueOnce(a_tree)
         .mockResolvedValueOnce(b_tree);
@@ -96,7 +96,7 @@ describe("TreeDiff#compareOids", () => {
     const tree = new Tree({
       "hello.txt": new Entry("3a3c4ecaaa", 0o0100644),
     });
-    const mockedLoad = jest.fn().mockResolvedValueOnce(tree);
+    const mockedLoad = vi.fn().mockResolvedValueOnce(tree);
     const db = {
       load: mockedLoad,
     } as any;

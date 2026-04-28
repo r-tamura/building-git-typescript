@@ -1,4 +1,4 @@
-import * as assert from "power-assert";
+import assert from "node:assert";
 import { Checksum } from "./checksum";
 
 describe("Checksum#writeChecksum", () => {
@@ -6,8 +6,8 @@ describe("Checksum#writeChecksum", () => {
     "44115646e09ab3481adc2b1dc17be10dd9cdaa09",
     "hex",
   ); // 'testdata'のSHA1値
-  const mockedWrite = jest.fn();
-  const mockedRead = jest.fn().mockResolvedValue({
+  const mockedWrite = vi.fn();
+  const mockedRead = vi.fn().mockResolvedValue({
     bytesRead: expectedSha1.length,
     buffer: expectedSha1,
   });
@@ -18,7 +18,7 @@ describe("Checksum#writeChecksum", () => {
   describe("チェックサム書き込んだとき、ハッシュ値を失わない", () => {
     beforeAll(async () => {
       // Arrange
-      jest.clearAllMocks();
+      vi.clearAllMocks();
 
       // Act
       const checksum = new Checksum(mockedFileHandle);

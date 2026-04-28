@@ -1,4 +1,4 @@
-import * as assert from "power-assert";
+import assert from "node:assert";
 import { stripIndent } from "../../src/util";
 import * as T from "./helper";
 
