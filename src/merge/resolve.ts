@@ -3,7 +3,7 @@ import { Blob, ChangeMap, Entry } from "../database";
 import { ModeNumber } from "../entry";
 import { Repository } from "../repository";
 import { OID, Pathname } from "../types";
-import { ascend, asserts, first } from "../util";
+import { ascendUnix, asserts, first } from "../util";
 import { posixPath } from "../util/fs";
 import { Diff3 } from "./diff3";
 import { CherryPick, Inputs } from "./inputs";
@@ -232,7 +232,7 @@ export class Resolve {
     diff: ChangeMap,
     branchName: string,
   ) {
-    for (const parent of ascend(path.dirname(pathname))) {
+    for (const parent of ascendUnix(path.posix.dirname(pathname))) {
       const pParent = posixPath(parent);
       const [oldItem, newItem] = diff.get(pParent) ?? [null, null];
       if (!newItem) {

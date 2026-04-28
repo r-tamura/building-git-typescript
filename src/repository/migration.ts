@@ -4,7 +4,13 @@ import * as path from "path";
 import * as Database from "../database";
 import * as Index from "../gindex";
 import { OID, Pathname } from "../types";
-import { ascend, asserts, BaseError, descendUnix, PosixPath } from "../util";
+import {
+  ascendUnix,
+  asserts,
+  BaseError,
+  descendUnix,
+  PosixPath,
+} from "../util";
 import { Inspector } from "./inspector";
 import { Repository } from "./repository";
 
@@ -169,7 +175,7 @@ export class Migration {
   }
 
   private async untrackedParent(pathname: Pathname) {
-    for (const parent of ascend(path.posix.dirname(pathname))) {
+    for (const parent of ascendUnix(path.posix.dirname(pathname))) {
       if (parent === ".") {
         continue;
       }
