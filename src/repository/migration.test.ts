@@ -1,3 +1,4 @@
+import { constants } from "fs";
 import * as assert from "power-assert";
 import { makeDummyFileStats } from "../__test__";
 import { setOid } from "../__test__/util";
@@ -91,20 +92,24 @@ describe("Migration#applyChanges", () => {
       });
 
       it("ファイルが更新される", () => {
+        const flag =
+          constants.O_WRONLY | constants.O_CREAT | constants.O_EXCL;
         // OS依存パスでOK
         assert.deepEqual(writeFile.mock.calls[0], [
           "/tmp/dir/updated.txt",
           "hello",
-          { flag: 1281 },
+          { flag },
         ]);
       });
 
       it("ファイルが作成される", () => {
+        const flag =
+          constants.O_WRONLY | constants.O_CREAT | constants.O_EXCL;
         // OS依存パスでOK
         assert.deepEqual(writeFile.mock.calls[1], [
           "/tmp/added.txt",
           "hello",
-          { flag: 1281 },
+          { flag },
         ]);
       });
     });
