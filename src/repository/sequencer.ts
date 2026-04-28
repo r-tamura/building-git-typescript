@@ -121,6 +121,12 @@ export class Sequencer {
   }
 
   async quit() {
+    // openTodoFile() で取得した lock が dump() を経由せず残っていると、
+    // FileHandle が close されず Node 25+ では GC エラーになる
+    if (this.#todoFile !== null) {
+      await this.#todoFile.rollback().catch(() => undefined);
+      this.#todoFile = null;
+    }
     await rmrf(this.#fs, this.#pathname);
   }
 
