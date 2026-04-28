@@ -64,7 +64,7 @@ export class Workspace {
     const stats: { [s: string]: Stats } = {};
     for (const name of entries) {
       const absPath = path.posix.join(pathname, name);
-      const relativeFromRoot = path.relative(this.#pathname, absPath);
+      const relativeFromRoot = path.posix.relative(this.#pathname, absPath);
       stats[relativeFromRoot] = await this.#fs.stat(absPath);
     }
     return stats;

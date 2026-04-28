@@ -50,7 +50,8 @@ describe("fetch", () => {
   }
 
   function kitPath() {
-    return path.join(__dirname, "../../bin/kit");
+    // shlex.split が backslash を escape として食うため、Windows でも POSIX 形式で保持
+    return path.join(__dirname, "../../bin/kit").replaceAll(path.sep, "/");
   }
 
   async function allRefs(repo: Repository) {

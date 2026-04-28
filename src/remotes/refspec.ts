@@ -1,4 +1,4 @@
-import * as path from "path";
+import * as path from "path/posix";
 import * as refs from "../refs";
 import { Revision } from "../revision";
 import { asserts } from "../util";

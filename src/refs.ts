@@ -69,11 +69,13 @@ export class SymRef {
   }
 
   branch(): boolean {
-    return this.path.startsWith(path.join("refs", "heads") + path.sep);
+    // ref パスはアプリ内部で POSIX 形式 (PosixPath 型) で保持されるため、
+    // path.sep を使うと Windows でマッチしない
+    return this.path.startsWith("refs/heads/");
   }
 
   remote(): boolean {
-    return this.path.startsWith(path.join("refs", "remotes") + path.sep);
+    return this.path.startsWith("refs/remotes/");
   }
 }
 
@@ -188,7 +190,7 @@ export class Refs {
     const headpath = posixJoin(this.#headsPath, revision);
 
     if (await exists(this.#fs, toOsPath(headpath))) {
-      const relative = posixPath(path.relative(this.#pathname, headpath));
+      const relative = posixPath(path.posix.relative(this.#pathname, headpath));
       await this.updateRefFile(head, `ref: ${relative}`);
     } else {
       await this.updateRefFile(head, oid);
@@ -287,7 +289,7 @@ export class Refs {
             await lockfile?.rollback();
             throw e;
           }
-          const dirPath = toOsPath(path.dirname(pathname));
+          const dirPath = toOsPath(path.posix.dirname(pathname));
           await this.#fs.mkdir(dirPath, { recursive: true });
           await this.updateRefFile(pathname, oid, {
             retry: retry ? retry - 1 : 1,
@@ -396,19 +398,19 @@ export class Refs {
     const prefix = find(
       [this.#remotesPath, this.#headsPath, this.#pathname],
       (dir) => {
-        return ascendUnix(path.dirname(fullPath)).some(
+        return ascendUnix(path.posix.dirname(fullPath)).some(
           (parent) => parent === dir,
         );
       },
     );
     asserts(prefix != null, "nullありあえない");
-    return posixPath(path.relative(prefix, fullPath));
+    return posixPath(path.posix.relative(prefix, fullPath));
   }
 
   async longName(ref: string): Promise<string> {
     const pathname = await this.pathForName(ref);
     if (pathname) {
-      return posixPath(path.relative(this.#pathname, pathname));
+      return posixPath(path.posix.relative(this.#pathname, pathname));
     }
 
     throw new InvalidBranch(
@@ -458,14 +460,14 @@ export class Refs {
       }
     }
 
-    const pathnames = names.map((name) => posixPath(path.join(dirname, name)));
+    const pathnames = names.map((name) => posixPath(path.posix.join(dirname, name)));
 
     const symrefs: (SymRef | SymRef[])[] = [];
     for (const pathname of pathnames) {
       if (await directory(this.#fs, toOsPath(pathname))) {
         symrefs.push(await this.listRefs(pathname));
       } else {
-        const relative = posixPath(path.relative(this.#pathname, pathname));
+        const relative = posixPath(path.posix.relative(this.#pathname, pathname));
         symrefs.push(symref(this, relative));
       }
     }
