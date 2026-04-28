@@ -30,7 +30,7 @@ export async function exists(fs: FileService, pathname: Pathname) {
   try {
     await fs.access(pathname);
     return true;
-  } catch  {
+  } catch {
     return false;
   }
 }
