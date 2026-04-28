@@ -36,6 +36,7 @@ function blockFn(blockSize: number) {
  */
 export function debug(message: any, ...optionalParams: any[]): void {
   if (process.env.NODE_DEBUG) {
+    // eslint-disable-next-line no-console
     console.debug(message, ...optionalParams);
   }
 }

@@ -1,4 +1,4 @@
-import type { Mock, MockInstance } from "vitest";
+import type { Mock } from "vitest";
 import { Logger } from "../services";
 import { GitObject, CompleteGitObject, OID } from "../types";
 

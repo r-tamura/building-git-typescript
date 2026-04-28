@@ -57,7 +57,7 @@ export class Stream implements fsUtil.Seekable {
   }
 
   // TODO: whenceの型を調べる
-  seek(amount: number, whence: fsUtil.Whence = "SEEK_SET") {
+  seek(amount: number, _whence: fsUtil.Whence = "SEEK_SET") {
     if (amount >= 0) {
       return;
     }

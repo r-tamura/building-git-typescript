@@ -15,7 +15,8 @@ export class Packed {
   #reader!: pack.Reader;
   #indexFile!: fsUtil.Seekable;
   #index!: pack.Index;
-  #fs: FileService.FileService;
+  // Note: fs は将来 DI 経由で差し替えられるよう Environment で受けるだけにし、
+  // 現状は FileSeeker.fromPath が直接 fs を参照する
   static async of(
     pathname: Pathname,
     { fs = defaultFs }: Environment = {},
@@ -88,7 +89,5 @@ export class Packed {
     return pack.Record.of(base.type, data);
   }
 
-  private constructor({ fs }: Required<Environment>) {
-    this.#fs = fs;
-  }
+  private constructor(_env: Required<Environment>) {}
 }

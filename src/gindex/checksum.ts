@@ -40,7 +40,7 @@ export class Checksum {
   }
 
   async verifyChecksum() {
-    const [sum, read] = await this._read(this.#file, Checksum.CHECKSUM_SIZE);
+    const [sum, _read] = await this._read(this.#file, Checksum.CHECKSUM_SIZE);
 
     if (Buffer.compare(this.#digest.copy().digest(), sum) !== 0) {
       throw new Invalid("Checksum does not match value stored on disk");

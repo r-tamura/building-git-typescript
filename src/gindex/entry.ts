@@ -63,7 +63,7 @@ interface FileStats {
   flags: number;
 }
 
-function fileStats(stats: FileStats): FileStats {
+function _fileStats(stats: FileStats): FileStats {
   return {
     ctime: stats.ctime,
     ctimeNsec: stats.ctimeNsec,

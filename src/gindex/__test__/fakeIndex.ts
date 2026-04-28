@@ -37,7 +37,7 @@ export const fakeFiles = {
 const dirc = () => Buffer.from("DIRC");
 const version = (v: number) => Buffer.from([0, 0, 0, v]);
 const entryCount = (count: number) => Buffer.from([0, 0, 0, count]);
-const header = (entryCnt: number) =>
+const _header = (entryCnt: number) =>
   Buffer.concat([dirc(), version(2), entryCount(entryCnt)], 12);
 
 /*

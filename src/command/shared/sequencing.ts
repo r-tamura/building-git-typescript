@@ -113,7 +113,7 @@ export async function failOnConflict(
   cmd: SequenceCmmand & WriteCommit.CommitPendable,
 ) {
   await cmd.sequencer.dump();
-  console.assert(inputs.rightOid !== null, `${inputs.rightOid} is null!`);
+  asserts(inputs.rightOid !== null, `${inputs.rightOid} is null!`);
   await WriteCommit.pendingCommit(cmd).start(inputs.rightOid, cmd.mergeType);
 
   await cmd.editFile(

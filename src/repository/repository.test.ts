@@ -1,4 +1,4 @@
-import type { Mock, MockInstance } from "vitest";
+import type { Mock } from "vitest";
 import { Refs } from "../refs";
 import { Environment } from "../types";
 import { Repository } from "../repository";
@@ -24,8 +24,9 @@ describe("Repository#refs", () => {
 
   // Act
   const repo = new Repository(gitPath, testEnvGlobal);
-  const _ = repo.refs;
-  repo.refs;
+  // Refs インスタンスがキャッシュされている (1回しか new されない) ことを検証するため 2 回触る
+  void repo.refs;
+  void repo.refs;
 
   it("初期化は初回のみ", () => {
     assert.equal(MockedRefs.mock.calls.length, 1);

@@ -63,7 +63,8 @@ export class Diff3 {
    */
   private generateChunks() {
     let c = 0;
-    while (true && c < 20) {
+    // c < 20 は無限ループに陥った時の安全弁(デバッグ用)
+    while (c < 20) {
       // 次にbase/a/bが一致しない行番号(o上の)を返す。見つからずにドキュメントが最終行を過ぎた場合はnullが返る。
       const i = this.findNextMismatch();
 

@@ -228,7 +228,7 @@ describe("Refs#readRef", () => {
     // Arrange
     const spyServiceExists = vi
       .spyOn(Service, "exists")
-      .mockImplementation(async (_fs, pathname) => false);
+      .mockImplementation(async (_fs, _pathname) => false);
     // Act
     const refs = new Refs(".git");
     const actual = await refs.readRef("master");
@@ -294,7 +294,7 @@ describe("Refs#updateHead", () => {
     const mockedCommit = vi.fn();
     beforeAll(async () => {
       MockedLockfile.mockRestore();
-      MockedLockfile.mockImplementationOnce(function (pathname: string) {
+      MockedLockfile.mockImplementationOnce(function (_pathname: string) {
         return {
           holdForUpdate: vi.fn().mockResolvedValue(undefined),
           write: mockedWrite,
@@ -328,7 +328,7 @@ describe("Refs#updateHead", () => {
     });
     beforeAll(async () => {
       MockedLockfile.mockRestore();
-      MockedLockfile.mockImplementationOnce(function (pathname: string) {
+      MockedLockfile.mockImplementationOnce(function (_pathname: string) {
         return {
           holdForUpdate: throwLockDenied,
           write: mockedWrite,
@@ -357,7 +357,7 @@ describe("Refs#updateRef", () => {
   describe("refを更新する", () => {
     beforeAll(async () => {
       MockedLockfile.mockRestore();
-      MockedLockfile.mockImplementationOnce(function (pathname: string) {
+      MockedLockfile.mockImplementationOnce(function (_pathname: string) {
         return {
           holdForUpdate: () => Promise.resolve(),
           write: mockedWrite,

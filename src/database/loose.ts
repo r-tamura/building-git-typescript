@@ -103,7 +103,7 @@ export class Loose implements Backend {
     await file.move(path.basename(objPathname));
   }
 
-  private async readObjectHeader(oid: OID, readBytes?: number) {
+  private async readObjectHeader(oid: OID, _readBytes?: number) {
     // TODO: 指定バイト数のみを読み込むことができるかを調査
     const objPath = this.objectPath(oid);
     const compressed = await this.#fs.readFile(objPath);

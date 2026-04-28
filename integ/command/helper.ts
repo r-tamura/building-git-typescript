@@ -1,4 +1,4 @@
-import type { Mock, MockInstance } from "vitest";
+import type { Mock } from "vitest";
 import { promises } from "fs";
 import * as path from "path";
 import assert from "node:assert";

@@ -1,4 +1,4 @@
-import { GitObject, OID } from "../types";
+import { OID } from "../types";
 
 export type Data = Buffer;
 

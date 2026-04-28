@@ -56,7 +56,6 @@ export class Repository {
     return Status.of(this, commitOid);
   }
   get workspace() {
-    const gitPath = this.gitPath;
     return (this.#workspace ??= new Workspace(
       path.posix.dirname(this.gitPath),
       this.env,

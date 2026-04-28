@@ -12,8 +12,8 @@ import { Index } from "./gindex";
 
 import mock = require("mock-fs");
 
-const mockedWrite = vi.fn();
-const TEST_OBJECT_PATH = "README.md";
+const _mockedWrite = vi.fn();
+const _TEST_OBJECT_PATH = "README.md";
 const testOid = "ba78afac62556e840341715936909cc36fe83a77"; // sha1 of 'jit\n'
 
 const randOid = () =>
@@ -27,7 +27,7 @@ afterEach(() => {
 describe("Index#add", () => {
   // Arrange
   const tmpPath = path.resolve("../tmp", __filename);
-  const indexPath = path.posix.join(tmpPath, "index");
+  const _indexPath = path.posix.join(tmpPath, "index");
 
   const stat = makeDummyFileStats();
   const oid = crypto.randomBytes(20).toString("hex");
@@ -107,7 +107,7 @@ describe("Index#remove", () => {
 describe("Index#writeUpdates", () => {
   describe("indexに変更があるとき、indexへ全てのエントリを書き込む", () => {
     // Arrange
-    let actual: boolean;
+    let _actual: boolean;
 
     // Assert
     it("1ファイルをIndexファイルへ書き込むことができる", async () => {
@@ -133,11 +133,11 @@ describe("Index#writeUpdates", () => {
         testOid,
         await fsPromises.stat("file.txt"),
       );
-      actual = await index.writeUpdates();
+      _actual = await index.writeUpdates();
 
       const actualIndexString = await fsPromises.readFile("index", "binary");
       const actualIndex = Buffer.from(actualIndexString, "binary");
-      const dirc = Buffer.from("DIRC", "utf8");
+      const _dirc = Buffer.from("DIRC", "utf8");
       assert.equal(
         Uint8Array.prototype.slice.call(actualIndex, 0, 4).toString(),
         "DIRC",

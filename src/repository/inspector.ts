@@ -32,8 +32,8 @@ export class Inspector {
 
     const entries = await this.#repo.workspace.listDir(pathname);
 
-    const files = Object.entries(entries).filter(([p, stat]) => stat.isFile());
-    const dirs = Object.entries(entries).filter(([p, stat]) =>
+    const files = Object.entries(entries).filter(([_p, stat]) => stat.isFile());
+    const dirs = Object.entries(entries).filter(([_p, stat]) =>
       stat.isDirectory(),
     );
 

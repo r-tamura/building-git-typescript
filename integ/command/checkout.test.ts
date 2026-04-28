@@ -116,7 +116,7 @@ describe("checkout", () => {
       await t.kitCmd("checkout", "@^");
 
       await t.assertWorkspace(
-        basefiles.filter(([n, c]) => n !== "outer/2.txt"),
+        basefiles.filter(([n, _c]) => n !== "outer/2.txt"),
       );
       await assertStatus(" D outer/2.txt");
     });

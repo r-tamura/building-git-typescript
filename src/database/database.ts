@@ -256,7 +256,7 @@ export class Raw implements GitRecord {
   ) {}
 }
 
-function assertGitObjectType(type: string): asserts type is GitObjectType {
+function _assertGitObjectType(type: string): asserts type is GitObjectType {
   asserts(
     type === "blob" || type === "tree" || type === "commit",
     `'${type}'はGitオブジェクトでサポートされているタイプです`,

@@ -1,10 +1,9 @@
-import type { Mock, MockInstance } from "vitest";
+import type { Mock } from "vitest";
 import { Stats } from "fs";
 import * as path from "node:path";
 import assert from "node:assert";
 import { assertAsyncError, ENOENT, mockFsError } from "./__test__";
 import { defaultFs } from "./services";
-import { Pathname } from "./types";
 import { toPathComponentsPosix } from "./util";
 import { posixJoin, posixPath, PosixPath } from "./util/fs";
 // (重複import削除)

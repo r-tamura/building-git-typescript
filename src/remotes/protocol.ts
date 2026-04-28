@@ -9,7 +9,7 @@ const HEAD_SIZE = 4;
 const FETCH_SEP = " ";
 const OTHERS_SEP = "\0";
 
-function log(command: string, ...messages: (string | number | Buffer)[]) {
+function log(_command: string, ..._messages: (string | number | Buffer)[]) {
   // if (command === "fetch" || command === "push") {
   //   console.log({ client: messages });
   // } else if (command === "upload-pack" || command === "receive-pack") {

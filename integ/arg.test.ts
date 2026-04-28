@@ -36,7 +36,7 @@ describe("arg", () => {
     [
       "handler",
       {
-        "--porcelain": arg.flag((...args: any[]) => {
+        "--porcelain": arg.flag((..._args: any[]) => {
           return false;
         }),
       },

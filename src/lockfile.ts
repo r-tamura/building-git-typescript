@@ -112,7 +112,7 @@ export class Lockfile implements IOHandle {
   }
 
   // TODO: TBI ?
-  async read(...args: any[]) {
+  async read(..._args: any[]) {
     return {} as any;
   }
 

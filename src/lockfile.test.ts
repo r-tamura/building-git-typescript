@@ -26,7 +26,7 @@ const env = {
 
 describe("Lockfile#holdForUpdate", () => {
   describe("ロックされていないとき、ロックを取得して、trueを返す", () => {
-    let actual: boolean;
+    let _actual: boolean;
     beforeAll(async () => {
       // Act
       const lockfile = new Lockfile(TEST_TARGET_PATH, env);

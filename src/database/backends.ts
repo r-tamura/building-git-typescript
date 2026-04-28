@@ -24,7 +24,7 @@ export class Backends implements Backend {
     return path.join(this.#pathname, "pack");
   }
 
-  private async packed(pathname?: Pathname): Promise<Packed[]> {
+  private async packed(_pathname?: Pathname): Promise<Packed[]> {
     const files = await this.#fs
       .readdir(this.packPath)
       .catch((err: unknown) => {

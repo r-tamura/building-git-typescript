@@ -1,4 +1,4 @@
-import type { Mock, MockInstance } from "vitest";
+import type { MockInstance } from "vitest";
 import { constants } from "fs";
 import assert from "node:assert";
 import { makeDummyFileStats } from "../__test__";

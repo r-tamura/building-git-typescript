@@ -22,9 +22,9 @@ export type ModeStr = "100644" | "100755";
 //   mode: ModeNumber | ModeStr;
 //   name: Pathname;
 //   oid: OID;
-//   statMatch(stat: Stats): boolean;
-//   timesMatch(stat: Stats): boolean;
-//   updateStat(stat: Stats): void;
+//   statMatch(_stat: Stats): boolean;
+//   timesMatch(_stat: Stats): boolean;
+//   updateStat(_stat: Stats): void;
 // }
 
 export type IEntry = Entry | Database.Entry | Index.Entry;
@@ -63,17 +63,17 @@ export class Entry {
     return path.posix.basename(this.name);
   }
 
-  statMatch(stat: Stats) {
+  statMatch(_stat: Stats) {
     // TBI
     return false;
   }
 
-  timesMatch(stat: Stats) {
+  timesMatch(_stat: Stats) {
     // TBI
     return false;
   }
 
-  updateStat(stat: Stats) {
+  updateStat(_stat: Stats) {
     // TBI
     return;
   }

@@ -73,7 +73,7 @@ export class Sequencer {
   }
 
   async dropCommand() {
-    this.#commands.shift() ?? null;
+    this.#commands.shift();
     const head = await this.#repo.refs.readHead();
     asserts(head !== null, "HEADが存在する");
     await this.writeFile(this.#abortPath, head);

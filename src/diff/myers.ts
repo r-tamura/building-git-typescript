@@ -17,8 +17,8 @@ export class Myers {
     let [x, y] = [this.a.length, this.b.length];
 
     const descending = (
-      [x1, i1]: [number[], number],
-      [x2, i2]: [number[], number],
+      [_x1, i1]: [number[], number],
+      [_x2, i2]: [number[], number],
     ) => i2 - i1;
 
     const enumerated = enumerate(this.shortestEdit());
