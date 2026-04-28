@@ -3,10 +3,10 @@ import { Logger } from "../services";
 import { GitObject, CompleteGitObject, OID } from "../types";
 
 export function getMockedMethod<T>(Cls: T, method: keyof T, index = 0) {
-  const Mocked = (Cls as unknown) as Mock;
+  const Mocked = Cls as unknown as Mock;
   const instance = Mocked.mock.instances[index] as T;
   const _method = instance[method];
-  return (_method as unknown) as Mock;
+  return _method as unknown as Mock;
 }
 
 export function makeLogger(): Logger {

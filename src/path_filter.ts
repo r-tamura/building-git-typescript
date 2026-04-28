@@ -5,7 +5,7 @@ import { isempty } from "./util";
 import { type PosixPath, posixPath, toPathComponentsPosix } from "./util/fs";
 
 export class PathFilter {
-  routes: Trie;;
+  routes: Trie;
   pathname: PosixPath;
   constructor(routes = new Trie(true, {}), pathname: Pathname = "") {
     this.routes = routes;

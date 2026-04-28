@@ -10,7 +10,7 @@ const GLOBAL_CONFIG = path.resolve(`${process.env["HOME"]}/.gitconfig`);
 const SYSTEM_CONFIG = "/etc/gitconfig";
 
 export const CONFIG_NAMES = ["local", "global", "system"] as const;
-export type ConfigName = typeof CONFIG_NAMES[number];
+export type ConfigName = (typeof CONFIG_NAMES)[number];
 export type Configs = Record<ConfigName, Config>;
 
 type Values = ReturnType<Config["getAll"]> extends Promise<infer R> ? R : never;

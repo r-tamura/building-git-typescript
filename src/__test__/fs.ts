@@ -84,7 +84,13 @@ export function makeDummyFileStats(props: Partial<Stats> = {}): Stats {
   };
   // @ts-expect-error Statsコンストラクタは非推奨だが、代替えができていない mockFsStatsではテストに失敗する
   const stats = new Stats();
-  return { ...stats, ...defaultProps, ...props, ...{ isFile, isDirectory } };
+  return {
+    ...stats,
+    ...defaultProps,
+    ...props,
+    isFile,
+    isDirectory,
+  };
 }
 
 /**
@@ -114,8 +120,8 @@ export function mockFs(
       return files[p]
         ? { isFile: () => true, isDirectory: () => false }
         : dirs[p]
-        ? { isFile: () => false, isDirectory: () => true }
-        : null;
+          ? { isFile: () => false, isDirectory: () => true }
+          : null;
     }),
     access: vi.fn().mockImplementation(async (p: string) => {
       if (dirs[p] || files[p]) {

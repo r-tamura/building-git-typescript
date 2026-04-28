@@ -27,12 +27,16 @@ export class Commit {
       }
       const match = /^(?<key>[^ ]+) (?<value>.+)$/.exec(line);
       if (match === null) {
-        throw TypeError(`line: '${line.trim()}' doesn't match commit header format.`);
+        throw TypeError(
+          `line: '${line.trim()}' doesn't match commit header format.`,
+        );
       }
       const key = match.groups?.key;
       const value = match.groups?.value;
       if (!key || !value) {
-        throw TypeError(`line: '${line.trim()}' doesn't match commit header format.`);
+        throw TypeError(
+          `line: '${line.trim()}' doesn't match commit header format.`,
+        );
       }
 
       headers.get(key).push(value);

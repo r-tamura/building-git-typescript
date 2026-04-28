@@ -110,7 +110,9 @@ describe("status", () => {
 
     it("prints nothing when no files are changed", async () => {
       await assertStatusPorcelain("");
-      await assertStatus("On branch master\nnothing to commit, working tree clean");
+      await assertStatus(
+        "On branch master\nnothing to commit, working tree clean",
+      );
     });
 
     it("reports files with modified contents", async () => {

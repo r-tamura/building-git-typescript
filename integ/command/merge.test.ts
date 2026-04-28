@@ -750,7 +750,11 @@ describe("merge", () => {
     });
 
     it("records the conflict in the index", async () => {
-      await assertIndex(["nest/f.txt", 1], ["nest/f.txt", 2], ["nest/f.txt/g.txt", 0]);
+      await assertIndex(
+        ["nest/f.txt", 1],
+        ["nest/f.txt", 2],
+        ["nest/f.txt/g.txt", 0],
+      );
     });
 
     it("does not write a merge commit", async () => {
@@ -773,7 +777,11 @@ describe("merge", () => {
 
   describe("conflict resolution", () => {
     beforeEach(async () => {
-      await t.merge3({ "f.txt": "1\n" }, { "f.txt": "2\n" }, { "f.txt": "3\n" });
+      await t.merge3(
+        { "f.txt": "1\n" },
+        { "f.txt": "2\n" },
+        { "f.txt": "3\n" },
+      );
     });
 
     it("prevents commits with unmerged entries", async () => {
@@ -817,12 +825,14 @@ describe("merge", () => {
       assert.equal(commit.message, "M");
 
       const parents = [];
-      for await (const parent of commit.parents.map((oid) => t.loadCommit(oid))) {
+      for await (const parent of commit.parents.map((oid) =>
+        t.loadCommit(oid),
+      )) {
         parents.push(parent);
       }
       assert.deepEqual(
         parents.map((p) => p.message),
-        ["B", "C"]
+        ["B", "C"],
       );
     });
 
@@ -836,12 +846,14 @@ describe("merge", () => {
       assert.equal(commit.message, "M");
 
       const parents = [];
-      for await (const parent of commit.parents.map((oid) => t.loadCommit(oid))) {
+      for await (const parent of commit.parents.map((oid) =>
+        t.loadCommit(oid),
+      )) {
         parents.push(parent);
       }
       assert.deepEqual(
         parents.map((p) => p.message),
-        ["B", "C"]
+        ["B", "C"],
       );
     });
 
@@ -850,7 +862,9 @@ describe("merge", () => {
       await t.kitCmd("merge", "--continue");
       await t.kitCmd("merge", "--continue");
 
-      t.assertError("fatal: There is no merge in progress (MERGE_HEAD missing).");
+      t.assertError(
+        "fatal: There is no merge in progress (MERGE_HEAD missing).",
+      );
       t.assertStatus(128);
     });
 

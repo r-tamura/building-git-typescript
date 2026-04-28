@@ -285,12 +285,14 @@ export class Refs {
       if (oid !== undefined) {
         await this.writeLockfile(lockfile, oid);
       } else {
-        await this.#fs.unlink(toOsPath(pathname)).catch((e: NodeJS.ErrnoException) => {
-          if (e.code === "ENOENT") {
-            return;
-          }
-          throw e;
-        });
+        await this.#fs
+          .unlink(toOsPath(pathname))
+          .catch((e: NodeJS.ErrnoException) => {
+            if (e.code === "ENOENT") {
+              return;
+            }
+            throw e;
+          });
         await lockfile.rollback();
       }
     } catch (e) {
@@ -373,7 +375,9 @@ export class Refs {
   async readOidOrSymRef(pathname: PosixPath): Promise<SymRef | Ref | null> {
     let data: string;
     try {
-      data = await this.#fs.readFile(toOsPath(pathname), "utf-8").then((s) => s.trim());
+      data = await this.#fs
+        .readFile(toOsPath(pathname), "utf-8")
+        .then((s) => s.trim());
     } catch (e) {
       const nodeErr = e as NodeJS.ErrnoException;
       switch (nodeErr.code) {
@@ -409,7 +413,9 @@ export class Refs {
     const prefix = find(
       [this.#remotesPath, this.#headsPath, this.#pathname],
       (dir) => {
-        return ascendUnix(path.dirname(fullPath)).some((parent) => parent === dir);
+        return ascendUnix(path.dirname(fullPath)).some(
+          (parent) => parent === dir,
+        );
       },
     );
     asserts(prefix != null, "nullありあえない");

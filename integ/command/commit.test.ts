@@ -15,7 +15,7 @@ describe("commit", () => {
 
     const commit = await t.loadCommit("HEAD");
     t.assertInfo(
-      `[master (root-commit) ${t.repo.database.shortOid(commit.oid)}] first`
+      `[master (root-commit) ${t.repo.database.shortOid(commit.oid)}] first`,
     );
   });
 
@@ -43,7 +43,7 @@ describe("commit", () => {
     await t.kitCmd("commit", "--file", path.join(t.repoPath, "message.txt"));
     const commit = await t.loadCommit("HEAD");
     t.assertInfo(
-      `[master ${t.repo.database.shortOid(commit.oid)}] message from file`
+      `[master ${t.repo.database.shortOid(commit.oid)}] message from file`,
     );
   });
 

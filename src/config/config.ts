@@ -319,7 +319,10 @@ export class Variable {
     return new this(name, value);
   }
 
-  constructor(public name: Name, public value: Value) {}
+  constructor(
+    public name: Name,
+    public value: Value,
+  ) {}
 
   static normalize(name: Name | undefined) {
     return name?.toLowerCase() ?? null;

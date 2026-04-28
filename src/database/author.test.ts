@@ -8,9 +8,7 @@ const timezones = {
 };
 type TimezoneName = keyof typeof timezones;
 const mockTimezone = (timezone: TimezoneName) => {
-  const mockedGetTimezoneOffset = vi
-    .fn()
-    .mockReturnValue(timezones[timezone]);
+  const mockedGetTimezoneOffset = vi.fn().mockReturnValue(timezones[timezone]);
   return vi
     .spyOn(Date.prototype, "getTimezoneOffset")
     .mockImplementation(mockedGetTimezoneOffset);

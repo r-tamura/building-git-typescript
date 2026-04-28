@@ -9,11 +9,11 @@ import { asserts, includes, partition } from "../util";
 import { shallowEqual } from "../util/object";
 import { BaseCommand } from "./base";
 import {
-    definePrintDiffOptions,
-    NULL_OID,
-    printCombinedDiff,
-    printDiff,
-    Target,
+  definePrintDiffOptions,
+  NULL_OID,
+  printCombinedDiff,
+  printDiff,
+  Target,
 } from "./shared/print_diff";
 import arg from "arg";
 
@@ -21,8 +21,8 @@ const FORMAT = ["medium", "oneline"] as const;
 const DECORATE = ["auto", "short", "full", "no"] as const;
 interface Options {
   abbrev: "auto" | boolean;
-  format: typeof FORMAT[number];
-  decorate: typeof DECORATE[number];
+  format: (typeof FORMAT)[number];
+  decorate: (typeof DECORATE)[number];
   /** ファイルdiffを表示するか */
   patch: boolean;
   /** マージ用のdiffを表示するか */

@@ -1,20 +1,20 @@
 import arg from "arg";
 import { Inputs, Resolve } from "../merge";
 import {
-    Error as NotInProgressError,
-    PendingCommit,
+  Error as NotInProgressError,
+  PendingCommit,
 } from "../repository/pending_commit";
 import { HEAD } from "../revision";
 import { asserts } from "../util";
 import { BaseCommand, Exit } from "./base";
 import {
-    CommitOptions,
-    CONFLICT_MESSAGE,
-    defineWriteCommitOptions,
-    pendingCommit,
-    readMessage,
-    resumeMerge,
-    writeCommit,
+  CommitOptions,
+  CONFLICT_MESSAGE,
+  defineWriteCommitOptions,
+  pendingCommit,
+  readMessage,
+  resumeMerge,
+  writeCommit,
 } from "./shared/write_commit";
 
 interface Options extends CommitOptions {

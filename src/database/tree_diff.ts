@@ -33,7 +33,10 @@ export class TreeDiff {
     switch (object.type) {
       case "commit": {
         const tree = await this.#database.load(object.tree);
-        asserts(tree.type === "tree", "Commitオブジェクトが持つGitオブジェクトは/treeです");
+        asserts(
+          tree.type === "tree",
+          "Commitオブジェクトが持つGitオブジェクトは/treeです",
+        );
         return tree;
       }
       case "tree":

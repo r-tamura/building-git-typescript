@@ -170,7 +170,7 @@ describe("rm", () => {
       await t.repo.index.load();
       assert.deepEqual(
         t.repo.index.eachEntry().map((e) => e.name),
-        ["outer/g.txt"]
+        ["outer/g.txt"],
       );
       await t.assertWorkspace([["outer/g.txt", "2"]]);
     });
@@ -184,7 +184,7 @@ describe("rm", () => {
       await t.repo.index.load();
       assert.deepEqual(
         t.repo.index.eachEntry().map((e) => e.name),
-        ["f.txt", "outer/g.txt", "outer/inner/h.txt"]
+        ["f.txt", "outer/g.txt", "outer/inner/h.txt"],
       );
 
       await t.assertWorkspace([
@@ -205,7 +205,7 @@ describe("rm", () => {
       await t.repo.index.load();
       assert.deepEqual(
         t.repo.index.eachEntry().map((e) => e.name),
-        ["f.txt", "outer/g.txt", "outer/inner/h.txt"]
+        ["f.txt", "outer/g.txt", "outer/inner/h.txt"],
       );
 
       await t.assertWorkspace([
@@ -221,7 +221,7 @@ describe("rm", () => {
       await t.repo.index.load();
       assert.deepEqual(
         t.repo.index.eachEntry().map((e) => e.name),
-        ["f.txt"]
+        ["f.txt"],
       );
 
       await t.assertWorkspace([["f.txt", "1"]]);
@@ -234,7 +234,7 @@ describe("rm", () => {
       await t.repo.index.load();
       assert.deepEqual(
         t.repo.index.eachEntry().map((e) => e.name),
-        ["f.txt"]
+        ["f.txt"],
       );
 
       await t.assertWorkspace([

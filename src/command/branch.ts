@@ -218,8 +218,8 @@ export class Branch extends BaseCommand<Options> {
     return shallowEqual(ref, current)
       ? `* ${this.fmt("green", ref.shortName())}`
       : ref.remote()
-      ? `* ${this.fmt("green", ref.shortName())}`
-      : `  ${ref.shortName()}`;
+        ? `* ${this.fmt("green", ref.shortName())}`
+        : `  ${ref.shortName()}`;
   }
 
   private async extendedBranchInfo(ref: SymRef, maxWidth: number) {

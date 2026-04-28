@@ -199,7 +199,13 @@ describe("log", () => {
     });
 
     it("logs the combined history of multiple branches", async () => {
-      await t.kitCmd("log", "--pretty=oneline", "--decorate=short", "master", "topic");
+      await t.kitCmd(
+        "log",
+        "--pretty=oneline",
+        "--decorate=short",
+        "master",
+        "topic",
+      );
 
       t.assertInfo(stripIndent`
         ${topic[0]} (HEAD -> topic) topic-4
@@ -261,7 +267,9 @@ describe("log", () => {
 
   async function commitTree(message: string, files: Dict<string>, time?: Date) {
     await Promise.all(
-      Object.entries(files).map(([pathname, contents]) => t.writeFile(pathname, contents))
+      Object.entries(files).map(([pathname, contents]) =>
+        t.writeFile(pathname, contents),
+      ),
     );
     await t.kitCmd("add", ".");
     await t.commit(message, { time });
@@ -284,7 +292,9 @@ describe("log", () => {
       });
 
       commits = await Promise.all(
-        ["@^^", "@^", "@"].map((rev) => t.loadCommit(rev) as Promise<CompleteCommit>)
+        ["@^^", "@^", "@"].map(
+          (rev) => t.loadCommit(rev) as Promise<CompleteCommit>,
+        ),
       );
     });
 
@@ -366,7 +376,7 @@ describe("log", () => {
 
       `,
         },
-        time
+        time,
       );
 
       for (const n of ["C", "D"] as const) {
@@ -381,7 +391,7 @@ describe("log", () => {
 
         `,
           },
-          T.addSeconds(time, 1)
+          T.addSeconds(time, 1),
         );
       }
 
@@ -400,7 +410,7 @@ describe("log", () => {
 
         `,
           },
-          T.addSeconds(time, 2)
+          T.addSeconds(time, 2),
         );
       }
 
@@ -463,7 +473,13 @@ describe("log", () => {
     });
 
     it("does not show patches for merge commits", async () => {
-      await t.kitCmd("log", "--pretty=oneline", "--patch", "topic..master", "^master^^^");
+      await t.kitCmd(
+        "log",
+        "--pretty=oneline",
+        "--patch",
+        "topic..master",
+        "^master^^^",
+      );
 
       t.assertInfo(stripIndent`
         ${master[0]} K
@@ -496,7 +512,13 @@ describe("log", () => {
     });
 
     it("shows combined patches for merges", async () => {
-      await t.kitCmd("log", "--pretty=oneline", "--cc", "topic..master", "^master^^^");
+      await t.kitCmd(
+        "log",
+        "--pretty=oneline",
+        "--cc",
+        "topic..master",
+        "^master^^^",
+      );
 
       t.assertInfo(stripIndent`
         ${master[0]} K

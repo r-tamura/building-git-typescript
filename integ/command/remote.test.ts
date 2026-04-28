@@ -49,7 +49,7 @@ describe("remote", () => {
         "-t",
         "master",
         "-t",
-        "topic"
+        "topic",
       );
     });
 

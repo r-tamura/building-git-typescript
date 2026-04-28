@@ -43,6 +43,10 @@ jobs:
           git config --global user.name "CI Tester"
           git config --global user.email "ci@example.com"
 
+      - run: pnpm lint
+
+      - run: pnpm format:check
+
       - run: pnpm test:unit
 
       - run: pnpm test:integ

@@ -14,7 +14,7 @@ const getTitle = (c: CompleteCommit) => {
     throw new Error(`title is '${title}'`);
   }
   return TextUtil.strip(title);
-}
+};
 
 describe("revert", () => {
   let time: Date;
@@ -31,15 +31,14 @@ describe("revert", () => {
 
   describe("with a chain of commits", () => {
     beforeEach(async () => {
-
       for (const message of ["one", "two", "three", "four"]) {
         await commitTree(message, { "f.txt": message });
       }
 
-      await commitTree("five", {"g.txt": "five"});
-      await commitTree("six", {"f.txt": "six"});
-      await commitTree("seven", {"g.txt": "seven"});
-      await commitTree("eight", {"g.txt": "eight"});
+      await commitTree("five", { "g.txt": "five" });
+      await commitTree("six", { "f.txt": "six" });
+      await commitTree("seven", { "g.txt": "seven" });
+      await commitTree("eight", { "g.txt": "eight" });
     });
 
     it("reverts a commit on top of the current HEAD", async () => {
@@ -48,7 +47,11 @@ describe("revert", () => {
 
       const commits = await t.history("@~3..");
 
-      assert.deepEqual(commits.map(getTitle), ["Revert \"six\"", "eight", "seven"]);
+      assert.deepEqual(commits.map(getTitle), [
+        'Revert "six"',
+        "eight",
+        "seven",
+      ]);
 
       await t.assertIndex([
         ["f.txt", "four"],
@@ -65,22 +68,26 @@ describe("revert", () => {
       await t.kitCmd("revert", "@~4");
       t.assertStatus(1);
 
-      const short = await t.resolveRevision("@~4").then(t.repo.database.shortOid);
+      const short = await t
+        .resolveRevision("@~4")
+        .then(t.repo.database.shortOid);
 
       await t.assertWorkspace([
-        ["f.txt", TextUtil.stripIndent`
+        [
+          "f.txt",
+          TextUtil.stripIndent`
           <<<<<<< HEAD
           six=======
           three>>>>>>> parent of ${short}... four
 
-        `],
+        `,
+        ],
         ["g.txt", "eight"],
       ]);
 
       await t.kitCmd("status", "--porcelain");
 
       t.assertInfo("UU f.txt");
-
     });
 
     it("failes to revert a modify/delete conflict", async () => {
@@ -95,7 +102,6 @@ describe("revert", () => {
       await t.kitCmd("status", "--porcelain");
 
       t.assertInfo("UD g.txt");
-
     });
 
     it("continues a conflicted revert", async () => {
@@ -108,7 +114,11 @@ describe("revert", () => {
       const commits = await t.history("@~3..");
       assert.deepEqual(commits[0].parents, [commits[1].oid]);
 
-      assert.deepEqual(commits.map(getTitle), ["Revert \"five\"", "eight", "seven"]);
+      assert.deepEqual(commits.map(getTitle), [
+        'Revert "five"',
+        "eight",
+        "seven",
+      ]);
 
       await t.assertIndex([
         ["f.txt", "six"],
@@ -131,7 +141,11 @@ describe("revert", () => {
       const commits = await t.history("@~3..");
       assert.deepEqual(commits[0].parents, [commits[1].oid]);
 
-      assert.deepEqual(commits.map(getTitle), ["Revert \"five\"", "eight", "seven"]);
+      assert.deepEqual(commits.map(getTitle), [
+        'Revert "five"',
+        "eight",
+        "seven",
+      ]);
     });
 
     it("applies multiple non-conflicting commits", async () => {
@@ -139,7 +153,12 @@ describe("revert", () => {
       t.assertStatus(0);
 
       const commits = await t.history("@~4..");
-      assert.deepEqual(commits.map(getTitle), ["Revert \"six\"", "Revert \"seven\"", "Revert \"eight\"", "eight"]);
+      assert.deepEqual(commits.map(getTitle), [
+        'Revert "six"',
+        'Revert "seven"',
+        'Revert "eight"',
+        "eight",
+      ]);
 
       await t.assertIndex([
         ["f.txt", "four"],
@@ -208,15 +227,16 @@ describe("revert", () => {
       t.assertStatus(0);
 
       const commits = await t.history("@~4..");
-      assert.deepEqual(commits.map(getTitle), ["Revert \"five\"", "Revert \"six\"", "Revert \"seven\"", "eight"]);
-
-      await t.assertIndex([
-        ["f.txt", "four"],
+      assert.deepEqual(commits.map(getTitle), [
+        'Revert "five"',
+        'Revert "six"',
+        'Revert "seven"',
+        "eight",
       ]);
 
-      await t.assertWorkspace([
-        ["f.txt", "four"],
-      ]);
+      await t.assertIndex([["f.txt", "four"]]);
+
+      await t.assertWorkspace([["f.txt", "four"]]);
     });
 
     it("can continue after commiting the conflicts", async () => {
@@ -230,15 +250,16 @@ describe("revert", () => {
       t.assertStatus(0);
 
       const commits = await t.history("@~4..");
-      assert.deepEqual(commits.map(getTitle), ["Revert \"five\"", "Revert \"six\"", "Revert \"seven\"", "eight"]);
-
-      await t.assertIndex([
-        ["f.txt", "four"],
+      assert.deepEqual(commits.map(getTitle), [
+        'Revert "five"',
+        'Revert "six"',
+        'Revert "seven"',
+        "eight",
       ]);
 
-      await t.assertWorkspace([
-        ["f.txt", "four"],
-      ]);
+      await t.assertIndex([["f.txt", "four"]]);
+
+      await t.assertWorkspace([["f.txt", "four"]]);
     });
 
     describe("aborting in a conflicted state", () => {
@@ -277,7 +298,9 @@ describe("revert", () => {
 
       it("exits with a warning", async () => {
         t.assertStatus(0);
-        t.assertWarn("warning: You seem to have moved HEAD. Not rewinding, check your HEAD!");
+        t.assertWarn(
+          "warning: You seem to have moved HEAD. Not rewinding, check your HEAD!",
+        );
       });
 
       it("does not reset HEAD", async () => {

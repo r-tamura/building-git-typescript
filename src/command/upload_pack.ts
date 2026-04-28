@@ -5,7 +5,10 @@ import { BaseCommand } from "./base";
 import * as remote_agent from "./shared/remote_agent";
 import { checkConnected } from "./shared/remote_common";
 import * as send_objects from "./shared/send_objects";
-export class UploadPack extends BaseCommand implements remote_agent.RemoteAgent {
+export class UploadPack
+  extends BaseCommand
+  implements remote_agent.RemoteAgent
+{
   /** クライアントが必要としているRefセット */
   #wanted: Set<OID> = new Set();
   /** クライアントが所持しているコミットIDセット */

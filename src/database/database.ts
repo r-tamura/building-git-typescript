@@ -8,10 +8,15 @@ import {
   Dict,
   GitObjectParser,
   Nullable,
-  OID
+  OID,
 } from "../types";
 import { asserts } from "../util";
-import { POSIX_PATH_ZERO, posixJoin, PosixPath, toPathComponentsPosix } from "../util/fs";
+import {
+  POSIX_PATH_ZERO,
+  posixJoin,
+  PosixPath,
+  toPathComponentsPosix,
+} from "../util/fs";
 import { Backends } from "./backends";
 import { Blob } from "./blob";
 import { Commit } from "./commit";
@@ -118,8 +123,9 @@ export class Database {
       // データベースからロードされたオブジェクトはOIDを持つことが保証されている
       // データベースからロードされたTreeのentriesはDict<Database.Entry>。Tree#parse参照
       item = item
-        ? (((await this.load(item.oid)) as CompleteTree)
-            .entries as Dict<Entry>)[name]
+        ? (
+            ((await this.load(item.oid)) as CompleteTree).entries as Dict<Entry>
+          )[name]
         : null;
     }
 

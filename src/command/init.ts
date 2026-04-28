@@ -13,7 +13,7 @@ const mkdirRec = async (fs: FileService, dirPath: PosixPath) => {
   } catch (err) {
     throw new Error(`fatal: ${err}`);
   }
-}
+};
 export class InitCommand extends BaseCommand {
   constructor(args: string[], env: Environment) {
     super(args, env);
@@ -28,13 +28,12 @@ export class InitCommand extends BaseCommand {
     const dirCreationPromises = [
       mkdirRec(this.env.fs, posixJoin(gitPath, "objects")),
       mkdirRec(this.env.fs, posixJoin(gitPath, "refs", "heads")),
-    ]
-    await Promise.all(dirCreationPromises)
-      .catch((err: unknown) => {
-        this.env.logger.error("fatal: could not initiate git repository");
-        this.env.logger.error(`fatal: ${err}`);
-        this.exit(1);
-      });
+    ];
+    await Promise.all(dirCreationPromises).catch((err: unknown) => {
+      this.env.logger.error("fatal: could not initiate git repository");
+      this.env.logger.error(`fatal: ${err}`);
+      this.exit(1);
+    });
 
     // PosixPathで渡す
     const config = new Config(posixPath(posixJoin(gitPath, "config")));

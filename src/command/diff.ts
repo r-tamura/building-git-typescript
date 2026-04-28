@@ -78,7 +78,11 @@ export class Diff extends BaseCommand<Options> {
             targetFromIndex !== null,
             `ファイル '${posixPathname}' は存在する`,
           );
-          await printDiff(this.fromNothing(posixPathname), targetFromIndex, this);
+          await printDiff(
+            this.fromNothing(posixPathname),
+            targetFromIndex,
+            this,
+          );
           break;
         }
         case "modified": {
@@ -87,7 +91,11 @@ export class Diff extends BaseCommand<Options> {
             targetFromIndex !== null,
             `ファイル '${posixPathname}' は存在する`,
           );
-          await printDiff(await this.fromHead(posixPathname), targetFromIndex, this);
+          await printDiff(
+            await this.fromHead(posixPathname),
+            targetFromIndex,
+            this,
+          );
           break;
         }
         case "deleted": {

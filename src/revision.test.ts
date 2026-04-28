@@ -145,9 +145,9 @@ describe("Revision#resolve", () => {
 
   it("該当するオブジェクトが存在するとき、OIDを返す", async () => {
     // Arrange
-    vi
-      .spyOn(Parent.prototype, "resolve")
-      .mockResolvedValue("3a3c4ec0ae9589c881029c161dd129bcc318dc08");
+    vi.spyOn(Parent.prototype, "resolve").mockResolvedValue(
+      "3a3c4ec0ae9589c881029c161dd129bcc318dc08",
+    );
 
     // Act
     const rev = new Revision(mockRepo(), "HEAD^");
@@ -172,9 +172,9 @@ describe("Revision#resolve", () => {
   it("オブジェクトのタイプが指定され、存在したオブエクとが該当するタイプのオブジェクトでないとき、例外を発生させる", async () => {
     // Arrange
     const blob = mockBlob("3a3c4ec0ae9589c881029c161dd129bcc318dc08");
-    vi
-      .spyOn(Parent.prototype, "resolve")
-      .mockResolvedValue("3a3c4ec0ae9589c881029c161dd129bcc318dc08");
+    vi.spyOn(Parent.prototype, "resolve").mockResolvedValue(
+      "3a3c4ec0ae9589c881029c161dd129bcc318dc08",
+    );
     vi.spyOn(Database.prototype, "load").mockResolvedValue(blob);
 
     // Act

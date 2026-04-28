@@ -27,7 +27,10 @@ interface Options {
 
 const UPLOAD_PACK = "git-upload-pack";
 
-export class Fetch extends BaseCommand<Options> implements remote_client.RemoteClient {
+export class Fetch
+  extends BaseCommand<Options>
+  implements remote_client.RemoteClient
+{
   #fetchUrl?: string;
   #errors: Record<remotes.TargetRef, fast_forward.FastForwardError> = {};
   #uploader?: string;

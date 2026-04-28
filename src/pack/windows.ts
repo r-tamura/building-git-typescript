@@ -7,7 +7,10 @@ export class Unpacked {
     return new this(entry, data);
   }
 
-  constructor(public entry: Entry, public data: Buffer) {}
+  constructor(
+    public entry: Entry,
+    public data: Buffer,
+  ) {}
 
   get type() {
     return this.entry.type;

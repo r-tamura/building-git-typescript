@@ -6,16 +6,16 @@ import { CompleteCommit, Environment, Nullable } from "../types";
 import { asserts } from "../util";
 import { BaseCommand } from "./base";
 import {
-    commitMessagePath,
-    CommitOptions,
-    currentAuthor,
-    defineWriteCommitOptions,
-    pendingCommit,
-    printCommit,
-    readMessage,
-    resumeMerge,
-    writeCommit,
-    writeTree,
+  commitMessagePath,
+  CommitOptions,
+  currentAuthor,
+  defineWriteCommitOptions,
+  pendingCommit,
+  printCommit,
+  readMessage,
+  resumeMerge,
+  writeCommit,
+  writeTree,
 } from "./shared/write_commit";
 
 export const COMMIT_NOTES = `Please Enter the commit message for your changes. Lines starting

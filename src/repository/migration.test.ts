@@ -48,7 +48,10 @@ describe("Migration#applyChanges", () => {
     const mockedEntryForPath = (p: string) => index[p];
     const diff: ChangeMap = new Map([
       // 削除されるファイル
-      [posixPath("del/ete/deleted.txt"), [new Entry("abcdef0", 0o0100644), null]],
+      [
+        posixPath("del/ete/deleted.txt"),
+        [new Entry("abcdef0", 0o0100644), null],
+      ],
       // 追加されるファイル
       [posixPath("added.txt"), [null, new Entry("abcdef1", 0o0100644)]],
       // 更新されるファイル
@@ -63,9 +66,9 @@ describe("Migration#applyChanges", () => {
       vi.spyOn(repo.database, "load").mockResolvedValue(setOid(new Blob("hello")));
       remove = vi.spyOn(repo.index, "remove").mockResolvedValue(undefined);
       add = vi.spyOn(repo.index, "add");
-      vi
-        .spyOn(repo.index, "entryForPath")
-        .mockImplementation(mockedEntryForPath);
+      vi.spyOn(repo.index, "entryForPath").mockImplementation(
+        mockedEntryForPath,
+      );
 
       // Act
       const mgr = new Migration(repo, diff);
@@ -93,8 +96,7 @@ describe("Migration#applyChanges", () => {
       });
 
       it("ファイルが更新される", () => {
-        const flag =
-          constants.O_WRONLY | constants.O_CREAT | constants.O_EXCL;
+        const flag = constants.O_WRONLY | constants.O_CREAT | constants.O_EXCL;
         // OS依存パスでOK
         assert.deepEqual(writeFile.mock.calls[0], [
           "/tmp/dir/updated.txt",
@@ -104,8 +106,7 @@ describe("Migration#applyChanges", () => {
       });
 
       it("ファイルが作成される", () => {
-        const flag =
-          constants.O_WRONLY | constants.O_CREAT | constants.O_EXCL;
+        const flag = constants.O_WRONLY | constants.O_CREAT | constants.O_EXCL;
         // OS依存パスでOK
         assert.deepEqual(writeFile.mock.calls[1], [
           "/tmp/added.txt",

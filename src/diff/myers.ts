@@ -4,7 +4,10 @@ import { asserts } from "../util/assert";
 import { Line } from "./diff";
 
 export class Myers {
-  constructor(public a: Line[], public b: Line[]) {}
+  constructor(
+    public a: Line[],
+    public b: Line[],
+  ) {}
 
   static diff(a: Line[], b: Line[]) {
     return new this(a, b).diff();

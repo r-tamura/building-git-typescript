@@ -40,7 +40,8 @@ export class Hunk {
       // TODO: .map(prop("number"))とすると、a_linesにnullが含まれるのでコンパイルエラー
       const a_starts =
         offset < 0 ? [] : edits[offset].a_lines.map(getLineNumber);
-      const b_start = offset < 0 ? null : edits[offset].b_line?.number ?? null;
+      const b_start =
+        offset < 0 ? null : (edits[offset].b_line?.number ?? null);
       hunks.push(Hunk.of(a_starts, b_start, []));
       offset = Hunk.build(get(hunks, -1), edits, offset);
     }

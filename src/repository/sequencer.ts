@@ -31,13 +31,16 @@ export class Sequencer {
   /** 未反映のコミットリスト */
   #commands: Command[] = [];
   #config: Config;
-  #fs: FileService;  constructor(repo: Repository, env: Environment = {}) {
+  #fs: FileService;
+  constructor(repo: Repository, env: Environment = {}) {
     this.#repo = repo;
     this.#pathname = path.posix.join(repo.gitPath, "sequencer");
     this.#abortPath = path.posix.join(this.#pathname, "abort-safety");
     this.#headPath = path.posix.join(this.#pathname, "head");
     this.#todoPath = path.posix.join(this.#pathname, "todo");
-    this.#config = new Config(posixPath(path.posix.join(this.#pathname, "opts")));
+    this.#config = new Config(
+      posixPath(path.posix.join(this.#pathname, "opts")),
+    );
     this.#fs = env.fs ?? fs;
   }
 

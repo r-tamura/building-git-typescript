@@ -97,7 +97,8 @@ export class Rm extends BaseCommand<Options> {
     const stat = await this.repo.workspace.statFile(pathname);
     if (stat?.isDirectory()) {
       throw new Runtime(`kit rm: '${pathname}': Operation not permitted`);
-    }    const item = await this.repo.database.loadTreeEntry(
+    }
+    const item = await this.repo.database.loadTreeEntry(
       this.#headOid,
       posixPath(pathname),
     );

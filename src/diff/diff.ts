@@ -7,7 +7,10 @@ import { Edit } from "./myers";
 export type TextDocument = string | string[];
 
 export class Line {
-  constructor(public number: number, public text: string) {}
+  constructor(
+    public number: number,
+    public text: string,
+  ) {}
 
   static of(number: number, text: string) {
     return new Line(number, text);

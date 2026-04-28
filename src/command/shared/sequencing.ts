@@ -187,7 +187,7 @@ export async function handleContinue(
     asserts(isObject(e), "unknown error");
     switch (e.constructor) {
       // TODO: なんのエラーをちゃっちしているかわからないので、正しいエラーを指定する
-    // case WriteCommit:
+      // case WriteCommit:
       case Error:
         cmd.logger.error(`fatal: ${e.message}`);
         cmd.exit(128);

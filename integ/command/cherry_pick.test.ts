@@ -58,24 +58,28 @@ describe("cherry pick", () => {
 
       await t.assertWorkspace([
         ["f.txt", "four"],
-        ["g.txt", "five"]
+        ["g.txt", "five"],
       ]);
     });
-
 
     it("fails to apply a content conflict", async () => {
       await t.kitCmd("cherry-pick", "topic^^");
       t.assertStatus(1);
 
-      const short = t.repo.database.shortOid(await t.resolveRevision("topic^^"));
+      const short = t.repo.database.shortOid(
+        await t.resolveRevision("topic^^"),
+      );
 
       await t.assertWorkspace([
-        ["f.txt", stripIndent`
+        [
+          "f.txt",
+          stripIndent`
         <<<<<<< HEAD
         four=======
-        six>>>>>>> ${ short }... six
+        six>>>>>>> ${short}... six
 
-        `]
+        `,
+        ],
       ]);
 
       await t.kitCmd("status", "--porcelain");
@@ -87,10 +91,9 @@ describe("cherry pick", () => {
       await t.kitCmd("cherry-pick", "topic");
       t.assertStatus(1);
 
-
       await t.assertWorkspace([
         ["f.txt", "four"],
-        ["g.txt", "eight"]
+        ["g.txt", "eight"],
       ]);
 
       await t.kitCmd("status", "--porcelain");
@@ -108,15 +111,18 @@ describe("cherry pick", () => {
       const commits = await t.history("@~3..");
       assert.deepEqual(commits[0].parents, [commits[1].oid]);
 
-      assert.deepEqual(commits.map(commits => commits.message), ["eight", "four", "three"]);
+      assert.deepEqual(
+        commits.map((commits) => commits.message),
+        ["eight", "four", "three"],
+      );
       await t.assertIndex([
         ["f.txt", "four"],
-        ["g.txt", "eight"]
+        ["g.txt", "eight"],
       ]);
 
       await t.assertWorkspace([
         ["f.txt", "four"],
-        ["g.txt", "eight"]
+        ["g.txt", "eight"],
       ]);
     });
 
@@ -138,16 +144,21 @@ describe("cherry pick", () => {
       t.assertStatus(0);
 
       const commits = await t.history("@~4..");
-      assert.deepEqual(commits.map(getMessage), ["eight", "seven", "five", "four"]);
+      assert.deepEqual(commits.map(getMessage), [
+        "eight",
+        "seven",
+        "five",
+        "four",
+      ]);
 
       await t.assertIndex([
         ["f.txt", "four"],
-        ["g.txt", "eight"]
+        ["g.txt", "eight"],
       ]);
 
       await t.assertWorkspace([
         ["f.txt", "four"],
-        ["g.txt", "eight"]
+        ["g.txt", "eight"],
       ]);
     });
 
@@ -206,7 +217,13 @@ describe("cherry pick", () => {
 
       const commits = await t.history("@~5..");
 
-      assert.deepEqual(commits.map(getMessage), ["eight", "seven", "six", "five", "four"]);
+      assert.deepEqual(commits.map(getMessage), [
+        "eight",
+        "seven",
+        "six",
+        "five",
+        "four",
+      ]);
 
       await t.assertIndex([
         ["f.txt", "six"],
@@ -231,7 +248,13 @@ describe("cherry pick", () => {
 
       const commits = await t.history("@~5..");
 
-      assert.deepEqual(commits.map(getMessage), ["eight", "seven", "six", "five", "four"]);
+      assert.deepEqual(commits.map(getMessage), [
+        "eight",
+        "seven",
+        "six",
+        "five",
+        "four",
+      ]);
       await t.assertIndex([
         ["f.txt", "six"],
         ["g.txt", "eight"],
@@ -242,56 +265,58 @@ describe("cherry pick", () => {
       ]);
     });
 
-      describe("aborting in conflicted state", () => {
-        beforeEach(async () => {
-          await t.kitCmd("cherry-pick", "..topic");
-          await t.kitCmd("cherry-pick", "--abort");
-        });
-
-        it("exits successfully", async () => {
-          t.assertStatus(0);
-          t.assertError("");
-        });
-
-        it("resets to the old HEAD", async () => {
-          assert.equal(await t.loadCommit("HEAD").then(getMessage), "four");
-
-          await t.kitCmd("status", "--porcelain");
-          t.assertInfo("");
-        });
-
-        it("removes the merge state", async () => {
-          assert.equal(await t.repo.pendingCommit().inProgress(), false);
-        });
+    describe("aborting in conflicted state", () => {
+      beforeEach(async () => {
+        await t.kitCmd("cherry-pick", "..topic");
+        await t.kitCmd("cherry-pick", "--abort");
       });
 
-      describe("aborting in commited state", () => {
-        beforeEach(async () => {
-          await t.kitCmd("cherry-pick", "..topic");
-          await t.kitCmd("add", ".");
-          const spy = T.spyEditor("picked");
-          await t.kitCmd("commit", "--amend");
-          spy.restore();
-
-          await t.kitCmd("cherry-pick", "--abort");
-        });
-
-        it("exits with a warning", async () => {
-          t.assertStatus(0);
-          t.assertWarn("warning: You seem to have moved HEAD. Not rewinding, check your HEAD!");
-        });
-
-        it("does not reset", async () => {
-          assert.equal(await t.loadCommit("HEAD").then(getMessage), "picked");
-
-          await t.kitCmd("status", "--porcelain");
-          t.assertInfo("");
-        });
-
-        it("removes the merge state", async () => {
-          assert.equal(await t.repo.pendingCommit().inProgress(), false);
-        });
+      it("exits successfully", async () => {
+        t.assertStatus(0);
+        t.assertError("");
       });
+
+      it("resets to the old HEAD", async () => {
+        assert.equal(await t.loadCommit("HEAD").then(getMessage), "four");
+
+        await t.kitCmd("status", "--porcelain");
+        t.assertInfo("");
+      });
+
+      it("removes the merge state", async () => {
+        assert.equal(await t.repo.pendingCommit().inProgress(), false);
+      });
+    });
+
+    describe("aborting in commited state", () => {
+      beforeEach(async () => {
+        await t.kitCmd("cherry-pick", "..topic");
+        await t.kitCmd("add", ".");
+        const spy = T.spyEditor("picked");
+        await t.kitCmd("commit", "--amend");
+        spy.restore();
+
+        await t.kitCmd("cherry-pick", "--abort");
+      });
+
+      it("exits with a warning", async () => {
+        t.assertStatus(0);
+        t.assertWarn(
+          "warning: You seem to have moved HEAD. Not rewinding, check your HEAD!",
+        );
+      });
+
+      it("does not reset", async () => {
+        assert.equal(await t.loadCommit("HEAD").then(getMessage), "picked");
+
+        await t.kitCmd("status", "--porcelain");
+        t.assertInfo("");
+      });
+
+      it("removes the merge state", async () => {
+        assert.equal(await t.repo.pendingCommit().inProgress(), false);
+      });
+    });
 
     // 追加テスト
     describe("print conflicting messages", () => {
@@ -318,6 +343,4 @@ describe("cherry pick", () => {
       });
     });
   });
-
-
 });

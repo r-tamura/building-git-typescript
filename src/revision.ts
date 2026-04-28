@@ -27,7 +27,10 @@ export const COMMIT = "commit" as const;
 
 export class InvalidObject extends BaseError {}
 export class HintedError extends BaseError {
-  constructor(public message: string, public hint: string[]) {
+  constructor(
+    public message: string,
+    public hint: string[],
+  ) {
     super(message);
   }
 }
@@ -177,7 +180,10 @@ export class Ref {
 }
 
 export class Parent {
-  constructor(public rev: Rev, public n: number) {}
+  constructor(
+    public rev: Rev,
+    public n: number,
+  ) {}
   static of(rev: Rev, n: number) {
     const parent = new Parent(rev, n);
     return parent;
@@ -190,7 +196,10 @@ export class Parent {
 }
 
 export class Ancestor {
-  constructor(public rev: Rev, public n: number) {}
+  constructor(
+    public rev: Rev,
+    public n: number,
+  ) {}
   static of(rev: Rev, n: number) {
     const ancestor = new Ancestor(rev, n);
     return ancestor;

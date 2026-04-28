@@ -22,7 +22,7 @@ describe("init", () => {
     assert.equal(
       await fs.readFile(path.join(gitPath, "HEAD"), "utf-8"),
       `ref: refs/heads/master${os.EOL}`,
-      "HEADファイル作成"
+      "HEADファイル作成",
     );
 
     assert.equal(
@@ -30,7 +30,7 @@ describe("init", () => {
         .stat(path.join(gitPath, "refs", "heads"))
         .then((stat) => stat.isDirectory()),
       true,
-      ".git/refs/headsディレクトリの作成"
+      ".git/refs/headsディレクトリの作成",
     );
   });
 });

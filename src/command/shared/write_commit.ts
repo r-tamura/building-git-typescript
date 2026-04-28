@@ -2,16 +2,16 @@ import arg from "arg";
 import * as path from "path";
 import { Author, Commit, Tree } from "../../database";
 import {
-    Error,
-    MergeType,
-    PendingCommit,
+  Error,
+  MergeType,
+  PendingCommit,
 } from "../../repository/pending_commit";
 import {
-    CompleteCommit,
-    CompleteTree,
-    Nullable,
-    OID,
-    Pathname,
+  CompleteCommit,
+  CompleteTree,
+  Nullable,
+  OID,
+  Pathname,
 } from "../../types";
 import { asserts, assertsComplete, BaseError } from "../../util";
 import { BaseCommand } from "../base";
@@ -75,7 +75,9 @@ export function defineWriteCommitOptions<O extends CommitOptions>(
   };
 }
 
-export async function readMessage<O extends CommitOptions>(cmd: BaseCommand<O>) {
+export async function readMessage<O extends CommitOptions>(
+  cmd: BaseCommand<O>,
+) {
   if (cmd.options["message"]) {
     return `${cmd.options["message"]}`;
   } else if (cmd.options["file"]) {
@@ -92,7 +94,10 @@ export async function readMessage<O extends CommitOptions>(cmd: BaseCommand<O>) 
  * マージコミットメッセージはコンフリクト発生時のマージで指定されたメッセージが利用されます。
  * コンフリクトが解決されていない場合はプロセスを終了します。
  */
-export async function resumeMerge(type: MergeType, cmd: BaseCommand & CommitPendable) {
+export async function resumeMerge(
+  type: MergeType,
+  cmd: BaseCommand & CommitPendable,
+) {
   switch (type) {
     case "merge":
       await writeMergeCommit(cmd);

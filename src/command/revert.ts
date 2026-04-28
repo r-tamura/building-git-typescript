@@ -12,9 +12,9 @@ import { BaseCommand } from "./base";
 import { COMMIT_NOTES } from "./commit";
 import * as Sequencing from "./shared/sequencing";
 import {
-    commitMessagePath,
-    currentAuthor,
-    writeTree,
+  commitMessagePath,
+  currentAuthor,
+  writeTree,
 } from "./shared/write_commit";
 
 export class Revert extends BaseCommand<Sequencing.Options> {

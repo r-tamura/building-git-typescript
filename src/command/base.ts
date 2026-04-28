@@ -36,7 +36,8 @@ export interface GitCommand {
   logger: Logger;
 }
 export abstract class BaseCommand<O extends Options = NoOptions>
-  implements Runnable, GitCommand {
+  implements Runnable, GitCommand
+{
   /** 作業ディレクトリ */
   protected workDir: PosixPath;
   /** ページャ-  */
@@ -55,7 +56,10 @@ export abstract class BaseCommand<O extends Options = NoOptions>
   status = 0;
 
   _repo!: Repository;
-  constructor(public args: string[], public env: Environment) {
+  constructor(
+    public args: string[],
+    public env: Environment,
+  ) {
     this.workDir = posixPath(env.process.cwd());
     this.envvars = env.process.env;
     this.isatty = env.process.stdout.isTTY;

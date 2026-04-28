@@ -21,7 +21,8 @@ export class Error extends BaseError {}
 export class PendingCommit {
   #pathname: Pathname;
   messagePath: Pathname;
-  #fs: FileService;  constructor(pathname: Pathname, env: Environment) {
+  #fs: FileService;
+  constructor(pathname: Pathname, env: Environment) {
     this.#pathname = pathname;
     this.messagePath = path.posix.join(pathname, "MERGE_MSG");
     this.#fs = env.fs;
@@ -38,7 +39,7 @@ export class PendingCommit {
 
   /**
    * コンフリクト発生時に指定されていたマージ元(right)のコミットOIDを取得します。
-   */  async mergeOid(type: MergeType = "merge") {
+   */ async mergeOid(type: MergeType = "merge") {
     const headPath = path.posix.join(this.#pathname, HeadFiles[type]);
     return this.#fs
       .readFile(headPath, "ascii")

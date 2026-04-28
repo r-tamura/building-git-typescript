@@ -16,7 +16,10 @@ export function shallowEqual<T>(o1: T, o2: T) {
  * k -> {k: a} -> a
  * @param key プロパティキー
  */
-export const prop = <T, K extends keyof T>(key: K) => (o: T): T[K] => o[key];
+export const prop =
+  <T, K extends keyof T>(key: K) =>
+  (o: T): T[K] =>
+    o[key];
 
 export function isempty(object: Record<string, any>): boolean {
   return object instanceof Object && Object.keys(object).length === 0;

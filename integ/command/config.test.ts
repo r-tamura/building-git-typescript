@@ -83,7 +83,12 @@ describe("config", () => {
     });
 
     it("replaces a variable", async () => {
-      await t.kitCmd("config", "--replace-all", "remote.origin.fetch", "new-value");
+      await t.kitCmd(
+        "config",
+        "--replace-all",
+        "remote.origin.fetch",
+        "new-value",
+      );
 
       await t.kitCmd("config", "--get-all", "remote.origin.fetch");
       t.assertStatus(0);

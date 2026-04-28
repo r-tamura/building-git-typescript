@@ -95,8 +95,9 @@ export class RevList {
       await list.handleRevision(rev);
     }
     if (isempty(list.#queue)) {
-      await list.handleRevision(HEAD);    }
-    list.#filter = PathFilter.build(list.#prune.map(p => posixPath(p)));
+      await list.handleRevision(HEAD);
+    }
+    list.#filter = PathFilter.build(list.#prune.map((p) => posixPath(p)));
     return list;
   }
 
@@ -382,7 +383,8 @@ export class RevList {
 
     for (const [name, item] of Object.entries(tree.entries)) {
       // databaseから読み込まれたtreeオブジェクトのエントリ
-      asserts(item.type === "database");      yield* this.traverseTree(
+      asserts(item.type === "database");
+      yield* this.traverseTree(
         item,
         (object) => {
           return Boolean(object);

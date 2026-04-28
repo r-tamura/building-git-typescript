@@ -1,4 +1,3 @@
-
 /**
  * 文字列の最初と最後にある空白文字を取り除いた文字列を返します
  * https://docs.ruby-lang.org/ja/latest/method/String/i/strip.html
@@ -39,7 +38,9 @@ function minIndent(str: string) {
 export function stripIndent(strings: TemplateStringsArray, ...args: any[]) {
   // EOLにWindowsの改行コードを含む場合はテストデータに誤りがあるのでエラーを投げる
   if (strings.join("").includes("\r")) {
-    throw new Error("EOLにWindowsの改行コードを含む場合はテストデータに誤りがあります。");
+    throw new Error(
+      "EOLにWindowsの改行コードを含む場合はテストデータに誤りがあります。",
+    );
   }
   const notIsEmptyFirstLastLine = (line: string, i: number, lines: string[]) =>
     !((i === 0 || i === lines.length - 1) && line.trim() === "");

@@ -139,7 +139,7 @@ describe("reset", () => {
 
       assert.equal(
         ((await t.repo.database.load(headOid)) as CompleteCommit).parent,
-        await t.repo.refs.readHead()
+        await t.repo.refs.readHead(),
       );
 
       await assertUnchangedWorkspace();
@@ -156,7 +156,7 @@ describe("reset", () => {
 
       assert.equal(
         ((await t.repo.database.load(headOid)) as CompleteCommit).parent,
-        await t.repo.refs.readHead()
+        await t.repo.refs.readHead(),
       );
 
       await assertUnchangedWorkspace();

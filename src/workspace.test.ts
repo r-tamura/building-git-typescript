@@ -87,29 +87,27 @@ const retrieve = (pathname: PosixPath): FakeEntry => {
   return entry;
 };
 
-const fakeReaddir = vi
-  .fn()
-  .mockImplementation(async (pathname: string) => {
-    const entry = retrieve(posixPath(pathname));
-    if (entry.type === "f") {
-      throw new TypeError(`${pathname} is not a directory.`);
-    }
-    const names = entry.items.map((item) => item.name);
-    return names;
-  });
+const fakeReaddir = vi.fn().mockImplementation(async (pathname: string) => {
+  const entry = retrieve(posixPath(pathname));
+  if (entry.type === "f") {
+    throw new TypeError(`${pathname} is not a directory.`);
+  }
+  const names = entry.items.map((item) => item.name);
+  return names;
+});
 
-const fakeStat = vi
-  .fn()
-  .mockImplementation(async (pathname: string) => {
-    MockedStat.mockImplementation(function() { return {
+const fakeStat = vi.fn().mockImplementation(async (pathname: string) => {
+  MockedStat.mockImplementation(function () {
+    return {
       isDirectory: vi
         .fn()
         .mockReturnValue(retrieve(posixPath(pathname)).type === "d"),
-    }; });
-    // @ts-expect-error Statsコンストラクタは非推奨だが、代替えができていない mockFsStatsではテストに失敗する
-    const stats = new Stats();
-    return stats;
+    };
   });
+  // @ts-expect-error Statsコンストラクタは非推奨だが、代替えができていない mockFsStatsではテストに失敗する
+  const stats = new Stats();
+  return stats;
+});
 
 describe("WorkSpace#listFiles", () => {
   const testPath = posixPath("test");

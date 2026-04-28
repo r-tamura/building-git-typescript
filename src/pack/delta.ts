@@ -27,7 +27,10 @@ export class Copy {
     return new Copy(Number(offset), Number(size));
   }
 
-  constructor(public readonly offset: number, public readonly size: number) {}
+  constructor(
+    public readonly offset: number,
+    public readonly size: number,
+  ) {}
 
   toString(): string {
     const bytes = numbers.PackedInt56LE.write(

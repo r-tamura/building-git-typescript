@@ -9,7 +9,7 @@ import { defaultFs, FileService } from "./services";
 import * as Service from "./services/FileService";
 
 vi.mock("./lockfile");
-const MockedLockfile = (Lockfile as unknown) as Mock;
+const MockedLockfile = Lockfile as unknown as Mock;
 
 const mockEnv = (mock: Partial<FileService> = {}) => ({
   fs: {
@@ -81,7 +81,7 @@ describe("Refs#deleteBranch", () => {
       rmdir.mock.calls[0][0],
       path.join(".git", "refs", "heads"),
       "ブランチが無くなったとき、/refs/headsディレクトリを削除",
-      );
+    );
     assert.equal(actual, oid, "返り値");
   });
 
@@ -210,11 +210,12 @@ describe("Refs#readRef", () => {
 
     afterAll(() => {
       spyServiceExists.mockRestore();
-    });    it("ファイルパス", () => {
+    });
+    it("ファイルパス", () => {
       // OS依存パスでOK
       assert.equal(
         mockedReadFile.mock.calls[0][0],
-        path.join(".git", "refs", "heads", "master")
+        path.join(".git", "refs", "heads", "master"),
       );
     });
 
@@ -240,15 +241,21 @@ describe("Refs#readRef", () => {
 });
 
 describe("reverseRefs", () => {
-  it("HEADと唯一のブランチを返す", async () => {    // Arrange
+  it("HEADと唯一のブランチを返す", async () => {
+    // Arrange
     const oid = "3a3c4ec";
-    const env = mockEnv(mockFs({
-      [path.join(".git", "refs")]: ["heads"],
-      [path.join(".git", "refs", "heads")]: ["master"],
-    }, {
-      [path.join(".git", "HEAD")]: "ref: refs/heads/master",
-      [path.join(".git", "refs", "heads", "master")]: oid,
-    }));
+    const env = mockEnv(
+      mockFs(
+        {
+          [path.join(".git", "refs")]: ["heads"],
+          [path.join(".git", "refs", "heads")]: ["master"],
+        },
+        {
+          [path.join(".git", "HEAD")]: "ref: refs/heads/master",
+          [path.join(".git", "refs", "heads", "master")]: oid,
+        },
+      ),
+    );
 
     // Act
     const refs = new Refs(".git", env);
@@ -287,11 +294,13 @@ describe("Refs#updateHead", () => {
     const mockedCommit = vi.fn();
     beforeAll(async () => {
       MockedLockfile.mockRestore();
-      MockedLockfile.mockImplementationOnce(function(pathname: string) { return {
-        holdForUpdate: vi.fn().mockResolvedValue(undefined),
-        write: mockedWrite,
-        commit: mockedCommit,
-      }; });
+      MockedLockfile.mockImplementationOnce(function (pathname: string) {
+        return {
+          holdForUpdate: vi.fn().mockResolvedValue(undefined),
+          write: mockedWrite,
+          commit: mockedCommit,
+        };
+      });
       // Act
       const refs = new Refs(testRootPath);
       await refs.updateHead(testOId);
@@ -319,11 +328,13 @@ describe("Refs#updateHead", () => {
     });
     beforeAll(async () => {
       MockedLockfile.mockRestore();
-      MockedLockfile.mockImplementationOnce(function(pathname: string) { return {
-        holdForUpdate: throwLockDenied,
-        write: mockedWrite,
-        commit: mockedCommit,
-      }; });
+      MockedLockfile.mockImplementationOnce(function (pathname: string) {
+        return {
+          holdForUpdate: throwLockDenied,
+          write: mockedWrite,
+          commit: mockedCommit,
+        };
+      });
       // Act & Assert
       const refs = new Refs(testRootPath);
       const actual = refs.updateHead(testOId);
@@ -346,12 +357,14 @@ describe("Refs#updateRef", () => {
   describe("refを更新する", () => {
     beforeAll(async () => {
       MockedLockfile.mockRestore();
-      MockedLockfile.mockImplementationOnce(function(pathname: string) { return {
-        holdForUpdate: () => Promise.resolve(),
-        write: mockedWrite,
-        commit: mockedCommit,
-        rollback: mockedRollback,
-      }; });
+      MockedLockfile.mockImplementationOnce(function (pathname: string) {
+        return {
+          holdForUpdate: () => Promise.resolve(),
+          write: mockedWrite,
+          commit: mockedCommit,
+          rollback: mockedRollback,
+        };
+      });
       const refs = new Refs(testRootPath);
       await refs.updateRef("/heads/master", testOId);
     });
@@ -367,19 +380,22 @@ describe("Refs#updateRef", () => {
     });
     beforeAll(async () => {
       MockedLockfile.mockRestore();
-      MockedLockfile.mockImplementationOnce(function() { return {
-        holdForUpdate: vi.fn().mockResolvedValueOnce(null),
-        write: mockedWrite,
-        commit: mockedCommit,
-        rollback: mockedRollback,
-      }; });
+      MockedLockfile.mockImplementationOnce(function () {
+        return {
+          holdForUpdate: vi.fn().mockResolvedValueOnce(null),
+          write: mockedWrite,
+          commit: mockedCommit,
+          rollback: mockedRollback,
+        };
+      });
       const refs = new Refs(testRootPath, mockedEnv);
       await refs.updateRef("heads/master", null);
-    });    it("refが削除される", () => {
+    });
+    it("refが削除される", () => {
       assert.equal(
         (mockedEnv.fs.unlink as Mock).mock.calls[0][0],
         path.join(testRootPath, "heads", "master"),
-        "削除されたパス"
+        "削除されたパス",
       );
     });
 

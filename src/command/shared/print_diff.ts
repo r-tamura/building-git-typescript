@@ -2,11 +2,11 @@ import * as path from "path";
 import { assertsStyle } from "../../color";
 import { assertsString, SectionName } from "../../config";
 import {
-    combinedHunk,
-    diffHunks,
-    Hunk,
-    HunkEdit,
-    TextDocument,
+  combinedHunk,
+  diffHunks,
+  Hunk,
+  HunkEdit,
+  TextDocument,
 } from "../../diff";
 import { OID, Pathname } from "../../types";
 import { prop } from "../../util/object";

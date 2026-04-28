@@ -4,7 +4,10 @@ import { Tree } from "./tree";
 
 export class Entry {
   readonly type = "database";
-  constructor(public oid: OID, public mode: ModeNumber) {}
+  constructor(
+    public oid: OID,
+    public mode: ModeNumber,
+  ) {}
 
   static equals(e1: Entry, e2: Entry) {
     return e1.euqals(e2);

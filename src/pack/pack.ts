@@ -44,7 +44,10 @@ export class Record {
    * TODO: database.Seriarizable#oidのundefined化
    */
   oid: Nullable<OID> = null;
-  constructor(public type: GitObjectName, public data: Buffer) {}
+  constructor(
+    public type: GitObjectName,
+    public data: Buffer,
+  ) {}
 
   static of(type: GitObjectName, data: Buffer) {
     return new this(type, data);
@@ -57,5 +60,8 @@ export class Record {
 
 export class RefDelta {
   readonly kind = "refdelta";
-  constructor(public baseOid: OID, public deltaData: Buffer) {}
+  constructor(
+    public baseOid: OID,
+    public deltaData: Buffer,
+  ) {}
 }

@@ -46,7 +46,10 @@ type Deserialize<T extends object> = (s: string) => T;
  */
 export class ObjectKeyHash<T extends object, S = any> {
   #hash: Map<string, S>;
-  constructor(private ser: Serialize<T>, private des: Deserialize<T>) {
+  constructor(
+    private ser: Serialize<T>,
+    private des: Deserialize<T>,
+  ) {
     this.#hash = new Map();
   }
 
@@ -89,7 +92,10 @@ export class ObjectKeyHash<T extends object, S = any> {
  */
 export class ObjectSet<T extends object> {
   #set: Set<string> = new Set();
-  constructor(private ser: Serialize<T>, private des: Deserialize<T>) {}
+  constructor(
+    private ser: Serialize<T>,
+    private des: Deserialize<T>,
+  ) {}
 
   get size() {
     return this.#set.size;

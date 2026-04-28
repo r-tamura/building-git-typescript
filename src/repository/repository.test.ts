@@ -7,7 +7,7 @@ import assert from "node:assert";
 import { makeLogger } from "../__test__/util";
 
 vi.mock("../refs");
-const MockedRefs = (Refs as unknown) as Mock;
+const MockedRefs = Refs as unknown as Mock;
 
 const testEnvGlobal: Environment = {
   fs: { ...defaultFs },
