@@ -6,7 +6,7 @@ import {
 } from "../repository/pending_commit";
 import { HEAD } from "../revision";
 import { asserts } from "../util";
-import { BaseCommand } from "./base";
+import { BaseCommand, Exit } from "./base";
 import {
     CommitOptions,
     CONFLICT_MESSAGE,
@@ -143,6 +143,9 @@ export class Merge extends BaseCommand<Options> {
       await this.repo.index.load();
       await resumeMerge("merge", this);
     } catch (e) {
+      if (e instanceof Exit) {
+        throw e;
+      }
       asserts(e instanceof Error, "unknown error");
       switch (e.constructor) {
         case NotInProgressError:
