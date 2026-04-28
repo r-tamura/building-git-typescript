@@ -1,5 +1,4 @@
 import { Stats } from "fs";
-import * as path from "path";
 import * as Database from "../database";
 import * as Index from "../gindex";
 import { Stage } from "../gindex";
