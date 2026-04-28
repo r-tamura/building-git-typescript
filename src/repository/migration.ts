@@ -1,5 +1,4 @@
 import { Stats } from "fs";
-import * as os from "os";
 import * as path from "path";
 import * as Database from "../database";
 import * as Index from "../gindex";
@@ -132,7 +131,8 @@ export class Migration {
 
       const lines = Array.from(pathnames).map((name) => `\t${name}`);
       const [header, footer] = MESSAGES[type as keyof Conflicts];
-      this.errors.push([header, ...lines, footer].join(os.EOL));
+      // git のエラー出力は OS によらず LF 区切り
+      this.errors.push([header, ...lines, footer].join("\n"));
     });
 
     if (this.errors.length > 0) {
