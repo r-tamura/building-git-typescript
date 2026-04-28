@@ -13,8 +13,8 @@ export class Conflict extends BaseError {}
 
 const SECTION_LINE = /^\s*\[([a-z0-9-]+)( "(.+)")?\]\s*($|#|;)/i;
 const VARIABLE_LINE = /^\s*([a-z][a-z0-9-]*)\s*=\s*(.*?)\s*($|#|;)/im;
-const BLANK_LINE = /\s*(¥|#|;)/;
-// const INTEGER = /-?[1-9][0-9]*¥/;
+const BLANK_LINE = /^\s*($|#|;)/;
+// const INTEGER = /-?[1-9][0-9]*\\/;
 
 const VALID_SECTION = /^[a-z0-9-]+$/i;
 const VALID_VARIABLE = /^[a-z][a-z0-9-]*$/i;
