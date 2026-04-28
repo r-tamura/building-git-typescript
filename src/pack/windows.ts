@@ -33,7 +33,8 @@ export class Window {
   #objects: Unpacked[];
   #offset = 0;
   constructor(size: number) {
-    this.#objects = new Array(size).fill(undefined);
+    // 既存挙動: 初期は空のスロットだが、実装上 Unpacked[] として扱う (`add` で埋まるまで undefined)
+    this.#objects = Array.from({ length: size }) as Unpacked[];
   }
 
   add(entry: Entry, data: Buffer): Unpacked {

@@ -172,7 +172,7 @@ export class Indexer {
     header.writeUInt32BE(VERSION);
     await this.#indexFile.write(header);
 
-    const counts = new Array(256).fill(0) as number[];
+    const counts = Array.from({ length: 256 }, () => 0);
     let total = 0;
 
     for (const oid of this.#objectIds) {

@@ -15,11 +15,6 @@ import { defaultFs, exists, Logger, Process } from "../../src/services";
 import { CompleteCommit, Dict, Environment, Pathname } from "../../src/types";
 import { asserts } from "../../src/util";
 
-export interface TestUtil {
-  suffix: Pathname;
-  cmd: Command.BaseCommand;
-}
-
 export function create(name?: string) {
   return new TestUtil(name);
 }
@@ -39,6 +34,8 @@ interface CommitOptions {
 export const X = "x";
 export class TestUtil {
   envvars: Process["env"] = {};
+  suffix: Pathname;
+  cmd!: Command.BaseCommand;
   #env: Environment;
   #repo: Repository;
 

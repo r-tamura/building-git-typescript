@@ -67,7 +67,7 @@ export class Myers {
     const m = this.b.length;
     const max = n + m; // 'd' the most number of moves
 
-    const v: number[] = new Array(2 * max + 1).fill(-1); // '-d' ~ 'd'
+    const v: number[] = Array.from({ length: 2 * max + 1 }, () => -1); // '-d' ~ 'd'
     v[1] = 0; // d = 0, x = 0
 
     for (const d of range(0, max + 1)) {

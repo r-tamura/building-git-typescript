@@ -1,6 +1,9 @@
 {
   "$schema": "./node_modules/oxlint/configuration_schema.json",
   "plugins": ["typescript", "unicorn", "oxc"],
+  "categories": {
+    "correctness": "error"
+  },
   "rules": {
     "no-console": ["warn", { "allow": ["warn", "error", "info"] }],
     "typescript/no-floating-promises": "error"

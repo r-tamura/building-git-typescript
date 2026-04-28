@@ -43,7 +43,7 @@ export class Combined implements Enumerable<Row> {
       this.#offsets[i] < diff.length &&
       diff[this.#offsets[i]].type === "del"
     ) {
-      const edits = new Array(this.#diffs.length).fill(null) as [
+      const edits = Array.from({ length: this.#diffs.length }, () => null) as [
         CombinedEdit,
         CombinedEdit,
       ];

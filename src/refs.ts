@@ -31,18 +31,6 @@ const HEAD = "HEAD";
 export const ORIG_HEAD = "ORIG_HEAD";
 
 export const symref = (refs: Refs, p: Pathname): SymRef => SymRef.of(refs, p);
-export interface SymRef {
-  type: "symref";
-  path: string;
-  shortName(): string;
-  readOid(): Promise<string>;
-  ord(other: SymRef): number;
-  head(): boolean;
-  /** Symbolic Refがローカルブランチであるかを判定します */
-  branch(): boolean;
-  /** Symbolic Refがリモートブランチであるかを判定します */
-  remote(): boolean;
-}
 
 /**
  * Symbolic Ref
@@ -90,11 +78,6 @@ export class SymRef {
 }
 
 const ref = (oid: OID): Ref => Ref.of(oid);
-export interface Ref {
-  type: "ref";
-  oid: OID;
-  readOid(): Promise<string>;
-}
 
 export class Ref {
   type = "ref" as const;
