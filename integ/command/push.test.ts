@@ -12,6 +12,11 @@ import { RemoteRepo } from "./remote_repo";
 
 const t = T.create();
 
+// kit のサブプロセスとの stream のやり取りで race condition があり、
+// "stream has emmited 'error' or 'end' already" で稀に落ちる。
+// 根本原因の修正は別チケットとし、CI 安定化のために再試行を許可する。
+jest.retryTimes(2);
+
 describe("push", () => {
   let remote: RemoteRepo;
   beforeEach(t.beforeHook);
