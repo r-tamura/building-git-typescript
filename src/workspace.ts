@@ -7,7 +7,13 @@ import { defaultFs, FileService, mkdirp, rmrf } from "./services";
 import { Pathname } from "./types";
 import { asserts } from "./util/assert";
 import { BaseError, isNodeError } from "./util/error";
-import { ascend, posixJoin, posixPath, PosixPath, toOsPath } from "./util/fs";
+import {
+  ascendUnix,
+  posixJoin,
+  posixPath,
+  PosixPath,
+  toOsPath,
+} from "./util/fs";
 
 export type Environment = {
   fs?: FileService;
@@ -141,7 +147,7 @@ export class Workspace {
   async remove(pathname: Pathname) {
     try {
       await rmrf(this.#fs, this.join(pathname));
-      for (const dirpath of ascend(path.posix.dirname(pathname))) {
+      for (const dirpath of ascendUnix(path.posix.dirname(pathname))) {
         await this.removeDirectory(dirpath);
       }
     } catch (e) {
