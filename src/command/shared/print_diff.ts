@@ -61,8 +61,9 @@ export async function printDiff(a: Target, b: Target, cmd: BaseCommand) {
     return;
   }
 
-  a.name = path.join("a", a.name);
-  b.name = path.join("b", b.name);
+  // git の diff フォーマットは常に POSIX 区切り
+  a.name = `a/${a.name}`;
+  b.name = `b/${b.name}`;
 
   cmd.log(`diff --git ${a.name} ${b.name}`);
   await printMode(a, b, cmd);

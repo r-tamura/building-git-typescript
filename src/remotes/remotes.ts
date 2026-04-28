@@ -1,4 +1,4 @@
-import * as path from "path";
+import * as path from "path/posix";
 import { Config } from "../config";
 import * as Refs from "../refs";
 import { BaseError, isempty } from "../util";
