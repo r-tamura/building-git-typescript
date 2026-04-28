@@ -59,11 +59,11 @@ describe("Refs#deleteBranch", () => {
     // Arrange
     const oid = "3a3c4ec0ae9589c881029c161dd129bcc318dc08";
     const unlink = jest.fn().mockResolvedValue(null);
-    const rm = jest.fn().mockResolvedValue(null);
+    const rmdir = jest.fn().mockResolvedValue(null);
     const env = mockEnv({
       readFile: jest.fn().mockResolvedValueOnce(oid),
       unlink,
-      rm,
+      rmdir,
     });
 
     // Act
@@ -77,7 +77,7 @@ describe("Refs#deleteBranch", () => {
       "ブランチRefファイルの削除",
     );
     assert.equal(
-      rm.mock.calls[0][0],
+      rmdir.mock.calls[0][0],
       path.join(".git", "refs", "heads"),
       "ブランチが無くなったとき、/refs/headsディレクトリを削除",
       );

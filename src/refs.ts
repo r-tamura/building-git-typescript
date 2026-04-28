@@ -323,7 +323,7 @@ export class Refs {
       }
 
       const e = await this.#fs
-        .rm(toOsPath(dirname))
+        .rmdir(toOsPath(dirname))
         .catch((e: NodeJS.ErrnoException) => e);
 
       if (e && e.code === "ENOTEMPTY") {
