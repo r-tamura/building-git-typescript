@@ -73,7 +73,8 @@ export class Status {
           await this.scanWorkspace(pathname);
         }
       } else if (await this.#inspector.trackableFile(pathname, stat)) {
-        const outputName = stat.isDirectory() ? pathname + path.sep : pathname;
+        // status の出力 (`?? dir/`) は git 規約に従い常に POSIX 区切り
+        const outputName = stat.isDirectory() ? pathname + "/" : pathname;
         this.untrackedFiles.add(outputName);
       }
     }
