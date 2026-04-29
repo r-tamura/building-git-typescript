@@ -65,6 +65,13 @@ export class Protocol {
 
   async recvPacket(): Promise<string | null> {
     const rawHead = await readChunk(this.input, HEAD_SIZE);
+    // ヘッダ未満で読み終わった = stream が end した = もう packet は来ない
+    // (子プロセスが exit して stdout が close した場合等)
+    // flush packet と同じく null を返して呼び出し側の終端処理に委ねる
+    if (rawHead.length < HEAD_SIZE) {
+      return null;
+    }
+
     const head = rawHead.toString("binary");
     if (!/[0-9a-f]{4}/.test(head)) {
       log(this.#command, "recv", "head", head);
