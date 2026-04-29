@@ -79,7 +79,9 @@ describe("push", () => {
 
   function kitPath() {
     // shlex.split が backslash を escape として食うため、Windows でも POSIX 形式で保持
-    return path.join(__dirname, "../../bin/kit").replaceAll(path.sep, "/");
+    const p = path.join(__dirname, "../../bin/kit").replaceAll(path.sep, "/");
+    // Windows は shebang script を直接 spawn できないので `node bin/kit` で起動
+    return process.platform === "win32" ? `node ${p}` : p;
   }
 
   describe("with a single branch in the local repository", () => {
