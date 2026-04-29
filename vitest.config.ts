@@ -24,7 +24,6 @@ export default defineConfig({
           name: "integ",
           include: ["integ/**/*.test.ts"],
           testTimeout: 30_000,
-          retry: 2,
           // 統合テストはサブプロセス起動とファイルシステム共有があるため
           // worker thread でなく forks (プロセス分離) で安定させる
           pool: "forks",
