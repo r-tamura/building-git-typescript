@@ -196,36 +196,38 @@ export async function readChunk(
    * https://nodejs.org/api/stream.html#stream_readable_readableended
    */
   const waitReadable = async (
-    stream: NodeJS.ReadableStream,
+    streamLike: NodeJS.ReadableStream,
   ): Promise<boolean> => {
-    // TypeScriptのNodeJS型定義にreadableEndedが定義されていない
-    if ((stream as any).readableEnded) {
+    // 引数の型は最小 interface だが、実際に渡るインスタンスは
+    // Readable (child_process の stdout 等) なので readableEnded が利用可能。
+    const stream = streamLike as Readable;
+    if (stream.readableEnded) {
       return false;
     }
 
-    return new Promise<boolean>((resolve, reject) => {
-      const removeListeners = () => {
-        stream.removeListener("readable", readableListener);
-        stream.removeListener("end", endListener);
-        stream.removeListener("error", errorListener);
-      };
-      const readableListener = () => {
-        removeListeners();
-        resolve(true);
-      };
-      const endListener = () => {
-        removeListeners();
-        resolve(false);
-      };
-      const errorListener = (err: Error) => {
-        removeListeners();
-        reject(err);
-      };
-      stream
-        .once("readable", readableListener)
-        .once("end", endListener)
-        .once("error", errorListener);
-    });
+    const { promise, resolve, reject } = Promise.withResolvers<boolean>();
+    const removeListeners = () => {
+      stream.removeListener("readable", readableListener);
+      stream.removeListener("end", endListener);
+      stream.removeListener("error", errorListener);
+    };
+    const readableListener = () => {
+      removeListeners();
+      resolve(true);
+    };
+    const endListener = () => {
+      removeListeners();
+      resolve(false);
+    };
+    const errorListener = (err: Error) => {
+      removeListeners();
+      reject(err);
+    };
+    stream
+      .once("readable", readableListener)
+      .once("end", endListener)
+      .once("error", errorListener);
+    return promise;
   };
 
   const read = (stream: NodeJS.ReadableStream, size: number): Buffer | null =>
