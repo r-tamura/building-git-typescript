@@ -184,29 +184,47 @@ export async function readChunk(
   size: number,
   { timeout = 3000, block = true }: ReadChunkOptions = {},
 ): Promise<Buffer> {
-  const readable = async (stream: NodeJS.ReadableStream) => {
+  /**
+   * stream の "readable" を待つ。
+   * 戻り値: true = 読める / false = 終端 (もう来ない)
+   *
+   * stream がすでに end している場合は false を返す。errorは reject。
+   * subprocess の stdout のような外部 stream は、相手が exit すると
+   * end イベントを発し readableEnded が true になるので、それを正しく
+   * 終端として扱う必要がある。
+   *
+   * https://nodejs.org/api/stream.html#stream_readable_readableended
+   */
+  const waitReadable = async (
+    stream: NodeJS.ReadableStream,
+  ): Promise<boolean> => {
     // TypeScriptのNodeJS型定義にreadableEndedが定義されていない
-    // https://nodejs.org/api/stream.html#stream_readable_readableended
     if ((stream as any).readableEnded) {
-      throw new Error("stream has emmited 'error' or 'end' already");
+      return false;
     }
 
-    return new Promise((resolve, reject) => {
+    return new Promise<boolean>((resolve, reject) => {
       const removeListeners = () => {
         stream.removeListener("readable", readableListener);
+        stream.removeListener("end", endListener);
         stream.removeListener("error", errorListener);
       };
-
       const readableListener = () => {
         removeListeners();
         resolve(true);
       };
-
+      const endListener = () => {
+        removeListeners();
+        resolve(false);
+      };
       const errorListener = (err: Error) => {
         removeListeners();
         reject(err);
       };
-      stream.once("readable", readableListener).once("error", errorListener);
+      stream
+        .once("readable", readableListener)
+        .once("end", endListener)
+        .once("error", errorListener);
     });
   };
 
@@ -235,12 +253,20 @@ export async function readChunk(
       );
     }
 
-    await readable(stream);
+    const hasMore = await waitReadable(stream);
     raw = read(stream, size);
 
-    if (raw === null && block === false) {
-      raw = (stream.read() as Buffer | null) ?? Buffer.alloc(0);
-      break;
+    if (raw === null) {
+      if (!hasMore) {
+        // 終端: 残バッファがあれば取り出す。なければ空 Buffer を返して呼び出し側の
+        // length チェックで EOF を判断させる
+        raw = (stream.read() as Buffer | null) ?? Buffer.alloc(0);
+        break;
+      }
+      if (block === false) {
+        raw = (stream.read() as Buffer | null) ?? Buffer.alloc(0);
+        break;
+      }
     }
   }
   return raw;
