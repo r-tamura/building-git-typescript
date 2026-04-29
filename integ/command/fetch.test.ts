@@ -11,7 +11,9 @@ import { RemoteRepo } from "./remote_repo";
 
 const t = T.create("fetch");
 
-describe("fetch", () => {
+// Windows では bin/kit を子プロセスとして起動するパスに複数の問題が残っているため
+// describe 全体をスキップする(詳細は push.test.ts のコメント参照)。
+T.describeOnlyUnix("fetch", () => {
   let remote: RemoteRepo;
 
   beforeEach(t.beforeHook);
