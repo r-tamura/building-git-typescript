@@ -1,4 +1,5 @@
 import * as T from "./helper";
+import { describeOnlyUnix } from "./helper";
 import assert from "node:assert";
 import { Pathname } from "../../src/types";
 import { stripIndent } from "../../src/util";
@@ -390,7 +391,7 @@ describe("merge", () => {
     });
   });
 
-  describe("conflicted merge: add-add mode conflict", () => {
+  describeOnlyUnix("conflicted merge: add-add mode conflict", () => {
     beforeEach(async () => {
       // prettier-ignore
       await t.merge3(

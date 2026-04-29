@@ -1,4 +1,5 @@
 import * as T from "./helper";
+import { itOnlyUnix } from "./helper";
 import { stripIndent } from "../../src/util";
 import { Repository } from "../../src/repository";
 
@@ -38,21 +39,26 @@ describe("diff", () => {
       `);
     });
 
-    it("ファイルモードに変換があるとき、モードのdiffを表示する", async () => {
-      await t.makeExecutable("file.txt");
+    itOnlyUnix(
+      "ファイルモードに変換があるとき、モードのdiffを表示する",
+      async () => {
+        await t.makeExecutable("file.txt");
 
-      await assertDiff(stripIndent`
+        await assertDiff(stripIndent`
         diff --git a/file.txt b/file.txt
         old mode 100644
         new mode 100755
       `);
-    });
+      },
+    );
 
-    it("コンテンツ・ファイルモードに変換があるとき、コンテンツ・モードのdiffを表示する", async () => {
-      await t.writeFile("file.txt", "changed");
-      await t.makeExecutable("file.txt");
+    itOnlyUnix(
+      "コンテンツ・ファイルモードに変換があるとき、コンテンツ・モードのdiffを表示する",
+      async () => {
+        await t.writeFile("file.txt", "changed");
+        await t.makeExecutable("file.txt");
 
-      await assertDiff(stripIndent`
+        await assertDiff(stripIndent`
         diff --git a/file.txt b/file.txt
         old mode 100644
         new mode 100755
@@ -63,7 +69,8 @@ describe("diff", () => {
         -contents
         +changed
       `);
-    });
+      },
+    );
 
     it("ファイルが削除されたとき、削除のdiffを表示する", async () => {
       await t.rm("file.txt");

@@ -1,6 +1,7 @@
 import assert from "node:assert";
 import { stripIndent } from "../../src/util";
 import * as T from "./helper";
+import { itOnlyUnix } from "./helper";
 const t = T.create();
 
 describe("checkout", () => {
@@ -87,7 +88,7 @@ describe("checkout", () => {
       assertStaleFile("1.txt");
     });
 
-    it("fails to update a modified-mode file", async () => {
+    itOnlyUnix("fails to update a modified-mode file", async () => {
       await t.writeFile("1.txt", "changed");
       await commitAll();
 
@@ -146,7 +147,7 @@ describe("checkout", () => {
       await assertStatus("");
     });
 
-    it("failes to update a staged changed-mode file", async () => {
+    itOnlyUnix("failes to update a staged changed-mode file", async () => {
       await t.writeFile("1.txt", "changed");
       await commitAll();
 
@@ -293,7 +294,7 @@ describe("checkout", () => {
       assertStaleFile("outer/94.txt");
     });
 
-    it("fails to remove a changed-mode file", async () => {
+    itOnlyUnix("fails to remove a changed-mode file", async () => {
       await t.writeFile("outer/94.txt", "94");
       await commitAll();
 
@@ -339,7 +340,7 @@ describe("checkout", () => {
       assertStaleFile("outer/94.txt");
     });
 
-    it("fails to remove a staged changed-mode file", async () => {
+    itOnlyUnix("fails to remove a staged changed-mode file", async () => {
       await t.writeFile("outer/94.txt", "94");
       await commitAll();
 

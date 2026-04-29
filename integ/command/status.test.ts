@@ -1,4 +1,5 @@
 import * as T from "./helper";
+import { itOnlyUnix } from "./helper";
 import { stripIndent } from "../../src/util";
 
 const t = T.create();
@@ -133,7 +134,7 @@ describe("status", () => {
       `);
     });
 
-    it("reports files with change modes", async () => {
+    itOnlyUnix("reports files with change modes", async () => {
       // Arrange
       await t.makeExecutable("a/2.txt");
 
@@ -208,7 +209,7 @@ describe("status", () => {
       await assertStatusPorcelain("A  d/e/5.txt");
     });
 
-    it("reports modified modes", async () => {
+    itOnlyUnix("reports modified modes", async () => {
       await t.makeExecutable("1.txt");
       await t.kitCmd("add", ".");
 

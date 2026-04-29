@@ -19,6 +19,18 @@ export function create(name?: string) {
   return new TestUtil(name);
 }
 
+/**
+ * Windows では fs.chmod / fs.stat が POSIX の executable bit を扱えないため、
+ * ファイルモード(100644 / 100755)や読み取り権限など POSIX 固有の挙動に
+ * 依存するテストは実行しても確実に失敗する。
+ * 本来は core.filemode = false 相当の動作を実装すべきだが、現状は skip する。
+ *
+ * 関連: issue #20 (Windows file mode 未検出)
+ */
+const isWindows = process.platform === "win32";
+export const itOnlyUnix = isWindows ? it.skip : it;
+export const describeOnlyUnix = isWindows ? describe.skip : describe;
+
 const fs = promises;
 export type Contents = [string, string][];
 interface MockTTYOptions {

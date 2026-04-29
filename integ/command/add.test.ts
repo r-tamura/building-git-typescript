@@ -1,9 +1,8 @@
 import { stripIndent } from "../../src/util";
 import * as T from "./helper";
+import { itOnlyUnix } from "./helper";
 
 const t = T.create();
-
-const itOnlyUnix = process.platform === "win32" ? it.skip : it;
 
 describe("add", () => {
   async function assertIndex(expected: [number, string][]) {
