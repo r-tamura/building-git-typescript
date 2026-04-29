@@ -1,12 +1,13 @@
 import * as crypto from "crypto";
 import * as fs from "fs";
+import { Readable } from "node:stream";
 import { readChunk } from "../services";
 import { Pathname } from "../types";
 import * as fsUtil from "../util/fs";
 import * as pack from "./pack";
 import { InvalidPack } from "./pack";
 export class Stream implements fsUtil.Seekable {
-  #input: NodeJS.ReadableStream;
+  #input: Readable;
   digest = crypto.createHash("sha1");
   offset = 0;
   #buffer = Buffer.alloc(0);
@@ -16,7 +17,7 @@ export class Stream implements fsUtil.Seekable {
     return new Stream(fs.createReadStream(pathname));
   }
 
-  constructor(input: NodeJS.ReadableStream, prefix = "") {
+  constructor(input: Readable, prefix = "") {
     this.#input = input;
     this.#buffer = Buffer.concat([this.#buffer, Buffer.from(prefix, "utf8")]);
   }

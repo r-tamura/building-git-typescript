@@ -180,7 +180,7 @@ interface ReadChunkOptions {
  * @param timeout タイムアウト(ms)
  */
 export async function readChunk(
-  stream: NodeJS.ReadableStream,
+  stream: Readable,
   size: number,
   { timeout = 3000, block = true }: ReadChunkOptions = {},
 ): Promise<Buffer> {
@@ -195,12 +195,7 @@ export async function readChunk(
    *
    * https://nodejs.org/api/stream.html#stream_readable_readableended
    */
-  const waitReadable = async (
-    streamLike: NodeJS.ReadableStream,
-  ): Promise<boolean> => {
-    // 引数の型は最小 interface だが、実際に渡るインスタンスは
-    // Readable (child_process の stdout 等) なので readableEnded が利用可能。
-    const stream = streamLike as Readable;
+  const waitReadable = async (stream: Readable): Promise<boolean> => {
     if (stream.readableEnded) {
       return false;
     }
@@ -230,7 +225,7 @@ export async function readChunk(
     return promise;
   };
 
-  const read = (stream: NodeJS.ReadableStream, size: number): Buffer | null =>
+  const read = (stream: Readable, size: number): Buffer | null =>
     stream.read(size) as Buffer | null;
 
   let raw = read(stream, size);

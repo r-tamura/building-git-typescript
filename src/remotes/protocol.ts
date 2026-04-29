@@ -1,3 +1,4 @@
+import { Readable } from "node:stream";
 import { readChunk } from "../services/FileService";
 import * as array from "../util/collection";
 
@@ -38,7 +39,7 @@ export class Protocol {
   #capsSent = false;
   constructor(
     command: string,
-    public input: NodeJS.ReadableStream,
+    public input: Readable,
     public output: NodeJS.WritableStream,
     capabilities: string[] = [],
   ) {
