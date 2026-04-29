@@ -307,7 +307,8 @@ export class Entry {
       // `v & 0xffffffff` は JS の bitwise op で 32bit signed になるため、
       // Windows などで負値が writeUInt32BE のレンジ外として弾かれる。
       // `>>> 0` で unsigned 32bit に正規化する。
-      buffer.writeUInt32BE((v & 0xffffffff) >>> 0, i * Entry.META_SIZE);
+      const packed = name === "size" ? mungeStSize(v) : (v & 0xffffffff) >>> 0;
+      buffer.writeUInt32BE(packed, i * Entry.META_SIZE);
     }
 
     // OID
@@ -319,6 +320,35 @@ export class Entry {
     buffer.write(this.name, filenameOffset, filenameLength);
     return buffer;
   }
+}
+
+/**
+ * git の statinfo.c の同名関数の移植。
+ * size を index 用の 32bit unsigned へ詰める。
+ *
+ * 4 GiB の正確な倍数のファイルだと下位 32bit が 0 になり、index 上で
+ * size=0 (= 空ファイル相当) と誤認されてしまうため、その場合だけ 0x80000000
+ * を返してゼロを避ける。
+ *
+ * https://github.com/git/git/blob/master/statinfo.c (`munge_st_size`)
+ *
+ *   static unsigned int munge_st_size(off_t st_size) {
+ *       unsigned int sd_size = st_size;
+ *
+ *       // If the file is an exact multiple of 4 GiB, modify the value so it
+ *       // doesn't get marked as racily clean (zero).
+ *       if (!sd_size && st_size)
+ *           return 0x80000000;
+ *       else
+ *           return sd_size;
+ *   }
+ */
+function mungeStSize(stSize: number): number {
+  const sdSize = (stSize & 0xffffffff) >>> 0;
+  if (sdSize === 0 && stSize > 0) {
+    return 0x80000000;
+  }
+  return sdSize;
 }
 
 function extractStage(flags: Flags) {
