@@ -64,7 +64,8 @@ export class Refspec {
       return name;
     }
 
-    const first = fsUtil.descend(name)[0];
+    // ref name は POSIX 形式("master", "origin/master" 等)
+    const first = fsUtil.descendUnix(name)[0];
     const dirs = [refs.REFS_DIR, refs.HEADS_DIR, refs.REMOTES_DIR];
     const prefix = dirs.find((dir) => path.basename(dir) === first);
 
