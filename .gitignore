@@ -13,3 +13,6 @@ puth-test
 
 # GitHub Copilot
 .github/copilot-instructions.md
+
+# Claude Code (個人ローカル設定 / スキル)
+.claude/
