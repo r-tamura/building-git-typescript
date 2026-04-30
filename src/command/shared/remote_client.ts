@@ -1,10 +1,10 @@
 import * as child_process from "child_process";
-import * as shlex from "shlex";
 import { URL } from "url";
 import * as remotes from "../../remotes";
 import { OID } from "../../types";
 import * as array from "../../util/array";
 import { BaseError } from "../../util/error";
+import { quote, split } from "../../util/shlex";
 import { GitCommand } from "../base";
 import { FastForwardError } from "./fast_forward";
 import { checkConnected, Connectable } from "./remote_common";
@@ -40,7 +40,7 @@ export function startAgent(
 
 export function buildAgentCommand(program: string, url: string): string[] {
   const uri = new URL(url);
-  const argv = [...shlex.split(program), uri.pathname];
+  const argv = [...split(program), uri.pathname];
 
   switch (uri.protocol) {
     case "file:":
@@ -59,7 +59,7 @@ function sshCommand(uri: URL, argv: string[]): string[] {
   if (uri.username) {
     ssh.push("-l", uri.username);
   }
-  return [...ssh, argv.map((part) => shlex.quote(part)).join(" ")];
+  return [...ssh, argv.map((part) => quote(part)).join(" ")];
 }
 
 export async function recvReferences(cmd: RemoteClient) {

@@ -2,9 +2,9 @@ import { spawnSync, SpawnSyncReturns } from "child_process";
 import * as fsCallback from "fs";
 import { O_CREAT, O_TRUNC, O_WRONLY } from "constants";
 import { promises } from "fs";
-import * as shlex from "shlex";
 import { FileService, Process } from "./services";
 import { Nullable, Pathname } from "./types";
+import { split as shlexSplit } from "./util/shlex";
 import { splitByLine, strip } from "./util/text";
 import { Error } from "./repository/pending_commit";
 const fs = fsCallback.promises;
@@ -52,7 +52,7 @@ export class Editor {
 
   async editFile() {
     await this.file().then((file) => file.close());
-    const [editorCommand, ...commandArgs] = shlex.split(this.#command);
+    const [editorCommand, ...commandArgs] = shlexSplit(this.#command);
     commandArgs.push(this.#pathname);
 
     // Note: stdioを親プロセスと共有させる必要がある

@@ -6,7 +6,7 @@ export default defineConfig({
     server: {
       deps: {
         // CJS パッケージを vite で変換させ、namespace import を callable として扱えるようにする
-        inline: ["shlex", "crc-32"],
+        inline: ["crc-32"],
       },
     },
     projects: [

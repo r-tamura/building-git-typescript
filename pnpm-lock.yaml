@@ -11,12 +11,6 @@ importers:
       crc-32:
         specifier: ^1.2.0
         version: 1.2.2
-      mock-fs:
-        specifier: ^5.5.0
-        version: 5.5.0
-      shlex:
-        specifier: ^2.0.2
-        version: 2.1.2
     devDependencies:
       '@types/mock-fs':
         specifier: ^4.13.4
@@ -27,6 +21,9 @@ importers:
       husky:
         specifier: ^4.3.8
         version: 4.3.8
+      mock-fs:
+        specifier: ^5.5.0
+        version: 5.5.0
       oxfmt:
         specifier: ^0.47.0
         version: 0.47.0
@@ -748,9 +745,6 @@ packages:
     resolution: {integrity: sha512-6IiqeZNgq01qGf0TId0t3NvKzSvUsjcpdEO3AQNeIjR6A2+ckTnQlDpl4qu1bjRv0RzN3FP9hzFmws3lKqRWkA==}
     engines: {node: '>=8'}
 
-  shlex@2.1.2:
-    resolution: {integrity: sha512-Nz6gtibMVgYeMEhUjp2KuwAgqaJA1K155dU/HuDaEJUGgnmYfVtVZah+uerVWdH8UGnyahhDCgABbYTbs254+w==}
-
   siginfo@2.0.0:
     resolution: {integrity: sha512-ybx0WO1/8bSBLEWXZvEd7gMW3Sn3JFlW3TvX1nREbDLRNQNaeNN8WK0meBwPdAaOI7TtRRRJn/Es1zhrrCHu7g==}
 
@@ -1447,8 +1441,6 @@ snapshots:
   semver-compare@1.0.0: {}
 
   semver-regex@3.1.4: {}
-
-  shlex@2.1.2: {}
 
   siginfo@2.0.0: {}
 
