@@ -15,7 +15,7 @@ import {
   printDiff,
   Target,
 } from "./shared/print_diff";
-import arg from "arg";
+import arg, { type Spec } from "../util/arg";
 
 const FORMAT = ["medium", "oneline"] as const;
 const DECORATE = ["auto", "short", "full", "no"] as const;
@@ -58,7 +58,7 @@ export class Log extends BaseCommand<Options> {
     }
   }
 
-  protected defineSpec(): arg.Spec {
+  protected defineSpec(): Spec {
     const printDiffOptions = definePrintDiffOptions(this);
     return {
       "--all": arg.flag(() => {

@@ -1,4 +1,4 @@
-import arg from "arg";
+import arg from "../util/arg";
 import { Style } from "../color";
 import * as Repository from "../repository";
 import { ConflictStatus } from "../repository";

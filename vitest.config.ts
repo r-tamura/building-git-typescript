@@ -5,9 +5,8 @@ export default defineConfig({
     globals: true,
     server: {
       deps: {
-        // import * as arg from "arg" 等の CJS パッケージを vite で変換させ、
-        // namespace import を callable として扱えるようにする
-        inline: ["arg", "shlex", "crc-32"],
+        // CJS パッケージを vite で変換させ、namespace import を callable として扱えるようにする
+        inline: ["shlex", "crc-32"],
       },
     },
     projects: [

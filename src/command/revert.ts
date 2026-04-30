@@ -1,4 +1,4 @@
-import arg from "arg";
+import { type Spec } from "../util/arg";
 import { Commit } from "../database";
 import { CherryPick } from "../merge";
 import { MergeType, PendingCommit } from "../repository/pending_commit";
@@ -33,7 +33,7 @@ export class Revert extends BaseCommand<Sequencing.Options> {
     }
   }
 
-  defineSpec(): arg.Spec {
+  defineSpec(): Spec {
     return Sequencing.defineSpec(this);
   }
 

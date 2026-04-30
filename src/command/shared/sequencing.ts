@@ -1,4 +1,4 @@
-import arg from "arg";
+import arg, { type Spec } from "../../util/arg";
 import { assertsNumber } from "../../config";
 import { Commit } from "../../database";
 import { Resolvable, Resolve } from "../../merge";
@@ -47,7 +47,7 @@ export async function run(cmd: SequenceCmmand & WriteCommit.CommitPendable) {
   await resumeSequencer(cmd);
 }
 
-export function defineSpec(cmd: SequenceCmmand): arg.Spec {
+export function defineSpec(cmd: SequenceCmmand): Spec {
   return {
     "--continue": arg.flag(() => {
       cmd.options["mode"] = "continue";

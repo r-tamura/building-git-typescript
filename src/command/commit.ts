@@ -1,4 +1,4 @@
-import arg from "arg";
+import arg, { type Spec } from "../util/arg";
 import * as Database from "../database";
 import { Error, PendingCommit } from "../repository/pending_commit";
 import { Revision } from "../revision";
@@ -54,7 +54,7 @@ export class Commit extends BaseCommand<Options> {
     await printCommit(commit, this);
   }
 
-  defineSpec(): arg.Spec {
+  defineSpec(): Spec {
     const spec = {
       "--reuse-message": (commit: string) => {
         this.options["reuse"] = commit;

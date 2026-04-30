@@ -1,4 +1,4 @@
-import arg from "arg";
+import arg, { type Spec } from "../util/arg";
 import * as remotes from "../remotes";
 import { Refspec } from "../remotes";
 import { Revision } from "../revision";
@@ -71,7 +71,7 @@ export class Push extends BaseCommand<Options> {
     this.exit(array.isempty(this.#errors) ? 0 : 1);
   }
 
-  defineSpec(): arg.Spec {
+  defineSpec(): Spec {
     return {
       "--force": arg.flag(() => {
         this.options["force"] = true;

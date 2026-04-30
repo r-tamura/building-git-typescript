@@ -10,7 +10,7 @@ import {
 import { OID, Pathname } from "../../types";
 import { prop } from "../../util/object";
 import { BaseCommand } from "../base";
-import arg from "arg";
+import arg, { type Handler } from "../../util/arg";
 
 export const NULL_OID = "0".repeat(40);
 export const NULL_PATH = "/dev/null";
@@ -20,10 +20,10 @@ interface PrintDiffOption {
 }
 
 interface DefinedPrintDiffOptionReponse {
-  "--patch": arg.Handler;
+  "--patch": Handler;
   "-p": "--patch";
   "-u": "--patch";
-  "--no-patch": arg.Handler;
+  "--no-patch": Handler;
   "-s": "--no-patch";
 }
 
