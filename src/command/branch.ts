@@ -1,4 +1,4 @@
-import arg from "arg";
+import arg, { type Spec } from "../util/arg";
 import * as refs from "../refs";
 import { InvalidBranch, SymRef } from "../refs";
 import * as remotes from "../remotes";
@@ -48,7 +48,7 @@ export class Branch extends BaseCommand<Options> {
     };
   }
 
-  defineSpec(): arg.Spec {
+  defineSpec(): Spec {
     return {
       "--verbose": arg.flag(() => {
         this.options["verbose"] += 1;

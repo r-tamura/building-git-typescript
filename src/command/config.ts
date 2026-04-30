@@ -1,4 +1,4 @@
-import arg from "arg";
+import arg from "../util/arg";
 import * as ConfigLib from "../config";
 import { SectionName } from "../config";
 import { Pathname } from "../types";

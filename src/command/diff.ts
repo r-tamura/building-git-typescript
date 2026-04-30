@@ -1,4 +1,4 @@
-import arg from "arg";
+import arg, { type Spec } from "../util/arg";
 import * as Database from "../database";
 import * as Index from "../gindex";
 import { Stage, STAGES } from "../gindex";
@@ -42,7 +42,7 @@ export class Diff extends BaseCommand<Options> {
     };
   }
 
-  defineSpec(): arg.Spec {
+  defineSpec(): Spec {
     const printDiffOptions = definePrintDiffOptions(this);
     return {
       "--cached": arg.flag(() => {

@@ -1,4 +1,4 @@
-import arg from "arg";
+import { type Spec } from "../util/arg";
 import { BaseCommand } from ".";
 import { Commit } from "../database";
 import * as Merge from "../merge";
@@ -19,7 +19,7 @@ export class CherryPick extends BaseCommand<Sequencing.Options> {
     await Sequencing.run(this);
   }
 
-  defineSpec(): arg.Spec {
+  defineSpec(): Spec {
     return Sequencing.defineSpec(this);
   }
 

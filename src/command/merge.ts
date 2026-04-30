@@ -1,4 +1,4 @@
-import arg from "arg";
+import arg, { type Spec } from "../util/arg";
 import { Inputs, Resolve } from "../merge";
 import {
   Error as NotInProgressError,
@@ -60,7 +60,7 @@ export class Merge extends BaseCommand<Options> {
     await this.commitMerge();
   }
 
-  protected defineSpec(): arg.Spec {
+  protected defineSpec(): Spec {
     return {
       "--continue": arg.flag(() => {
         this.options["mode"] = "continue";

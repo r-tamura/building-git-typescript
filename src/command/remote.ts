@@ -1,4 +1,4 @@
-import arg from "arg";
+import arg from "../util/arg";
 import { InvalidRemote, RemoteName } from "../remotes";
 import { asserts } from "../util";
 import { BaseCommand } from "./base";

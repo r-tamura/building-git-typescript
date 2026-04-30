@@ -1,4 +1,4 @@
-import arg from "arg";
+import arg, { type Handler, type Spec } from "../../util/arg";
 import * as path from "path";
 import { Author, Commit, Tree } from "../../database";
 import {
@@ -40,10 +40,10 @@ export interface CommitOptions {
   edit?: "auto" | boolean;
 }
 
-export interface CommitArgSpec extends arg.Spec {
-  "--message": arg.Handler;
+export interface CommitArgSpec extends Spec {
+  "--message": Handler;
   "-m": "--message";
-  "--file": arg.Handler;
+  "--file": Handler;
   "-F": "--file";
 }
 

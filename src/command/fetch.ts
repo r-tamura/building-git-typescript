@@ -1,4 +1,4 @@
-import arg from "arg";
+import arg, { type Spec } from "../util/arg";
 import * as pack from "../pack";
 import * as remotes from "../remotes";
 import { SourceRef } from "../remotes";
@@ -80,7 +80,7 @@ export class Fetch
     this.exit(array.isempty(Object.keys(this.#errors)) ? 0 : 1);
   }
 
-  defineSpec(): arg.Spec {
+  defineSpec(): Spec {
     return {
       "--force": arg.flag(() => {
         this.options["force"] = true;
