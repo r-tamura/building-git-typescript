@@ -30,7 +30,7 @@ describe("shlex.split", () => {
     expect(split(String.raw`'a\b'`)).toEqual([String.raw`a\b`]);
   });
 
-  it("double quote 内は \\\\ と \\\" のみ unescape", () => {
+  it('double quote 内は \\\\ と \\" のみ unescape', () => {
     expect(split(String.raw`"a\"b\\c"`)).toEqual([String.raw`a"b\c`]);
   });
 
