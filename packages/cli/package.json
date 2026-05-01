@@ -7,8 +7,8 @@
     "kit": "./bin/kit"
   },
   "scripts": {
-    "build": "tsc -p tsconfig.prod.json",
-    "build:dev": "tsc -p tsconfig.json --noEmit",
+    "build": "tsc -b tsconfig.prod.json",
+    "build:dev": "tsc -b tsconfig.json",
     "test:unit": "vitest run --project unit",
     "pretest:integ": "pnpm build",
     "test:integ": "vitest run --project integ"
