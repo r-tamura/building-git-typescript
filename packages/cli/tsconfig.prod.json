@@ -1,0 +1,10 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "declaration": true,
+    "noEmit": false,
+    "rewriteRelativeImportExtensions": true
+  },
+  "exclude": ["src/**/*.test.ts", "src/__test__/**"],
+  "references": [{ "path": "../core/tsconfig.prod.json" }]
+}

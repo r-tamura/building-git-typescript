@@ -1,0 +1,19 @@
+{
+  "name": "@kit/cli",
+  "version": "0.0.0",
+  "private": true,
+  "main": "./dist/main.js",
+  "bin": {
+    "kit": "./bin/kit"
+  },
+  "scripts": {
+    "build": "tsc -b tsconfig.prod.json",
+    "build:dev": "tsc -b tsconfig.json",
+    "test:unit": "vitest run --project unit",
+    "pretest:integ": "pnpm build",
+    "test:integ": "vitest run --project integ"
+  },
+  "dependencies": {
+    "@kit/core": "workspace:*"
+  }
+}
