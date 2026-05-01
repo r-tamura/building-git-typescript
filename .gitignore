@@ -8,6 +8,9 @@ workkit
 dist
 puth-test
 
+# TypeScript project references の incremental build キャッシュ
+*.tsbuildinfo
+
 # direnv
 .envrc
 

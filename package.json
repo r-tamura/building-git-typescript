@@ -9,7 +9,7 @@
   },
   "license": "ISC",
   "scripts": {
-    "clean": "rm -rf packages/*/dist",
+    "clean": "rm -rf packages/*/dist packages/*/tsconfig*.tsbuildinfo",
     "build:release": "pnpm -r run build",
     "build:dev": "tsc -b",
     "lint": "oxlint",
