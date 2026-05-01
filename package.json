@@ -1,9 +1,7 @@
 {
   "name": "@rtamura30/kit",
   "version": "0.1.0",
-  "main": "./dist/main.js",
-  "types": "./dist/main.d.ts",
-  "bin": "./bin/kit",
+  "private": true,
   "packageManager": "pnpm@10.33.0",
   "repository": {
     "type": "git",
@@ -11,30 +9,23 @@
   },
   "license": "ISC",
   "scripts": {
-    "clean": "rm -rf dist/*",
-    "build:release": "tsc --project tsconfig.prod.json",
-    "build": "tsc",
-    "watch": "tsc -w",
+    "clean": "rm -rf packages/*/dist",
+    "build:release": "pnpm -r run build",
+    "build:dev": "tsc -b",
+    "lint": "oxlint",
     "format": "oxfmt .",
     "format:check": "oxfmt --check .",
-    "lint": "oxlint",
-    "test:all": "vitest run",
-    "test:unit": "vitest run --project unit",
-    "pretest:integ": "pnpm build:release",
-    "test:integ": "vitest run --project integ",
+    "test:unit": "pnpm -r run test:unit",
+    "test:integ": "pnpm --filter @kit/cli run test:integ",
+    "test:all": "pnpm test:unit && pnpm test:integ",
     "pre-commit": "pnpm format && pnpm lint"
   },
   "devDependencies": {
-    "@types/mock-fs": "^4.13.4",
     "@types/node": "^22.15.17",
     "husky": "^4.3.8",
-    "mock-fs": "^5.5.0",
     "oxfmt": "^0.47.0",
     "oxlint": "^1.62.0",
     "typescript": "^5.8.3",
     "vitest": "^4.1.5"
-  },
-  "dependencies": {
-    "crc-32": "^1.2.0"
   }
 }

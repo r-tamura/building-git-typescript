@@ -1,19 +1,4 @@
 {
-  "compilerOptions": {
-    "target": "ES2024",
-    "module": "CommonJS",
-    "noEmit": true,
-    "strict": true,
-    "allowImportingTsExtensions": true,
-    "lib": ["ES2024"],
-    "types": ["node", "vitest/globals"],
-    "esModuleInterop": true,
-    "skipLibCheck": true
-  },
-  "include": [
-    "src/**/*.ts",
-    "integ/**/*.ts",
-    "scripts/debug.ts",
-    "src/tempfile.test.mts"
-  ]
+  "files": [],
+  "references": [{ "path": "./packages/core" }, { "path": "./packages/cli" }]
 }

@@ -1,5 +1,67 @@
 {
   "name": "@kit/core",
   "version": "0.0.0",
-  "private": true
+  "private": true,
+  "scripts": {
+    "build": "tsc -p tsconfig.prod.json",
+    "build:dev": "tsc -p tsconfig.json --noEmit",
+    "test:unit": "vitest run --project unit"
+  },
+  "exports": {
+    "./database": {
+      "types": "./dist/database/index.d.ts",
+      "default": "./dist/database/index.js"
+    },
+    "./repository": {
+      "types": "./dist/repository/index.d.ts",
+      "default": "./dist/repository/index.js"
+    },
+    "./gindex": {
+      "types": "./dist/gindex/index.d.ts",
+      "default": "./dist/gindex/index.js"
+    },
+    "./pack": {
+      "types": "./dist/pack/index.d.ts",
+      "default": "./dist/pack/index.js"
+    },
+    "./remotes": {
+      "types": "./dist/remotes/index.d.ts",
+      "default": "./dist/remotes/index.js"
+    },
+    "./merge": {
+      "types": "./dist/merge/index.d.ts",
+      "default": "./dist/merge/index.js"
+    },
+    "./diff": {
+      "types": "./dist/diff/index.d.ts",
+      "default": "./dist/diff/index.js"
+    },
+    "./config": {
+      "types": "./dist/config/index.d.ts",
+      "default": "./dist/config/index.js"
+    },
+    "./services": {
+      "types": "./dist/services/index.d.ts",
+      "default": "./dist/services/index.js"
+    },
+    "./util": {
+      "types": "./dist/util/index.d.ts",
+      "default": "./dist/util/index.js"
+    },
+    "./__test__/*": {
+      "types": "./dist/__test__/*.d.ts",
+      "default": "./dist/__test__/*.js"
+    },
+    "./*": {
+      "types": "./dist/*.d.ts",
+      "default": "./dist/*.js"
+    }
+  },
+  "dependencies": {
+    "crc-32": "^1.2.0"
+  },
+  "devDependencies": {
+    "@types/mock-fs": "^4.13.4",
+    "mock-fs": "^5.5.0"
+  }
 }
