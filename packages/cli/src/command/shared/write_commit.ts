@@ -1,5 +1,5 @@
 import arg, { type Handler, type Spec } from "@kit/core/util/arg";
-import * as path from "path";
+import * as path from "node:path";
 import { Author, Commit, Tree } from "@kit/core/database";
 import {
   Error,

@@ -1,3 +1,4 @@
+import { describe, it } from "vitest";
 import assert from "node:assert";
 import { VarIntLE } from "./numbers";
 import { Xdelta } from "./xdelta";

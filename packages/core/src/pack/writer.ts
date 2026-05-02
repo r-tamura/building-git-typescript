@@ -1,5 +1,5 @@
-import * as crypto from "crypto";
-import { constants } from "zlib";
+import * as crypto from "node:crypto";
+import { constants } from "node:zlib";
 import * as database from "../database";
 import { Progress } from "../progress";
 import { RevList } from "../rev_list";

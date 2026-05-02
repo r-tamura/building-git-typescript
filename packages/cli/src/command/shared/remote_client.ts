@@ -1,5 +1,5 @@
-import * as child_process from "child_process";
-import { URL } from "url";
+import * as child_process from "node:child_process";
+import { URL } from "node:url";
 import * as remotes from "@kit/core/remotes";
 import { OID } from "@kit/core/types";
 import * as array from "@kit/core/util/array";

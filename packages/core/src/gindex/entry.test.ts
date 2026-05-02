@@ -1,4 +1,5 @@
-import * as path from "path";
+import { describe, it } from "vitest";
+import * as path from "node:path";
 import assert from "node:assert";
 import { makeDummyFileStats } from "../__test__";
 import { Entry } from "./entry";

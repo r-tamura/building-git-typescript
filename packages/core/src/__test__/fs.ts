@@ -1,3 +1,4 @@
+import { vi } from "vitest";
 import type { Mock } from "vitest";
 import { Stats } from "node:fs";
 import { FileHandle } from "node:fs/promises";

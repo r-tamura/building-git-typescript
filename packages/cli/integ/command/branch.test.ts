@@ -1,5 +1,6 @@
-import * as fsCb from "fs";
-import * as path from "path";
+import { describe, it, beforeEach, afterEach } from "vitest";
+import * as fsCb from "node:fs";
+import * as path from "node:path";
 import assert from "node:assert";
 import { asserts, stripIndent } from "@kit/core/util";
 import * as T from "./helper";

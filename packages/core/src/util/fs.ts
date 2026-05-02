@@ -1,9 +1,9 @@
 /**
  * File system / path 周りのユーティリティ
  */
-import { constants, Stats } from "fs";
-import { FileHandle, open } from "fs/promises";
-import * as path from "path";
+import { constants, Stats } from "node:fs";
+import { FileHandle, open } from "node:fs/promises";
+import * as path from "node:path";
 import { Pathname } from "../types";
 import { asserts } from "./assert";
 

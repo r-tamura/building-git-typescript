@@ -1,4 +1,4 @@
-import * as path from "path";
+import * as path from "node:path";
 import * as database from "../database";
 import { OID, Pathname } from "../types";
 import * as binary from "../util/binary";

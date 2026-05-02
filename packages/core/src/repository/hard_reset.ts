@@ -1,4 +1,4 @@
-import { Stats } from "fs";
+import { Stats } from "node:fs";
 import { Blob } from "../database";
 import { OID, Pathname } from "../types";
 import { posixPath } from "../util/fs";

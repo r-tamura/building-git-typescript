@@ -1,4 +1,4 @@
-import path = require("path");
+import path = require("node:path");
 import * as Database from "./database";
 import { PathFilter } from "./path_filter";
 import { SymRef } from "./refs";

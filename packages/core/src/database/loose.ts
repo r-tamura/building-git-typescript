@@ -1,5 +1,5 @@
-import * as path from "path";
-import { constants } from "zlib";
+import * as path from "node:path";
+import { constants } from "node:zlib";
 import { Backend, Raw } from ".";
 import { defaultFs, defaultZlib, FileService, Zlib } from "../services";
 import { TempFile } from "../tempfile";

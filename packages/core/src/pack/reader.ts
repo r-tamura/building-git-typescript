@@ -1,5 +1,5 @@
-import { TextDecoder } from "util";
-import * as zlib from "zlib";
+import { TextDecoder } from "node:util";
+import * as zlib from "node:zlib";
 import { defaultZlib, Zlib } from "../services";
 import { asserts, includes, isNodeError } from "../util";
 import * as array from "../util/array";

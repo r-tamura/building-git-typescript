@@ -1,3 +1,4 @@
+import { describe, it, beforeEach, afterEach } from "vitest";
 import { stripIndent } from "@kit/core/util";
 import * as T from "./helper";
 

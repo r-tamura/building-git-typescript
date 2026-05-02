@@ -1,6 +1,6 @@
-import { O_CREAT, O_EXCL, O_WRONLY } from "constants";
-import { Stats } from "fs";
-import * as path from "path";
+import { O_CREAT, O_EXCL, O_WRONLY } from "node:constants";
+import { Stats } from "node:fs";
+import * as path from "node:path";
 import { ModeNumber } from "./entry";
 import { Changes, Migration } from "./repository";
 import { defaultFs, FileService, mkdirp, rmrf } from "./services";

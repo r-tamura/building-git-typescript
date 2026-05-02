@@ -1,3 +1,4 @@
+import { describe, it } from "vitest";
 import { Diff3 } from "./diff3";
 import assert from "node:assert";
 import { stripIndent } from "../util";

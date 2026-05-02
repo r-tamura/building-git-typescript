@@ -1,5 +1,6 @@
+import { describe, it, beforeAll, afterAll, vi } from "vitest";
 import type { MockInstance } from "vitest";
-import { constants } from "fs";
+import { constants } from "node:fs";
 import assert from "node:assert";
 import { makeDummyFileStats } from "../__test__";
 import { setOid } from "../__test__/util";

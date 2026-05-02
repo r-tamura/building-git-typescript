@@ -1,4 +1,4 @@
-import * as path from "path";
+import * as path from "node:path";
 import { defaultFs } from "../services";
 import { OID, Pathname } from "../types";
 import * as errorUtil from "../util";

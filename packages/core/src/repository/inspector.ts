@@ -1,4 +1,4 @@
-import { Stats } from "fs";
+import { Stats } from "node:fs";
 import { Repository } from "./repository";
 import { Pathname } from "../types";
 import * as Index from "../gindex";

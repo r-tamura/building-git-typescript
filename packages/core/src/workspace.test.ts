@@ -1,5 +1,6 @@
+import { describe, it, expect, beforeAll, vi } from "vitest";
 import type { Mock } from "vitest";
-import { Stats } from "fs";
+import { Stats } from "node:fs";
 import * as path from "node:path";
 import assert from "node:assert";
 import { assertAsyncError, ENOENT, mockFsError } from "./__test__";

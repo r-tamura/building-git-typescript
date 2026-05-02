@@ -1,3 +1,4 @@
+import { describe, it, vi } from "vitest";
 import assert from "node:assert";
 import { Author } from "./author";
 

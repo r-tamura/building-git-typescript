@@ -1,3 +1,4 @@
+import { describe, it } from "vitest";
 import { lines, TextDocument, Line, combinedHunk } from "./diff";
 import { Myers, Edit } from "./myers";
 import { Hunk } from "./hunk";

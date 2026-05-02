@@ -1,3 +1,4 @@
+import { describe, it } from "vitest";
 import assert from "node:assert";
 import { Expander } from "./expander";
 import { VarIntLE } from "./numbers";

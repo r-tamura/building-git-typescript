@@ -1,5 +1,5 @@
-import { O_CREAT, O_EXCL, O_WRONLY } from "constants";
-import * as path from "path";
+import { O_CREAT, O_EXCL, O_WRONLY } from "node:constants";
+import * as path from "node:path";
 import { FileService, exists } from "../services";
 import { OID, Pathname } from "../types";
 import { BaseError } from "../util";

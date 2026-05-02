@@ -1,4 +1,4 @@
-import * as path from "path";
+import * as path from "node:path";
 import { Stack } from "../config";
 import { ChangeMap, Database } from "../database";
 import { Index } from "../gindex/index";

@@ -1,8 +1,9 @@
+import { describe, it, vi } from "vitest";
 import type { Mock } from "vitest";
-import { promises } from "fs";
-import * as path from "path";
+import { promises } from "node:fs";
+import * as path from "node:path";
 import assert from "node:assert";
-import { Readable, Writable } from "stream";
+import { Readable, Writable } from "node:stream";
 import { makeLogger } from "@kit/core/__test__/util";
 import * as Command from "../../src/command";
 import { Blob } from "@kit/core/database";

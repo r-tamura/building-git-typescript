@@ -1,4 +1,5 @@
-import type { Stats } from "fs";
+import { describe, it, beforeEach, vi } from "vitest";
+import type { Stats } from "node:fs";
 import assert from "node:assert";
 import * as Database from ".";
 import { makeDummyFileStats, mockFsStats } from "../__test__/fs.ts";

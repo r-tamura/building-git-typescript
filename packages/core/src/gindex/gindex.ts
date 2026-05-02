@@ -2,7 +2,7 @@
  * Note: index.jsはNodeJSでは特別な扱いをされるためgitのindexを扱う機能のファイル名はgindex.js (git index) とする
  */
 import assert from "node:assert";
-import { Stats, constants } from "fs";
+import { Stats, constants } from "node:fs";
 import * as Database from "../database";
 import { Lockfile, LockfileEnvironment } from "../lockfile";
 import { FileService, defaultFs } from "../services";

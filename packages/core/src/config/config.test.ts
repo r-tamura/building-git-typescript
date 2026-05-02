@@ -1,5 +1,6 @@
-import { promises as fs } from "fs";
-import * as path from "path";
+import { describe, it, beforeEach, afterEach } from "vitest";
+import { promises as fs } from "node:fs";
+import * as path from "node:path";
 import assert from "node:assert";
 import { rmrf } from "../services";
 import { posixJoin, PosixPath, stripIndent } from "../util";

@@ -1,3 +1,4 @@
+import { describe, it, beforeEach, afterEach, vi } from "vitest";
 import assert from "node:assert";
 import { toLF } from "../util";
 import { Author } from "./author";
