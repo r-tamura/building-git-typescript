@@ -1,5 +1,5 @@
-import { Repository } from "../repository";
-import { OID, RevisionName } from "../types";
+import type { Repository } from "../repository";
+import type { OID, RevisionName } from "../types";
 import { Revision } from "../revision";
 import { Bases } from "./bases";
 

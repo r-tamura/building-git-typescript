@@ -1,10 +1,11 @@
 import arg, { type Spec } from "@kit/core/util/arg";
 import * as Database from "@kit/core/database";
 import * as Index from "@kit/core/gindex";
-import { Stage, STAGES } from "@kit/core/gindex";
-import * as Repository from "@kit/core/repository";
+import type { Stage } from "@kit/core/gindex";
+import { STAGES } from "@kit/core/gindex";
+import type * as Repository from "@kit/core/repository";
 import { asserts } from "@kit/core/util";
-import { PosixPath } from "@kit/core/util/fs";
+import type { PosixPath } from "@kit/core/util/fs";
 import { BaseCommand } from "./base";
 import {
   definePrintDiffOptions,

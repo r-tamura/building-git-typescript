@@ -1,9 +1,11 @@
 import arg, { type Spec } from "@kit/core/util/arg";
 import * as refs from "@kit/core/refs";
-import { InvalidBranch, SymRef } from "@kit/core/refs";
+import type { SymRef } from "@kit/core/refs";
+import { InvalidBranch } from "@kit/core/refs";
 import * as remotes from "@kit/core/remotes";
 import { InvalidObject, Revision } from "@kit/core/revision";
-import { asserts, BaseError } from "@kit/core/util";
+import type { BaseError } from "@kit/core/util";
+import { asserts } from "@kit/core/util";
 import * as arrayUtil from "@kit/core/util/array";
 import { shallowEqual } from "@kit/core/util/object";
 import { BaseCommand } from "./base";

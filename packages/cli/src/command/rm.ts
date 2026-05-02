@@ -1,5 +1,5 @@
 import { Inspector } from "@kit/core/repository/inspector";
-import { OID, Pathname } from "@kit/core/types";
+import type { OID, Pathname } from "@kit/core/types";
 import { isempty } from "@kit/core/util/array";
 import { asserts } from "@kit/core/util/assert";
 import { Runtime } from "@kit/core/util/error";

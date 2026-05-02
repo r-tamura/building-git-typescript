@@ -1,8 +1,9 @@
 import * as Database from "@kit/core/database";
 import { LockDenied } from "@kit/core/refs";
-import { Environment } from "@kit/core/types";
+import type { Environment } from "@kit/core/types";
 import { asserts, stripIndent } from "@kit/core/util";
-import { posixPath, PosixPath } from "@kit/core/util/fs";
+import type { PosixPath } from "@kit/core/util/fs";
+import { posixPath } from "@kit/core/util/fs";
 import { MissingFile, NoPermission } from "@kit/core/workspace";
 import { BaseCommand } from "./base";
 

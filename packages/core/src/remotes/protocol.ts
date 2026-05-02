@@ -1,4 +1,4 @@
-import { Readable } from "node:stream";
+import type { Readable } from "node:stream";
 import { readChunk } from "../services/FileService";
 import * as array from "../util/collection";
 

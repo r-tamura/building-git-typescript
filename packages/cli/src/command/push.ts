@@ -2,7 +2,7 @@ import arg, { type Spec } from "@kit/core/util/arg";
 import * as remotes from "@kit/core/remotes";
 import { Refspec } from "@kit/core/remotes";
 import { Revision } from "@kit/core/revision";
-import { OID } from "@kit/core/types";
+import type { OID } from "@kit/core/types";
 import { asserts, BaseError } from "@kit/core/util";
 import * as array from "@kit/core/util/array";
 import { nullify } from "@kit/core/util/logic";

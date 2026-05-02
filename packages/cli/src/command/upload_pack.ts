@@ -1,5 +1,5 @@
-import * as remotes from "@kit/core/remotes/protocol";
-import { Environment, OID } from "@kit/core/types";
+import type * as remotes from "@kit/core/remotes/protocol";
+import type { Environment, OID } from "@kit/core/types";
 import { BaseError } from "@kit/core/util";
 import { BaseCommand } from "./base";
 import * as remote_agent from "./shared/remote_agent";

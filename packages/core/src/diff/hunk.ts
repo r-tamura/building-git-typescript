@@ -1,7 +1,7 @@
-import { Edit } from "./myers";
+import type { Edit } from "./myers";
 import { get, transpose } from "../util/array";
 import { prop } from "../util/object";
-import { Line } from "./diff";
+import type { Line } from "./diff";
 import { notNull } from "../util/logic";
 
 const HUNK_CONTEXT = 3;

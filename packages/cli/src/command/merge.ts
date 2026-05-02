@@ -1,14 +1,12 @@
 import arg, { type Spec } from "@kit/core/util/arg";
 import { Inputs, Resolve } from "@kit/core/merge";
-import {
-  Error as NotInProgressError,
-  PendingCommit,
-} from "@kit/core/repository/pending_commit";
+import type { PendingCommit } from "@kit/core/repository/pending_commit";
+import { Error as NotInProgressError } from "@kit/core/repository/pending_commit";
 import { HEAD } from "@kit/core/revision";
 import { asserts } from "@kit/core/util";
 import { BaseCommand, Exit } from "./base";
+import type { CommitOptions } from "./shared/write_commit";
 import {
-  CommitOptions,
   CONFLICT_MESSAGE,
   defineWriteCommitOptions,
   pendingCommit,

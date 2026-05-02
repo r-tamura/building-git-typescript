@@ -1,10 +1,11 @@
 import * as crypto from "node:crypto";
 import { constants } from "node:zlib";
-import * as database from "../database";
-import { Progress } from "../progress";
-import { RevList } from "../rev_list";
-import { defaultZlib, Zlib } from "../services";
-import { CompleteCommit, Pathname } from "../types";
+import type * as database from "../database";
+import type { Progress } from "../progress";
+import type { RevList } from "../rev_list";
+import type { Zlib } from "../services";
+import { defaultZlib } from "../services";
+import type { CompleteCommit, Pathname } from "../types";
 import { Compressor } from "./compressor";
 import { Entry } from "./entry";
 import * as numbers from "./numbers";

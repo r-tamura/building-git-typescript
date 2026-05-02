@@ -1,9 +1,10 @@
-import { PathFilter } from "../path_filter";
-import { OID } from "../types";
-import { asserts, PosixPath } from "../util";
-import { Database } from "./database";
-import { Entry } from "./entry";
-import { EntryMap } from "./tree";
+import type { PathFilter } from "../path_filter";
+import type { OID } from "../types";
+import type { PosixPath } from "../util";
+import { asserts } from "../util";
+import type { Database } from "./database";
+import type { Entry } from "./entry";
+import type { EntryMap } from "./tree";
 
 type A = Entry | null;
 type B = A;

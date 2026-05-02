@@ -1,11 +1,12 @@
-import * as database from "@kit/core/database";
+import type * as database from "@kit/core/database";
 import * as pack from "@kit/core/pack";
 import { Unpacker } from "@kit/core/pack";
 import { Indexer } from "@kit/core/pack/indexer";
 import { Progress } from "@kit/core/progress";
 import { asserts } from "@kit/core/util";
-import { GitCommand } from "../base";
-import { checkConnected, Connectable } from "./remote_common";
+import type { GitCommand } from "../base";
+import type { Connectable } from "./remote_common";
+import { checkConnected } from "./remote_common";
 
 interface ReceivePackedObjects extends GitCommand, Connectable {}
 

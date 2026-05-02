@@ -1,16 +1,10 @@
 import * as path from "node:path";
 import * as Database from "../database";
-import { Entry } from "../entry";
-import { Entry as IndexEntry } from "../gindex";
-import { OID, Pathname } from "../types";
-import {
-  asserts,
-  packHex,
-  posixPath,
-  PosixPath,
-  scanUntil,
-  unpackHex,
-} from "../util";
+import type { Entry } from "../entry";
+import type { Entry as IndexEntry } from "../gindex";
+import type { OID, Pathname } from "../types";
+import type { PosixPath } from "../util";
+import { asserts, packHex, posixPath, scanUntil, unpackHex } from "../util";
 
 export type TraverseCallbackFn = (t: Tree) => Promise<void>;
 

@@ -1,4 +1,4 @@
-import { OID } from "../types";
+import type { OID } from "../types";
 
 export type Data = Buffer;
 

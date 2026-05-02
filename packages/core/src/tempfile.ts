@@ -1,8 +1,8 @@
 import { constants } from "node:fs";
-import { FileHandle } from "node:fs/promises";
+import type { FileHandle } from "node:fs/promises";
 import * as path from "node:path";
 import * as FileService from "./services/FileService.ts";
-import { Pathname, Rand } from "./types.ts";
+import type { Pathname, Rand } from "./types.ts";
 import { asserts } from "./util/assert.ts";
 import * as iter from "./util/iter.ts";
 

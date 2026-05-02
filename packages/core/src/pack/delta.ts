@@ -1,7 +1,7 @@
 import { asserts } from "../util";
-import { Entry } from "./entry";
+import type { Entry } from "./entry";
 import * as numbers from "./numbers";
-import { Unpacked } from "./windows";
+import type { Unpacked } from "./windows";
 import { Xdelta } from "./xdelta";
 
 /**

@@ -1,7 +1,7 @@
 import { CommonAncestors } from "../merge";
-import { SymRef } from "../refs";
+import type { SymRef } from "../refs";
 import { asserts } from "../util";
-import { Repository } from "./repository";
+import type { Repository } from "./repository";
 
 export class Divergence {
   static async of(

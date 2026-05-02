@@ -1,9 +1,9 @@
 import arg, { type Spec } from "@kit/core/util/arg";
 import * as pack from "@kit/core/pack";
 import * as remotes from "@kit/core/remotes";
-import { SourceRef } from "@kit/core/remotes";
+import type { SourceRef } from "@kit/core/remotes";
 import * as rev_list from "@kit/core/rev_list";
-import { OID } from "@kit/core/types";
+import type { OID } from "@kit/core/types";
 import { asserts, BaseError } from "@kit/core/util";
 import * as array from "@kit/core/util/array";
 import { BaseCommand } from "./base";

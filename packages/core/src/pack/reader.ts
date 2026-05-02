@@ -1,10 +1,11 @@
 import { TextDecoder } from "node:util";
 import * as zlib from "node:zlib";
-import { defaultZlib, Zlib } from "../services";
+import type { Zlib } from "../services";
+import { defaultZlib } from "../services";
 import { asserts, includes, isNodeError } from "../util";
 import * as array from "../util/array";
 import * as binary from "../util/binary";
-import * as fsUtil from "../util/fs";
+import type * as fsUtil from "../util/fs";
 import { Expander } from "./expander";
 import * as numbers from "./numbers";
 import * as pack from "./pack";

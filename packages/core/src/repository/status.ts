@@ -1,10 +1,11 @@
-import { Stats } from "node:fs";
-import * as Database from "../database";
-import * as Index from "../gindex";
-import { Stage } from "../gindex";
-import { Dict, OID, Pathname } from "../types";
-import { IndexStatus, Inspector, WorkspaceStatus } from "./inspector";
-import { Repository } from "./repository";
+import type { Stats } from "node:fs";
+import type * as Database from "../database";
+import type * as Index from "../gindex";
+import type { Stage } from "../gindex";
+import type { Dict, OID, Pathname } from "../types";
+import type { IndexStatus, WorkspaceStatus } from "./inspector";
+import { Inspector } from "./inspector";
+import type { Repository } from "./repository";
 
 export type ChangeType = IndexStatus | WorkspaceStatus;
 export type ConflictStatus = Stage[];

@@ -1,6 +1,6 @@
 // 2 ファイル
 
-import { FileReadOptions, FileReadResult } from "node:fs/promises";
+import type { FileReadOptions, FileReadResult } from "node:fs/promises";
 
 // 2 files
 export const fakeFiles = {

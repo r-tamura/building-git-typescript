@@ -1,7 +1,7 @@
-import { Environment } from "@kit/core/types";
+import type { Environment } from "@kit/core/types";
 import { asserts, BaseError } from "@kit/core/util";
 import { Add } from "./add";
-import { BaseConstructor, NoOptions, Options } from "./base";
+import type { BaseConstructor, NoOptions, Options } from "./base";
 import { Branch } from "./branch";
 import { Checkout } from "./checkout";
 import { CherryPick } from "./cherry_pick";

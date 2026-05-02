@@ -1,7 +1,7 @@
-import { Config } from "../config";
+import type { Config } from "../config";
 import * as arrayUtil from "../util/array";
 import { Refspec } from "./refspec";
-import { RemoteName } from "./remotes";
+import type { RemoteName } from "./remotes";
 
 export class Remote {
   #config: Config;

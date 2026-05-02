@@ -1,5 +1,5 @@
-import { Database } from "../database";
-import { CompleteCommit, OID } from "../types";
+import type { Database } from "../database";
+import type { CompleteCommit, OID } from "../types";
 import { asserts, equal, Hash, insert, merge, superset } from "../util";
 
 /**

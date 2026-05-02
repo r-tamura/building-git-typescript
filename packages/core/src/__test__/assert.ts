@@ -1,5 +1,5 @@
 import { expect } from "vitest";
-import { ErrorConstructor } from "../util";
+import type { ErrorConstructor } from "../util";
 
 export async function assertAsyncError(
   actual: Promise<any>,

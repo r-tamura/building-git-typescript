@@ -1,7 +1,7 @@
 import { get, set, clone, enumerate } from "../util/array";
 import { range } from "../util/iter";
 import { asserts } from "../util/assert";
-import { Line } from "./diff";
+import type { Line } from "./diff";
 
 export class Myers {
   constructor(

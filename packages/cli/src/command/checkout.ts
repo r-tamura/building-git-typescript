@@ -1,7 +1,8 @@
-import { SymRef } from "@kit/core/refs";
-import { Conflict, Migration } from "@kit/core/repository";
+import type { SymRef } from "@kit/core/refs";
+import type { Migration } from "@kit/core/repository";
+import { Conflict } from "@kit/core/repository";
 import { InvalidObject, Revision } from "@kit/core/revision";
-import { OID } from "@kit/core/types";
+import type { OID } from "@kit/core/types";
 import { asserts, BaseError } from "@kit/core/util";
 import { shallowEqual } from "@kit/core/util/object";
 import { BaseCommand } from "./base";

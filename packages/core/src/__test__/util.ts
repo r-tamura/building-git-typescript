@@ -1,7 +1,7 @@
 import { vi } from "vitest";
 import type { Mock } from "vitest";
-import { Logger } from "../services";
-import { GitObject, CompleteGitObject, OID } from "../types";
+import type { Logger } from "../services";
+import type { GitObject, CompleteGitObject, OID } from "../types";
 
 export function getMockedMethod<T>(Cls: T, method: keyof T, index = 0) {
   const Mocked = Cls as unknown as Mock;

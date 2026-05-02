@@ -6,9 +6,11 @@ import assert from "node:assert";
 import { assertAsyncError, ENOENT, mockFsError } from "./__test__";
 import { defaultFs } from "./services";
 import { toPathComponentsPosix } from "./util";
-import { posixJoin, posixPath, PosixPath } from "./util/fs";
+import type { PosixPath } from "./util/fs";
+import { posixJoin, posixPath } from "./util/fs";
 // (重複import削除)
-import { Environment, MissingFile, NoPermission, Workspace } from "./workspace";
+import type { Environment } from "./workspace";
+import { MissingFile, NoPermission, Workspace } from "./workspace";
 
 vi.mock("fs");
 vi.mock("./repository/repository");

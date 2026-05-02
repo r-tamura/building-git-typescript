@@ -1,5 +1,5 @@
 import { spawn } from "node:child_process";
-import { Process } from "@kit/core/services";
+import type { Process } from "@kit/core/services";
 
 const PAGER_CMD = "less";
 // less, lvコマンドに対応

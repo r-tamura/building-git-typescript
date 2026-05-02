@@ -1,12 +1,12 @@
 import arg, { type Handler, type Spec } from "@kit/core/util/arg";
 import * as path from "node:path";
 import { Author, Commit, Tree } from "@kit/core/database";
-import {
-  Error,
+import type {
   MergeType,
   PendingCommit,
 } from "@kit/core/repository/pending_commit";
-import {
+import { Error } from "@kit/core/repository/pending_commit";
+import type {
   CompleteCommit,
   CompleteTree,
   Nullable,
@@ -14,7 +14,7 @@ import {
   Pathname,
 } from "@kit/core/types";
 import { asserts, assertsComplete, BaseError } from "@kit/core/util";
-import { BaseCommand } from "../base";
+import type { BaseCommand } from "../base";
 import { COMMIT_NOTES } from "../commit";
 
 export const CONFLICT_MESSAGE = `hint: Fix them up in the work tree, and then use 'kit add/rm <file>'

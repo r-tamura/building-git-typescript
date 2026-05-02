@@ -1,7 +1,8 @@
 import { enumerate, zip } from "../util/array";
 import { notNull } from "../util/logic";
 import { prop } from "../util/object";
-import { Edit, SYMBOLS } from "./myers";
+import type { Edit } from "./myers";
+import { SYMBOLS } from "./myers";
 
 /** 1ファイル分の行差分(Edit)の配列 */
 type Diff = Edit[];

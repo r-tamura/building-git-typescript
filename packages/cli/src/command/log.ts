@@ -1,10 +1,10 @@
 import { AssertionError } from "node:assert";
 import * as os from "node:os";
-import { Style } from "../color";
-import { Change, Entry } from "@kit/core/database";
-import { SymRef } from "@kit/core/refs";
+import type { Style } from "../color";
+import type { Change, Entry } from "@kit/core/database";
+import type { SymRef } from "@kit/core/refs";
 import { RevList } from "@kit/core/rev_list";
-import { CompleteCommit, Pathname } from "@kit/core/types";
+import type { CompleteCommit, Pathname } from "@kit/core/types";
 import { asserts, includes, partition } from "@kit/core/util";
 import { shallowEqual } from "@kit/core/util/object";
 import { BaseCommand } from "./base";

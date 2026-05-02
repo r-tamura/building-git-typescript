@@ -1,5 +1,5 @@
-import { ModeNumber } from "../entry";
-import { OID } from "../types";
+import type { ModeNumber } from "../entry";
+import type { OID } from "../types";
 import { Tree } from "./tree";
 
 export class Entry {

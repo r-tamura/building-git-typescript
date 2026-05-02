@@ -1,6 +1,6 @@
 import { execute, Unknown } from "./command";
 import { defaultFs, defaultLogger, defaultProcess } from "@kit/core/services";
-import { Environment } from "@kit/core/types";
+import type { Environment } from "@kit/core/types";
 import { asserts } from "@kit/core/util/assert";
 
 export function createMain() {

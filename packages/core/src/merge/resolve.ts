@@ -1,12 +1,13 @@
 import * as path from "node:path";
-import { Blob, ChangeMap, Entry } from "../database";
-import { ModeNumber } from "../entry";
-import { Repository } from "../repository";
-import { OID, Pathname } from "../types";
+import type { ChangeMap } from "../database";
+import { Blob, Entry } from "../database";
+import type { ModeNumber } from "../entry";
+import type { Repository } from "../repository";
+import type { OID, Pathname } from "../types";
 import { ascendUnix, asserts, first } from "../util";
 import { posixPath } from "../util/fs";
 import { Diff3 } from "./diff3";
-import { CherryPick, Inputs } from "./inputs";
+import type { CherryPick, Inputs } from "./inputs";
 
 export type Conflict = readonly [Entry | null, Entry | null, Entry | null];
 type OnProgress = (message: string) => void;

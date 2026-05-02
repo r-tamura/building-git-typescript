@@ -1,4 +1,4 @@
-import { Nullable } from "../types";
+import type { Nullable } from "../types";
 
 export interface SequencerOptions {
   mode: Nullable<"continue" | "abort" | "quit">;

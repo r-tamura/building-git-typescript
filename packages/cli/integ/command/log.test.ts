@@ -1,8 +1,8 @@
 import { describe, it, beforeEach, afterEach } from "vitest";
 import * as T from "./helper";
-import { OID } from "@kit/core/types";
+import type { OID } from "@kit/core/types";
 import { stripIndent } from "@kit/core/util";
-import { CompleteCommit, Dict } from "@kit/core/types";
+import type { CompleteCommit, Dict } from "@kit/core/types";
 
 const t = T.create();
 

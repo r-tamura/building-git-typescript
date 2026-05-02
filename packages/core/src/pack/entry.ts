@@ -1,8 +1,8 @@
 import * as path from "node:path";
-import * as database from "../database";
-import { OID, Pathname } from "../types";
+import type * as database from "../database";
+import type { OID, Pathname } from "../types";
 import * as binary from "../util/binary";
-import { Delta } from "./delta";
+import type { Delta } from "./delta";
 import { REF_DELTA, TYPE_CODES } from "./pack";
 
 export class Entry {

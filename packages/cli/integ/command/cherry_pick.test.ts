@@ -1,6 +1,6 @@
 import { describe, it, beforeEach, afterEach } from "vitest";
 import assert from "node:assert";
-import { CompleteCommit, Dict } from "@kit/core/types";
+import type { CompleteCommit, Dict } from "@kit/core/types";
 import { stripIndent } from "@kit/core/util";
 import * as T from "./helper";
 

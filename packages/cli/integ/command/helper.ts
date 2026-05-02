@@ -6,14 +6,20 @@ import assert from "node:assert";
 import { Readable, Writable } from "node:stream";
 import { makeLogger } from "@kit/core/__test__/util";
 import * as Command from "../../src/command";
-import { Blob } from "@kit/core/database";
+import type { Blob } from "@kit/core/database";
 import { Editor } from "../../src/editor";
 import { Repository } from "@kit/core/repository";
 import { RevList } from "@kit/core/rev_list";
 import { Revision } from "@kit/core/revision";
 import * as FileService from "@kit/core/services";
-import { defaultFs, exists, Logger, Process } from "@kit/core/services";
-import { CompleteCommit, Dict, Environment, Pathname } from "@kit/core/types";
+import type { Logger, Process } from "@kit/core/services";
+import { defaultFs, exists } from "@kit/core/services";
+import type {
+  CompleteCommit,
+  Dict,
+  Environment,
+  Pathname,
+} from "@kit/core/types";
 import { asserts } from "@kit/core/util";
 
 export function create(name?: string) {

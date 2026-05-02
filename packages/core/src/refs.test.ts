@@ -5,8 +5,10 @@ import * as path from "node:path";
 import assert from "node:assert";
 import { mockFs, mockFsError } from "./__test__";
 import { Lockfile } from "./lockfile";
-import { Environment, InvalidBranch, LockDenied, Refs, symref } from "./refs";
-import { defaultFs, FileService } from "./services";
+import type { Environment } from "./refs";
+import { InvalidBranch, LockDenied, Refs, symref } from "./refs";
+import type { FileService } from "./services";
+import { defaultFs } from "./services";
 import * as Service from "./services/FileService";
 
 vi.mock("./lockfile");

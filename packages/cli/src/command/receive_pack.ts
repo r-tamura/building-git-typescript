@@ -1,5 +1,5 @@
-import * as remotes from "@kit/core/remotes";
-import { Environment, OID } from "@kit/core/types";
+import type * as remotes from "@kit/core/remotes";
+import type { Environment, OID } from "@kit/core/types";
 import { asserts, BaseError, unreachable } from "@kit/core/util";
 import { BaseCommand } from "./base";
 import * as fast_forward from "./shared/fast_forward";

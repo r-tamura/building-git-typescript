@@ -1,6 +1,6 @@
 import * as path from "node:path";
-import { EntryMap } from "./database";
-import { Pathname } from "./types";
+import type { EntryMap } from "./database";
+import type { Pathname } from "./types";
 import { isempty } from "./util";
 import { type PosixPath, posixPath, toPathComponentsPosix } from "./util/fs";
 

@@ -1,10 +1,10 @@
 import * as CallbackFs from "node:fs";
 import * as path from "node:path";
 import * as readline from "node:readline";
-import { Readable } from "node:stream";
+import type { Readable } from "node:stream";
 import { promisify } from "node:util";
 import * as zlib from "node:zlib";
-import { Pathname } from "../types.ts";
+import type { Pathname } from "../types.ts";
 import { BaseError } from "../util/index.ts";
 const fs = CallbackFs.promises;
 

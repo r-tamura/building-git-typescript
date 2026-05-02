@@ -3,8 +3,10 @@ import { promises as fs } from "node:fs";
 import * as path from "node:path";
 import assert from "node:assert";
 import { rmrf } from "../services";
-import { posixJoin, PosixPath, stripIndent } from "../util";
-import { Config, Conflict, SectionName } from "./config";
+import type { PosixPath } from "../util";
+import { posixJoin, stripIndent } from "../util";
+import type { SectionName } from "./config";
+import { Config, Conflict } from "./config";
 
 const testDir = "./test-config";
 beforeEach(async () => {

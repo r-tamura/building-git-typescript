@@ -1,14 +1,15 @@
 import arg, { type Spec } from "@kit/core/util/arg";
 import { assertsNumber } from "@kit/core/config";
-import { Commit } from "@kit/core/database";
-import { Resolvable, Resolve } from "@kit/core/merge";
-import { MergeType } from "@kit/core/repository/pending_commit";
-import { Command, Sequencer } from "@kit/core/repository/sequencer";
-import { SequencerOptions } from "@kit/core/repository/sequencer_options";
-import { CompleteCommit, Nullable } from "@kit/core/types";
+import type { Commit } from "@kit/core/database";
+import type { Resolvable } from "@kit/core/merge";
+import { Resolve } from "@kit/core/merge";
+import type { MergeType } from "@kit/core/repository/pending_commit";
+import type { Command, Sequencer } from "@kit/core/repository/sequencer";
+import type { SequencerOptions } from "@kit/core/repository/sequencer_options";
+import type { CompleteCommit, Nullable } from "@kit/core/types";
 import { asserts, assertsComplete } from "@kit/core/util/assert";
 import { isObject } from "@kit/core/util/object";
-import { BaseCommand } from "../base";
+import type { BaseCommand } from "../base";
 import * as WriteCommit from "./write_commit";
 
 const CONFLICT_NOTES = `  after resolving the conflicts, mark the corrected paths
