@@ -1,35 +1,66 @@
 {
-  // Use IntelliSense to learn about possible attributes.
-  // Hover to view descriptions of existing attributes.
-  // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
   "version": "0.2.0",
+  "inputs": [
+    {
+      "id": "kitArgs",
+      "type": "promptString",
+      "description": "kit に渡す引数 (例: status / commit -m foo)",
+      "default": "status"
+    },
+    {
+      "id": "cwd",
+      "type": "promptString",
+      "description": "kit を実行する作業ディレクトリ (絶対パス)",
+      "default": "${workspaceFolder}"
+    }
+  ],
   "configurations": [
     {
       "type": "node",
-      // vscode jest extension
-      "name": "vscode-jest-tests",
       "request": "launch",
-      // https://medium.com/@jakubsynowiec/debugging-typescript-jest-unit-tests-with-visual-studio-code-36cd16865bb0
-      "args": ["--runInBand", "--config", "${workspaceRoot}/jest.config.js"],
-      "cwd": "${workspaceFolder}",
+      "name": "kit (current args + cwd)",
+      "program": "${workspaceFolder}/packages/cli/dist/main.js",
+      "args": [],
+      "cwd": "${input:cwd}",
       "console": "integratedTerminal",
-      "internalConsoleOptions": "neverOpen",
-      "program": "${workspaceFolder}/node_modules/jest/bin/jest",
-      // https://stackoverflow.com/questions/37771097/how-to-debug-async-await-in-visual-studio-code
-      "skipFiles": ["inspector_async_hook.js", "async_hooks.js"],
-      "env": {
-        // デバッグ時はtimeoutを長くする
-        // https://stackoverflow.com/questions/69137737/what-is-the-best-way-to-automatically-set-jest-timeout-when-debugging-tests
-        "DEBUG": "jest"
-      }
+      "skipFiles": ["<node_internals>/**"],
+      "outFiles": ["${workspaceFolder}/packages/*/dist/**/*.js"],
+      "sourceMaps": true,
+      "preLaunchTask": "build:release"
     },
     {
       "type": "node",
       "request": "launch",
-      "name": "Launch Program",
+      "name": "vitest: current file",
+      "program": "${workspaceFolder}/node_modules/vitest/vitest.mjs",
+      "args": ["run", "--no-file-parallelism", "${relativeFile}"],
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal",
       "skipFiles": ["<node_internals>/**"],
-      "program": "${workspaceFolder}/dist/main.js",
-      "outFiles": ["${workspaceFolder}/**/*.js"]
+      "smartStep": true
+    },
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "vitest: all unit",
+      "program": "${workspaceFolder}/node_modules/vitest/vitest.mjs",
+      "args": ["run", "--project", "unit"],
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal",
+      "skipFiles": ["<node_internals>/**"],
+      "smartStep": true
+    },
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "vitest: all integ",
+      "program": "${workspaceFolder}/node_modules/vitest/vitest.mjs",
+      "args": ["run", "--project", "integ"],
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal",
+      "skipFiles": ["<node_internals>/**"],
+      "smartStep": true,
+      "preLaunchTask": "build:release"
     }
   ]
 }
