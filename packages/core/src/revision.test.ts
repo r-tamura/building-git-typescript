@@ -1,5 +1,5 @@
 import { describe, it, expect, afterEach, vi } from "vitest";
-import type { Rev } from "./revision";
+import type { Rev } from "./revision.js";
 import {
   Ref,
   Parent,
@@ -7,12 +7,12 @@ import {
   Revision,
   InvalidObject,
   HintedError,
-} from "./revision";
+} from "./revision.js";
 import assert from "node:assert";
-import { Database, Commit, Author, Blob } from "./database";
-import { Refs } from "./refs";
-import { Repository } from "./repository";
-import type { CompleteGitObject } from "./types";
+import { Database, Commit, Author, Blob } from "./database/index.js";
+import { Refs } from "./refs.js";
+import { Repository } from "./repository/index.js";
+import type { CompleteGitObject } from "./types.js";
 
 const mockCommit = (oid: string) => {
   const commit = new Commit(

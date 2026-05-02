@@ -1,6 +1,13 @@
-import type { Database } from "../database";
-import type { CompleteCommit, OID } from "../types";
-import { asserts, equal, Hash, insert, merge, superset } from "../util";
+import type { Database } from "../database/index.js";
+import type { CompleteCommit, OID } from "../types.js";
+import {
+  asserts,
+  equal,
+  Hash,
+  insert,
+  merge,
+  superset,
+} from "../util/index.js";
 
 /**
  * result: BCAの候補となったときセットされる

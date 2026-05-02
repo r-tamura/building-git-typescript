@@ -3,14 +3,14 @@ import type { Mock } from "vitest";
 import { Stats } from "node:fs";
 import * as path from "node:path";
 import assert from "node:assert";
-import { assertAsyncError, ENOENT, mockFsError } from "./__test__";
-import { defaultFs } from "./services";
-import { toPathComponentsPosix } from "./util";
-import type { PosixPath } from "./util/fs";
-import { posixJoin, posixPath } from "./util/fs";
+import { assertAsyncError, ENOENT, mockFsError } from "./__test__/index.js";
+import { defaultFs } from "./services/index.js";
+import { toPathComponentsPosix } from "./util/index.js";
+import type { PosixPath } from "./util/fs.js";
+import { posixJoin, posixPath } from "./util/fs.js";
 // (重複import削除)
-import type { Environment } from "./workspace";
-import { MissingFile, NoPermission, Workspace } from "./workspace";
+import type { Environment } from "./workspace.js";
+import { MissingFile, NoPermission, Workspace } from "./workspace.js";
 
 vi.mock("fs");
 vi.mock("./repository/repository");

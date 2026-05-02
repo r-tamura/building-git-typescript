@@ -1,10 +1,10 @@
-import { Lockfile } from "../lockfile";
-import { readByLine } from "../services";
-import type { Nullable } from "../types";
-import type { PosixPath } from "../util";
-import { asserts, BaseError } from "../util";
-import { clone, first, isempty, last } from "../util/array";
-import { ObjectKeyHash } from "../util/collection";
+import { Lockfile } from "../lockfile.js";
+import { readByLine } from "../services/index.js";
+import type { Nullable } from "../types.js";
+import type { PosixPath } from "../util/index.js";
+import { asserts, BaseError } from "../util/index.js";
+import { clone, first, isempty, last } from "../util/array.js";
+import { ObjectKeyHash } from "../util/collection.js";
 
 export type Name = string;
 export type Value = string | number | boolean;

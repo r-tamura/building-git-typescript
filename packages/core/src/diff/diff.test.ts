@@ -1,7 +1,7 @@
 import { describe, it } from "vitest";
 import assert from "node:assert";
-import { stripIndent } from "../util";
-import { combined } from "./diff";
+import { stripIndent } from "../util/index.js";
+import { combined } from "./diff.js";
 
 describe("combined", () => {
   it.each([

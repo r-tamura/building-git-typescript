@@ -7,11 +7,11 @@ import { asserts, BaseError } from "@kit/core/util";
 import * as array from "@kit/core/util/array";
 import { nullify } from "@kit/core/util/logic";
 import * as objectUtil from "@kit/core/util/object";
-import { BaseCommand } from "./base";
-import * as fast_forward from "./shared/fast_forward";
-import * as remote_client from "./shared/remote_client";
-import { checkConnected } from "./shared/remote_common";
-import * as send_objects from "./shared/send_objects";
+import { BaseCommand } from "./base.js";
+import * as fast_forward from "./shared/fast_forward.js";
+import * as remote_client from "./shared/remote_client.js";
+import { checkConnected } from "./shared/remote_common.js";
+import * as send_objects from "./shared/send_objects.js";
 
 interface Options {
   /** non fast-forwardの更新の場合もrefを更新する */

@@ -2,11 +2,11 @@ import { describe, it, beforeEach, afterEach } from "vitest";
 import { promises as fs } from "node:fs";
 import * as path from "node:path";
 import assert from "node:assert";
-import { rmrf } from "../services";
-import type { PosixPath } from "../util";
-import { posixJoin, stripIndent } from "../util";
-import type { SectionName } from "./config";
-import { Config, Conflict } from "./config";
+import { rmrf } from "../services/index.js";
+import type { PosixPath } from "../util/index.js";
+import { posixJoin, stripIndent } from "../util/index.js";
+import type { SectionName } from "./config.js";
+import { Config, Conflict } from "./config.js";
 
 const testDir = "./test-config";
 beforeEach(async () => {

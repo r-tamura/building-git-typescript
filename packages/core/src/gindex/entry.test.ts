@@ -1,8 +1,8 @@
 import { describe, it } from "vitest";
 import * as path from "node:path";
 import assert from "node:assert";
-import { makeDummyFileStats } from "../__test__";
-import { Entry } from "./entry";
+import { makeDummyFileStats } from "../__test__/index.js";
+import { Entry } from "./entry.js";
 
 const testPath = "README.md";
 const testOid = "ba78afac62556e840341715936909cc36fe83a77"; // sha1 of 'jit'

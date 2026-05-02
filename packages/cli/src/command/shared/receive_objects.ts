@@ -4,9 +4,9 @@ import { Unpacker } from "@kit/core/pack";
 import { Indexer } from "@kit/core/pack/indexer";
 import { Progress } from "@kit/core/progress";
 import { asserts } from "@kit/core/util";
-import type { GitCommand } from "../base";
-import type { Connectable } from "./remote_common";
-import { checkConnected } from "./remote_common";
+import type { GitCommand } from "../base.js";
+import type { Connectable } from "./remote_common.js";
+import { checkConnected } from "./remote_common.js";
 
 interface ReceivePackedObjects extends GitCommand, Connectable {}
 

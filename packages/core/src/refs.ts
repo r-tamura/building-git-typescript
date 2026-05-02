@@ -1,13 +1,13 @@
 import * as os from "node:os";
 import * as path from "node:path";
-import { Lockfile, MissingParent } from "./lockfile";
-import type { FileService } from "./services";
-import { defaultFs, directory, exists } from "./services";
-import type { Nullable, OID, Pathname } from "./types";
-import type { PosixPath } from "./util";
-import { ascendUnix, asserts, BaseError, find } from "./util";
-import { posixJoin, posixPath, toOsPath } from "./util/fs";
-import { nullify } from "./util/logic";
+import { Lockfile, MissingParent } from "./lockfile.js";
+import type { FileService } from "./services/index.js";
+import { defaultFs, directory, exists } from "./services/index.js";
+import type { Nullable, OID, Pathname } from "./types.js";
+import type { PosixPath } from "./util/index.js";
+import { ascendUnix, asserts, BaseError, find } from "./util/index.js";
+import { posixJoin, posixPath, toOsPath } from "./util/fs.js";
+import { nullify } from "./util/logic.js";
 
 export interface Environment {
   fs?: FileService;

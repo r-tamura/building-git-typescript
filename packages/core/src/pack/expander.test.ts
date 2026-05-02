@@ -1,8 +1,8 @@
 import { describe, it } from "vitest";
 import assert from "node:assert";
-import { Expander } from "./expander";
-import { VarIntLE } from "./numbers";
-import { Xdelta } from "./xdelta";
+import { Expander } from "./expander.js";
+import { VarIntLE } from "./numbers.js";
+import { Xdelta } from "./xdelta.js";
 
 describe("Expander", () => {
   function compress(_source: string, _target: string) {

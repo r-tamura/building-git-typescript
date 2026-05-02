@@ -1,10 +1,10 @@
 import { constants } from "node:fs";
 import type { FileHandle } from "node:fs/promises";
 import * as path from "node:path";
-import * as FileService from "./services/FileService.ts";
-import type { Pathname, Rand } from "./types.ts";
-import { asserts } from "./util/assert.ts";
-import * as iter from "./util/iter.ts";
+import * as FileService from "./services/FileService.js";
+import type { Pathname, Rand } from "./types.js";
+import { asserts } from "./util/assert.js";
+import * as iter from "./util/iter.js";
 
 export function charsFromRange(start: string, end: string): string[] {
   asserts(

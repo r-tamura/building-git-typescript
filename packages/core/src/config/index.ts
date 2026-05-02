@@ -1,2 +1,2 @@
-export * from "./config.ts";
-export * from "./stack.ts";
+export * from "./config.js";
+export * from "./stack.js";

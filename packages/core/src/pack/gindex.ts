@@ -1,9 +1,9 @@
-import type { OID } from "../types";
-import * as array from "../util/array";
-import { asserts } from "../util/assert";
-import * as binary from "../util/binary";
-import type * as fsUtil from "../util/fs";
-import { IDX_MAX_OFFSET } from "./pack";
+import type { OID } from "../types.js";
+import * as array from "../util/array.js";
+import { asserts } from "../util/assert.js";
+import * as binary from "../util/binary.js";
+import type * as fsUtil from "../util/fs.js";
+import { IDX_MAX_OFFSET } from "./pack.js";
 
 const HEADER_SIZE = 0;
 const FANOUT_SIZE = 1024;

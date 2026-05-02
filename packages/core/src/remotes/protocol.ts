@@ -1,6 +1,6 @@
 import type { Readable } from "node:stream";
-import { readChunk } from "../services/FileService";
-import * as array from "../util/collection";
+import { readChunk } from "../services/FileService.js";
+import * as array from "../util/collection.js";
 
 /** fluch packet */
 const FLUSH_PACKET = "0000";

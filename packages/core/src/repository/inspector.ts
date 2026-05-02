@@ -1,8 +1,8 @@
 import type { Stats } from "node:fs";
-import type { Repository } from "./repository";
-import type { Pathname } from "../types";
-import type * as Index from "../gindex";
-import * as Database from "../database";
+import type { Repository } from "./repository.js";
+import type { Pathname } from "../types.js";
+import type * as Index from "../gindex/index.js";
+import * as Database from "../database/index.js";
 
 export type IndexStatus = "added" | "modified" | "deleted" | null;
 export type WorkspaceStatus = "untracked" | "modified" | "deleted" | null;

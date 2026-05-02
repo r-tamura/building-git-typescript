@@ -1,9 +1,9 @@
 import type { Stats } from "node:fs";
 import * as path from "node:path";
-import type * as Database from "./database";
-import type * as Index from "./gindex";
-import type { OID, Pathname } from "./types";
-import { isExecutable } from "./util/fs";
+import type * as Database from "./database/index.js";
+import type * as Index from "./gindex/index.js";
+import type { OID, Pathname } from "./types.js";
+import { isExecutable } from "./util/fs.js";
 
 type ValueOf<T> = T[keyof T];
 

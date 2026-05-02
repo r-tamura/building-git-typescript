@@ -9,8 +9,8 @@ import { HEAD } from "@kit/core/revision";
 import type { CompleteCommit } from "@kit/core/types";
 import { asserts } from "@kit/core/util/assert";
 import { reverse } from "@kit/core/util/asynciter";
-import * as Sequencing from "./shared/sequencing";
-import { currentAuthor, writeTree } from "./shared/write_commit";
+import * as Sequencing from "./shared/sequencing.js";
+import { currentAuthor, writeTree } from "./shared/write_commit.js";
 
 export class CherryPick extends BaseCommand<Sequencing.Options> {
   pendingCommit!: PendingCommit;

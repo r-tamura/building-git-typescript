@@ -1,7 +1,7 @@
-import { CommonAncestors } from "../merge";
-import type { SymRef } from "../refs";
-import { asserts } from "../util";
-import type { Repository } from "./repository";
+import { CommonAncestors } from "../merge/index.js";
+import type { SymRef } from "../refs.js";
+import { asserts } from "../util/index.js";
+import type { Repository } from "./repository.js";
 
 export class Divergence {
   static async of(

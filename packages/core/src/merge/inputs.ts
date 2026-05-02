@@ -1,7 +1,7 @@
-import type { Repository } from "../repository";
-import type { OID, RevisionName } from "../types";
-import { Revision } from "../revision";
-import { Bases } from "./bases";
+import type { Repository } from "../repository/index.js";
+import type { OID, RevisionName } from "../types.js";
+import { Revision } from "../revision.js";
+import { Bases } from "./bases.js";
 
 export class Inputs {
   #repo: Repository;

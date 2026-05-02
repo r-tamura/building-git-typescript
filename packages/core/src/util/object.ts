@@ -1,4 +1,4 @@
-import { asserts } from "./assert";
+import { asserts } from "./assert.js";
 
 export function isObject(obj: unknown): obj is Record<string, unknown> {
   return obj !== null && typeof obj === "object";

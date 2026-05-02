@@ -1,9 +1,9 @@
 import * as path from "node:path";
-import type * as database from "../database";
-import type { OID, Pathname } from "../types";
-import * as binary from "../util/binary";
-import type { Delta } from "./delta";
-import { REF_DELTA, TYPE_CODES } from "./pack";
+import type * as database from "../database/index.js";
+import type { OID, Pathname } from "../types.js";
+import * as binary from "../util/binary.js";
+import type { Delta } from "./delta.js";
+import { REF_DELTA, TYPE_CODES } from "./pack.js";
 
 export class Entry {
   #info: database.Raw;

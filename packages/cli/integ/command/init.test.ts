@@ -3,7 +3,7 @@ import * as fsCb from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
 import assert from "node:assert";
-import * as T from "./helper";
+import * as T from "./helper.js";
 const fs = fsCb.promises;
 
 const t = T.create();

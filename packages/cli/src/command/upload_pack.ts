@@ -1,10 +1,10 @@
 import type * as remotes from "@kit/core/remotes/protocol";
 import type { Environment, OID } from "@kit/core/types";
 import { BaseError } from "@kit/core/util";
-import { BaseCommand } from "./base";
-import * as remote_agent from "./shared/remote_agent";
-import { checkConnected } from "./shared/remote_common";
-import * as send_objects from "./shared/send_objects";
+import { BaseCommand } from "./base.js";
+import * as remote_agent from "./shared/remote_agent.js";
+import { checkConnected } from "./shared/remote_common.js";
+import * as send_objects from "./shared/send_objects.js";
 export class UploadPack
   extends BaseCommand
   implements remote_agent.RemoteAgent

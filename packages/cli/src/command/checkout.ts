@@ -5,7 +5,7 @@ import { InvalidObject, Revision } from "@kit/core/revision";
 import type { OID } from "@kit/core/types";
 import { asserts, BaseError } from "@kit/core/util";
 import { shallowEqual } from "@kit/core/util/object";
-import { BaseCommand } from "./base";
+import { BaseCommand } from "./base.js";
 
 const DETACHED_HEAD_MESSAGE = `You are in 'detached HEAD' state. You can look around, make experimental
 changes and commit them, and you can discard any commits you make in this

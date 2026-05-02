@@ -1,7 +1,7 @@
 import { describe, it, beforeEach, afterEach } from "vitest";
 import assert from "node:assert";
 import { stripIndent } from "@kit/core/util";
-import * as T from "./helper";
+import * as T from "./helper.js";
 
 const t = T.create("rm");
 

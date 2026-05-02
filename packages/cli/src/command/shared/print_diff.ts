@@ -1,11 +1,11 @@
-import { assertsStyle } from "../../color";
+import { assertsStyle } from "../../color.js";
 import type { SectionName } from "@kit/core/config";
 import { assertsString } from "@kit/core/config";
 import type { Hunk, HunkEdit, TextDocument } from "@kit/core/diff";
 import { combinedHunk, diffHunks } from "@kit/core/diff";
 import type { OID, Pathname } from "@kit/core/types";
 import { prop } from "@kit/core/util/object";
-import type { BaseCommand } from "../base";
+import type { BaseCommand } from "../base.js";
 import arg, { type Handler } from "@kit/core/util/arg";
 
 export const NULL_OID = "0".repeat(40);

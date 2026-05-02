@@ -1,6 +1,6 @@
-import type { Repository } from "./repository";
-import type { OID } from "./types";
-import { asserts, BaseError, times } from "./util";
+import type { Repository } from "./repository/index.js";
+import type { OID } from "./types.js";
+import { asserts, BaseError, times } from "./util/index.js";
 
 const INVALID_BRANCH_NAME = [
   /^\./, // Unixの隠しファイルパスの形式

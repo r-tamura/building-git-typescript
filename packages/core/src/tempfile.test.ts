@@ -1,6 +1,6 @@
 import { it } from "vitest";
 import assert from "node:assert";
-import { charsFromRange } from "./tempfile.ts";
+import { charsFromRange } from "./tempfile.js";
 
 it("アルファベットがすべて列挙できる", () => {
   // Act

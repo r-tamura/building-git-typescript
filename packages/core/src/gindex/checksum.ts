@@ -1,7 +1,7 @@
 import type { Hash } from "node:crypto";
 import { createHash } from "node:crypto";
-import type { IOHandle } from "../types";
-import { BaseError, Invalid } from "../util";
+import type { IOHandle } from "../types.js";
+import { BaseError, Invalid } from "../util/index.js";
 
 export class EndOfFile extends BaseError {
   static {

@@ -1,7 +1,7 @@
-import type { Database } from "../database";
-import type { OID } from "../types";
-import { CommonAncestors } from "./common_anncestors";
-import { exclude, merge } from "../util";
+import type { Database } from "../database/index.js";
+import type { OID } from "../types.js";
+import { CommonAncestors } from "./common_anncestors.js";
+import { exclude, merge } from "../util/index.js";
 
 export class Bases {
   #database: Database;

@@ -2,16 +2,16 @@ import * as crc32lib from "crc-32";
 import * as crypto from "node:crypto";
 import * as path from "node:path";
 import { IDX_SIGNATURE, Reader, SIGNATURE, Stream, VERSION } from ".";
-import type * as database from "../database";
-import type * as progress from "../progress";
-import { TempFile } from "../tempfile";
-import type { OID, Pathname } from "../types";
-import { asserts } from "../util";
-import * as binary from "../util/binary";
-import { Hash } from "../util/collection";
-import { Expander } from "./expander";
-import type { RefDelta } from "./pack";
-import { IDX_MAX_OFFSET, Record as PackRecord } from "./pack";
+import type * as database from "../database/index.js";
+import type * as progress from "../progress.js";
+import { TempFile } from "../tempfile.js";
+import type { OID, Pathname } from "../types.js";
+import { asserts } from "../util/index.js";
+import * as binary from "../util/binary.js";
+import { Hash } from "../util/collection.js";
+import { Expander } from "./expander.js";
+import type { RefDelta } from "./pack.js";
+import { IDX_MAX_OFFSET, Record as PackRecord } from "./pack.js";
 
 type OffsetCrc32Pair = readonly [offset: number, crc32: number];
 export class Indexer {

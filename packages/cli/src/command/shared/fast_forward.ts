@@ -1,6 +1,6 @@
 import * as merge from "@kit/core/merge";
 import type { OID } from "@kit/core/types";
-import type * as base from "../base";
+import type * as base from "../base.js";
 
 export type FastForwardError = string;
 

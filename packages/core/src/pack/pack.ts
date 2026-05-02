@@ -1,5 +1,5 @@
-import type { Nullable, OID } from "../types";
-import { BaseError } from "../util/error";
+import type { Nullable, OID } from "../types.js";
+import { BaseError } from "../util/error.js";
 
 export const HEADER_SIZE = 12;
 export const SIGNATURE = "PACK";

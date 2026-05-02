@@ -1,7 +1,7 @@
-import type { TextDocument, Line } from "../diff";
-import { diff } from "../diff";
-import { shallowEqual } from "../util/array";
-import { splitByLine } from "../util/text";
+import type { TextDocument, Line } from "../diff/index.js";
+import { diff } from "../diff/index.js";
+import { shallowEqual } from "../util/array.js";
+import { splitByLine } from "../util/text.js";
 
 /**
  * baseドキュメントと比較して何行目とある比較対象のドキュメントの何行目が一致しているかをマップしたもの

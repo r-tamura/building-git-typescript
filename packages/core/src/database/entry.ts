@@ -1,6 +1,6 @@
-import type { ModeNumber } from "../entry";
-import type { OID } from "../types";
-import { Tree } from "./tree";
+import type { ModeNumber } from "../entry.js";
+import type { OID } from "../types.js";
+import { Tree } from "./tree.js";
 
 export class Entry {
   readonly type = "database";

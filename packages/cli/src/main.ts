@@ -1,4 +1,4 @@
-import { execute, Unknown } from "./command";
+import { execute, Unknown } from "./command/index.js";
 import { defaultFs, defaultLogger, defaultProcess } from "@kit/core/services";
 import type { Environment } from "@kit/core/types";
 import { asserts } from "@kit/core/util/assert";

@@ -1,13 +1,13 @@
 import * as path from "node:path";
-import type { ChangeMap } from "../database";
-import { Blob, Entry } from "../database";
-import type { ModeNumber } from "../entry";
-import type { Repository } from "../repository";
-import type { OID, Pathname } from "../types";
-import { ascendUnix, asserts, first } from "../util";
-import { posixPath } from "../util/fs";
-import { Diff3 } from "./diff3";
-import type { CherryPick, Inputs } from "./inputs";
+import type { ChangeMap } from "../database/index.js";
+import { Blob, Entry } from "../database/index.js";
+import type { ModeNumber } from "../entry.js";
+import type { Repository } from "../repository/index.js";
+import type { OID, Pathname } from "../types.js";
+import { ascendUnix, asserts, first } from "../util/index.js";
+import { posixPath } from "../util/fs.js";
+import { Diff3 } from "./diff3.js";
+import type { CherryPick, Inputs } from "./inputs.js";
 
 export type Conflict = readonly [Entry | null, Entry | null, Entry | null];
 type OnProgress = (message: string) => void;

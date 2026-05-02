@@ -1,10 +1,10 @@
 import * as path from "path/posix";
-import * as refs from "../refs";
-import { Revision } from "../revision";
-import { asserts } from "../util";
-import * as arrayUtil from "../util/array";
-import { BaseError } from "../util/error";
-import * as fsUtil from "../util/fs";
+import * as refs from "../refs.js";
+import { Revision } from "../revision.js";
+import { asserts } from "../util/index.js";
+import * as arrayUtil from "../util/array.js";
+import { BaseError } from "../util/error.js";
+import * as fsUtil from "../util/fs.js";
 
 export type TargetRef = string;
 export type SourceRef = string;

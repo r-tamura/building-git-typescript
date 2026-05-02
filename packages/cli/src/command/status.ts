@@ -1,11 +1,11 @@
 import arg from "@kit/core/util/arg";
-import type { Style } from "../color";
+import type { Style } from "../color.js";
 import type * as Repository from "@kit/core/repository";
 import type { ConflictStatus } from "@kit/core/repository";
 import type { MergeType } from "@kit/core/repository/pending_commit";
 import type { Pathname } from "@kit/core/types";
 import { shallowEqual, stripIndent } from "@kit/core/util";
-import { BaseCommand } from "./base";
+import { BaseCommand } from "./base.js";
 
 const SHORT_STATUS: Record<
   Exclude<Repository.ChangeType, null> | "nochange",

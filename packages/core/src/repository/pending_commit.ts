@@ -1,9 +1,9 @@
 import { O_CREAT, O_EXCL, O_WRONLY } from "node:constants";
 import * as path from "node:path";
-import type { FileService } from "../services";
-import { exists } from "../services";
-import type { OID, Pathname } from "../types";
-import { BaseError } from "../util";
+import type { FileService } from "../services/index.js";
+import { exists } from "../services/index.js";
+import type { OID, Pathname } from "../types.js";
+import { BaseError } from "../util/index.js";
 
 export interface Environment {
   fs: FileService;

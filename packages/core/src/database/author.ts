@@ -1,4 +1,4 @@
-import { timeForPrint } from "../util";
+import { timeForPrint } from "../util/index.js";
 
 export type AuthorName = string;
 export type AuthorEmail = string;

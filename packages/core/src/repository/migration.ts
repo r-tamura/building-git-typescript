@@ -1,12 +1,12 @@
 import type { Stats } from "node:fs";
 import * as path from "node:path";
-import type * as Database from "../database";
-import type * as Index from "../gindex";
-import type { OID, Pathname } from "../types";
-import type { PosixPath } from "../util";
-import { ascendUnix, asserts, BaseError, descendUnix } from "../util";
-import { Inspector } from "./inspector";
-import type { Repository } from "./repository";
+import type * as Database from "../database/index.js";
+import type * as Index from "../gindex/index.js";
+import type { OID, Pathname } from "../types.js";
+import type { PosixPath } from "../util/index.js";
+import { ascendUnix, asserts, BaseError, descendUnix } from "../util/index.js";
+import { Inspector } from "./inspector.js";
+import type { Repository } from "./repository.js";
 
 export type DeleteChange = [PosixPath, null];
 export type CreateChange = [PosixPath, Database.Entry];

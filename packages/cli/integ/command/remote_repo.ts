@@ -1,5 +1,5 @@
 import * as path from "node:path";
-import { TestUtil } from "./helper";
+import { TestUtil } from "./helper.js";
 
 export class RemoteRepo extends TestUtil {
   constructor(name: string) {

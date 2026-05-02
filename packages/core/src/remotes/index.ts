@@ -1,3 +1,3 @@
-export * from "./protocol.ts";
-export * from "./refspec.ts";
-export * from "./remotes.ts";
+export * from "./protocol.js";
+export * from "./refspec.js";
+export * from "./remotes.js";

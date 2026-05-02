@@ -6,11 +6,11 @@ import * as rev_list from "@kit/core/rev_list";
 import type { OID } from "@kit/core/types";
 import { asserts, BaseError } from "@kit/core/util";
 import * as array from "@kit/core/util/array";
-import { BaseCommand } from "./base";
-import * as fast_forward from "./shared/fast_forward";
-import * as receive_objects from "./shared/receive_objects";
-import * as remote_client from "./shared/remote_client";
-import { checkConnected } from "./shared/remote_common";
+import { BaseCommand } from "./base.js";
+import * as fast_forward from "./shared/fast_forward.js";
+import * as receive_objects from "./shared/receive_objects.js";
+import * as remote_client from "./shared/remote_client.js";
+import { checkConnected } from "./shared/remote_common.js";
 
 interface Options {
   /**

@@ -1,6 +1,6 @@
 import { describe, it, beforeEach, afterEach } from "vitest";
-import * as T from "./helper";
-import { describeOnlyUnix } from "./helper";
+import * as T from "./helper.js";
+import { describeOnlyUnix } from "./helper.js";
 import assert from "node:assert";
 import type { Pathname } from "@kit/core/types";
 import { stripIndent } from "@kit/core/util";

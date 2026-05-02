@@ -1,15 +1,15 @@
 import { TextDecoder } from "node:util";
 import * as zlib from "node:zlib";
-import type { Zlib } from "../services";
-import { defaultZlib } from "../services";
-import { asserts, includes, isNodeError } from "../util";
-import * as array from "../util/array";
-import * as binary from "../util/binary";
-import type * as fsUtil from "../util/fs";
-import { Expander } from "./expander";
-import * as numbers from "./numbers";
-import * as pack from "./pack";
-import { HEADER_SIZE, InvalidPack, SIGNATURE, VERSION } from "./pack";
+import type { Zlib } from "../services/index.js";
+import { defaultZlib } from "../services/index.js";
+import { asserts, includes, isNodeError } from "../util/index.js";
+import * as array from "../util/array.js";
+import * as binary from "../util/binary.js";
+import type * as fsUtil from "../util/fs.js";
+import { Expander } from "./expander.js";
+import * as numbers from "./numbers.js";
+import * as pack from "./pack.js";
+import { HEADER_SIZE, InvalidPack, SIGNATURE, VERSION } from "./pack.js";
 
 interface Environment {
   zlib?: Zlib;

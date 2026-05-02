@@ -1,6 +1,6 @@
-import { asserts, BaseError } from "../util";
-import * as delta from "./delta";
-import * as numbers from "./numbers";
+import { asserts, BaseError } from "../util/index.js";
+import * as delta from "./delta.js";
+import * as numbers from "./numbers.js";
 
 export class Expander {
   #delta: numbers.Readable;

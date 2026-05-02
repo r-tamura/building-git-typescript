@@ -1,8 +1,8 @@
 import { describe, it } from "vitest";
 import assert from "node:assert";
-import type { TextDocument } from "./diff";
-import { lines } from "./diff";
-import { Myers } from "./myers";
+import type { TextDocument } from "./diff.js";
+import { lines } from "./diff.js";
+import { Myers } from "./myers.js";
 const tests: [string, TextDocument, TextDocument, number, string[]][] = [
   ["編集回数0", "A", "A", 0, [" A"]],
   ["編集回数1", "A", [], 0, ["-A"]],

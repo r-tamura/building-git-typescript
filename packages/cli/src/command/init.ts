@@ -4,7 +4,7 @@ import type { FileService } from "@kit/core/services";
 import type { Environment } from "@kit/core/types";
 import type { PosixPath } from "@kit/core/util/fs";
 import { posixJoin, posixPath, toOsPath } from "@kit/core/util/fs";
-import { BaseCommand } from "./base";
+import { BaseCommand } from "./base.js";
 
 const DEFAULT_BRANCH = "master";
 

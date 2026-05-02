@@ -1,11 +1,11 @@
 import { describe, it, vi } from "vitest";
 import type { Mock } from "vitest";
-import { Refs } from "../refs";
-import type { Environment } from "../types";
-import { Repository } from "../repository";
-import { defaultFs, defaultProcess } from "../services";
+import { Refs } from "../refs.js";
+import type { Environment } from "../types.js";
+import { Repository } from "../repository/index.js";
+import { defaultFs, defaultProcess } from "../services/index.js";
 import assert from "node:assert";
-import { makeLogger } from "../__test__/util";
+import { makeLogger } from "../__test__/util.js";
 
 vi.mock("../refs");
 const MockedRefs = Refs as unknown as Mock;

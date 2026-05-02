@@ -8,8 +8,8 @@ import type { BaseError } from "@kit/core/util";
 import { asserts } from "@kit/core/util";
 import * as arrayUtil from "@kit/core/util/array";
 import { shallowEqual } from "@kit/core/util/object";
-import { BaseCommand } from "./base";
-import * as fast_forward from "./shared/fast_forward";
+import { BaseCommand } from "./base.js";
+import * as fast_forward from "./shared/fast_forward.js";
 
 interface Options {
   verbose: number;

@@ -1,6 +1,6 @@
 import { describe, it, beforeEach, afterEach } from "vitest";
-import * as T from "./helper";
-import { itOnlyUnix } from "./helper";
+import * as T from "./helper.js";
+import { itOnlyUnix } from "./helper.js";
 import { stripIndent } from "@kit/core/util";
 
 const t = T.create();

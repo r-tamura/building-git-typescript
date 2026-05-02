@@ -1,6 +1,6 @@
-import type { OID } from "../types";
-import { Hash, scanUntil, splitByLine } from "../util";
-import { Author } from "./author";
+import type { OID } from "../types.js";
+import { Hash, scanUntil, splitByLine } from "../util/index.js";
+import { Author } from "./author.js";
 
 export class Commit {
   readonly type = "commit";

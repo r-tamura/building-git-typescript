@@ -1,8 +1,8 @@
-import { Myers } from "./myers";
-import { Hunk } from "./hunk";
-import { splitByLine } from "../util";
-import { Combined } from "./combined";
-import type { Edit } from "./myers";
+import { Myers } from "./myers.js";
+import { Hunk } from "./hunk.js";
+import { splitByLine } from "../util/index.js";
+import { Combined } from "./combined.js";
+import type { Edit } from "./myers.js";
 
 export type TextDocument = string | string[];
 

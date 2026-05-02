@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import arg from "./arg";
+import arg from "./arg.js";
 
 describe("arg shim", () => {
   it("位置引数を _ に集める", () => {

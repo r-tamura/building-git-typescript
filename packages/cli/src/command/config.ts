@@ -3,7 +3,7 @@ import * as ConfigLib from "@kit/core/config";
 import type { SectionName } from "@kit/core/config";
 import type { Pathname } from "@kit/core/types";
 import { asserts, compact, isempty } from "@kit/core/util";
-import { BaseCommand } from "./base";
+import { BaseCommand } from "./base.js";
 
 interface Options {
   /** ファイル環境名かファイルパス */

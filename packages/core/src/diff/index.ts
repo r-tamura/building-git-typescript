@@ -1,3 +1,3 @@
-export * from "./diff.ts";
-export * from "./hunk.ts";
-export * from "./myers.ts";
+export * from "./diff.js";
+export * from "./hunk.js";
+export * from "./myers.js";

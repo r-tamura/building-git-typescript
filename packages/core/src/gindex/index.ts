@@ -1,2 +1,2 @@
-export * from "./entry.ts";
-export * from "./gindex.ts";
+export * from "./entry.js";
+export * from "./gindex.js";

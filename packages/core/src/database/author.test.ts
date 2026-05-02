@@ -1,6 +1,6 @@
 import { describe, it, vi } from "vitest";
 import assert from "node:assert";
-import { Author } from "./author";
+import { Author } from "./author.js";
 
 const timezones = {
   JST: -540,

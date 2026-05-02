@@ -1,3 +1,3 @@
-export * from "./migration.ts";
-export * from "./repository.ts";
-export * from "./status.ts";
+export * from "./migration.js";
+export * from "./repository.js";
+export * from "./status.js";

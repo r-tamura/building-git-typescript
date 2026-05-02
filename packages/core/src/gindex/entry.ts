@@ -1,9 +1,9 @@
 import type { Stats } from "node:fs";
 import * as path from "node:path";
-import type * as Database from "../database";
-import { MODE } from "../entry";
-import type { OID, Pathname } from "../types";
-import { asserts, descendUnix, isExecutable } from "../util";
+import type * as Database from "../database/index.js";
+import { MODE } from "../entry.js";
+import type { OID, Pathname } from "../types.js";
+import { asserts, descendUnix, isExecutable } from "../util/index.js";
 
 // Git indexファイルのフォーマット仕様
 // https://github.com/git/git/blob/master/Documentation/technical/index-format.txt
