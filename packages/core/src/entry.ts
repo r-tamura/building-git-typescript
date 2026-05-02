@@ -1,5 +1,5 @@
-import { Stats } from "fs";
-import * as path from "path";
+import { Stats } from "node:fs";
+import * as path from "node:path";
 import * as Database from "./database";
 import * as Index from "./gindex";
 import { OID, Pathname } from "./types";

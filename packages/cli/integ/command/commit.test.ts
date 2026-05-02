@@ -1,4 +1,5 @@
-import * as path from "path";
+import { describe, it, beforeEach, afterEach, vi } from "vitest";
+import * as path from "node:path";
 import assert from "node:assert";
 import { Editor } from "../../src/editor";
 import { RevList } from "@kit/core/rev_list";

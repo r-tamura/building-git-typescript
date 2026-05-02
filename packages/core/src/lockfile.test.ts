@@ -1,6 +1,7 @@
-import { constants } from "fs";
-import * as fs from "fs/promises";
-import * as path from "path";
+import { describe, it, expect, afterEach, beforeAll, vi } from "vitest";
+import { constants } from "node:fs";
+import * as fs from "node:fs/promises";
+import * as path from "node:path";
 import assert from "node:assert";
 import { EACCES, EEXIST, ENOENT } from "./__test__";
 import { Lockfile, MissingParent, NoPermission } from "./lockfile";

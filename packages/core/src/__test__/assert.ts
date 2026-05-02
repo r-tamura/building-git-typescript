@@ -1,3 +1,4 @@
+import { expect } from "vitest";
 import { ErrorConstructor } from "../util";
 
 export async function assertAsyncError(

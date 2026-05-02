@@ -1,3 +1,4 @@
+import { describe, it, afterEach } from "vitest";
 import * as fsCb from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";

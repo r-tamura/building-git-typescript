@@ -1,4 +1,4 @@
-import * as path from "path";
+import * as path from "node:path";
 import { EntryMap } from "./database";
 import { Pathname } from "./types";
 import { isempty } from "./util";

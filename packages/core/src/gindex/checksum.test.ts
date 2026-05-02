@@ -1,3 +1,4 @@
+import { describe, it, beforeAll, vi } from "vitest";
 import assert from "node:assert";
 import { Checksum } from "./checksum";
 

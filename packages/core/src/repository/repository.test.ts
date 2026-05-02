@@ -1,3 +1,4 @@
+import { describe, it, vi } from "vitest";
 import type { Mock } from "vitest";
 import { Refs } from "../refs";
 import { Environment } from "../types";

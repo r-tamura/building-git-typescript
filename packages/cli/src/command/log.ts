@@ -1,5 +1,5 @@
-import { AssertionError } from "assert";
-import * as os from "os";
+import { AssertionError } from "node:assert";
+import * as os from "node:os";
 import { Style } from "../color";
 import { Change, Entry } from "@kit/core/database";
 import { SymRef } from "@kit/core/refs";

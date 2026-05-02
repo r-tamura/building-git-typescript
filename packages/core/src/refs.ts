@@ -1,5 +1,5 @@
-import * as os from "os";
-import * as path from "path";
+import * as os from "node:os";
+import * as path from "node:path";
 import { Lockfile, MissingParent } from "./lockfile";
 import { defaultFs, directory, exists, FileService } from "./services";
 import { Nullable, OID, Pathname } from "./types";

@@ -1,5 +1,5 @@
-import { constants, promises } from "fs";
-import * as path from "path";
+import { constants, promises } from "node:fs";
+import * as path from "node:path";
 import { LockDenied } from "./refs";
 import { defaultFs, FileService } from "./services";
 import { IOHandle } from "./types";

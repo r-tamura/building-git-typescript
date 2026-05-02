@@ -1,4 +1,4 @@
-import * as stream from "stream";
+import * as stream from "node:stream";
 import * as FileService from "../services";
 import { asserts } from "../util";
 import * as iter from "../util/iter";

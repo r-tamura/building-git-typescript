@@ -1,4 +1,4 @@
-import { Hash, createHash } from "crypto";
+import { Hash, createHash } from "node:crypto";
 import { IOHandle } from "../types";
 import { BaseError, Invalid } from "../util";
 

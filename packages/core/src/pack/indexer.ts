@@ -1,6 +1,6 @@
 import * as crc32lib from "crc-32";
-import * as crypto from "crypto";
-import * as path from "path";
+import * as crypto from "node:crypto";
+import * as path from "node:path";
 import { IDX_SIGNATURE, Reader, SIGNATURE, Stream, VERSION } from ".";
 import * as database from "../database";
 import * as progress from "../progress";

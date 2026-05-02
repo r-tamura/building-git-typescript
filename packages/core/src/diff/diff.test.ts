@@ -1,3 +1,4 @@
+import { describe, it } from "vitest";
 import assert from "node:assert";
 import { stripIndent } from "../util";
 import { combined } from "./diff";

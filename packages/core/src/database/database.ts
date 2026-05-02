@@ -1,5 +1,5 @@
 import assert from "node:assert";
-import { createHash } from "crypto";
+import { createHash } from "node:crypto";
 import { PathFilter } from "../path_filter";
 import { defaultFs, defaultZlib, FileService, Zlib } from "../services";
 import {
@@ -24,7 +24,7 @@ import { Entry } from "./entry";
 import { GitObjectType } from "./loose";
 import { Tree } from "./tree";
 import { TreeDiff } from "./tree_diff";
-import path = require("path");
+import path = require("node:path");
 
 type Rand = {
   sample: (str: string) => string;

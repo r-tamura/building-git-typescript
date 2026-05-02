@@ -1,4 +1,4 @@
-import * as path from "path";
+import * as path from "node:path";
 import { Blob, ChangeMap, Entry } from "../database";
 import { ModeNumber } from "../entry";
 import { Repository } from "../repository";

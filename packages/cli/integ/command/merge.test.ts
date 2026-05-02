@@ -1,3 +1,4 @@
+import { describe, it, beforeEach, afterEach } from "vitest";
 import * as T from "./helper";
 import { describeOnlyUnix } from "./helper";
 import assert from "node:assert";

@@ -1,6 +1,7 @@
+import { describe, it, expect, beforeAll, afterAll, vi } from "vitest";
 import type { Mock, MockInstance } from "vitest";
-import * as os from "os";
-import * as path from "path";
+import * as os from "node:os";
+import * as path from "node:path";
 import assert from "node:assert";
 import { mockFs, mockFsError } from "./__test__";
 import { Lockfile } from "./lockfile";

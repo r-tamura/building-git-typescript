@@ -1,3 +1,4 @@
+import { describe, it, beforeEach, afterEach } from "vitest";
 import * as T from "./helper";
 import { OID } from "@kit/core/types";
 import { stripIndent } from "@kit/core/util";

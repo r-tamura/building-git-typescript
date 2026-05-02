@@ -1,7 +1,7 @@
-import { spawnSync, SpawnSyncReturns } from "child_process";
-import * as fsCallback from "fs";
-import { O_CREAT, O_TRUNC, O_WRONLY } from "constants";
-import { promises } from "fs";
+import { spawnSync, SpawnSyncReturns } from "node:child_process";
+import * as fsCallback from "node:fs";
+import { O_CREAT, O_TRUNC, O_WRONLY } from "node:constants";
+import { promises } from "node:fs";
 import { FileService, Process } from "@kit/core/services";
 import { Nullable, Pathname } from "@kit/core/types";
 import { split as shlexSplit } from "@kit/core/util/shlex";

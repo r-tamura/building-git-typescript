@@ -1,4 +1,4 @@
-import { Console } from "console";
+import { Console } from "node:console";
 
 export type Logger = {
   level: "debug" | "info" | "warn" | "error";

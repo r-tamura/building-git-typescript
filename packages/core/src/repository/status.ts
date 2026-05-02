@@ -1,4 +1,4 @@
-import { Stats } from "fs";
+import { Stats } from "node:fs";
 import * as Database from "../database";
 import * as Index from "../gindex";
 import { Stage } from "../gindex";

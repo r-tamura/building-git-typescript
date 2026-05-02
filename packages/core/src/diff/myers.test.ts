@@ -1,3 +1,4 @@
+import { describe, it } from "vitest";
 import assert from "node:assert";
 import { TextDocument, lines } from "./diff";
 import { Myers } from "./myers";

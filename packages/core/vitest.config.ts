@@ -12,7 +12,6 @@ export default defineConfig({
     ],
   },
   test: {
-    globals: true,
     server: {
       deps: {
         // CJS パッケージを vite で変換させ、namespace import を callable として扱えるようにする

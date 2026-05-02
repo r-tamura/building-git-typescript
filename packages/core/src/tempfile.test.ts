@@ -1,3 +1,4 @@
+import { it } from "vitest";
 import assert from "node:assert";
 import { charsFromRange } from "./tempfile.ts";
 

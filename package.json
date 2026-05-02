@@ -2,7 +2,7 @@
   "name": "@rtamura30/kit",
   "version": "0.1.0",
   "private": true,
-  "packageManager": "pnpm@10.33.0",
+  "packageManager": "pnpm@10.33.2",
   "repository": {
     "type": "git",
     "url": "https://github.com/r-tamura/building-git-typescript.git"
