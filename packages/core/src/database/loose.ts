@@ -1,9 +1,11 @@
 import * as path from "node:path";
 import { constants } from "node:zlib";
-import { Backend, Raw } from ".";
-import { defaultFs, defaultZlib, FileService, Zlib } from "../services";
+import type { Backend } from ".";
+import { Raw } from ".";
+import type { FileService, Zlib } from "../services";
+import { defaultFs, defaultZlib } from "../services";
 import { TempFile } from "../tempfile";
-import { OID, Pathname, Rand } from "../types";
+import type { OID, Pathname, Rand } from "../types";
 import { asserts } from "../util/assert";
 
 export type GitObjectType = "blob" | "tree" | "commit";

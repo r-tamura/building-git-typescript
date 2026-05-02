@@ -1,5 +1,6 @@
 import { describe, it } from "vitest";
-import { lines, TextDocument, Line, combinedHunk } from "./diff";
+import type { TextDocument } from "./diff";
+import { lines, Line, combinedHunk } from "./diff";
 import { Myers, Edit } from "./myers";
 import { Hunk } from "./hunk";
 import assert from "node:assert";

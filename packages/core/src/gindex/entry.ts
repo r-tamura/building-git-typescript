@@ -1,8 +1,8 @@
-import { Stats } from "node:fs";
+import type { Stats } from "node:fs";
 import * as path from "node:path";
-import * as Database from "../database";
+import type * as Database from "../database";
 import { MODE } from "../entry";
-import { OID, Pathname } from "../types";
+import type { OID, Pathname } from "../types";
 import { asserts, descendUnix, isExecutable } from "../util";
 
 // Git indexファイルのフォーマット仕様

@@ -1,4 +1,4 @@
-import * as remotes from "@kit/core/remotes";
+import type * as remotes from "@kit/core/remotes";
 import { BaseError } from "@kit/core/util/error";
 
 export interface Connectable {

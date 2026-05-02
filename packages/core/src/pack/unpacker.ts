@@ -1,9 +1,10 @@
-import * as database from "../database";
-import * as progress from "../progress";
-import { OID } from "../types";
-import { Reader, Stream } from "./";
+import type * as database from "../database";
+import type * as progress from "../progress";
+import type { OID } from "../types";
+import type { Reader, Stream } from "./";
 import { Expander } from "./expander";
-import { Record, RefDelta } from "./pack";
+import type { RefDelta } from "./pack";
+import { Record } from "./pack";
 
 export class Unpacker {
   #database: database.Database;

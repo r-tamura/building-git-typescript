@@ -2,21 +2,19 @@
  * Note: index.jsはNodeJSでは特別な扱いをされるためgitのindexを扱う機能のファイル名はgindex.js (git index) とする
  */
 import assert from "node:assert";
-import { Stats, constants } from "node:fs";
-import * as Database from "../database";
-import { Lockfile, LockfileEnvironment } from "../lockfile";
-import { FileService, defaultFs } from "../services";
-import { OID, Pathname } from "../types";
-import {
-  Invalid,
-  ObjectKeyHash,
-  ObjectSet,
-  PosixPath,
-  some,
-  times,
-} from "../util";
+import type { Stats } from "node:fs";
+import { constants } from "node:fs";
+import type * as Database from "../database";
+import type { LockfileEnvironment } from "../lockfile";
+import { Lockfile } from "../lockfile";
+import type { FileService } from "../services";
+import { defaultFs } from "../services";
+import type { OID, Pathname } from "../types";
+import type { PosixPath } from "../util";
+import { Invalid, ObjectKeyHash, ObjectSet, some, times } from "../util";
 import { Checksum } from "./checksum";
-import { BASE, Entry, Key, LEFT, RIGHT, STAGES, Stage } from "./entry";
+import type { Key, Stage } from "./entry";
+import { BASE, Entry, LEFT, RIGHT, STAGES } from "./entry";
 
 type IndexEntryMap = ObjectKeyHash<Key, Entry>;
 export class Index {

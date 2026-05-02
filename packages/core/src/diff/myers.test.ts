@@ -1,6 +1,7 @@
 import { describe, it } from "vitest";
 import assert from "node:assert";
-import { TextDocument, lines } from "./diff";
+import type { TextDocument } from "./diff";
+import { lines } from "./diff";
 import { Myers } from "./myers";
 const tests: [string, TextDocument, TextDocument, number, string[]][] = [
   ["編集回数0", "A", "A", 0, [" A"]],

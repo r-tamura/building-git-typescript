@@ -1,13 +1,14 @@
 import arg, { type Spec } from "@kit/core/util/arg";
 import * as Database from "@kit/core/database";
-import { Error, PendingCommit } from "@kit/core/repository/pending_commit";
+import type { PendingCommit } from "@kit/core/repository/pending_commit";
+import { Error } from "@kit/core/repository/pending_commit";
 import { Revision } from "@kit/core/revision";
-import { CompleteCommit, Environment, Nullable } from "@kit/core/types";
+import type { CompleteCommit, Environment, Nullable } from "@kit/core/types";
 import { asserts } from "@kit/core/util";
 import { BaseCommand } from "./base";
+import type { CommitOptions } from "./shared/write_commit";
 import {
   commitMessagePath,
-  CommitOptions,
   currentAuthor,
   defineWriteCommitOptions,
   pendingCommit,

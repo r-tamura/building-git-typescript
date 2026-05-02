@@ -1,7 +1,7 @@
 import { describe, it, afterEach, vi } from "vitest";
 import assert from "node:assert";
 import { PathFilter, Trie } from "../path_filter";
-import { GitObject } from "../types";
+import type { GitObject } from "../types";
 import { posixPath } from "../util/fs";
 import { Commit } from "./commit";
 import { Entry } from "./entry";

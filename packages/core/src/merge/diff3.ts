@@ -1,4 +1,5 @@
-import { diff, TextDocument, Line } from "../diff";
+import type { TextDocument, Line } from "../diff";
+import { diff } from "../diff";
 import { shallowEqual } from "../util/array";
 import { splitByLine } from "../util/text";
 

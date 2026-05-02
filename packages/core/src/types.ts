@@ -1,6 +1,6 @@
-import { promises } from "node:fs";
-import * as Database from "./database/index.ts";
-import { FileService, Logger, Process } from "./services/index.ts";
+import type { promises } from "node:fs";
+import type * as Database from "./database/index.ts";
+import type { FileService, Logger, Process } from "./services/index.ts";
 
 /**
  * Type utility

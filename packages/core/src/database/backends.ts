@@ -1,11 +1,12 @@
 import * as path from "node:path";
 import { defaultFs } from "../services";
-import { OID, Pathname } from "../types";
+import type { OID, Pathname } from "../types";
 import * as errorUtil from "../util";
 import { BaseError } from "../util";
 import * as array from "../util/array";
-import { Backend, GitRecord, Raw } from "./database";
-import { Environment, Loose } from "./loose";
+import type { Backend, GitRecord, Raw } from "./database";
+import type { Environment } from "./loose";
+import { Loose } from "./loose";
 import { Packed } from "./packed";
 
 export class Backends implements Backend {

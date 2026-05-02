@@ -1,7 +1,7 @@
 import arg from "@kit/core/util/arg";
 import * as ConfigLib from "@kit/core/config";
-import { SectionName } from "@kit/core/config";
-import { Pathname } from "@kit/core/types";
+import type { SectionName } from "@kit/core/config";
+import type { Pathname } from "@kit/core/types";
 import { asserts, compact, isempty } from "@kit/core/util";
 import { BaseCommand } from "./base";
 

@@ -3,7 +3,7 @@ import * as fsCb from "node:fs";
 import * as fs from "node:fs/promises";
 import * as path from "node:path";
 import assert from "node:assert";
-import { Repository } from "@kit/core/repository";
+import type { Repository } from "@kit/core/repository";
 import * as revlist from "@kit/core/rev_list";
 import * as FileService from "@kit/core/services/FileService";
 import { stripIndent } from "@kit/core/util";

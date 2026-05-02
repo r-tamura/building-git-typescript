@@ -1,7 +1,7 @@
 import * as pack from "../pack";
-import * as FileService from "../services/FileService";
+import type * as FileService from "../services/FileService";
 import { defaultFs } from "../services/FileService";
-import { OID, Pathname } from "../types";
+import type { OID, Pathname } from "../types";
 import { asserts } from "../util";
 import * as fsUtil from "../util/fs";
 import * as database from "./database";

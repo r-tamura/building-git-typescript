@@ -1,7 +1,7 @@
 import arg from "@kit/core/util/arg";
 import { ORIG_HEAD } from "@kit/core/refs";
 import { HEAD, InvalidObject, Revision } from "@kit/core/revision";
-import { OID, Pathname } from "@kit/core/types";
+import type { OID, Pathname } from "@kit/core/types";
 import { isempty } from "@kit/core/util/array";
 import { asserts } from "@kit/core/util/assert";
 import { posixPath } from "@kit/core/util/fs";

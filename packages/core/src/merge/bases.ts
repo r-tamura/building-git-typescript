@@ -1,5 +1,5 @@
-import { Database } from "../database";
-import { OID } from "../types";
+import type { Database } from "../database";
+import type { OID } from "../types";
 import { CommonAncestors } from "./common_anncestors";
 import { exclude, merge } from "../util";
 

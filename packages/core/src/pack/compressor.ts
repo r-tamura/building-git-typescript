@@ -1,9 +1,10 @@
-import * as database from "../database";
-import * as progress from "../progress";
+import type * as database from "../database";
+import type * as progress from "../progress";
 import { asserts } from "../util";
 import { Delta } from "./delta";
-import { Entry } from "./entry";
-import { Unpacked, Window } from "./windows";
+import type { Entry } from "./entry";
+import type { Unpacked } from "./windows";
+import { Window } from "./windows";
 
 /** 圧縮するオブジェクトサイズの範囲 50バイト ~ 512MB */
 const OBJECT_SIZE_RANGE = { minimum: 50, maximum: 0x20000000 } as const;

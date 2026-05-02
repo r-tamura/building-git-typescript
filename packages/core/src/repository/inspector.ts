@@ -1,7 +1,7 @@
-import { Stats } from "node:fs";
-import { Repository } from "./repository";
-import { Pathname } from "../types";
-import * as Index from "../gindex";
+import type { Stats } from "node:fs";
+import type { Repository } from "./repository";
+import type { Pathname } from "../types";
+import type * as Index from "../gindex";
 import * as Database from "../database";
 
 export type IndexStatus = "added" | "modified" | "deleted" | null;

@@ -1,9 +1,10 @@
-import { spawnSync, SpawnSyncReturns } from "node:child_process";
+import type { SpawnSyncReturns } from "node:child_process";
+import { spawnSync } from "node:child_process";
 import * as fsCallback from "node:fs";
 import { O_CREAT, O_TRUNC, O_WRONLY } from "node:constants";
-import { promises } from "node:fs";
-import { FileService, Process } from "@kit/core/services";
-import { Nullable, Pathname } from "@kit/core/types";
+import type { promises } from "node:fs";
+import type { FileService, Process } from "@kit/core/services";
+import type { Nullable, Pathname } from "@kit/core/types";
 import { split as shlexSplit } from "@kit/core/util/shlex";
 import { splitByLine, strip } from "@kit/core/util/text";
 import { Error } from "@kit/core/repository/pending_commit";

@@ -1,10 +1,10 @@
 import path = require("node:path");
-import * as Database from "./database";
+import type * as Database from "./database";
 import { PathFilter } from "./path_filter";
-import { SymRef } from "./refs";
-import { Repository } from "./repository";
+import type { SymRef } from "./refs";
+import type { Repository } from "./repository";
 import { COMMIT, HEAD, InvalidObject, Revision } from "./revision";
-import { CompleteCommit, OID, Pathname } from "./types";
+import type { CompleteCommit, OID, Pathname } from "./types";
 import {
   asserts,
   clone,

@@ -1,9 +1,9 @@
 import arg from "@kit/core/util/arg";
-import { Style } from "../color";
-import * as Repository from "@kit/core/repository";
-import { ConflictStatus } from "@kit/core/repository";
-import { MergeType } from "@kit/core/repository/pending_commit";
-import { Pathname } from "@kit/core/types";
+import type { Style } from "../color";
+import type * as Repository from "@kit/core/repository";
+import type { ConflictStatus } from "@kit/core/repository";
+import type { MergeType } from "@kit/core/repository/pending_commit";
+import type { Pathname } from "@kit/core/types";
 import { shallowEqual, stripIndent } from "@kit/core/util";
 import { BaseCommand } from "./base";
 

@@ -1,17 +1,12 @@
-import { Stats } from "node:fs";
+import type { Stats } from "node:fs";
 import * as path from "node:path";
-import * as Database from "../database";
-import * as Index from "../gindex";
-import { OID, Pathname } from "../types";
-import {
-  ascendUnix,
-  asserts,
-  BaseError,
-  descendUnix,
-  PosixPath,
-} from "../util";
+import type * as Database from "../database";
+import type * as Index from "../gindex";
+import type { OID, Pathname } from "../types";
+import type { PosixPath } from "../util";
+import { ascendUnix, asserts, BaseError, descendUnix } from "../util";
 import { Inspector } from "./inspector";
-import { Repository } from "./repository";
+import type { Repository } from "./repository";
 
 export type DeleteChange = [PosixPath, null];
 export type CreateChange = [PosixPath, Database.Entry];

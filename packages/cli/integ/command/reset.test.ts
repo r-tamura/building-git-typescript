@@ -1,5 +1,5 @@
 import { describe, it, beforeEach, afterEach } from "vitest";
-import { CompleteCommit, OID } from "@kit/core/types";
+import type { CompleteCommit, OID } from "@kit/core/types";
 import assert from "node:assert";
 import * as T from "./helper";
 

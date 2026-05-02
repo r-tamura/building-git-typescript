@@ -1,19 +1,15 @@
 import { O_CREAT, O_EXCL, O_WRONLY } from "node:constants";
-import { Stats } from "node:fs";
+import type { Stats } from "node:fs";
 import * as path from "node:path";
-import { ModeNumber } from "./entry";
-import { Changes, Migration } from "./repository";
-import { defaultFs, FileService, mkdirp, rmrf } from "./services";
-import { Pathname } from "./types";
+import type { ModeNumber } from "./entry";
+import type { Changes, Migration } from "./repository";
+import type { FileService } from "./services";
+import { defaultFs, mkdirp, rmrf } from "./services";
+import type { Pathname } from "./types";
 import { asserts } from "./util/assert";
 import { BaseError, isNodeError } from "./util/error";
-import {
-  ascendUnix,
-  posixJoin,
-  posixPath,
-  PosixPath,
-  toOsPath,
-} from "./util/fs";
+import type { PosixPath } from "./util/fs";
+import { ascendUnix, posixJoin, posixPath, toOsPath } from "./util/fs";
 
 export type Environment = {
   fs?: FileService;

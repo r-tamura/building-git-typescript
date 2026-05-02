@@ -2,9 +2,9 @@ import { describe, it, beforeEach, afterEach } from "vitest";
 import * as T from "./helper";
 import { describeOnlyUnix } from "./helper";
 import assert from "node:assert";
-import { Pathname } from "@kit/core/types";
+import type { Pathname } from "@kit/core/types";
 import { stripIndent } from "@kit/core/util";
-import { Stage } from "@kit/core/gindex";
+import type { Stage } from "@kit/core/gindex";
 
 const t = T.create();
 

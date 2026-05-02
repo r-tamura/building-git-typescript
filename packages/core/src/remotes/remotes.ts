@@ -1,5 +1,5 @@
 import * as path from "path/posix";
-import { Config } from "../config";
+import type { Config } from "../config";
 import * as Refs from "../refs";
 import { BaseError, isempty } from "../util";
 import { Refspec } from "./refspec";

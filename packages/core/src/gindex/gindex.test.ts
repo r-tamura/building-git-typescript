@@ -8,7 +8,7 @@ import * as Database from "../database";
 import { LockDenied } from "../refs";
 import { posixPath } from "../util/fs";
 import { fakeIndex } from "./__test__/fakeIndex";
-import { Entry } from "./entry";
+import type { Entry } from "./entry";
 import { Index } from "./gindex";
 
 import mock = require("mock-fs");

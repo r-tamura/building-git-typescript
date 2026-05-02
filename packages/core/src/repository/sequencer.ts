@@ -1,14 +1,15 @@
 import * as fsCallback from "node:fs";
 import * as path from "node:path";
-import { SequencerOptions as Options } from "./sequencer_options";
+import type { SequencerOptions as Options } from "./sequencer_options";
 import { Config } from "../config";
 import { Lockfile } from "../lockfile";
 import { ORIG_HEAD } from "../refs";
-import { FileService, rmrf } from "../services";
-import { CompleteCommit, Nullable, Pathname } from "../types";
+import type { FileService } from "../services";
+import { rmrf } from "../services";
+import type { CompleteCommit, Nullable, Pathname } from "../types";
 import { asserts, BaseError, splitByLine, strip } from "../util";
 import { posixPath } from "../util/fs";
-import { Repository } from "./repository";
+import type { Repository } from "./repository";
 const fs = fsCallback.promises;
 
 export interface Environment {

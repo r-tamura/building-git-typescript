@@ -1,11 +1,14 @@
 import { type Spec } from "@kit/core/util/arg";
 import { Commit } from "@kit/core/database";
 import { CherryPick } from "@kit/core/merge";
-import { MergeType, PendingCommit } from "@kit/core/repository/pending_commit";
+import type {
+  MergeType,
+  PendingCommit,
+} from "@kit/core/repository/pending_commit";
 import { Sequencer } from "@kit/core/repository/sequencer";
 import { RevList } from "@kit/core/rev_list";
 import { HEAD } from "@kit/core/revision";
-import { CompleteCommit, Nullable } from "@kit/core/types";
+import type { CompleteCommit, Nullable } from "@kit/core/types";
 import { stripIndent } from "@kit/core/util";
 import { asserts } from "@kit/core/util/assert";
 import { BaseCommand } from "./base";

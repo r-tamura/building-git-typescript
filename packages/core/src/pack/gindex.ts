@@ -1,8 +1,8 @@
-import { OID } from "../types";
+import type { OID } from "../types";
 import * as array from "../util/array";
 import { asserts } from "../util/assert";
 import * as binary from "../util/binary";
-import * as fsUtil from "../util/fs";
+import type * as fsUtil from "../util/fs";
 import { IDX_MAX_OFFSET } from "./pack";
 
 const HEADER_SIZE = 0;

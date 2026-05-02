@@ -1,9 +1,11 @@
 import * as os from "node:os";
 import * as path from "node:path";
 import { Lockfile, MissingParent } from "./lockfile";
-import { defaultFs, directory, exists, FileService } from "./services";
-import { Nullable, OID, Pathname } from "./types";
-import { ascendUnix, asserts, BaseError, find, PosixPath } from "./util";
+import type { FileService } from "./services";
+import { defaultFs, directory, exists } from "./services";
+import type { Nullable, OID, Pathname } from "./types";
+import type { PosixPath } from "./util";
+import { ascendUnix, asserts, BaseError, find } from "./util";
 import { posixJoin, posixPath, toOsPath } from "./util/fs";
 import { nullify } from "./util/logic";
 

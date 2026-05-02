@@ -1,7 +1,8 @@
 import { Lockfile } from "../lockfile";
 import { readByLine } from "../services";
-import { Nullable } from "../types";
-import { asserts, BaseError, PosixPath } from "../util";
+import type { Nullable } from "../types";
+import type { PosixPath } from "../util";
+import { asserts, BaseError } from "../util";
 import { clone, first, isempty, last } from "../util/array";
 import { ObjectKeyHash } from "../util/collection";
 

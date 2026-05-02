@@ -1,4 +1,4 @@
-import { OID } from "../types";
+import type { OID } from "../types";
 import { Hash, scanUntil, splitByLine } from "../util";
 import { Author } from "./author";
 

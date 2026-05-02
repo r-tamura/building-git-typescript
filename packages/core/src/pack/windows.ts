@@ -1,5 +1,5 @@
-import { Entry } from "./entry";
-import { Xdelta } from "./xdelta";
+import type { Entry } from "./entry";
+import type { Xdelta } from "./xdelta";
 // import { Delta } from './delta'
 export class Unpacked {
   deltaIndex?: Xdelta;

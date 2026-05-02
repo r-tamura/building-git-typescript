@@ -1,9 +1,9 @@
-import { Stats } from "node:fs";
-import { Blob } from "../database";
-import { OID, Pathname } from "../types";
+import type { Stats } from "node:fs";
+import type { Blob } from "../database";
+import type { OID, Pathname } from "../types";
 import { posixPath } from "../util/fs";
-import { Repository } from "./repository";
-import { Status } from "./status";
+import type { Repository } from "./repository";
+import type { Status } from "./status";
 
 export class HardReset {
   #repo: Repository;

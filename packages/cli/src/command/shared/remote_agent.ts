@@ -1,12 +1,14 @@
 import * as fs from "node:fs";
 import * as path from "node:path";
 import * as remotes from "@kit/core/remotes";
-import { Repository, RepositoryEnv } from "@kit/core/repository";
-import { Pathname } from "@kit/core/types";
+import type { RepositoryEnv } from "@kit/core/repository";
+import { Repository } from "@kit/core/repository";
+import type { Pathname } from "@kit/core/types";
 import { BaseError, isNodeError } from "@kit/core/util";
 import * as pathUtil from "@kit/core/util/fs";
-import { GitCommand } from "../base";
-import { checkConnected, Connectable } from "./remote_common";
+import type { GitCommand } from "../base";
+import type { Connectable } from "./remote_common";
+import { checkConnected } from "./remote_common";
 
 export interface RemoteAgent extends GitCommand, Connectable {
   readonly stdin: NodeJS.Process["stdin"];

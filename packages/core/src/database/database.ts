@@ -1,8 +1,9 @@
 import assert from "node:assert";
 import { createHash } from "node:crypto";
 import { PathFilter } from "../path_filter";
-import { defaultFs, defaultZlib, FileService, Zlib } from "../services";
-import {
+import type { FileService, Zlib } from "../services";
+import { defaultFs, defaultZlib } from "../services";
+import type {
   CompleteGitObject,
   CompleteTree,
   Dict,
@@ -11,17 +12,13 @@ import {
   OID,
 } from "../types";
 import { asserts } from "../util";
-import {
-  POSIX_PATH_ZERO,
-  posixJoin,
-  PosixPath,
-  toPathComponentsPosix,
-} from "../util/fs";
+import type { PosixPath } from "../util/fs";
+import { POSIX_PATH_ZERO, posixJoin, toPathComponentsPosix } from "../util/fs";
 import { Backends } from "./backends";
 import { Blob } from "./blob";
 import { Commit } from "./commit";
 import { Entry } from "./entry";
-import { GitObjectType } from "./loose";
+import type { GitObjectType } from "./loose";
 import { Tree } from "./tree";
 import { TreeDiff } from "./tree_diff";
 import path = require("node:path");

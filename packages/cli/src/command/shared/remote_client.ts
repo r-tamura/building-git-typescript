@@ -1,13 +1,14 @@
 import * as child_process from "node:child_process";
 import { URL } from "node:url";
 import * as remotes from "@kit/core/remotes";
-import { OID } from "@kit/core/types";
+import type { OID } from "@kit/core/types";
 import * as array from "@kit/core/util/array";
 import { BaseError } from "@kit/core/util/error";
 import { quote, split } from "@kit/core/util/shlex";
-import { GitCommand } from "../base";
-import { FastForwardError } from "./fast_forward";
-import { checkConnected, Connectable } from "./remote_common";
+import type { GitCommand } from "../base";
+import type { FastForwardError } from "./fast_forward";
+import type { Connectable } from "./remote_common";
+import { checkConnected } from "./remote_common";
 
 const REF_LINE = /^([0-9a-f]+) (.*)$/;
 export const ZERO_OID = "0".repeat(40);

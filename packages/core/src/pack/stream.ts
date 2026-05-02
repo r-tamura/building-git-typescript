@@ -1,10 +1,10 @@
 import * as crypto from "node:crypto";
 import * as fs from "node:fs";
-import { Readable } from "node:stream";
+import type { Readable } from "node:stream";
 import { readChunk } from "../services";
-import { Pathname } from "../types";
-import * as fsUtil from "../util/fs";
-import * as pack from "./pack";
+import type { Pathname } from "../types";
+import type * as fsUtil from "../util/fs";
+import type * as pack from "./pack";
 import { InvalidPack } from "./pack";
 export class Stream implements fsUtil.Seekable {
   #input: Readable;

@@ -1,8 +1,9 @@
 import { Config } from "@kit/core/config";
 import { Refs } from "@kit/core/refs";
-import { FileService } from "@kit/core/services";
-import { Environment } from "@kit/core/types";
-import { posixJoin, PosixPath, posixPath, toOsPath } from "@kit/core/util/fs";
+import type { FileService } from "@kit/core/services";
+import type { Environment } from "@kit/core/types";
+import type { PosixPath } from "@kit/core/util/fs";
+import { posixJoin, posixPath, toOsPath } from "@kit/core/util/fs";
 import { BaseCommand } from "./base";
 
 const DEFAULT_BRANCH = "master";

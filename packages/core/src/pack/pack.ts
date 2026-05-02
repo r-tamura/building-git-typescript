@@ -1,4 +1,4 @@
-import { Nullable, OID } from "../types";
+import type { Nullable, OID } from "../types";
 import { BaseError } from "../util/error";
 
 export const HEADER_SIZE = 12;

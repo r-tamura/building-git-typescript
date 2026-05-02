@@ -1,5 +1,5 @@
-import { Repository } from "./repository";
-import { OID } from "./types";
+import type { Repository } from "./repository";
+import type { OID } from "./types";
 import { asserts, BaseError, times } from "./util";
 
 const INVALID_BRANCH_NAME = [

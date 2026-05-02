@@ -2,7 +2,7 @@ import { Myers } from "./myers";
 import { Hunk } from "./hunk";
 import { splitByLine } from "../util";
 import { Combined } from "./combined";
-import { Edit } from "./myers";
+import type { Edit } from "./myers";
 
 export type TextDocument = string | string[];
 

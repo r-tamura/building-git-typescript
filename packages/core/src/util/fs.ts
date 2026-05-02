@@ -1,10 +1,12 @@
 /**
  * File system / path 周りのユーティリティ
  */
-import { constants, Stats } from "node:fs";
-import { FileHandle, open } from "node:fs/promises";
+import type { Stats } from "node:fs";
+import { constants } from "node:fs";
+import type { FileHandle } from "node:fs/promises";
+import { open } from "node:fs/promises";
 import * as path from "node:path";
-import { Pathname } from "../types";
+import type { Pathname } from "../types";
 import { asserts } from "./assert";
 
 export function isExecutable(stat: Stats) {
