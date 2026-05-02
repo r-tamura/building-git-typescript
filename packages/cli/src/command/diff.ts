@@ -6,14 +6,14 @@ import { STAGES } from "@kit/core/gindex";
 import type * as Repository from "@kit/core/repository";
 import { asserts } from "@kit/core/util";
 import type { PosixPath } from "@kit/core/util/fs";
-import { BaseCommand } from "./base";
+import { BaseCommand } from "./base.js";
 import {
   definePrintDiffOptions,
   NULL_OID,
   printCombinedDiff,
   printDiff,
   Target,
-} from "./shared/print_diff";
+} from "./shared/print_diff.js";
 
 interface Options {
   cached: boolean;

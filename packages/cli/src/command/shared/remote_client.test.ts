@@ -1,6 +1,6 @@
 import { describe, it } from "vitest";
 import assert from "node:assert";
-import { buildAgentCommand } from "./remote_client";
+import { buildAgentCommand } from "./remote_client.js";
 
 describe("buildAgentCommand", () => {
   it.each`

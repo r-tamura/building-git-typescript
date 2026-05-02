@@ -1,11 +1,11 @@
 import type * as remotes from "@kit/core/remotes";
 import type { Environment, OID } from "@kit/core/types";
 import { asserts, BaseError, unreachable } from "@kit/core/util";
-import { BaseCommand } from "./base";
-import * as fast_forward from "./shared/fast_forward";
-import * as receive_objects from "./shared/receive_objects";
-import * as remote_agent from "./shared/remote_agent";
-import { checkConnected } from "./shared/remote_common";
+import { BaseCommand } from "./base.js";
+import * as fast_forward from "./shared/fast_forward.js";
+import * as receive_objects from "./shared/receive_objects.js";
+import * as remote_agent from "./shared/remote_agent.js";
+import { checkConnected } from "./shared/remote_common.js";
 
 const CAPABILITIES = ["no-thin", "report-status", "delete-refs"];
 

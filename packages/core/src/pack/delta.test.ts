@@ -1,7 +1,7 @@
 import { describe, it } from "vitest";
 import assert from "node:assert";
-import { VarIntLE } from "./numbers";
-import { Xdelta } from "./xdelta";
+import { VarIntLE } from "./numbers.js";
+import { Xdelta } from "./xdelta.js";
 
 describe("XDelta Encoding", () => {
   it.each([

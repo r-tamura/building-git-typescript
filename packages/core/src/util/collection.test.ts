@@ -1,6 +1,6 @@
 import { describe, it } from "vitest";
 import assert from "node:assert";
-import { ObjectKeyHash } from "./collection";
+import { ObjectKeyHash } from "./collection.js";
 
 type Key = readonly [string, number];
 const ser = (k: Key) => k[0] + ":" + k[1];

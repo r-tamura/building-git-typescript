@@ -2,8 +2,8 @@ import { vi } from "vitest";
 import type { Mock } from "vitest";
 import { Stats } from "node:fs";
 import type { FileHandle } from "node:fs/promises";
-import type { FileService } from "../services/FileService.ts";
-import { FS_ERROR } from "./error";
+import type { FileService } from "../services/FileService.js";
+import { FS_ERROR } from "./error.js";
 
 function makeNotExpectedCalledFileService() {
   const errorMock = (apiName: string) =>

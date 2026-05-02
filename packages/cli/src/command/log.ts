@@ -1,20 +1,20 @@
 import { AssertionError } from "node:assert";
 import * as os from "node:os";
-import type { Style } from "../color";
+import type { Style } from "../color.js";
 import type { Change, Entry } from "@kit/core/database";
 import type { SymRef } from "@kit/core/refs";
 import { RevList } from "@kit/core/rev_list";
 import type { CompleteCommit, Pathname } from "@kit/core/types";
 import { asserts, includes, partition } from "@kit/core/util";
 import { shallowEqual } from "@kit/core/util/object";
-import { BaseCommand } from "./base";
+import { BaseCommand } from "./base.js";
 import {
   definePrintDiffOptions,
   NULL_OID,
   printCombinedDiff,
   printDiff,
   Target,
-} from "./shared/print_diff";
+} from "./shared/print_diff.js";
 import arg, { type Spec } from "@kit/core/util/arg";
 
 const FORMAT = ["medium", "oneline"] as const;

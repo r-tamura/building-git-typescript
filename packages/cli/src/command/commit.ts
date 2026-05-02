@@ -5,8 +5,8 @@ import { Error } from "@kit/core/repository/pending_commit";
 import { Revision } from "@kit/core/revision";
 import type { CompleteCommit, Environment, Nullable } from "@kit/core/types";
 import { asserts } from "@kit/core/util";
-import { BaseCommand } from "./base";
-import type { CommitOptions } from "./shared/write_commit";
+import { BaseCommand } from "./base.js";
+import type { CommitOptions } from "./shared/write_commit.js";
 import {
   commitMessagePath,
   currentAuthor,
@@ -17,7 +17,7 @@ import {
   resumeMerge,
   writeCommit,
   writeTree,
-} from "./shared/write_commit";
+} from "./shared/write_commit.js";
 
 export const COMMIT_NOTES = `Please Enter the commit message for your changes. Lines starting
 with '#' will be ignored, and an empty message aborts the commit.

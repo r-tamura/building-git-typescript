@@ -1,9 +1,9 @@
 import * as path from "node:path";
-import type { Pathname } from "../types";
-import { includes, last } from "../util/array";
-import { posixPath } from "../util/fs";
-import type { SectionName } from "./config";
-import { Config } from "./config";
+import type { Pathname } from "../types.js";
+import { includes, last } from "../util/array.js";
+import { posixPath } from "../util/fs.js";
+import type { SectionName } from "./config.js";
+import { Config } from "./config.js";
 
 // Note: NodeJSではビルトインで'~'を解決する方法は提供されていない
 // https://stackoverflow.com/questions/21077670/expanding-resolving-in-node-js

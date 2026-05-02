@@ -2,7 +2,7 @@
  * アプリケーション内のエラーで利用されるベースエラー
  */
 
-import { asserts } from "./assert";
+import { asserts } from "./assert.js";
 
 export interface ErrorConstructor {
   new (message?: string): BaseError;

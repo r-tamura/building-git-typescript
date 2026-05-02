@@ -1,9 +1,9 @@
 import { describe, it, beforeEach, afterEach, vi } from "vitest";
 import * as path from "node:path";
 import assert from "node:assert";
-import { Editor } from "../../src/editor";
+import { Editor } from "../../src/editor.js";
 import { RevList } from "@kit/core/rev_list";
-import * as T from "./helper";
+import * as T from "./helper.js";
 
 const t = T.create("commit");
 

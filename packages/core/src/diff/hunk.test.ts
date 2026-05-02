@@ -1,10 +1,10 @@
 import { describe, it } from "vitest";
-import type { TextDocument } from "./diff";
-import { lines, Line, combinedHunk } from "./diff";
-import { Myers, Edit } from "./myers";
-import { Hunk } from "./hunk";
+import type { TextDocument } from "./diff.js";
+import { lines, Line, combinedHunk } from "./diff.js";
+import { Myers, Edit } from "./myers.js";
+import { Hunk } from "./hunk.js";
 import assert from "node:assert";
-import { Row } from "./combined";
+import { Row } from "./combined.js";
 
 describe("Hunk.filter", () => {
   describe("通常diff", () => {

@@ -3,13 +3,13 @@ import * as crypto from "node:crypto";
 import { promises as fsPromises } from "node:fs";
 import * as path from "node:path";
 import assert from "node:assert";
-import { makeDummyFileStats } from "../__test__";
-import * as Database from "../database";
-import { LockDenied } from "../refs";
-import { posixPath } from "../util/fs";
-import { fakeIndex } from "./__test__/fakeIndex";
-import type { Entry } from "./entry";
-import { Index } from "./gindex";
+import { makeDummyFileStats } from "../__test__/index.js";
+import * as Database from "../database/index.js";
+import { LockDenied } from "../refs.js";
+import { posixPath } from "../util/fs.js";
+import { fakeIndex } from "./__test__/fakeIndex.js";
+import type { Entry } from "./entry.js";
+import { Index } from "./gindex.js";
 
 import mock = require("mock-fs");
 

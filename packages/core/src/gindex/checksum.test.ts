@@ -1,6 +1,6 @@
 import { describe, it, beforeAll, vi } from "vitest";
 import assert from "node:assert";
-import { Checksum } from "./checksum";
+import { Checksum } from "./checksum.js";
 
 describe("Checksum#writeChecksum", () => {
   const expectedSha1 = Buffer.from(

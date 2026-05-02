@@ -2,11 +2,11 @@ import * as path from "node:path";
 import { constants } from "node:zlib";
 import type { Backend } from ".";
 import { Raw } from ".";
-import type { FileService, Zlib } from "../services";
-import { defaultFs, defaultZlib } from "../services";
-import { TempFile } from "../tempfile";
-import type { OID, Pathname, Rand } from "../types";
-import { asserts } from "../util/assert";
+import type { FileService, Zlib } from "../services/index.js";
+import { defaultFs, defaultZlib } from "../services/index.js";
+import { TempFile } from "../tempfile.js";
+import type { OID, Pathname, Rand } from "../types.js";
+import { asserts } from "../util/assert.js";
 
 export type GitObjectType = "blob" | "tree" | "commit";
 export interface Environment {

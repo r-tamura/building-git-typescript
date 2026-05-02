@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { quote, split } from "./shlex";
+import { quote, split } from "./shlex.js";
 
 describe("shlex.split", () => {
   it("空文字列は空配列", () => {

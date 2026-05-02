@@ -1,12 +1,12 @@
 import type { promises } from "node:fs";
 import { constants } from "node:fs";
 import * as path from "node:path";
-import { LockDenied } from "./refs";
-import type { FileService } from "./services";
-import { defaultFs } from "./services";
-import type { IOHandle } from "./types";
-import type { PosixPath } from "./util";
-import { BaseError, posixPath, toOsPath } from "./util";
+import { LockDenied } from "./refs.js";
+import type { FileService } from "./services/index.js";
+import { defaultFs } from "./services/index.js";
+import type { IOHandle } from "./types.js";
+import type { PosixPath } from "./util/index.js";
+import { BaseError, posixPath, toOsPath } from "./util/index.js";
 export type LockfileEnvironment = {
   fs?: FileService;
 };

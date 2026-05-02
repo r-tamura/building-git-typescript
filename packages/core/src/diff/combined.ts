@@ -1,8 +1,8 @@
-import { enumerate, zip } from "../util/array";
-import { notNull } from "../util/logic";
-import { prop } from "../util/object";
-import type { Edit } from "./myers";
-import { SYMBOLS } from "./myers";
+import { enumerate, zip } from "../util/array.js";
+import { notNull } from "../util/logic.js";
+import { prop } from "../util/object.js";
+import type { Edit } from "./myers.js";
+import { SYMBOLS } from "./myers.js";
 
 /** 1ファイル分の行差分(Edit)の配列 */
 type Diff = Edit[];

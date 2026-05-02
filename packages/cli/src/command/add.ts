@@ -5,7 +5,7 @@ import { asserts, stripIndent } from "@kit/core/util";
 import type { PosixPath } from "@kit/core/util/fs";
 import { posixPath } from "@kit/core/util/fs";
 import { MissingFile, NoPermission } from "@kit/core/workspace";
-import { BaseCommand } from "./base";
+import { BaseCommand } from "./base.js";
 
 const LOCKED_INDEX_MESSAGE = `Another jit process seems to be running in this repository.
 Please make sure all processes are terminated then try again.

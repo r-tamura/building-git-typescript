@@ -6,8 +6,8 @@ import { constants } from "node:fs";
 import type { FileHandle } from "node:fs/promises";
 import { open } from "node:fs/promises";
 import * as path from "node:path";
-import type { Pathname } from "../types";
-import { asserts } from "./assert";
+import type { Pathname } from "../types.js";
+import { asserts } from "./assert.js";
 
 export function isExecutable(stat: Stats) {
   const modeBin = stat.mode.toString(2);
@@ -41,7 +41,7 @@ function guessPathSeparator(pathname: Pathname): typeof path.sep {
  *
  * @example
  * ```ts
- * import { descendUnix } from "./fs";
+ * import { descendUnix } from "./fs.js";
  * descendUnix("/home/username/a.txt")
  * // => ["/home", "/home/username", "/home/username/a.txt"]
  * ```

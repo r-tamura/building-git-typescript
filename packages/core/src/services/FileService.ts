@@ -4,8 +4,8 @@ import * as readline from "node:readline";
 import type { Readable } from "node:stream";
 import { promisify } from "node:util";
 import * as zlib from "node:zlib";
-import type { Pathname } from "../types.ts";
-import { BaseError } from "../util/index.ts";
+import type { Pathname } from "../types.js";
+import { BaseError } from "../util/index.js";
 const fs = CallbackFs.promises;
 
 export type FileService = Pick<

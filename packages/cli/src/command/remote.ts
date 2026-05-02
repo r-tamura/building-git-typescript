@@ -2,7 +2,7 @@ import arg from "@kit/core/util/arg";
 import type { RemoteName } from "@kit/core/remotes";
 import { InvalidRemote } from "@kit/core/remotes";
 import { asserts } from "@kit/core/util";
-import { BaseCommand } from "./base";
+import { BaseCommand } from "./base.js";
 
 interface Options {
   verbose: boolean;

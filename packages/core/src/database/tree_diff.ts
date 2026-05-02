@@ -1,10 +1,10 @@
-import type { PathFilter } from "../path_filter";
-import type { OID } from "../types";
-import type { PosixPath } from "../util";
-import { asserts } from "../util";
-import type { Database } from "./database";
-import type { Entry } from "./entry";
-import type { EntryMap } from "./tree";
+import type { PathFilter } from "../path_filter.js";
+import type { OID } from "../types.js";
+import type { PosixPath } from "../util/index.js";
+import { asserts } from "../util/index.js";
+import type { Database } from "./database.js";
+import type { Entry } from "./entry.js";
+import type { EntryMap } from "./tree.js";
 
 type A = Entry | null;
 type B = A;

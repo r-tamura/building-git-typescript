@@ -1,15 +1,15 @@
 import { O_CREAT, O_EXCL, O_WRONLY } from "node:constants";
 import type { Stats } from "node:fs";
 import * as path from "node:path";
-import type { ModeNumber } from "./entry";
-import type { Changes, Migration } from "./repository";
-import type { FileService } from "./services";
-import { defaultFs, mkdirp, rmrf } from "./services";
-import type { Pathname } from "./types";
-import { asserts } from "./util/assert";
-import { BaseError, isNodeError } from "./util/error";
-import type { PosixPath } from "./util/fs";
-import { ascendUnix, posixJoin, posixPath, toOsPath } from "./util/fs";
+import type { ModeNumber } from "./entry.js";
+import type { Changes, Migration } from "./repository/index.js";
+import type { FileService } from "./services/index.js";
+import { defaultFs, mkdirp, rmrf } from "./services/index.js";
+import type { Pathname } from "./types.js";
+import { asserts } from "./util/assert.js";
+import { BaseError, isNodeError } from "./util/error.js";
+import type { PosixPath } from "./util/fs.js";
+import { ascendUnix, posixJoin, posixPath, toOsPath } from "./util/fs.js";
 
 export type Environment = {
   fs?: FileService;

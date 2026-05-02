@@ -14,8 +14,8 @@ import type {
   Pathname,
 } from "@kit/core/types";
 import { asserts, assertsComplete, BaseError } from "@kit/core/util";
-import type { BaseCommand } from "../base";
-import { COMMIT_NOTES } from "../commit";
+import type { BaseCommand } from "../base.js";
+import { COMMIT_NOTES } from "../commit.js";
 
 export const CONFLICT_MESSAGE = `hint: Fix them up in the work tree, and then use 'kit add/rm <file>'
 hint: as appropriate to mark resolution and make a commit.

@@ -1,7 +1,7 @@
 import * as stream from "node:stream";
-import * as FileService from "../services";
-import { asserts } from "../util";
-import * as iter from "../util/iter";
+import * as FileService from "../services/index.js";
+import { asserts } from "../util/index.js";
+import * as iter from "../util/iter.js";
 
 /**
  * NodeJS.ReadableとRubyのReadable、Building git内で実装したStreamのインタフェースが合わないため、

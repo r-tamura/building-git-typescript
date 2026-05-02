@@ -1,8 +1,8 @@
-import type { Edit } from "./myers";
-import { get, transpose } from "../util/array";
-import { prop } from "../util/object";
-import type { Line } from "./diff";
-import { notNull } from "../util/logic";
+import type { Edit } from "./myers.js";
+import { get, transpose } from "../util/array.js";
+import { prop } from "../util/object.js";
+import type { Line } from "./diff.js";
+import { notNull } from "../util/logic.js";
 
 const HUNK_CONTEXT = 3;
 

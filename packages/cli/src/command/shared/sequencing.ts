@@ -9,8 +9,8 @@ import type { SequencerOptions } from "@kit/core/repository/sequencer_options";
 import type { CompleteCommit, Nullable } from "@kit/core/types";
 import { asserts, assertsComplete } from "@kit/core/util/assert";
 import { isObject } from "@kit/core/util/object";
-import type { BaseCommand } from "../base";
-import * as WriteCommit from "./write_commit";
+import type { BaseCommand } from "../base.js";
+import * as WriteCommit from "./write_commit.js";
 
 const CONFLICT_NOTES = `  after resolving the conflicts, mark the corrected paths
   with 'kit add <paths>' or 'kit rm <paths>'

@@ -1,7 +1,7 @@
-import { asserts } from "../util";
-import * as array from "../util/array";
-import { Copy, Insert } from "./delta";
-import { MAX_COPY_SIZE, MAX_INSERT_SIZE } from "./pack";
+import { asserts } from "../util/index.js";
+import * as array from "../util/array.js";
+import { Copy, Insert } from "./delta.js";
+import { MAX_COPY_SIZE, MAX_INSERT_SIZE } from "./pack.js";
 
 const BLOCK_SIZE = 16;
 

@@ -1,6 +1,6 @@
-import type { Entry } from "./entry";
-import type { Xdelta } from "./xdelta";
-// import { Delta } from './delta'
+import type { Entry } from "./entry.js";
+import type { Xdelta } from "./xdelta.js";
+// import { Delta } from './delta.js'
 export class Unpacked {
   deltaIndex?: Xdelta;
   static of(entry: Entry, data: Buffer) {

@@ -1,10 +1,10 @@
 import path = require("node:path");
-import type * as Database from "./database";
-import { PathFilter } from "./path_filter";
-import type { SymRef } from "./refs";
-import type { Repository } from "./repository";
-import { COMMIT, HEAD, InvalidObject, Revision } from "./revision";
-import type { CompleteCommit, OID, Pathname } from "./types";
+import type * as Database from "./database/index.js";
+import { PathFilter } from "./path_filter.js";
+import type { SymRef } from "./refs.js";
+import type { Repository } from "./repository/index.js";
+import { COMMIT, HEAD, InvalidObject, Revision } from "./revision.js";
+import type { CompleteCommit, OID, Pathname } from "./types.js";
 import {
   asserts,
   clone,
@@ -15,7 +15,7 @@ import {
   isempty,
   last,
   posixPath,
-} from "./util";
+} from "./util/index.js";
 
 type Flag = "seen" | "added" | "uninteresting" | "treesame";
 const RANGE = /^(.*)\.\.(.*)$/;

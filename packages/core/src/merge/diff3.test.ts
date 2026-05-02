@@ -1,7 +1,7 @@
 import { describe, it } from "vitest";
-import { Diff3 } from "./diff3";
+import { Diff3 } from "./diff3.js";
 import assert from "node:assert";
-import { stripIndent } from "../util";
+import { stripIndent } from "../util/index.js";
 
 describe("Diff3.merge", () => {
   it.each([

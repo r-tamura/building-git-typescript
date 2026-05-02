@@ -5,7 +5,7 @@ import type { OID, Pathname } from "@kit/core/types";
 import { isempty } from "@kit/core/util/array";
 import { asserts } from "@kit/core/util/assert";
 import { posixPath } from "@kit/core/util/fs";
-import { BaseCommand } from "./base";
+import { BaseCommand } from "./base.js";
 
 /** resetモード */
 type Mode = "soft" | "mixed" | "hard";

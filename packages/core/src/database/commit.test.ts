@@ -1,8 +1,8 @@
 import { describe, it, beforeEach, afterEach, vi } from "vitest";
 import assert from "node:assert";
-import { toLF } from "../util";
-import { Author } from "./author";
-import { Commit } from "./commit";
+import { toLF } from "../util/index.js";
+import { Author } from "./author.js";
+import { Commit } from "./commit.js";
 
 describe("Commit#toString", () => {
   // toString が getTimezoneOffset() で TZ 文字列を作るため、CI の TZ に依存しないよう JST 固定

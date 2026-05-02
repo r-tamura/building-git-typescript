@@ -1,8 +1,8 @@
 import * as path from "node:path";
-import type { EntryMap } from "./database";
-import type { Pathname } from "./types";
-import { isempty } from "./util";
-import { type PosixPath, posixPath, toPathComponentsPosix } from "./util/fs";
+import type { EntryMap } from "./database/index.js";
+import type { Pathname } from "./types.js";
+import { isempty } from "./util/index.js";
+import { type PosixPath, posixPath, toPathComponentsPosix } from "./util/fs.js";
 
 export class PathFilter {
   routes: Trie;

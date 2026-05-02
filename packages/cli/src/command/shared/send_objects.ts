@@ -1,8 +1,8 @@
 import * as pack from "@kit/core/pack";
 import * as rev_list from "@kit/core/rev_list";
-import type { GitCommand } from "../base";
-import type { Connectable } from "./remote_common";
-import { checkConnected } from "./remote_common";
+import type { GitCommand } from "../base.js";
+import type { Connectable } from "./remote_common.js";
+import { checkConnected } from "./remote_common.js";
 
 interface SendObject extends GitCommand, Connectable {}
 

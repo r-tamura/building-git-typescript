@@ -5,10 +5,10 @@ import type { OID } from "@kit/core/types";
 import * as array from "@kit/core/util/array";
 import { BaseError } from "@kit/core/util/error";
 import { quote, split } from "@kit/core/util/shlex";
-import type { GitCommand } from "../base";
-import type { FastForwardError } from "./fast_forward";
-import type { Connectable } from "./remote_common";
-import { checkConnected } from "./remote_common";
+import type { GitCommand } from "../base.js";
+import type { FastForwardError } from "./fast_forward.js";
+import type { Connectable } from "./remote_common.js";
+import { checkConnected } from "./remote_common.js";
 
 const REF_LINE = /^([0-9a-f]+) (.*)$/;
 export const ZERO_OID = "0".repeat(40);

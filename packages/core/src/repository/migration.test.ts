@@ -2,16 +2,16 @@ import { describe, it, beforeAll, afterAll, vi } from "vitest";
 import type { MockInstance } from "vitest";
 import { constants } from "node:fs";
 import assert from "node:assert";
-import { makeDummyFileStats } from "../__test__";
-import { setOid } from "../__test__/util";
-import type { ChangeMap } from "../database";
-import { Blob, Entry } from "../database";
-import * as Index from "../gindex";
-import * as FileService from "../services/FileService";
-import type { Dict } from "../types";
-import { posixPath } from "../util/fs";
-import { Migration } from "./migration";
-import { Repository } from "./repository";
+import { makeDummyFileStats } from "../__test__/index.js";
+import { setOid } from "../__test__/util.js";
+import type { ChangeMap } from "../database/index.js";
+import { Blob, Entry } from "../database/index.js";
+import * as Index from "../gindex/index.js";
+import * as FileService from "../services/FileService.js";
+import type { Dict } from "../types.js";
+import { posixPath } from "../util/fs.js";
+import { Migration } from "./migration.js";
+import { Repository } from "./repository.js";
 
 describe("Migration#applyChanges", () => {
   let spyRmrf: MockInstance<any>;

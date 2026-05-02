@@ -1,10 +1,10 @@
-import * as pack from "../pack";
-import type * as FileService from "../services/FileService";
-import { defaultFs } from "../services/FileService";
-import type { OID, Pathname } from "../types";
-import { asserts } from "../util";
-import * as fsUtil from "../util/fs";
-import * as database from "./database";
+import * as pack from "../pack/index.js";
+import type * as FileService from "../services/FileService.js";
+import { defaultFs } from "../services/FileService.js";
+import type { OID, Pathname } from "../types.js";
+import { asserts } from "../util/index.js";
+import * as fsUtil from "../util/fs.js";
+import * as database from "./database.js";
 
 interface Environment {
   fs?: FileService.FileService;

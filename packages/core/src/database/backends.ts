@@ -1,13 +1,13 @@
 import * as path from "node:path";
-import { defaultFs } from "../services";
-import type { OID, Pathname } from "../types";
-import * as errorUtil from "../util";
-import { BaseError } from "../util";
-import * as array from "../util/array";
-import type { Backend, GitRecord, Raw } from "./database";
-import type { Environment } from "./loose";
-import { Loose } from "./loose";
-import { Packed } from "./packed";
+import { defaultFs } from "../services/index.js";
+import type { OID, Pathname } from "../types.js";
+import * as errorUtil from "../util/index.js";
+import { BaseError } from "../util/index.js";
+import * as array from "../util/array.js";
+import type { Backend, GitRecord, Raw } from "./database.js";
+import type { Environment } from "./loose.js";
+import { Loose } from "./loose.js";
+import { Packed } from "./packed.js";
 
 export class Backends implements Backend {
   #pathname: Pathname;

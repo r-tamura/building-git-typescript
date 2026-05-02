@@ -7,8 +7,8 @@ import type { Repository } from "@kit/core/repository";
 import * as revlist from "@kit/core/rev_list";
 import * as FileService from "@kit/core/services/FileService";
 import { stripIndent } from "@kit/core/util";
-import * as T from "./helper";
-import { RemoteRepo } from "./remote_repo";
+import * as T from "./helper.js";
+import { RemoteRepo } from "./remote_repo.js";
 
 const t = T.create("fetch");
 

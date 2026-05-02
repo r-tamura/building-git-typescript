@@ -1,8 +1,8 @@
 import { describe, it } from "vitest";
 import assert from "node:assert";
-import { Copy, Insert } from "./delta";
-import type { Operation } from "./xdelta";
-import { Xdelta } from "./xdelta";
+import { Copy, Insert } from "./delta.js";
+import type { Operation } from "./xdelta.js";
+import { Xdelta } from "./xdelta.js";
 
 describe("Xdelta", () => {
   function insert(s: string, encoding: BufferEncoding = "utf8") {

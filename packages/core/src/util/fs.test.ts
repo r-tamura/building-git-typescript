@@ -14,7 +14,7 @@ import {
   posixPath,
   toOsPath,
   toPathComponentsPosix,
-} from "./fs";
+} from "./fs.js";
 
 const itOnlyPosix = process.platform !== "win32" ? it : it.skip;
 const itOnlyWindows = process.platform === "win32" ? it : it.skip;

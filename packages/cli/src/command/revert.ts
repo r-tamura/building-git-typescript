@@ -11,14 +11,14 @@ import { HEAD } from "@kit/core/revision";
 import type { CompleteCommit, Nullable } from "@kit/core/types";
 import { stripIndent } from "@kit/core/util";
 import { asserts } from "@kit/core/util/assert";
-import { BaseCommand } from "./base";
-import { COMMIT_NOTES } from "./commit";
-import * as Sequencing from "./shared/sequencing";
+import { BaseCommand } from "./base.js";
+import { COMMIT_NOTES } from "./commit.js";
+import * as Sequencing from "./shared/sequencing.js";
 import {
   commitMessagePath,
   currentAuthor,
   writeTree,
-} from "./shared/write_commit";
+} from "./shared/write_commit.js";
 
 export class Revert extends BaseCommand<Sequencing.Options> {
   pendingCommit!: PendingCommit;

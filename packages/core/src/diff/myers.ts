@@ -1,7 +1,7 @@
-import { get, set, clone, enumerate } from "../util/array";
-import { range } from "../util/iter";
-import { asserts } from "../util/assert";
-import type { Line } from "./diff";
+import { get, set, clone, enumerate } from "../util/array.js";
+import { range } from "../util/iter.js";
+import { asserts } from "../util/assert.js";
+import type { Line } from "./diff.js";
 
 export class Myers {
   constructor(

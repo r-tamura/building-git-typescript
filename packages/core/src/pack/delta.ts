@@ -1,8 +1,8 @@
-import { asserts } from "../util";
-import type { Entry } from "./entry";
-import * as numbers from "./numbers";
-import type { Unpacked } from "./windows";
-import { Xdelta } from "./xdelta";
+import { asserts } from "../util/index.js";
+import type { Entry } from "./entry.js";
+import * as numbers from "./numbers.js";
+import type { Unpacked } from "./windows.js";
+import { Xdelta } from "./xdelta.js";
 
 /**
  * XDeltaアルゴリズムのCopy操作 (7バイト/56bit)

@@ -1,11 +1,11 @@
 import type { Stats } from "node:fs";
-import type * as Database from "../database";
-import type * as Index from "../gindex";
-import type { Stage } from "../gindex";
-import type { Dict, OID, Pathname } from "../types";
-import type { IndexStatus, WorkspaceStatus } from "./inspector";
-import { Inspector } from "./inspector";
-import type { Repository } from "./repository";
+import type * as Database from "../database/index.js";
+import type * as Index from "../gindex/index.js";
+import type { Stage } from "../gindex/index.js";
+import type { Dict, OID, Pathname } from "../types.js";
+import type { IndexStatus, WorkspaceStatus } from "./inspector.js";
+import { Inspector } from "./inspector.js";
+import type { Repository } from "./repository.js";
 
 export type ChangeType = IndexStatus | WorkspaceStatus;
 export type ConflictStatus = Stage[];

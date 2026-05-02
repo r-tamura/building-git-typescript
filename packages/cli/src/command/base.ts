@@ -1,9 +1,9 @@
 import arg, { type Spec } from "@kit/core/util/arg";
 import * as path from "node:path";
-import * as Color from "../color";
-import type { EditCallback } from "../editor";
-import { Editor } from "../editor";
-import { Pager } from "../pager";
+import * as Color from "../color.js";
+import type { EditCallback } from "../editor.js";
+import { Editor } from "../editor.js";
+import { Pager } from "../pager.js";
 import { Repository } from "@kit/core/repository";
 import type { Logger } from "@kit/core/services";
 import { createLogger } from "@kit/core/services";
@@ -11,7 +11,7 @@ import type { Environment, EnvVars, Pathname } from "@kit/core/types";
 import type { PosixPath } from "@kit/core/util";
 import { posixPath } from "@kit/core/util";
 import { asserts } from "@kit/core/util/assert";
-import type { Runnable } from "./types";
+import type { Runnable } from "./types.js";
 
 /** process.exit 代替え */
 export class Exit {}

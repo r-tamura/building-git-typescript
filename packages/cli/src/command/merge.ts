@@ -4,8 +4,8 @@ import type { PendingCommit } from "@kit/core/repository/pending_commit";
 import { Error as NotInProgressError } from "@kit/core/repository/pending_commit";
 import { HEAD } from "@kit/core/revision";
 import { asserts } from "@kit/core/util";
-import { BaseCommand, Exit } from "./base";
-import type { CommitOptions } from "./shared/write_commit";
+import { BaseCommand, Exit } from "./base.js";
+import type { CommitOptions } from "./shared/write_commit.js";
 import {
   CONFLICT_MESSAGE,
   defineWriteCommitOptions,
@@ -13,7 +13,7 @@ import {
   readMessage,
   resumeMerge,
   writeCommit,
-} from "./shared/write_commit";
+} from "./shared/write_commit.js";
 
 interface Options extends CommitOptions {
   mode: "run" | "continue" | "abort";

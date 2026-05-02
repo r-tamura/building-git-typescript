@@ -1,8 +1,8 @@
 import assert from "node:assert";
 import { createHash } from "node:crypto";
-import { PathFilter } from "../path_filter";
-import type { FileService, Zlib } from "../services";
-import { defaultFs, defaultZlib } from "../services";
+import { PathFilter } from "../path_filter.js";
+import type { FileService, Zlib } from "../services/index.js";
+import { defaultFs, defaultZlib } from "../services/index.js";
 import type {
   CompleteGitObject,
   CompleteTree,
@@ -10,17 +10,21 @@ import type {
   GitObjectParser,
   Nullable,
   OID,
-} from "../types";
-import { asserts } from "../util";
-import type { PosixPath } from "../util/fs";
-import { POSIX_PATH_ZERO, posixJoin, toPathComponentsPosix } from "../util/fs";
-import { Backends } from "./backends";
-import { Blob } from "./blob";
-import { Commit } from "./commit";
-import { Entry } from "./entry";
-import type { GitObjectType } from "./loose";
-import { Tree } from "./tree";
-import { TreeDiff } from "./tree_diff";
+} from "../types.js";
+import { asserts } from "../util/index.js";
+import type { PosixPath } from "../util/fs.js";
+import {
+  POSIX_PATH_ZERO,
+  posixJoin,
+  toPathComponentsPosix,
+} from "../util/fs.js";
+import { Backends } from "./backends.js";
+import { Blob } from "./blob.js";
+import { Commit } from "./commit.js";
+import { Entry } from "./entry.js";
+import type { GitObjectType } from "./loose.js";
+import { Tree } from "./tree.js";
+import { TreeDiff } from "./tree_diff.js";
 import path = require("node:path");
 
 type Rand = {

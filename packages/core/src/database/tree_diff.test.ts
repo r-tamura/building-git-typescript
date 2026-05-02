@@ -1,12 +1,12 @@
 import { describe, it, afterEach, vi } from "vitest";
 import assert from "node:assert";
-import { PathFilter, Trie } from "../path_filter";
-import type { GitObject } from "../types";
-import { posixPath } from "../util/fs";
-import { Commit } from "./commit";
-import { Entry } from "./entry";
-import { Tree } from "./tree";
-import { TreeDiff } from "./tree_diff";
+import { PathFilter, Trie } from "../path_filter.js";
+import type { GitObject } from "../types.js";
+import { posixPath } from "../util/fs.js";
+import { Commit } from "./commit.js";
+import { Entry } from "./entry.js";
+import { Tree } from "./tree.js";
+import { TreeDiff } from "./tree_diff.js";
 
 function mockDatabase(objects: { [s: string]: GitObject }) {
   return {

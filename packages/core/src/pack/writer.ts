@@ -1,15 +1,15 @@
 import * as crypto from "node:crypto";
 import { constants } from "node:zlib";
-import type * as database from "../database";
-import type { Progress } from "../progress";
-import type { RevList } from "../rev_list";
-import type { Zlib } from "../services";
-import { defaultZlib } from "../services";
-import type { CompleteCommit, Pathname } from "../types";
-import { Compressor } from "./compressor";
-import { Entry } from "./entry";
-import * as numbers from "./numbers";
-import { SIGNATURE, VERSION } from "./pack";
+import type * as database from "../database/index.js";
+import type { Progress } from "../progress.js";
+import type { RevList } from "../rev_list.js";
+import type { Zlib } from "../services/index.js";
+import { defaultZlib } from "../services/index.js";
+import type { CompleteCommit, Pathname } from "../types.js";
+import { Compressor } from "./compressor.js";
+import { Entry } from "./entry.js";
+import * as numbers from "./numbers.js";
+import { SIGNATURE, VERSION } from "./pack.js";
 
 interface Options {
   readonly compressLevel?: number;

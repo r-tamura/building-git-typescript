@@ -1,4 +1,4 @@
-import type { OID } from "../types";
+import type { OID } from "../types.js";
 
 export type Data = Buffer;
 

@@ -1,9 +1,9 @@
 import * as path from "path/posix";
-import type { Config } from "../config";
-import * as Refs from "../refs";
-import { BaseError, isempty } from "../util";
-import { Refspec } from "./refspec";
-import { Remote } from "./remote";
+import type { Config } from "../config/index.js";
+import * as Refs from "../refs.js";
+import { BaseError, isempty } from "../util/index.js";
+import { Refspec } from "./refspec.js";
+import { Remote } from "./remote.js";
 
 export type RemoteName = string;
 

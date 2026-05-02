@@ -6,9 +6,9 @@ import { Repository } from "@kit/core/repository";
 import type { Pathname } from "@kit/core/types";
 import { BaseError, isNodeError } from "@kit/core/util";
 import * as pathUtil from "@kit/core/util/fs";
-import type { GitCommand } from "../base";
-import type { Connectable } from "./remote_common";
-import { checkConnected } from "./remote_common";
+import type { GitCommand } from "../base.js";
+import type { Connectable } from "./remote_common.js";
+import { checkConnected } from "./remote_common.js";
 
 export interface RemoteAgent extends GitCommand, Connectable {
   readonly stdin: NodeJS.Process["stdin"];

@@ -1,11 +1,11 @@
 import * as crypto from "node:crypto";
 import * as fs from "node:fs";
 import type { Readable } from "node:stream";
-import { readChunk } from "../services";
-import type { Pathname } from "../types";
-import type * as fsUtil from "../util/fs";
-import type * as pack from "./pack";
-import { InvalidPack } from "./pack";
+import { readChunk } from "../services/index.js";
+import type { Pathname } from "../types.js";
+import type * as fsUtil from "../util/fs.js";
+import type * as pack from "./pack.js";
+import { InvalidPack } from "./pack.js";
 export class Stream implements fsUtil.Seekable {
   #input: Readable;
   digest = crypto.createHash("sha1");

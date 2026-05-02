@@ -3,11 +3,11 @@ import { constants } from "node:fs";
 import * as fs from "node:fs/promises";
 import * as path from "node:path";
 import assert from "node:assert";
-import { EACCES, EEXIST, ENOENT } from "./__test__";
-import { Lockfile, MissingParent, NoPermission } from "./lockfile";
-import { LockDenied } from "./refs";
-import { defaultFs } from "./services";
-import { posixPath } from "./util/fs";
+import { EACCES, EEXIST, ENOENT } from "./__test__/index.js";
+import { Lockfile, MissingParent, NoPermission } from "./lockfile.js";
+import { LockDenied } from "./refs.js";
+import { defaultFs } from "./services/index.js";
+import { posixPath } from "./util/fs.js";
 import mock = require("mock-fs");
 
 const TEST_TARGET_PATH = posixPath("/test/file.txt");

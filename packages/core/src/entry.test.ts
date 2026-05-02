@@ -1,8 +1,8 @@
 import { describe, it } from "vitest";
 import assert from "node:assert";
-import { mockFsStats } from "./__test__/fs.ts";
-import { Entry } from "./entry.ts";
-import { posixPath } from "./util/fs";
+import { mockFsStats } from "./__test__/fs.js";
+import { Entry } from "./entry.js";
+import { posixPath } from "./util/fs.js";
 
 describe("Entry#mode", () => {
   it.each([

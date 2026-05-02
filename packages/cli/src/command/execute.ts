@@ -1,25 +1,25 @@
 import type { Environment } from "@kit/core/types";
 import { asserts, BaseError } from "@kit/core/util";
-import { Add } from "./add";
-import type { BaseConstructor, NoOptions, Options } from "./base";
-import { Branch } from "./branch";
-import { Checkout } from "./checkout";
-import { CherryPick } from "./cherry_pick";
-import { Commit } from "./commit";
-import { Config } from "./config";
-import { Diff } from "./diff";
-import { Fetch } from "./fetch";
-import { InitCommand } from "./init";
-import { Log } from "./log";
-import { Merge } from "./merge";
-import { Push } from "./push";
-import { ReceivePack } from "./receive_pack";
-import { Remote } from "./remote";
-import { Reset } from "./reset";
-import { Revert } from "./revert";
-import { Rm } from "./rm";
-import { Status } from "./status";
-import { UploadPack } from "./upload_pack";
+import { Add } from "./add.js";
+import type { BaseConstructor, NoOptions, Options } from "./base.js";
+import { Branch } from "./branch.js";
+import { Checkout } from "./checkout.js";
+import { CherryPick } from "./cherry_pick.js";
+import { Commit } from "./commit.js";
+import { Config } from "./config.js";
+import { Diff } from "./diff.js";
+import { Fetch } from "./fetch.js";
+import { InitCommand } from "./init.js";
+import { Log } from "./log.js";
+import { Merge } from "./merge.js";
+import { Push } from "./push.js";
+import { ReceivePack } from "./receive_pack.js";
+import { Remote } from "./remote.js";
+import { Reset } from "./reset.js";
+import { Revert } from "./revert.js";
+import { Rm } from "./rm.js";
+import { Status } from "./status.js";
+import { UploadPack } from "./upload_pack.js";
 
 export class Unknown extends BaseError {}
 

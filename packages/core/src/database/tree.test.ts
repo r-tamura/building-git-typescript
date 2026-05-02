@@ -2,12 +2,12 @@ import { describe, it, beforeEach, vi } from "vitest";
 import type { Stats } from "node:fs";
 import assert from "node:assert";
 import * as Database from ".";
-import { makeDummyFileStats, mockFsStats } from "../__test__/fs.ts";
-import type { MODE } from "../entry.ts";
-import { Entry } from "../entry.ts";
-import { scanUntil } from "../util";
-import { posixPath } from "../util/fs";
-import { Tree } from "./tree";
+import { makeDummyFileStats, mockFsStats } from "../__test__/fs.js";
+import type { MODE } from "../entry.js";
+import { Entry } from "../entry.js";
+import { scanUntil } from "../util/index.js";
+import { posixPath } from "../util/fs.js";
+import { Tree } from "./tree.js";
 
 const testStats = (mode: keyof typeof MODE): Stats => {
   const stats = mockFsStats();

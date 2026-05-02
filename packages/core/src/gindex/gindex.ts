@@ -4,17 +4,23 @@
 import assert from "node:assert";
 import type { Stats } from "node:fs";
 import { constants } from "node:fs";
-import type * as Database from "../database";
-import type { LockfileEnvironment } from "../lockfile";
-import { Lockfile } from "../lockfile";
-import type { FileService } from "../services";
-import { defaultFs } from "../services";
-import type { OID, Pathname } from "../types";
-import type { PosixPath } from "../util";
-import { Invalid, ObjectKeyHash, ObjectSet, some, times } from "../util";
-import { Checksum } from "./checksum";
-import type { Key, Stage } from "./entry";
-import { BASE, Entry, LEFT, RIGHT, STAGES } from "./entry";
+import type * as Database from "../database/index.js";
+import type { LockfileEnvironment } from "../lockfile.js";
+import { Lockfile } from "../lockfile.js";
+import type { FileService } from "../services/index.js";
+import { defaultFs } from "../services/index.js";
+import type { OID, Pathname } from "../types.js";
+import type { PosixPath } from "../util/index.js";
+import {
+  Invalid,
+  ObjectKeyHash,
+  ObjectSet,
+  some,
+  times,
+} from "../util/index.js";
+import { Checksum } from "./checksum.js";
+import type { Key, Stage } from "./entry.js";
+import { BASE, Entry, LEFT, RIGHT, STAGES } from "./entry.js";
 
 type IndexEntryMap = ObjectKeyHash<Key, Entry>;
 export class Index {

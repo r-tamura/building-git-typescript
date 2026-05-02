@@ -1,5 +1,5 @@
 import { describe, it, beforeEach, afterEach } from "vitest";
-import * as T from "./helper";
+import * as T from "./helper.js";
 import type { OID } from "@kit/core/types";
 import { stripIndent } from "@kit/core/util";
 import type { CompleteCommit, Dict } from "@kit/core/types";

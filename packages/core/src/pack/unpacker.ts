@@ -1,10 +1,10 @@
-import type * as database from "../database";
-import type * as progress from "../progress";
-import type { OID } from "../types";
-import type { Reader, Stream } from "./";
-import { Expander } from "./expander";
-import type { RefDelta } from "./pack";
-import { Record } from "./pack";
+import type * as database from "../database/index.js";
+import type * as progress from "../progress.js";
+import type { OID } from "../types.js";
+import type { Reader, Stream } from ".//index.js";
+import { Expander } from "./expander.js";
+import type { RefDelta } from "./pack.js";
+import { Record } from "./pack.js";
 
 export class Unpacker {
   #database: database.Database;

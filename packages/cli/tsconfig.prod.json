@@ -3,7 +3,6 @@
   "compilerOptions": {
     "declaration": true,
     "noEmit": false,
-    "rewriteRelativeImportExtensions": true,
     "sourceMap": true
   },
   "exclude": ["src/**/*.test.ts", "src/__test__/**"],

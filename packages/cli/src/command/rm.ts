@@ -4,7 +4,7 @@ import { isempty } from "@kit/core/util/array";
 import { asserts } from "@kit/core/util/assert";
 import { Runtime } from "@kit/core/util/error";
 import { posixPath } from "@kit/core/util/fs";
-import { BaseCommand, Exit } from "./base";
+import { BaseCommand, Exit } from "./base.js";
 import arg from "@kit/core/util/arg";
 
 interface Options {
