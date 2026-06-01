@@ -28,7 +28,7 @@ kit config
 pnpm watch
 
 # test (unit & integ)
-yarn test:unit
-yarn test:integ
-yarn test:all
+pnpm test:unit
+pnpm test:integ
+pnpm test:all
 ```
